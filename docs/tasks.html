@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Search-SWE task briefs for implementation, optimization, and repair tasks." />
+    <title>Tasks — Search-SWE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a class="brand" href="index.html#top" aria-label="Search-SWE home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>Search-SWE</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+        <span class="sr-only">Toggle navigation</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Main navigation">
+        <a href="index.html#motivation">Why</a>
+        <a href="index.html#search-swe">What</a>
+        <a href="index.html#construction">How</a>
+        <a class="nav-active" href="tasks.html">Tasks</a>
+        <a href="index.html#evaluation">Evaluation</a>
+        <a href="index.html#results">Results</a>
+        <a class="nav-button" href="https://github.com/VectorSpaceLab/Search-SWE" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="catalog-hero">
+        <div class="section-shell catalog-hero-inner">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> 04 · Task catalog</p>
+          <h1>The Search-SWE <em>task set.</em></h1>
+          <p>
+            Seven defined tasks span implementation, optimization, and repair. Each task asks an agent to
+            produce a working change under a concrete search-system scenario.
+          </p>
+          <div class="catalog-meta"><span>07 defined tasks</span><i>·</i><span>03 task types</span><i>·</i><span>Clean-run evaluation</span></div>
+        </div>
+      </section>
+
+      <section class="section-shell catalog-section">
+        <div class="catalog-intro">
+          <div>
+            <p class="eyebrow">Browse the tasks</p>
+            <h2>Three task types.<br />One executable standard.</h2>
+          </div>
+          <p>
+            Implementation tasks ask the agent to create a capability. Optimization tasks ask it to improve a
+            working system under a fixed budget. Repair tasks ask it to find and fix a broken integration or pipeline.
+          </p>
+        </div>
+
+        <div class="task-type-strip">
+          <span class="type-chip type-implementation">IMPLEMENTATION</span><span>Build a missing capability</span>
+          <span class="type-chip type-optimization">OPTIMIZATION</span><span>Improve quality or efficiency</span>
+          <span class="type-chip type-repair">REPAIR</span><span>Restore correctness</span>
+        </div>
+
+        <div class="catalog-grid catalog-grid-seven">
+          <a class="catalog-card task-blue" href="#task-1-1"><span class="catalog-card-id">TASK 1-1 · IMPLEMENTATION</span><span class="catalog-card-icon">↻</span><h3>Reasoning query rewrite</h3><p>Recognize when query rewriting is necessary and design an effective reasoning-query strategy.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-violet" href="#task-1-2"><span class="catalog-card-id">TASK 1-2 · OPTIMIZATION</span><span class="catalog-card-icon">◌</span><h3>Memory-constrained retrieval</h3><p>Search a 1.5M-vector corpus under strict memory and query-latency constraints.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-teal" href="#task-2-1"><span class="catalog-card-id">TASK 2-1 · OPTIMIZATION</span><span class="catalog-card-icon">↗</span><h3>Long-document reranking</h3><p>Improve Cross-Encoder reranking when relevant evidence lies beyond the first 512 tokens.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-orange" href="#task-2-2"><span class="catalog-card-id">TASK 2-2 · OPTIMIZATION</span><span class="catalog-card-icon">◆</span><h3>Embedder training</h3><p>Improve a fixed-backbone code-retrieval embedder using supplied training data.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-pink" href="#task-2-3"><span class="catalog-card-id">TASK 2-3 · OPTIMIZATION</span><span class="catalog-card-icon">⌘</span><h3>Query-side encoder</h3><p>Optimize a query encoder against fixed document vectors and a runtime gate.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-blue" href="#task-3-1"><span class="catalog-card-id">TASK 3-1 · REPAIR</span><span class="catalog-card-icon">⌁</span><h3>Multilingual BM25 tokenizer</h3><p>Repair the Pyserini BM25 pipeline for a Korean retrieval corpus.</p><span>Open task brief →</span></a>
+          <a class="catalog-card task-blue" href="#task-3-2"><span class="catalog-card-id">TASK 3-2 · REPAIR</span><span class="catalog-card-icon">✓</span><h3>Embedding inference</h3><p>Fix FlagEmbedding automatic loading and produce correct normalized embeddings.</p><span>Open task brief →</span></a>
+        </div>
+      </section>
+
+      <section class="section-shell detail-section">
+        <div class="detail-section-heading"><p class="eyebrow">Task briefs</p><h2>What each agent has to solve.</h2></div>
+
+        <article id="task-1-1" class="task-detail task-blue">
+          <div class="detail-number">01</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 1-1 · IMPLEMENTATION · IN PREPARATION</div>
+            <h3>Reasoning query rewrite for professional search</h3>
+            <p class="detail-lede">Build a query-rewriting capability for reasoning-intensive information needs, where the user's natural-language description differs from the terminology used by relevant documents.</p>
+            <div class="detail-facts"><div><span>Scenario</span><b>BRIGHT Biology</b></div><div><span>Core skill</span><b>Query understanding</b></div><div><span>Expected direction</span><b>Reasoning query</b></div><div><span>Status</span><b>Task under construction</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Identify that adding query rewrite is necessary, extract the real information need from long background and follow-up questions, and design a useful rewrite strategy.</p></div><div><b>Expected implementation</b><p>Use a reasoning-query rewrite approach: remove noise, extract the core need, add professional terminology, and expand useful synonyms before retrieval.</p></div></div>
+            <div class="detail-note">Why this scenario matters: Biology, medicine, law, and research queries often describe phenomena in everyday language while the corpus uses precise professional concepts.</div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-1-2" class="task-detail task-violet">
+          <div class="detail-number">02</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 1-2 · OPTIMIZATION · DENSE RETRIEVAL</div>
+            <h3>Memory-constrained retrieval over a huge corpus</h3>
+            <p class="detail-lede">Build and optimize a dense-vector search system when the complete corpus is larger than the available memory.</p>
+            <div class="detail-facts"><div><span>Corpus</span><b>1.5M vectors</b></div><div><span>Vector shape</span><b>1024-D float32</b></div><div><span>Memory budget</span><b>2 GiB</b></div><div><span>Metric</span><b>Accuracy@3</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Choose an index and storage strategy while balancing recall, index size, memory use, disk access, and query latency.</p></div><div><b>Expected implementation</b><p>Use the supplied precomputed vectors with techniques such as ANN, quantization, memory mapping, chunking, candidate retrieval, and exact reranking.</p></div></div>          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-2-1" class="task-detail task-teal">
+          <div class="detail-number">03</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 2-1 · OPTIMIZATION · CROSS-ENCODER</div>
+            <h3>Improve long-document reranking</h3>
+            <p class="detail-lede">Optimize reranking when relevant evidence may appear beyond the first 512 model tokens of a long document.</p>
+            <div class="detail-facts"><div><span>Corpus</span><b>NarrativeQA</b></div><div><span>Candidates</span><b>Fixed BM25 Top-100</b></div><div><span>Model</span><b>BGE reranker-large</b></div><div><span>Metric</span><b>Accuracy@5</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Improve the reranking pipeline without changing the supplied candidate set or replacing, training, or modifying the fixed cross-encoder.</p></div><div><b>Expected implementation</b><p>Make the fixed model see more useful long-document evidence through efficient preprocessing, text views, window selection, batching, caching, and score aggregation.</p></div></div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-2-2" class="task-detail task-orange">
+          <div class="detail-number">04</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 2-2 · OPTIMIZATION · EMBEDDER TRAINING</div>
+            <h3>Improve a code-retrieval embedder</h3>
+            <p class="detail-lede">Improve the retrieval quality of a fixed-backbone code embedder using the supplied corpus and training data.</p>
+            <div class="detail-facts"><div><span>Backbone</span><b>BGE-base-en-v1.5</b></div><div><span>Domain</span><b>Code retrieval</b></div><div><span>Target</span><b>Held-out Accuracy@1</b></div><div><span>Constraint</span><b>Preserve architecture</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Use the visible training data to improve representations while preserving parameter names, shapes, count, and the supplied backbone architecture.</p></div><div><b>Expected implementation</b><p>Train and validate a self-contained checkpoint that can be loaded locally by the verifier without hidden data, answer mappings, or network access.</p></div></div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-2-3" class="task-detail task-pink">
+          <div class="detail-number">05</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 2-3 · OPTIMIZATION · QUERY ENCODER</div>
+            <h3>Optimize the query-side encoder</h3>
+            <p class="detail-lede">Build a query-side retrieval system based on a small backbone while the document vectors remain fixed.</p>
+            <div class="detail-facts"><div><span>Query model</span><b>Qwen3-Embedding-0.6B</b></div><div><span>Documents</span><b>Fixed vectors</b></div><div><span>Corpus</span><b>8,674 documents</b></div><div><span>Metric</span><b>Accuracy@1</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Improve query representations without re-encoding, modifying, or reordering the supplied document vectors, while meeting the runtime gate.</p></div><div><b>Expected implementation</b><p>Train or adapt the query-side system using the supplied backbone and visible data, then submit a deterministic, self-contained executable entry point.</p></div></div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-3-1" class="task-detail task-blue">
+          <div class="detail-number">06</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 3-1 · REPAIR · BM25 / PYSERINI</div>
+            <h3>Repair multilingual BM25 tokenization</h3>
+            <p class="detail-lede">Repair a Pyserini BM25 retrieval pipeline so that a Korean corpus is indexed and queried correctly.</p>
+            <div class="detail-facts"><div><span>Runtime</span><b>Pyserini / Lucene</b></div><div><span>Corpus</span><b>Korean retrieval</b></div><div><span>Core issue</span><b>Tokenizer / indexing</b></div><div><span>Metric</span><b>Accuracy@1</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Locate the pipeline or analyzer behavior that causes incorrect multilingual retrieval and repair it without query-specific answer rules.</p></div><div><b>Expected implementation</b><p>Build a fresh index during verification and use the installed Pyserini/Lucene BM25 path for deterministic retrieval.</p></div></div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+
+        <article id="task-3-2" class="task-detail task-blue">
+          <div class="detail-number">07</div>
+          <div class="detail-main">
+            <div class="detail-kicker">TASK 3-2 · REPAIR · EMBEDDING INFERENCE</div>
+            <h3>Repair embedding-model inference integration</h3>
+            <p class="detail-lede">Fix a supplied FlagEmbedding inference integration so automatic model loading produces correct retrieval embeddings.</p>
+            <div class="detail-facts"><div><span>Source</span><b>FlagEmbedding</b></div><div><span>Entry point</span><b>Automatic loading</b></div><div><span>Output</span><b>Finite normalized vectors</b></div><div><span>Metric</span><b>Hidden retrieval checks</b></div></div>
+            <div class="detail-columns"><div><b>Agent challenge</b><p>Find the local integration error without replacing the installed package, bypassing the source, or modifying model and data files.</p></div><div><b>Expected implementation</b><p>Repair the source-level model selection and pooling path so batch consistency, input-length handling, prefix behavior, and retrieval ranking all work.</p></div></div>
+          </div>
+          <a class="detail-top" href="#top">Back to top ↑</a>
+        </article>
+      </section>
+
+      <section class="section-shell catalog-cta">
+        <div><p class="eyebrow">Search-SWE</p><h2>Every task ends with an executable artifact.</h2></div>
+        <a class="button button-primary" href="index.html#evaluation">See the evaluation setting <span aria-hidden="true">→</span></a>
+      </section>
+    </main>
+
+    <footer class="footer section-shell">
+      <span>Search-SWE · VectorSpaceLab</span>
+      <span><a href="index.html">Back to project overview</a></span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
