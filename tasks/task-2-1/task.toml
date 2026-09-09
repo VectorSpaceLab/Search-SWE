@@ -1,0 +1,50 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-2-1"
+version = "0.1"
+description = "Optimize long-document reranking over a frozen BM25 Top-100 candidate pool with a fixed local BGE reranker."
+authors = [{ name = "Search-SWE" }]
+keywords = ["information-retrieval", "search", "reranking", "cross-encoder", "long-document", "gpu"]
+
+[metadata]
+task_type = "optimize"
+dataset = "MTEB NarrativeQARetrieval"
+primary_metric = "Accuracy@5"
+metric_k = 5
+public_query_count = 100
+hidden_query_count = 100
+reranker_model = "BAAI/bge-reranker-large"
+reranker_max_length = 512
+data_status = "355-document corpus, frozen BM25 Top-100 candidates, and disjoint 100-query validation/hidden splits installed"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "public"
+
+[verifier]
+timeout_sec = 4800.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+
+[environment]
+network_mode = "public"
+build_timeout_sec = 1800.0
+workdir = "/app"
+cpus = 16
+memory_mb = 65536
+storage_mb = 102400
+gpus = 0
+os = "linux"
+
+[verifier.env]
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${OPENAI_API_KEY:-}"

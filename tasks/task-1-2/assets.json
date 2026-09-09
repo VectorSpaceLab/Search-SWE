@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/metadata.jsonl",
+      "size_bytes": 59735458,
+      "sha256": "8a92cdf63b865f543b1c701371bd41a0c36abdf5b25f1512c69cec874d731da5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/metadata.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/ground_truth.jsonl",
+      "size_bytes": 290,
+      "sha256": "57c12d050e0bff175d2d7981005348a803bcf5432d295fd43d871313f981064e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/validation/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 396,
+      "sha256": "f2ce9368500256909087b4ce42ebe0ed97c929f939a626e75d6bcd173c00f17e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/query_metadata.jsonl",
+      "size_bytes": 173,
+      "sha256": "b01c916c883dd2f22bdd0c63e8253cddc25e05f31b6f24cb3c3ae664722d25b4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/validation/query_metadata.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/query_vectors.f32",
+      "size_bytes": 20480,
+      "sha256": "ce8ca53e7b6efaaf718b3a81b6dddbf996f7dbaac89ca279dbec5010abab2203",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/validation/query_vectors.f32"
+      }
+    },
+    {
+      "path": "data/validation/vector_config.json",
+      "size_bytes": 180,
+      "sha256": "55883084effcd79937a071e0df9ac988acc62d4c59732398091afc0bb40059d5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/validation/vector_config.json"
+      }
+    },
+    {
+      "path": "data/vector_config.json",
+      "size_bytes": 174,
+      "sha256": "c3571a60e3e1aac3cd941280c021bf7135436190db32481709040d12471589fc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/vector_config.json"
+      }
+    },
+    {
+      "path": "data/vectors.f32",
+      "size_bytes": 6144000000,
+      "sha256": "6ec85127f0150642d1287e5b02fa651df0b3f965a93d2e1ce66ba186199b0a3b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-1-2/vectors.f32"
+      }
+    }
+  ]
+}

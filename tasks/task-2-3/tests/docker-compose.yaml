@@ -1,0 +1,28 @@
+services:
+  main:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - type: bind
+        source: ../data/corpus.jsonl
+        target: /task/data/corpus.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../data/doc.npy
+        target: /task/data/doc.npy
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../models
+        target: /task/models
+        read_only: true
+        bind:
+          create_host_path: false

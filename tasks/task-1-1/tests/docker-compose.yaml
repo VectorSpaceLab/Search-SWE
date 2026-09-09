@@ -1,0 +1,15 @@
+services:
+  main:
+    volumes:
+      - type: bind
+        source: ../data/corpus.jsonl
+        target: /task/data/corpus.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../environment/docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false

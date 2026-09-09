@@ -1,0 +1,52 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-1-1"
+version = "0.1"
+description = "Build a reasoning-assisted semantic retrieval system over Bright biology short documents."
+authors = [{ name = "Search-SWE" }]
+keywords = ["information-retrieval", "search", "biology", "BM25", "query-rewriting", "semantic-retrieval"]
+
+[metadata]
+task_type = "create"
+dataset = "Bright biology short-document"
+primary_metric = "Accuracy@3"
+metric_k = 3
+public_query_count = 3
+hidden_query_count = 3
+all_hidden_queries_required = true
+corpus_document_count = 57359
+data_status = "Bright biology short documents with disjoint public validation and hidden hard-case queries installed"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "public"
+
+[verifier]
+timeout_sec = 5400.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+[environment]
+network_mode = "public"
+build_timeout_sec = 1800.0
+workdir = "/app"
+cpus = 16
+memory_mb = 32768
+storage_mb = 102400
+os = "linux"
+
+[environment.env]
+OPENROUTER_API_KEY = "${TASK_1_1_OPENROUTER_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_KEY = "${TASK_1_1_OPENROUTER_API_KEY:-}"
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${OPENAI_API_KEY:-}"

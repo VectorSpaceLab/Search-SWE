@@ -1,0 +1,27 @@
+services:
+  main:
+    volumes:
+      - type: bind
+        source: ../data/vectors.f32
+        target: /task/data/vectors.f32
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../data/metadata.jsonl
+        target: /task/data/metadata.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../data/vector_config.json
+        target: /task/data/vector_config.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../environment/docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false

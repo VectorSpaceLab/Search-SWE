@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 119541403,
+      "sha256": "a576b514e07d13bc15b973f1448e2854e150152403ab22827963a045bd03d4b2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-1/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/ground_truth.jsonl",
+      "size_bytes": 8391,
+      "sha256": "80fe33326e2bb9e77b011e926458bc5c108e22d6c62d9ad7160da4924c7a073a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-1/validation/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 1017926,
+      "sha256": "d106569348310c4eaf3857cbfb9102da22054376a4c656daafe69483d18682c4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-1/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/.gitattributes",
+      "size_bytes": 1735,
+      "sha256": "6a4f646f089f79443fed3ffa600f366d1df2041ff7864fb5e687be9cd9dc675a",
+      "source": {
+        "local_path": "model-metadata/bge-reranker-large/.gitattributes"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/README.md",
+      "size_bytes": 34046,
+      "sha256": "21e23fa63b74a594ce5aa91f70c133ad2cd81baa21168362bbbc634c8c183066",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/config.json",
+      "size_bytes": 801,
+      "sha256": "25dda0319f57e9de243c32eb7ecefa0768271afac6b5d8a94ba7f779198ab102",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/configuration.json",
+      "size_bytes": 76,
+      "sha256": "6bc26d64eb5024b4d1dab5a52371958b429256d6c9d59787f1f5294a54e0cebd",
+      "source": {
+        "local_path": "model-metadata/bge-reranker-large/configuration.json"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/model.safetensors",
+      "size_bytes": 2239618772,
+      "sha256": "c5ae4e262c60ed2fb507ec587358285377ec36ee0a2e6da029f0534272b06d36",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/onnx/model.onnx",
+      "size_bytes": 618476,
+      "sha256": "0528834a83cbe4b37fd20a887dd8f3dbdc6d924ffaaab51278d0a05364410117",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "onnx/model.onnx"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/onnx/model.onnx_data",
+      "size_bytes": 2239565824,
+      "sha256": "e88670fb90657362754eee65d1e29ea14689dab61caca572051db8f6e5d9109c",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "onnx/model.onnx_data"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/pytorch_model.bin",
+      "size_bytes": 2239705845,
+      "sha256": "62129e841464da714b961eb0bbbeb48c0f0b5f67e657902aaa3befcff6b3dab3",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "pytorch_model.bin"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/sentencepiece.bpe.model",
+      "size_bytes": 5069051,
+      "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "sentencepiece.bpe.model"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/special_tokens_map.json",
+      "size_bytes": 279,
+      "sha256": "d5469a60db23249c7f8945013d78df30b44b6bf686c6bb4740f4223f77b1b535",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "special_tokens_map.json"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/tokenizer.json",
+      "size_bytes": 17098107,
+      "sha256": "9eb652ac4e40cc093272bbbe0f55d521cf67570060227109b5cdc20945a4489e",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/bge-reranker-large/tokenizer_config.json",
+      "size_bytes": 443,
+      "sha256": "a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b",
+      "source": {
+        "repo_id": "BAAI/bge-reranker-large",
+        "repo_type": "model",
+        "revision": "55611d7bca2a7133960a6d3b71e083071bbfc312",
+        "filename": "tokenizer_config.json"
+      }
+    }
+  ]
+}

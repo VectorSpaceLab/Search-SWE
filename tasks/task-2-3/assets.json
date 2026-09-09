@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 9296066,
+      "sha256": "97fe08496783f71dc21b060d15245c279e4076cbbf9078886f7fafc2d402d4dc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-3/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/doc.npy",
+      "size_bytes": 88821888,
+      "sha256": "54c2f4a5a83e43d8ab5569f195c7e478a0807c9018e0749a9f62158656c8cd46",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-3/doc.npy"
+      }
+    },
+    {
+      "path": "data/validation/ground_truth.jsonl",
+      "size_bytes": 4780,
+      "sha256": "96c59914c9dedc5aec6c735668812f30d472e5c13130e728f50f6dce1a671c96",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-3/validation/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 118380,
+      "sha256": "91ae57597e6f8da4b472ac34d0667996cbac5bb843bed3892d25e060c1198b23",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "filename": "tasks/task-2-3/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/1_Pooling/config.json",
+      "size_bytes": 313,
+      "sha256": "37bf193fa101f19101bfad9c31d3eb0f786e247b7b1e5cb7f007d730eed1ddbd",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "1_Pooling/config.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/README.md",
+      "size_bytes": 17237,
+      "sha256": "165914ec295689ae52c6e653221506912feb98d64043e03c3a27632aa135b0a3",
+      "source": {
+        "local_path": "model-metadata/Qwen3-Embedding-0.6B/README.md"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/config.json",
+      "size_bytes": 727,
+      "sha256": "b5bf1f51fc45be473a54718cef92448d90a1be001bf9b9a44b8c7f10a19feaa9",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/config_sentence_transformers.json",
+      "size_bytes": 215,
+      "sha256": "10667c72ddb772627bf1780cb7f86af8e2ae0032b8c243c731172064105c6961",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "config_sentence_transformers.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/configuration.json",
+      "size_bytes": 73,
+      "sha256": "f888421726665e8a84b738eed42a64875aed79de8be7daade851ac8bf4c0cef9",
+      "source": {
+        "local_path": "model-metadata/Qwen3-Embedding-0.6B/configuration.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/generation_config.json",
+      "size_bytes": 117,
+      "sha256": "28396d421a2108acce96383f6a7de78008f7f1b17f807958f3c14c51dbfb65fb",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "generation_config.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/merges.txt",
+      "size_bytes": 1671853,
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "merges.txt"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/model.safetensors",
+      "size_bytes": 1191586416,
+      "sha256": "0437e45c94563b09e13cb7a64478fc406947a93cb34a7e05870fc8dcd48e23fd",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/modules.json",
+      "size_bytes": 349,
+      "sha256": "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "modules.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/tokenizer.json",
+      "size_bytes": 11423705,
+      "sha256": "def76fb086971c7867b829c23a26261e38d9d74e02139253b38aeb9df8b4b50a",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/tokenizer_config.json",
+      "size_bytes": 9706,
+      "sha256": "253153d0738ceb4c668d2eff957714dd2bea0b56de772a9fdccd96cbf517e6a0",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-0.6B/vocab.json",
+      "size_bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-0.6B",
+        "repo_type": "model",
+        "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "filename": "vocab.json"
+      }
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/1_Pooling/config.json",
+      "size_bytes": 313,
+      "sha256": "0f0ed3380602b252fced3fab6d07c76752c32ffca818ccc61afaf17ae8edd96f",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "1_Pooling/config.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/README.md",
+      "size_bytes": 17276,
+      "sha256": "3c8dafc1e6529491fa8918cd96c62b90229b317fd83f2794cea20cda100d6122",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "README.md"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/config.json",
+      "size_bytes": 727,
+      "sha256": "78d2861cbbfd80eee05839200c5a3b7ed64c789f6c1cab4fbb84cc4eae33eaf5",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "config.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/config_sentence_transformers.json",
+      "size_bytes": 215,
+      "sha256": "10667c72ddb772627bf1780cb7f86af8e2ae0032b8c243c731172064105c6961",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "config_sentence_transformers.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/configuration.json",
+      "size_bytes": 73,
+      "sha256": "f888421726665e8a84b738eed42a64875aed79de8be7daade851ac8bf4c0cef9",
+      "source": {
+        "local_path": "model-metadata/Qwen3-Embedding-4B/configuration.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/generation_config.json",
+      "size_bytes": 117,
+      "sha256": "28396d421a2108acce96383f6a7de78008f7f1b17f807958f3c14c51dbfb65fb",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "generation_config.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/merges.txt",
+      "size_bytes": 1671853,
+      "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "merges.txt"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/model-00001-of-00002.safetensors",
+      "size_bytes": 4965826464,
+      "sha256": "e70bfe3c970523fb7ef4eddffed2254ce3f1e7150c3de2af4342de129dd756f8",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "model-00001-of-00002.safetensors"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/model-00002-of-00002.safetensors",
+      "size_bytes": 3077765624,
+      "sha256": "ed1b87c8e9eb7e535a1a155e4fd00d9f4dba80e58a6db48a4c9f82cede7079c1",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "model-00002-of-00002.safetensors"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/model.safetensors.index.json",
+      "size_bytes": 30431,
+      "sha256": "9d130c7f24fa1f9a2a7e19fad42c7d6d2d6fea31b180bdf3e8aac1924c26c39a",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "model.safetensors.index.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/modules.json",
+      "size_bytes": 349,
+      "sha256": "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "modules.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/tokenizer.json",
+      "size_bytes": 11422947,
+      "sha256": "83cdf8c3a34f68862319cb1810ee7b1e2c0a44e0864ae930194ddb76bb7feb8d",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "tokenizer.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/tokenizer_config.json",
+      "size_bytes": 7256,
+      "sha256": "2f58f4bbd7bbce15d683f525954ef3a92cd82f5e06415a9c513859bf8ab72436",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "tokenizer_config.json"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "models/Qwen3-Embedding-4B/vocab.json",
+      "size_bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "source": {
+        "repo_id": "Qwen/Qwen3-Embedding-4B",
+        "repo_type": "model",
+        "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+        "filename": "vocab.json"
+      },
+      "mode": "0600"
+    }
+  ],
+  "directory_modes": {
+    "models/Qwen3-Embedding-4B": "0700"
+  }
+}

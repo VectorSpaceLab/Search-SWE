@@ -1,0 +1,49 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app/submission",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-2-3"
+version = "0.1"
+description = "Optimize a query encoder based on a supplied small backbone against fixed document vectors."
+authors = [{ name = "Search-SWE" }]
+keywords = ["information-retrieval", "query-encoder", "distillation", "embedding", "gpu"]
+
+[metadata]
+task_type = "optimize"
+dataset = "local frozen retrieval corpus"
+query_backbone = "Qwen3-Embedding-0.6B"
+reference_model = "Qwen3-Embedding-4B"
+query_model_budget = "approximately 0.6B parameters"
+corpus_document_count = 8674
+primary_metric = "Accuracy@1 after the runtime gate"
+public_query_count = 100
+hidden_query_count = 100
+
+[agent]
+timeout_sec = 43200.0
+user = "root"
+network_mode = "public"
+
+[verifier]
+timeout_sec = 5700.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+[verifier.env]
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "public"
+cpus = 8
+memory_mb = 32768
+storage_mb = 102400
+gpus = 0

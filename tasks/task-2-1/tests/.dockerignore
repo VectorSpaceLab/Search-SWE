@@ -1,0 +1,14 @@
+# Python bytecode and interpreter caches.
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local test/tool caches.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+
+# Public task data belongs in the agent environment and must not be baked
+# into the separate verifier image.
+corpus/

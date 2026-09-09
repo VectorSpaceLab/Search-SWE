@@ -1,0 +1,9 @@
+{
+  "file": "query_vectors.f32",
+  "dtype": "float32",
+  "rows": 55,
+  "dimension": 1024,
+  "metric": "inner_product",
+  "normalized": true,
+  "row_order": "query_metadata.jsonl"
+}
