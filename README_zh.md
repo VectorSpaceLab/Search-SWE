@@ -61,7 +61,7 @@ Search-SWE/
 
 任务数据托管在 Hugging Face 的 [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE) 数据集中。预训练权重从原始模型仓库下载。
 
-每个任务的 `assets.json` 记录固定输入文件的路径、字节数、SHA-256 校验值和下载来源。公开数据恢复到 `tasks/<task-id>/data/`，固定模型恢复到 `tasks/<task-id>/models/`；这两个目录均被 Git 忽略。数据和模型来源均固定到具体的提交版本。目录约定和下载选项见[资源说明](docs/assets.md)。
+每个任务的 `assets.json` 记录固定输入文件的路径、字节数、SHA-256 校验值和下载来源。运行数据恢复到 `tasks/<task-id>/data/`，固定模型恢复到 `tasks/<task-id>/models/`；这两个目录均被 Git 忽略。数据和模型来源固定到具体提交版本。目录约定、下载选项和本地恢复方法见[资源说明](docs/assets.md)。
 
 数据来源、处理方式和许可信息见 Hugging Face 数据集说明。隐藏评测查询和标签放在任务包的 `tests/data/` 中，与可下载的任务数据分开存放。
 

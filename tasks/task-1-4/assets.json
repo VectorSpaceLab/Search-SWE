@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus/EIT8a96hkP.pdf",
+      "size_bytes": 2535108,
+      "sha256": "6b810b05e7f9a6148735a7836070bef30fdce55c4f0aa5b2d16374c19fac4fc2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/EIT8a96hkP.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/PKWyu1l0s5.pdf",
+      "size_bytes": 7587144,
+      "sha256": "25ac42536ed343c99142bc2e7b1d5bca18bf0b8217d08cfe17aca6205e1af78c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/PKWyu1l0s5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VkJKTVJe24.pdf",
+      "size_bytes": 10110145,
+      "sha256": "94aab2f5c83d1060ee95d344f1915833869fe4502dc635e4ab9ca84f496ee94b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/VkJKTVJe24.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/fjcwKVgRbz.pdf",
+      "size_bytes": 25429209,
+      "sha256": "5657fb5a5cbd28c6d5f203a822a076b3293cdb9b8f7e5bdda30d43e4f9a73fef",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/fjcwKVgRbz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/qL30u0E817.pdf",
+      "size_bytes": 174428063,
+      "sha256": "3ee90f16a78e8871ddb72f2c12f99fe601b37c69bacc12ff8fe1a35515c5a065",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/qL30u0E817.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/x3E9GzwgeJ.pdf",
+      "size_bytes": 1320136,
+      "sha256": "cbbe4513ef91cc6bf84a2c2fe73e78e3727da3fefb7c928723ed6ebf477935ea",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/corpus/x3E9GzwgeJ.pdf"
+      }
+    },
+    {
+      "path": "data/validation/golden_answers.jsonl",
+      "size_bytes": 31967,
+      "sha256": "713183200eb304482001b2d6ef3c41e67cb9ac3fdfab476d0e15b96a2f701f91",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/validation/golden_answers.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/ground_truth.jsonl",
+      "size_bytes": 31968,
+      "sha256": "569aa6ec6c960d37bec3de059901667f70139f9c928c599d0887fa89cd8daf8d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/validation/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 8287,
+      "sha256": "b09c5aebbb333673589c0cb85609d79329e41aaef3d650e2adf8b82592af0e6e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/341Sn6Zixv.pdf",
+      "size_bytes": 10814457,
+      "sha256": "4d17e9811865a8a416934ec15f3a01f59b0074c3083777fd92b693f01c197ca5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/341Sn6Zixv.pdf"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/4OHKE8kvl7.pdf",
+      "size_bytes": 181870135,
+      "sha256": "e2b73ed4482ece06b4aa50bbf29af51dad37d9c65520f5cbbeee5bbd050da2ef",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/4OHKE8kvl7.pdf"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/lH72OJb5ar.pdf",
+      "size_bytes": 3773440,
+      "sha256": "8eeb4887a4dc57a23049da7dd2ed556833cf98e214b240468d987873164ff688",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/lH72OJb5ar.pdf"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/lHICFL9n2q.pdf",
+      "size_bytes": 8075373,
+      "sha256": "e0cb39de25bcbf5c3ecb493a791559326ceb249f7e2c27e7ebfebd83d05b00e3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/lHICFL9n2q.pdf"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/lp4P6AUxur.pdf",
+      "size_bytes": 4787272,
+      "sha256": "cb4e9d2b33682eb7106a8d2c2e39c40380e347f8cf526c26a5e5d41de22033b1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/lp4P6AUxur.pdf"
+      }
+    },
+    {
+      "path": "data/verifier/corpus/ocDaADKhFA.pdf",
+      "size_bytes": 30878156,
+      "sha256": "db978acf18dac28f4de1412839ca1f804302c6a29b971b024595369afa69cbea",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-4/verifier/corpus/ocDaADKhFA.pdf"
+      }
+    }
+  ]
+}

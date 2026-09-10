@@ -1,0 +1,10 @@
+# Python bytecode and interpreter caches.
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local test/tool caches.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*

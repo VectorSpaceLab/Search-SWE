@@ -1,0 +1,61 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-2-4"
+version = "0.5.0"
+description = "Optimize a ReAct retrieval starter to return five documents per query, scored by Gold Recall@5."
+authors = [{ name = "Search-SWE" }]
+keywords = ["BrowseComp-Plus", "information-retrieval", "multi-constraint-retrieval"]
+
+[metadata]
+task_type = "optimize"
+dataset = "BrowseComp-Plus"
+primary_metric = "GoldRecall@5"
+metric_k = 5
+public_example_count = 20
+hidden_query_count = 20
+query_concurrency = 5
+max_retrieval_rounds = 20
+starter = "ReAct with SQLite FTS5 lexical search"
+data_status = "BrowseComp-Plus corpus with disjoint 20/20 subsets, each query having 1-5 gold documents"
+gold_count_min = 1
+gold_count_max = 5
+split_sampling_seed = 20260909
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "public"
+
+[verifier]
+timeout_sec = 15600.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+[environment]
+network_mode = "public"
+build_timeout_sec = 1800.0
+workdir = "/app"
+cpus = 32
+memory_mb = 131072
+storage_mb = 204800
+gpus = 0
+os = "linux"
+
+[environment.env]
+OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1"
+REACT_MODEL = "qwen/qwen3.5-9b"
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1"
+REACT_MODEL = "qwen/qwen3.5-9b"
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"

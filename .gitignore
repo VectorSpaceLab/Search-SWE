@@ -3,5 +3,6 @@
 !.env.example
 *.local.toml
 /jobs/
+tasks/*/data/
 __pycache__/
 *.py[cod]

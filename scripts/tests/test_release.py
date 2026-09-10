@@ -32,7 +32,11 @@ class ReleasePackage(unittest.TestCase):
             (self.task / name).write_text("fixture\n")
         for name in ("environment/docker-compose.yaml", "tests/docker-compose.yaml"):
             (self.task / name).write_text("services: {}\n")
-        (self.task / "task.toml").write_text('[task]\nname = "task-new"\nversion = "0.1"\n')
+        (self.task / "task.toml").write_text(
+            '[task]\nname = "task-new"\nversion = "0.1"\n'
+            '[verifier.env]\nOPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"\n'
+            'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
+        )
         (self.task / ".gitignore").write_text("/data/\n/models/\n")
         self.content = b"fixed data\n"
         self.entry = {
@@ -72,6 +76,26 @@ class ReleasePackage(unittest.TestCase):
         self.write_manifest()
         errors, _ = release.check_release(self.repo)
         self.assertTrue(any("immutable commit" in error for error in errors))
+
+    def test_unpublished_data_requires_explicit_local_staging_mode(self):
+        self.entry["source"]["revision"] = None
+        self.write_manifest()
+        errors, _ = release.check_release(self.repo, self.hf, verify_data=True)
+        self.assertTrue(any("immutable commit" in error for error in errors))
+        errors, warnings = release.check_release(self.repo, self.hf, verify_data=True, allow_unpublished=True)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("publish them" in warning for warning in warnings))
+        self.entry["source"]["revision"] = "main"
+        self.write_manifest()
+        errors, _ = release.check_release(self.repo, self.hf, allow_unpublished=True)
+        self.assertTrue(any("immutable commit" in error for error in errors))
+
+    def test_staging_mode_still_rejects_corrupt_data(self):
+        self.entry["source"]["revision"] = None
+        self.write_manifest()
+        self.hf_file.write_bytes(b"x" * len(self.content))
+        errors, _ = release.check_release(self.repo, self.hf, verify_data=True, allow_unpublished=True)
+        self.assertTrue(any("SHA-256 mismatch" in error for error in errors))
 
     def test_forced_tracked_data_is_rejected_even_when_ignored(self):
         subprocess.run(["git", "add", "-f", "tasks/task-new/data/corpus.jsonl"], cwd=self.repo, check=True)
@@ -124,6 +148,44 @@ class ReleasePackage(unittest.TestCase):
         argv = json.loads(result.stdout.splitlines()[-1])
         self.assertIn("OPENAI_API_KEY=${AGENT_OPENAI_API_KEY}", argv)
         self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}", argv)
+
+    def test_launcher_requires_only_the_selected_tasks_judge_groups(self):
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        fake_harbor = bin_dir / "harbor"
+        fake_harbor.write_text(f"#!{sys.executable}\nimport json, sys\nprint(json.dumps(sys.argv[1:]))\n")
+        fake_harbor.chmod(0o755)
+        env = {key: value for key, value in os.environ.items()
+               if not key.startswith(("AGENT_", "VERIFIER_", "CONTAINER_", "TRAJECTORY_JUDGE_", "ANSWER_JUDGE_"))}
+        env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+        agent = "AGENT_MODEL=fixture-model\nAGENT_OPENAI_BASE_URL=https://agent.example/v1\nAGENT_OPENAI_API_KEY=fixture-agent-key\n"
+        trajectory = "VERIFIER_OPENAI_BASE_URL=https://audit.example/v1\nVERIFIER_OPENAI_API_KEY=fixture-audit-key\n"
+        answer = "ANSWER_JUDGE_MODEL_NAME=fixture-answer-model\nANSWER_JUDGE_BASE_URL=https://answer.example/v1\nANSWER_JUDGE_API_KEY=fixture-answer-key\n"
+        trajectory_keys = ["OPENAI_BASE_URL", "OPENAI_API_KEY"]
+        answer_keys = ["ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"]
+        for keys, values, success in [
+            ([], agent, True),
+            (trajectory_keys, agent + trajectory, True),
+            (trajectory_keys + answer_keys, agent + trajectory, False),
+            (trajectory_keys + answer_keys, agent + trajectory + answer, True),
+        ]:
+            with self.subTest(keys=keys, success=success):
+                (self.task / "task.toml").write_text(
+                    '[task]\nname = "task-new"\nversion = "0.1"\n[verifier.env]\n'
+                    + ''.join(f'{key} = "${{{key}:-}}"\n' for key in keys)
+                )
+                (self.repo / ".env").write_text(values)
+                result = subprocess.run([sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "task-new"],
+                                        cwd=self.root, env=env, capture_output=True, text=True)
+                if success:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    argv = json.loads(result.stdout.splitlines()[-1])
+                    self.assertEqual("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}" in argv, bool(keys))
+                    for secret in ("fixture-agent-key", "fixture-audit-key", "fixture-answer-key"):
+                        self.assertNotIn(secret, result.stdout)
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("ANSWER_JUDGE_API_KEY", result.stderr)
 
 
 if __name__ == "__main__":

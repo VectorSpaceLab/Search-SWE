@@ -85,6 +85,12 @@ def obtain_source(task, entry, args):
         if not local.resolve().is_relative_to(task.resolve()) or not matches(local, entry):
             raise ValueError(f"Bundled model metadata is missing or invalid: {entry['path']}")
         return local
+    local_data = getattr(args, "local_data_dir", None)
+    if local_data is not None and source.get("repo_type") == "dataset" and source.get("repo_id") == "search-swe/Search-SWE":
+        local = local_data / relative_path(source["filename"])
+        if not local.resolve().is_relative_to(local_data.resolve()) or not matches(local, entry):
+            raise ValueError(f"Local dataset asset is missing or invalid: {entry['path']}")
+        return local
     if not re.fullmatch(r"[0-9a-f]{40}", source.get("revision") or ""):
         raise ValueError(f"No published fixed revision for {task.name}/{entry['path']}")
     if source.get("repo_type") not in ("dataset", "model"):
@@ -129,6 +135,8 @@ def restore(task, task_output, entry, directory_modes, args):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+    if getattr(args, "local_data_dir", None) is not None and entry.get("source", {}).get("repo_id") == "search-swe/Search-SWE":
+        return "restored local data"
     return "downloaded" if "repo_id" in entry.get("source", {}) else "restored metadata"
 
 
@@ -138,6 +146,7 @@ def main(default_kind="all"):
     parser.add_argument("--kind", choices=("all", "data", "models"), default=default_kind)
     parser.add_argument("--output-dir", type=Path, default=REPO / "tasks", help="Parent of task directories")
     parser.add_argument("--cache-dir", type=Path, help="Hugging Face cache directory")
+    parser.add_argument("--local-data-dir", type=Path, help="Restore Search-SWE dataset files from a local hf-data directory, with size/SHA-256 checks")
     parser.add_argument("--force", action="store_true", help="Replace files whose checksums differ")
     parser.add_argument("--local-files-only", action="store_true", help="Use cached downloads without network access")
     mode = parser.add_mutually_exclusive_group()

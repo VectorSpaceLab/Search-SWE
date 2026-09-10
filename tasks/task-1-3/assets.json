@@ -1,0 +1,3327 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus/08ttQI197D.pdf",
+      "size_bytes": 1566273,
+      "sha256": "e4e311d30f191f1364aceac3d4d7b7325b25933c80a54e6d18339f9eb37c7709",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/08ttQI197D.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/0U9YpcM1Bz.pdf",
+      "size_bytes": 1103539,
+      "sha256": "944480abe549b1f1d304352a72081649de0848f9b6d5ca73760a2d56bdfa7f81",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/0U9YpcM1Bz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/0ppQHeP87n.pdf",
+      "size_bytes": 7521725,
+      "sha256": "b375fdf456b7ed17d6e4fb3b258b21c7f4352d831943024288effcfdd5f335ab",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/0ppQHeP87n.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/0v6MoRphvB.pdf",
+      "size_bytes": 1151818,
+      "sha256": "a7f6d6ee2c9524c4fe7f6a7786667868d8d02de683dbf60b83b57958ba9dec93",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/0v6MoRphvB.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/0zBZjyfRiD.pdf",
+      "size_bytes": 1014278,
+      "sha256": "6eadbcdc973b65e979e1a2440e04407e7bb369a4caf85a4a135b54d5c3b043bd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/0zBZjyfRiD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/1N2EdrPMxh.pdf",
+      "size_bytes": 3516633,
+      "sha256": "d1d9296b7df4c6b7a6fb2075d5bd97808a9e0692fd5aefc838d39335ec9ebbbd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/1N2EdrPMxh.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/1gErSq67kj.pdf",
+      "size_bytes": 10142818,
+      "sha256": "25a5680fd85a9303c1380ab2c77db7aa4d84d255bf7a3e2524636e4265ee0250",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/1gErSq67kj.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/1hG9QVyvW3.pdf",
+      "size_bytes": 5371548,
+      "sha256": "2f094618a99be8a81644c36286d48010f602d94a8c81f39f2fe6be075b218fa2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/1hG9QVyvW3.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/1qMaq7BR5v.pdf",
+      "size_bytes": 4863750,
+      "sha256": "404f7d3b4d3970af574780b7f1e62d8ac06c55f10d98a9dd4babec82d024e2a6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/1qMaq7BR5v.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/2CFv9XeBPZ.pdf",
+      "size_bytes": 2219845,
+      "sha256": "07ddcb69b3e29b9c0839264115b5cc4024f633fc7821588d616ca1c204fbd620",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/2CFv9XeBPZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/2GCnI6c0So.pdf",
+      "size_bytes": 1037633,
+      "sha256": "ffe871aa6292c112de3b66a06c6f3bb353eab5b3a79fa6104d4f1babfc021993",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/2GCnI6c0So.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/2LK7n00ise.pdf",
+      "size_bytes": 371809,
+      "sha256": "cf34c2d084d389a54856f5470620dbaddbf6541dc54cae19600d6e201049e5ba",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/2LK7n00ise.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/2lERxQwQW9.pdf",
+      "size_bytes": 554429,
+      "sha256": "f843593e0b979ea35cd1fbf99d11377b896e858e111456497fdbc42564425826",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/2lERxQwQW9.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/3KJjpt7yjf.pdf",
+      "size_bytes": 44155070,
+      "sha256": "d4551129b96a353b4e090fd01b8754d2ce1ab5a6ce8cc3d51b45c3f6a9971f8b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/3KJjpt7yjf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/3rZzRQ1uwp.pdf",
+      "size_bytes": 3279628,
+      "sha256": "0c44898b2f3e4beea8d42d599ed39276e5dffa150a0e98d41641fecbc4fc1cbd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/3rZzRQ1uwp.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/3zASmt7GcA.pdf",
+      "size_bytes": 1749539,
+      "sha256": "eb1b48a2e5c30de23e13b252e9fcd94f8de4aead40d8621f0541bd31b20a5b05",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/3zASmt7GcA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/454jks0Vee.pdf",
+      "size_bytes": 5088915,
+      "sha256": "9caf9a3ed4a9b5d2bd00b98573f560a7aaeb8a461240ad3bc9c89ab2d0050ad4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/454jks0Vee.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/4A3upHp1cu.pdf",
+      "size_bytes": 506622,
+      "sha256": "2308764d7809f0c646085bf2e063c87818da33432e70eff631a1ff3b11a1fc19",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/4A3upHp1cu.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/4RxeiQp43N.pdf",
+      "size_bytes": 1645649,
+      "sha256": "95e05c8a4c3bf3d2cb72b40e6e10642af9f513c4002ba43ce7c9db301ec8eb77",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/4RxeiQp43N.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/4Zb7NyRlH4.pdf",
+      "size_bytes": 1822333,
+      "sha256": "b9c8dea23cd82ad843d5223945ad11d3ab8a2a74cb594d8f882b0380d4c71703",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/4Zb7NyRlH4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/4b1HwAMcEF.pdf",
+      "size_bytes": 231867,
+      "sha256": "577d7223c3729b3244eb372c49ac6b55a1d3995911a0a4fca437d56b166ca817",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/4b1HwAMcEF.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/4qSkq7KRKa.pdf",
+      "size_bytes": 308414,
+      "sha256": "059bcb69df09451faa76386aee6ae5b096854bd662ae687bb28c976d925082ff",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/4qSkq7KRKa.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/50KJKv0h2G.pdf",
+      "size_bytes": 3603396,
+      "sha256": "84753fb1affa1aae676f25f62abd8e4cd9efca7a0d34f0e2316c2ac65d640828",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/50KJKv0h2G.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/5B8Mhcnru5.pdf",
+      "size_bytes": 594793,
+      "sha256": "53a4d93ab6a2815814e21c38226262be94d9e98acd5041e912e9211f9353969f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/5B8Mhcnru5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/5L5O4E56Nt.pdf",
+      "size_bytes": 1728200,
+      "sha256": "cdf9f99ce165476edd834d05558a6981e38fc5f29ebf4f3fe4c6fdb3b3373a61",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/5L5O4E56Nt.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/5WhgjEcjAU.pdf",
+      "size_bytes": 3788034,
+      "sha256": "08e41d89f9a92f7b05acd6a9d122ac47f1043725c9adda8322052ed2ed218d51",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/5WhgjEcjAU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/5gyT0Bl0Xn.pdf",
+      "size_bytes": 294046,
+      "sha256": "50cbcda48bf956fb8487e76e3491744dd26801baaf086bb2e01ed9c093d0e6d2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/5gyT0Bl0Xn.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/5puFRCE2qh.pdf",
+      "size_bytes": 501469,
+      "sha256": "952786b9e789fd376be593bfb5a1c33b6b0505688fc1d3a8f521ed2e3e9f12da",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/5puFRCE2qh.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/6CEF91fPtc.pdf",
+      "size_bytes": 780208,
+      "sha256": "73bf8aeaca112633a06808147d8e26356ff34d2d4d82e3592250650ff7d3bc4a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/6CEF91fPtc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/6CsZVuPWQH.pdf",
+      "size_bytes": 4490034,
+      "sha256": "b3d49e588d5ab2f3d5862261fa6f454fbc29dd5614bfc34e8de268ba2b76c97e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/6CsZVuPWQH.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/6I6Paw5HXM.pdf",
+      "size_bytes": 2534973,
+      "sha256": "459f9df6ce426ec7b404170a93bf27b23900e8b68ed312c6e200495695dde1a6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/6I6Paw5HXM.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/6YW0omrg4W.pdf",
+      "size_bytes": 3105415,
+      "sha256": "dd59c35db6067132c9317a49ae8b3758983fc2f02003004e52a919ff1fc6aae0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/6YW0omrg4W.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/6tbvTrJ1lX.pdf",
+      "size_bytes": 677087,
+      "sha256": "782fdbb640671826efca92ed5faeb483b3d63cbd22a46da6b3252101945a5c36",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/6tbvTrJ1lX.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/761tzSV3lf.pdf",
+      "size_bytes": 1880504,
+      "sha256": "0485de8b46d7b1a1b4dad237c676b772f1c91085bb1cfc0eaf2f8566cbcdf5ec",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/761tzSV3lf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/76nfaoxKa5.pdf",
+      "size_bytes": 537136,
+      "sha256": "7a4de6e9f451ddd638b3c43ff1fe777e174c6b24921d5cb1ff621d9989cf42be",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/76nfaoxKa5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/7UvnNpIPiv.pdf",
+      "size_bytes": 450450,
+      "sha256": "becb4c8113168782fbda338ea3490b304022097af3bbe7786610ee8a04b22529",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/7UvnNpIPiv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/7aZzsRT9Gu.pdf",
+      "size_bytes": 3100290,
+      "sha256": "630edf5000652e8d138940efb937917244713638fd72e1b0168e84e5f3cd3600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/7aZzsRT9Gu.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/88DNlmVGIe.pdf",
+      "size_bytes": 412880,
+      "sha256": "f7645a566ade49e81a277e7e47ad9a69a9ebbacd136c2f8f0c6e56ef3d5fe9f0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/88DNlmVGIe.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/8EP1ZI1G6q.pdf",
+      "size_bytes": 15874771,
+      "sha256": "352e2c1f2d4c0f6e24ecf842661b30f407ebf4bca8888872ef4bbf2df0c1ac85",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/8EP1ZI1G6q.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/8SllZloSaK.pdf",
+      "size_bytes": 1044714,
+      "sha256": "03e9cb0eb70087519af4beb905a1e2821f613df0a384e67902a5b0506f2c0964",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/8SllZloSaK.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/8T5zA4I8Bv.pdf",
+      "size_bytes": 2476503,
+      "sha256": "d1f5f1343abe0c21a46a1d137c9ded01f0a5f7af43ec6de96c0814a6da20dc12",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/8T5zA4I8Bv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/8r4MxJNYcr.pdf",
+      "size_bytes": 8306803,
+      "sha256": "a4942da869f9017dd80f43fd9a2f0cee3074395fbff804fc6c902a35b9225fbe",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/8r4MxJNYcr.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/8uviE6WOmM.pdf",
+      "size_bytes": 1480613,
+      "sha256": "8e4ab092121b5a0de82875677beb9cf3e9a59a64108312681e47570f14cf685d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/8uviE6WOmM.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/96m7AF7YPR.pdf",
+      "size_bytes": 10337014,
+      "sha256": "940fec2585fb2f33ba866a48485acc56703a1d30ead2b6f62ffcbd93ffa28f25",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/96m7AF7YPR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/9HY69guXmZ.pdf",
+      "size_bytes": 683503,
+      "sha256": "ee9f5917aefd905dbc384e248dd2715a92bfa10df4c8bcf204d2e64360ba1b00",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/9HY69guXmZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/9X08emD9XE.pdf",
+      "size_bytes": 5049003,
+      "sha256": "4329baa977516f4a7bd51c3b5fc573d0b708fde21ce4a3910872076b7e35cfa5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/9X08emD9XE.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/9ZmHNzIrna.pdf",
+      "size_bytes": 2103831,
+      "sha256": "4d888c22868eb9608ee3bb1e01c2e83e621328943ce4bd37043c7e8050b3805c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/9ZmHNzIrna.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/9kwAIosmTD.pdf",
+      "size_bytes": 1477603,
+      "sha256": "2b7f298663d69fb08d6c57ef4304c3964485702bbf1e8b06fc4ae281ac9c09af",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/9kwAIosmTD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/A8VIjyvHI7.pdf",
+      "size_bytes": 653280,
+      "sha256": "49e3b2fb1ec98b5c08d89bf649aef0d62c9a9ce907a33afc298d010d85fcacc2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/A8VIjyvHI7.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ASGjAnHIkl.pdf",
+      "size_bytes": 14380155,
+      "sha256": "25dfb324b12c9335526ce96c3154bb6d253d4e888bc255c2a37ac2bad70c666c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ASGjAnHIkl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Al8YqTg7s9.pdf",
+      "size_bytes": 7027645,
+      "sha256": "1055780699f0a96ca88935e7d55e33559a014c930e69b5fe7185bd5ee6dfce6e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Al8YqTg7s9.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/AmMlpbV2ex.pdf",
+      "size_bytes": 1138741,
+      "sha256": "8e27e8b791b9365c0f97bf765f2ad955fc206b70e1d63c24f96d943d83121fbd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/AmMlpbV2ex.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/B5WvQYGV6l.pdf",
+      "size_bytes": 11954613,
+      "sha256": "2f6a40b6faf5972c193fc75367c70884ab4e87a5a55bd98aefdda3ba320cf137",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/B5WvQYGV6l.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/BHWz254vNQ.pdf",
+      "size_bytes": 1578782,
+      "sha256": "d4d6c51326daf659ae53d7e116f8b9f71102d041d4b3c567f8ddeb5b368dee53",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/BHWz254vNQ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/BQFMVtKjuE.pdf",
+      "size_bytes": 811069,
+      "sha256": "2ec07054a02f164b216b52a0effca22bbc306eb59f55d31984b4479b8a669135",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/BQFMVtKjuE.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/BUnmIrx3Ey.pdf",
+      "size_bytes": 4465204,
+      "sha256": "e35fb0c8f6df9d83401f0640c1cd52f922af4f3823b87feb7f82d1e7f44f3274",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/BUnmIrx3Ey.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/BmQPh9dMgc.pdf",
+      "size_bytes": 5776989,
+      "sha256": "96fb3cce8cf293aa17fe12009198bc844e536bb277e11be66ddbf2d3a7896f75",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/BmQPh9dMgc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/C8R58rOy0f.pdf",
+      "size_bytes": 786583,
+      "sha256": "5939204a3295e1fdc41a5f2e43841377057f71fa0b1cf0d1a9beed829506f447",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/C8R58rOy0f.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CELkQInPsZ.pdf",
+      "size_bytes": 672604,
+      "sha256": "6c5a9eee402e20870b489afafaee35e589cd8d5c024e4b0b6ed63ca2d564412a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CELkQInPsZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CFTy2f5Hjs.pdf",
+      "size_bytes": 21167269,
+      "sha256": "cbf5d538446c862c3505dda50da972c14d644d12572f7fa3f7c3e16fd4bbb11c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CFTy2f5Hjs.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CQNai524KD.pdf",
+      "size_bytes": 18721517,
+      "sha256": "f8fbe7988fbb12c72896630c675ee42771647826869d63dd589106710e52eda3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CQNai524KD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CWqxpKpowp.pdf",
+      "size_bytes": 1105309,
+      "sha256": "e4b0908949bcad27b895d93744e5d9c47db85b24d925c94f3b5d6273ac3f2784",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CWqxpKpowp.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Cb16GWBBDa.pdf",
+      "size_bytes": 4073045,
+      "sha256": "f60a2e7ac2e57365e28658b4620326076865da34d94c5238b1ec47341a46427b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Cb16GWBBDa.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CpErLshTyf.pdf",
+      "size_bytes": 1846841,
+      "sha256": "ebef4b51e62b0dee6c73f2ef02b340b3e69dfc764b04529cae3da452606be576",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CpErLshTyf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/CwXqx0dpB3.pdf",
+      "size_bytes": 2710888,
+      "sha256": "583d0118193c8ed1f41b958b9c410e03e24a9c32d1a622ba18acdf3a7d50fdbd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/CwXqx0dpB3.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/DDCILWcTHz.pdf",
+      "size_bytes": 3169649,
+      "sha256": "bb4d7f998297c485baf580644fba20307981a04aa513129d198394c02bd7c85c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/DDCILWcTHz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/DcE9PakXDq.pdf",
+      "size_bytes": 501362,
+      "sha256": "a18b051c8f24ed16bb128e54062b4c0e06f20cc90f7fd62a10ac6f6c246103ed",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/DcE9PakXDq.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/DfQNJOjqnz.pdf",
+      "size_bytes": 3228574,
+      "sha256": "c0da1b4ee450df723705e1edce51f2c495d24f5bfea005c5090f6e3a14b69e68",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/DfQNJOjqnz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Dm6LA1T3VF.pdf",
+      "size_bytes": 1478521,
+      "sha256": "25ad6221e8add7ad4433942377659eea7f55ef165dc97591d321eabecb1c3b2f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Dm6LA1T3VF.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/EKOZvAzV2J.pdf",
+      "size_bytes": 1953222,
+      "sha256": "f399178529026d1a0a748a68474793a0340b63d55881e94f5f22aaaeab482f56",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/EKOZvAzV2J.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/EiM1uwF2Uf.pdf",
+      "size_bytes": 6977019,
+      "sha256": "22053cd805ae975360e21bf96e822612dadcb79d938c4eb1e4433aa97c18b1ae",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/EiM1uwF2Uf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Ety4aaL8KU.pdf",
+      "size_bytes": 900519,
+      "sha256": "f2279feaef9d42f1cc6edbb2d3a86eefc99482031e785bf683cce31c826beca9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Ety4aaL8KU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/EzUz7f65LR.pdf",
+      "size_bytes": 848833,
+      "sha256": "911845be44df751732841ecbf2f3a3deb5a533d801d21409d6a3be7619418272",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/EzUz7f65LR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/FTQzBku1Ix.pdf",
+      "size_bytes": 822498,
+      "sha256": "7ef5270673a56304e1fa874751fd3e0b160ed7cfd9c9beb55ac505d70c519606",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/FTQzBku1Ix.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/FVgXkBWGi1.pdf",
+      "size_bytes": 1323009,
+      "sha256": "cda693c40c979a0b08373aa370c0430626b27e6b17fef08d1a7dbaaefcaaa46a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/FVgXkBWGi1.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/FaJhTHM9yw.pdf",
+      "size_bytes": 2049601,
+      "sha256": "8a2c7609ac0b16b5090f302ca9a4330c1b90c89e12a992d7c5e815b9aa829bdf",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/FaJhTHM9yw.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Fmao3PRvCJ.pdf",
+      "size_bytes": 4070381,
+      "sha256": "fe839b4319ffc9c0b12fbc9c549a8e3122730f191fe0475a96ef0759d7d810be",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Fmao3PRvCJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/FtOuhBinFK.pdf",
+      "size_bytes": 4125247,
+      "sha256": "3ed1c8db67fd76f62b2b50c6db550a17c9def37eeabc0fec1bc9b3a175e5f486",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/FtOuhBinFK.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/G3IuUTtHAX.pdf",
+      "size_bytes": 840732,
+      "sha256": "971372ca2cb37e3a64d3910df2fd592aa2a5c90129d8e3da514ae98e7f2df917",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/G3IuUTtHAX.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/G5A7pJTFAN.pdf",
+      "size_bytes": 423743,
+      "sha256": "2d44c9463d0716f6e29b7df43cfbd3a84a1a851742de9b913e6b03e451801b08",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/G5A7pJTFAN.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/G6hhhkkP3b.pdf",
+      "size_bytes": 2050560,
+      "sha256": "865b9be40bcd64d4b39fecdc825176e2ae0d53479ca24ba94713dc171e37ee1f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/G6hhhkkP3b.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/GCcecXC4UE.pdf",
+      "size_bytes": 1893341,
+      "sha256": "aa09bfe299e5c55e1a5aa4e51e8ff1f4163599b8a8c17fddbe43e7ba25433b5a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/GCcecXC4UE.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/H51ZSLsAKW.pdf",
+      "size_bytes": 1134834,
+      "sha256": "c3a7ee6420e043f341fd8cf9f147f39a8b0042c87c0fdc32c243d89cc31b8ef6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/H51ZSLsAKW.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/HChQTN0hNN.pdf",
+      "size_bytes": 1444041,
+      "sha256": "557e013d67432ed4d32716030d5a0754a362320610996d728ef7a36e2b77b852",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/HChQTN0hNN.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/HJogHSHXgP.pdf",
+      "size_bytes": 1944948,
+      "sha256": "68b1ce1231f36f1d39e88de146310b492764b2b531d4ac5fd1947a717b4e4012",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/HJogHSHXgP.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/He4OslDLxd.pdf",
+      "size_bytes": 194082,
+      "sha256": "cbe1b1db1188987ee1a89680fafb3fcafb0473439025ab599f24ed1ec7ceee87",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/He4OslDLxd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Hi3BBRsN2u.pdf",
+      "size_bytes": 815610,
+      "sha256": "70119cf4191589b4b9c87652b821d48b1591395a5908d1708b7624dd321fb470",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Hi3BBRsN2u.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Hito7CM2R7.pdf",
+      "size_bytes": 640953,
+      "sha256": "ab6792bfa8fafdb48e567eb2b6ce0f8283817b3f39b86c4f056fe498e085f1fc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Hito7CM2R7.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/HqN5NRxgci.pdf",
+      "size_bytes": 9453641,
+      "sha256": "1a301e83fad9ea0d652d3427cc91e9ff818b30e87a68ca76ab3b467689cb768d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/HqN5NRxgci.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/HrL7kzf8NJ.pdf",
+      "size_bytes": 2140762,
+      "sha256": "54425a1f80371fce638ee2234d2dc99379649d631e590d571ab16778e763996b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/HrL7kzf8NJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Hz4bSS6oOh.pdf",
+      "size_bytes": 8904446,
+      "sha256": "87d0a193edb03f562a4bc3934e6cb2e44138c731f7f13013eda58fa5148783a6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Hz4bSS6oOh.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/I0EXfDwtN4.pdf",
+      "size_bytes": 421511,
+      "sha256": "e470142458d87e9a41d7f24a4b92e82e2d31115d4d15921f19f5f6b2aa8d84bc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/I0EXfDwtN4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/IBrC9M0Hkp.pdf",
+      "size_bytes": 4100151,
+      "sha256": "88228031bd1c352cd22451faafb94190c4ce4cc274808b7ebd72fc8d15fef680",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/IBrC9M0Hkp.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/IfDeSIk2Yn.pdf",
+      "size_bytes": 2305741,
+      "sha256": "cde1e00b125759633cc4dd72748da2393ca60881110f0500d14aeec3a91beb44",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/IfDeSIk2Yn.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/IfxNbxPJ0F.pdf",
+      "size_bytes": 3705676,
+      "sha256": "d74b07a3f86d672b6593a19cb969ef92474fe423876bb7bf7044ec0b3ebf20d4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/IfxNbxPJ0F.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/IiJ8qS7ggJ.pdf",
+      "size_bytes": 1522628,
+      "sha256": "3d24713050b029c522d09246d4eecdd437bc443b3c06e0d43daa3ce6e6281d5d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/IiJ8qS7ggJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JEpiemBgQD.pdf",
+      "size_bytes": 2847654,
+      "sha256": "1e1051224265047c84b64a6734795afe5a816bf59688ab76f5232a18ef61a42a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JEpiemBgQD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JO1LhroB8w.pdf",
+      "size_bytes": 891859,
+      "sha256": "8efe33ae186b2a2190d5e234498391b7527342c07cd0520b5cf67da2c2568ec3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JO1LhroB8w.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JX8Zk08F6O.pdf",
+      "size_bytes": 11385508,
+      "sha256": "9a1fefc4d0f52d8b68593b07ea915c755aee7d23006aafb8dab930280e9d5825",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JX8Zk08F6O.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JZ7BHNdnFW.pdf",
+      "size_bytes": 835366,
+      "sha256": "8e1f74fd10b336cae35f4a9888339c8ca0d3aa5381084d5932710cdac68271b3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JZ7BHNdnFW.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JoK8TNEXtT.pdf",
+      "size_bytes": 2831066,
+      "sha256": "7f79152217dae1e943575c83d7bbdedb5e0344a77f327229e51787ae14c5bd5a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JoK8TNEXtT.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JqZstMzh2V.pdf",
+      "size_bytes": 7320806,
+      "sha256": "c1750fd28372494424f6192d3c689dfad914edf2367f64788989837180c418e6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JqZstMzh2V.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/JuFMFzr0qF.pdf",
+      "size_bytes": 2705771,
+      "sha256": "cca830796ed405dcf8ce196375b07c1218f43a6b668cfd813500925cc06f6f64",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/JuFMFzr0qF.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/K2ISwxHQNX.pdf",
+      "size_bytes": 6293099,
+      "sha256": "96d26340af9779d6b22846f29d022d219b4f6c57f2ceae02485698de3fa80cdf",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/K2ISwxHQNX.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/K8m2JUASVe.pdf",
+      "size_bytes": 1833990,
+      "sha256": "f5b5577e66ca31ee86dee9edf2084542f4d0e3ce5898c7c220b402525c54a755",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/K8m2JUASVe.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/KN1QYMWdqm.pdf",
+      "size_bytes": 427207,
+      "sha256": "32ce41d012d9883c58a9e95a317041fc41df31ce7c6a4622a56927e5f719d17d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/KN1QYMWdqm.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/KR3hGefyeT.pdf",
+      "size_bytes": 6558162,
+      "sha256": "14dc8fe412da69641eef46f90b83c4bfd9072f56c6d29a694aafd8e7aeb46a7e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/KR3hGefyeT.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/KVc4dIz6cX.pdf",
+      "size_bytes": 3703765,
+      "sha256": "f42a8c68e993f8b37c35c3bfc2481698a91bd2fb7007c7822f362f2974cac00d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/KVc4dIz6cX.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/KzReM0BSKk.pdf",
+      "size_bytes": 634428,
+      "sha256": "d06537315baa5f957c54aaa8627521fad53b4250e31bd7b6df7ca0bf19cdf3a1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/KzReM0BSKk.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LI49v3sIKZ.pdf",
+      "size_bytes": 2018833,
+      "sha256": "eb1cafb54668647c274249e1718bbbb43300f1fea282a1367dd8a878aa14761d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LI49v3sIKZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LMOzg5Q9Ah.pdf",
+      "size_bytes": 1395169,
+      "sha256": "ee4735ec0b79b86a07a204b19b49074ff3b95166a131d9202cc5c58a44f86472",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LMOzg5Q9Ah.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LOckV6YiBn.pdf",
+      "size_bytes": 3652708,
+      "sha256": "abf3f282fdc7f7627837535e897559da3e78cf9a3bb742aa73197eaf36c0a9af",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LOckV6YiBn.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LaFg4PZLFr.pdf",
+      "size_bytes": 2729157,
+      "sha256": "d9016b21204ee15796b9ba95bd1ffa420a3d4f34fa388abf4a70fe35c248b9a8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LaFg4PZLFr.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LcRoTxQZWd.pdf",
+      "size_bytes": 4239781,
+      "sha256": "f9d0afb4f3b36fac008de9039df436e0779df3843880a91351a5587b610b40ee",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LcRoTxQZWd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/LpdOpxdq7w.pdf",
+      "size_bytes": 370136,
+      "sha256": "1389cd787e825071246713a0a03979f78373626c50e18f672822c6a0a6aef646",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/LpdOpxdq7w.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/MLjjNflmAy.pdf",
+      "size_bytes": 483909,
+      "sha256": "91d0cffb86af683322f55b3762399fd4f7ccafbdd06952888c7f578332a13df5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/MLjjNflmAy.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/MpNRZ9chZJ.pdf",
+      "size_bytes": 13344016,
+      "sha256": "846d341b9072c5065bf9c8432cd872786e92c8c0e409b773a919fe3471818ba2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/MpNRZ9chZJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/MtEM5OJwtd.pdf",
+      "size_bytes": 3090104,
+      "sha256": "749963b9fd7ab15b8fb9b10ea7214773633a6c10f0c3e6422f49e545500a27aa",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/MtEM5OJwtd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Mu28391QFI.pdf",
+      "size_bytes": 2152524,
+      "sha256": "2828f4135ebfaa9db1b36accc2ef3fe38e3f064e8cdfa2ac839e71ff9327feac",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Mu28391QFI.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NAea44NKg4.pdf",
+      "size_bytes": 5912066,
+      "sha256": "3275ef2e51f9df81abf7687bec823cdc6dd191c72374cb797c68c875674ac482",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NAea44NKg4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NCcaaVQ8YT.pdf",
+      "size_bytes": 39687522,
+      "sha256": "1bc1c902841dd0aa37ba72655879f4c55ebdd95572a5195222f12068f4cfb94c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NCcaaVQ8YT.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NN0d652Okt.pdf",
+      "size_bytes": 9394532,
+      "sha256": "4ab7d432dbb12ecc4a3baea9331299ce5d817ed9b2aae0707dc0a6ea7e085d69",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NN0d652Okt.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NPUgtIKols.pdf",
+      "size_bytes": 922279,
+      "sha256": "13b1872c4cacd587220d4e382fc8e943eb06cef4b00efdbe0ca31d07ff0b2722",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NPUgtIKols.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NWzi7oPYKR.pdf",
+      "size_bytes": 2669184,
+      "sha256": "d4efde733080d1ea66447a2d1c378c2bd3fa8456cff9767094808847b0c1f847",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NWzi7oPYKR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NczIIqEUM6.pdf",
+      "size_bytes": 5909022,
+      "sha256": "0a99e48334cb96d1e402c3e5a96ed52f8a5fa4d91631a43329a093137beed9fc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NczIIqEUM6.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NpuJFhOiqp.pdf",
+      "size_bytes": 1544201,
+      "sha256": "efd3ab2b505c1fcfa64b7f7163048aa58579e0134db107bcdf6aceef6e4f9c86",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NpuJFhOiqp.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NsEgxMD6tt.pdf",
+      "size_bytes": 688678,
+      "sha256": "8eabfbc4f9eeb5ed10841174872bd15245a55572e45b991214b2d661ffd0d08f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NsEgxMD6tt.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Nu34TKeq4p.pdf",
+      "size_bytes": 1263971,
+      "sha256": "d89eda9eba93a347ce5988872965098f00db733cdba4ab0bbdab5ff48d974f93",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Nu34TKeq4p.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/NyzUef8T5Z.pdf",
+      "size_bytes": 3250940,
+      "sha256": "41a2327d99bb45e2e660b264b6b3d8097de833c4d04e1c14c38f2fd7a7c90d8e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/NyzUef8T5Z.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/OPgW6aRVb5.pdf",
+      "size_bytes": 2915749,
+      "sha256": "3053f1596f999b6f2afad3c4d0dc654df5c54c3659a45ae2d55cd3e67ea37244",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/OPgW6aRVb5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/OWo5dTZefO.pdf",
+      "size_bytes": 1074500,
+      "sha256": "91718bf1e9264294d696d1caaa92f030a01bea9343d02d90199c7c1513393005",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/OWo5dTZefO.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/OamNISzz7u.pdf",
+      "size_bytes": 587345,
+      "sha256": "acaf900d9760dabf201fa5f34dd4312e178d22204c2b17ecec1d611c7a332566",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/OamNISzz7u.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/P1l28Izht6.pdf",
+      "size_bytes": 1015152,
+      "sha256": "68775968413dff1e6f94498ad85a0640e195de8252c5a91cb43426966eb8999a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/P1l28Izht6.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/PPEVPO9mVl.pdf",
+      "size_bytes": 977808,
+      "sha256": "29f8c19dcd15a277af9af94d2f0b908f6c8179c265a72e7e867f4f35bce62bde",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/PPEVPO9mVl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Pb9gVSv6mU.pdf",
+      "size_bytes": 1150486,
+      "sha256": "dd3c4715a199a73b205d7c2cda975df327ed7b7173d3046fa2a7a549d8fc9f27",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Pb9gVSv6mU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/PfMOZsj31C.pdf",
+      "size_bytes": 2464324,
+      "sha256": "43793da6b3bec1fa9622eaaa3d06042e1971c09e171581497e41d5d8be09e2ae",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/PfMOZsj31C.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/PpFLzBzByt.pdf",
+      "size_bytes": 869032,
+      "sha256": "3fe32cd3cf591bb49b910d9fcd727261eb4920903b4d2d87fcc134f1b4c21fd0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/PpFLzBzByt.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Q1Qw1GStXx.pdf",
+      "size_bytes": 1669999,
+      "sha256": "1ce1ff82f0eacc4cbb8640efe61225a78a9879c3f2702fe201e92501f39fb888",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Q1Qw1GStXx.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/QUVxeXJRvA.pdf",
+      "size_bytes": 3346662,
+      "sha256": "758683e3fd7236558a37a8d801ff9010d96b2f3b1d04e7eecbda5f85e9ffb3f1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/QUVxeXJRvA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/QfcUyqbjD2.pdf",
+      "size_bytes": 5913355,
+      "sha256": "61d378ac20b792af287b9621567f50fd75e58ef9740d40c491c3b270b8f8cb4f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/QfcUyqbjD2.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/QzmixmSdl0.pdf",
+      "size_bytes": 941472,
+      "sha256": "04aec2b6abcb038062da357bd189931e754d294cae69828286cf4611b0b00ba8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/QzmixmSdl0.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/RbAyJmDSmx.pdf",
+      "size_bytes": 2349670,
+      "sha256": "8839252f416fde1fe99ea2f9d0e05a31b647a932dfba82577d510ea627e2749b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/RbAyJmDSmx.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/S4G7yOFFWR.pdf",
+      "size_bytes": 11409325,
+      "sha256": "3e9efa0fb0fee46dc8369c93561c55596f18cfcd030db29110e4e28b7a0ff282",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/S4G7yOFFWR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/S5dojL50DQ.pdf",
+      "size_bytes": 1323120,
+      "sha256": "0e7a0770cd8875dc5d7573bf0f8d0e7050be49fc164563c75efc9739c26b7218",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/S5dojL50DQ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SCDxFMF8Cq.pdf",
+      "size_bytes": 868771,
+      "sha256": "a14ea35f2a0518dff4ca4bf8427ab487085c8ae41c1e65e9eb214d2051cd8377",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SCDxFMF8Cq.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SD8TtWeUpR.pdf",
+      "size_bytes": 5643456,
+      "sha256": "d1366fab5ccec72e8fa18b228807063c6be4c465d2f4705914ad8d7a60b1ee47",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SD8TtWeUpR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SLwxKZQP2e.pdf",
+      "size_bytes": 1229608,
+      "sha256": "be4a1f018bd685be2f439dd88c4ebf195649403383a03c32ec7cba21e35c2ea9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SLwxKZQP2e.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SeI1vwRNwv.pdf",
+      "size_bytes": 4071912,
+      "sha256": "7116b519d70aea3095127a79dfc7d6ebaadf6de986a88cde571a70edad7cfcf2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SeI1vwRNwv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SfUjvCVEQk.pdf",
+      "size_bytes": 2294930,
+      "sha256": "ca50afaac6ec5b9acfd9574ddcd61a13fa8d1831a6457d456c99abd22fbb5440",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SfUjvCVEQk.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/SghmEJsXZA.pdf",
+      "size_bytes": 14877960,
+      "sha256": "938e1ad1ee3947f157a73522474c1f4c85b27b2b847d59c4ce663b3977513c48",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/SghmEJsXZA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/TNZPOB6ONM.pdf",
+      "size_bytes": 2654120,
+      "sha256": "9cce566fb61d6a53a1b5c0344acdf7920cedaa979785a248a2718db8442c640c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/TNZPOB6ONM.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Ttnp4YLQH6.pdf",
+      "size_bytes": 987214,
+      "sha256": "466ff56da22aca89427e6c7a9667e54ebd3c6d962fa1f83a445253c011533866",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Ttnp4YLQH6.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/TxmxdfNhJQ.pdf",
+      "size_bytes": 8605600,
+      "sha256": "008edc3459a7f44e18ac33ab5ad972402e0b0524967ea38d17eb4f7a78393b61",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/TxmxdfNhJQ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/U20zGrFdwQ.pdf",
+      "size_bytes": 50560067,
+      "sha256": "a055029e0b4548f43a13fd64560d61f19690b6a60d4109406420e6eba67b4810",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/U20zGrFdwQ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/U6Ai2deODN.pdf",
+      "size_bytes": 10877899,
+      "sha256": "995f21e6c4ec1bda6444919254eb05df01831408c8b5e6f33f1c9a4bea78e592",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/U6Ai2deODN.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/UMP8UOCPQ4.pdf",
+      "size_bytes": 331068,
+      "sha256": "96f23c2ad3406fee8518d0d90dbe9f934b2344e640b0f08a211044a401eefcdf",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/UMP8UOCPQ4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/UQiskZoVs1.pdf",
+      "size_bytes": 1483627,
+      "sha256": "d9b2f6522332c9d60825acc733e18ff06770ca36950ff88a6563e1d0728acbfb",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/UQiskZoVs1.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/UaPwGU9LEf.pdf",
+      "size_bytes": 6083083,
+      "sha256": "f1e8ed548460058824c5422a3939581242cb6d3e9328c8a6e538a73b3b6c3132",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/UaPwGU9LEf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/UjPZx32TqX.pdf",
+      "size_bytes": 8443454,
+      "sha256": "ec8a91eea6d2012b551c21706b534fbc99e0ff49e2f8ca2447c2ce1da40b299d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/UjPZx32TqX.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/UyQa0SeGN5.pdf",
+      "size_bytes": 2195025,
+      "sha256": "f16869089331f7914f87f5eed488d44b68c8313adeef717885f9c3829b715df2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/UyQa0SeGN5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VCbvUU6Pn2.pdf",
+      "size_bytes": 311760,
+      "sha256": "b357feac4d1a02f92703cfb467dc7ea42626f017d0cde687abb055bffbcf1e56",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/VCbvUU6Pn2.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VfBQNaq51q.pdf",
+      "size_bytes": 9835854,
+      "sha256": "d869e5c0602c44a2ad991e2c82ae17f63ef99dec572aa3d32330bc2a02c353fe",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/VfBQNaq51q.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VjR1Jzj7Aa.pdf",
+      "size_bytes": 1872532,
+      "sha256": "769db3969fff71819f8147483cc64d80f6c5026e59625aa13bd68796b2b4e32a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/VjR1Jzj7Aa.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VlVfNk0RSM.pdf",
+      "size_bytes": 1161921,
+      "sha256": "e63d529282552434e0598e32cf7242cd1d107bc3682b6ae939980e984f3041ae",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/VlVfNk0RSM.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/VxPW6DMdtm.pdf",
+      "size_bytes": 425383,
+      "sha256": "bbc36717026edfe255dc3f78702c2c061b5892d2fc1edc60cc0d0ecf55d6c13c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/VxPW6DMdtm.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/WEilv8VYHz.pdf",
+      "size_bytes": 1498322,
+      "sha256": "0ac50047b3b19a3a5df73bd585aaa3bb83a1cfe2441017a98c7ca5f33fc8b0d8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/WEilv8VYHz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/WTLqlkm76y.pdf",
+      "size_bytes": 15212574,
+      "sha256": "e574a012337eec04ef643ff221ede8b89b5056b6e3ad3e79bac849090f21e353",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/WTLqlkm76y.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/WVK6sB7bVG.pdf",
+      "size_bytes": 3429493,
+      "sha256": "a0da290225f24466e453daa413769b38d9a1b215e950abf9d601b5b9d0188603",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/WVK6sB7bVG.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/WiWK74NC4w.pdf",
+      "size_bytes": 6141351,
+      "sha256": "f56d84f1470dd1941b4e1235b6d4f2faaea226183109288a179b04cfa5e70c2e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/WiWK74NC4w.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/WrXVv1tGcD.pdf",
+      "size_bytes": 682083,
+      "sha256": "7d36db81ebd878e04233c7be3c313c16069cb13ea7ec74f509f60b4f2a6f68c7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/WrXVv1tGcD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/XQsdjrmJJq.pdf",
+      "size_bytes": 3005117,
+      "sha256": "29425b91c9fd6352c45c20b32705cf797aea9e59edb1e092858de8e1bb972dc6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/XQsdjrmJJq.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/YbVAMlstmO.pdf",
+      "size_bytes": 6798275,
+      "sha256": "a3326ec6fe968c8c34f318149a50ffe19e283b891447a93bc0f99943b8872a01",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/YbVAMlstmO.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/YoleOBv5g9.pdf",
+      "size_bytes": 404813,
+      "sha256": "310d494712683fd1e5f11ad47eb6cc6d553d2c12cfab77aeae1f4e03005c2d2a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/YoleOBv5g9.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/YqNQPCr2IU.pdf",
+      "size_bytes": 1251717,
+      "sha256": "ee1c5fc1b9a004805ad9e00b4fca09c7e66d2642a8a850e8fe4ce1193ea9383c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/YqNQPCr2IU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Ys1pLbGaUc.pdf",
+      "size_bytes": 14093378,
+      "sha256": "eac2c5d79fc668534fea163d91f0cadbfb8296c7db83146ebc124591a8de38bc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Ys1pLbGaUc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/Z4dTt54oNl.pdf",
+      "size_bytes": 1156861,
+      "sha256": "56737e3d1e69658af1ffdb1f95277307396fa46ca31432d21200840fd18a810e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/Z4dTt54oNl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ZEf8xs2d2i.pdf",
+      "size_bytes": 2514233,
+      "sha256": "04881433025c479981c4a48d69fcd791f5796927a92313fba02ed9348de84e1d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ZEf8xs2d2i.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ZJXncdxUlC.pdf",
+      "size_bytes": 5734130,
+      "sha256": "2017658150f2c0f7351df1bd679e42b6a58f0e31ba117afd878b7533729d7097",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ZJXncdxUlC.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ZbMEjPOetA.pdf",
+      "size_bytes": 642990,
+      "sha256": "ebc8587372a1180a360ba0df101330cc85b62f3cb66aabac40fef539fffdd631",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ZbMEjPOetA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ZdsW1iPozG.pdf",
+      "size_bytes": 12488462,
+      "sha256": "abc969a00909b48fd4dcaf518eb4336c852ed4f69a62700d1259c83418c1c989",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ZdsW1iPozG.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/a0GEDa3wel.pdf",
+      "size_bytes": 20784844,
+      "sha256": "5a5f53d62754b57ea79509d08fa1b0d0d7b4dc79b863f6a9f6ba85444a38dcc7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/a0GEDa3wel.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/a5Cp0fdqFK.pdf",
+      "size_bytes": 1865721,
+      "sha256": "a07dfc5ada4ff818c77812dd581065a4e3e40f5736f2f36a97787a66da6e7825",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/a5Cp0fdqFK.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/aWBh3LGrAC.pdf",
+      "size_bytes": 4414496,
+      "sha256": "6623e16f27beb8f3d15b92ac9cd2616aaa3169c58463ebee22d2e2c19fb94627",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/aWBh3LGrAC.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/aYkRVvzoFd.pdf",
+      "size_bytes": 3655329,
+      "sha256": "a41d0e4188f97baac88679d99cdf7266b929357844638b3dd83a6b01c0ae4aa6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/aYkRVvzoFd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/b0OrvE0g7s.pdf",
+      "size_bytes": 1341771,
+      "sha256": "46c892e44008954abc2f0562009a079c89839aed982eae30af037965d6ec22e4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/b0OrvE0g7s.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/bCdTlRYS2u.pdf",
+      "size_bytes": 1924979,
+      "sha256": "edc86cf8ea7e57ea53ca828c697047299dbff8bc852a7a8b2b131cf6fff54b9b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/bCdTlRYS2u.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/bMVb5dmX5G.pdf",
+      "size_bytes": 2489331,
+      "sha256": "22f61e0021cba3431caad9531ab61aa43c07bf5a6540845c24e205cd8db05a39",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/bMVb5dmX5G.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/bXGg45dCRy.pdf",
+      "size_bytes": 454094,
+      "sha256": "923aabbbcdd7605a235c49cc0bd607731cc5c9ccd5e581d99478bed6369b4d9d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/bXGg45dCRy.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/bZzI2gmrzm.pdf",
+      "size_bytes": 3577628,
+      "sha256": "34f0f5be313ee5b2c260adcf59d4ecfadde0be0db0bebb82905879302590a63a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/bZzI2gmrzm.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/blGFuC1FW4.pdf",
+      "size_bytes": 1789989,
+      "sha256": "2b9e15138bfd3238dc9e9711a58f5e5ffd16144607a6090505cf33e8a49495a9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/blGFuC1FW4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/bt76htNG4E.pdf",
+      "size_bytes": 350758,
+      "sha256": "12f36ca8d1ac43630ef741e72e2cd477c5bba82be1aa94ba447a077c18509721",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/bt76htNG4E.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/c4nL9M9K8G.pdf",
+      "size_bytes": 9433321,
+      "sha256": "10055db484552571bd6de65ebd08afad110d7b121c7692130b8d13275e2d6e18",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/c4nL9M9K8G.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/cC2tL8C8Id.pdf",
+      "size_bytes": 1641663,
+      "sha256": "13b510d1e82444e116eba98377e1c0f3b955c5f7ad0e50648164839e0ffa5a5d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/cC2tL8C8Id.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/cHh0n94TYl.pdf",
+      "size_bytes": 37647291,
+      "sha256": "628e6b51865c25ef88d9d49b34b7e7f7d5af731b1e14d82dce851a06e9cafcfc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/cHh0n94TYl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/cOdmLpOviW.pdf",
+      "size_bytes": 1401339,
+      "sha256": "e983848de3c268506f58a8393bc65cfa8b2735eeac00848305135586fe746cb7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/cOdmLpOviW.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/czFtQmV6vN.pdf",
+      "size_bytes": 1512255,
+      "sha256": "3fba95402b6dd377a4cfffdf56db1a1ed06d791a2dd54f6636f9477ffad23c49",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/czFtQmV6vN.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/d4DkZ17zKd.pdf",
+      "size_bytes": 699648,
+      "sha256": "17b34a41f5a432b37083e245ff511147ed542aadd9f4d70717da07e7b764e324",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/d4DkZ17zKd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/dN74GJLoPR.pdf",
+      "size_bytes": 4479944,
+      "sha256": "8a16dcf39f64a2ef169c83b88854ee047e31b0783a073b0429f9dff2a8464105",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/dN74GJLoPR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/dVNHMjFsRe.pdf",
+      "size_bytes": 1300456,
+      "sha256": "46282a67645cd24d71c1378b2101f720c6e4c307acefb76cf689b2ca7bc22e69",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/dVNHMjFsRe.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/diCej7A5RF.pdf",
+      "size_bytes": 3081755,
+      "sha256": "5a4ef9c84128924a60b5a3511fcdeb862dba4194b838c09da8cfa4abff340061",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/diCej7A5RF.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/dyfqMULVwL.pdf",
+      "size_bytes": 4959481,
+      "sha256": "466b33396eee64e0b9581e2bd0cbaf38a4c23b1a71467e8cd52a7aec5519b85f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/dyfqMULVwL.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/e48zd7dPkp.pdf",
+      "size_bytes": 202166,
+      "sha256": "74328dac7b708791b1d2fda297aada6232ebab856916a0fd5c93d2bc321b6494",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/e48zd7dPkp.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/eE0kORov3b.pdf",
+      "size_bytes": 2009756,
+      "sha256": "6df06620eaf40e42d619b12efc6e7e693c94bcb9a6c2fd9268f274348a7b0aa1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/eE0kORov3b.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/eGHWPvehAP.pdf",
+      "size_bytes": 9866607,
+      "sha256": "ae8df9260bc523b4a933a0dfb7ed8c503138c8c1232a6464757375b790ea7ceb",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/eGHWPvehAP.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/eK0cFVmH6l.pdf",
+      "size_bytes": 972455,
+      "sha256": "d6cc76dcfd6b7543c9eac3493531ceecf941690d0b0661bcebbb745eebf7619c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/eK0cFVmH6l.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/edqxYtw0he.pdf",
+      "size_bytes": 1752416,
+      "sha256": "ec0e5fd0553c7e4dc11b98548e28cf24b36ee88bfc125b619dfbfdef308cf3f8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/edqxYtw0he.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ejAmhF4BXv.pdf",
+      "size_bytes": 904432,
+      "sha256": "d83e1354696210bb20bd24625e8eb1a7a108290cfe9e2b30fe8021c288e85df7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ejAmhF4BXv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/f1g4vAzwee.pdf",
+      "size_bytes": 1210865,
+      "sha256": "837789c798dca64f1e19278df4a5fe269943e21182a26cbe6b8fa8bb5c4b09db",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/f1g4vAzwee.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/fU6BJ3UTHf.pdf",
+      "size_bytes": 12452380,
+      "sha256": "373c9ac17c45d1590e76ca890bae04e58d18009fd682053a145021dc76aa95b8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/fU6BJ3UTHf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ffvmkhUV3P.pdf",
+      "size_bytes": 2027771,
+      "sha256": "9be51515e31658f7bbdeed2ac3b5a137c477f975430dad5907a1ef3a69bf00d7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ffvmkhUV3P.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/fruA9kqFXv.pdf",
+      "size_bytes": 2760048,
+      "sha256": "f4442ca1c99b83ae2fdbd95fa6c789b5de0357f24989cd318f21a2bbaba8267d",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/fruA9kqFXv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/fvwpL5PARU.pdf",
+      "size_bytes": 8521025,
+      "sha256": "6a62f83dcfd3eb6e153bfd9927b4f68483fa501c0399c245ddd6704bac685fb9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/fvwpL5PARU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/fzb6bKSiVD.pdf",
+      "size_bytes": 715511,
+      "sha256": "b997e20ed7f488fc9d0fc03d2bf4aaae76b700241896ce305531bf87c2f08a87",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/fzb6bKSiVD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/gKxfdKmCgJ.pdf",
+      "size_bytes": 2679669,
+      "sha256": "b5d45b43b6dbcc31794c4ad0f8f5052f7994919e9f26a224ac1abac4061a6066",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/gKxfdKmCgJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/gZPw9q08kn.pdf",
+      "size_bytes": 1166302,
+      "sha256": "0c50cf0e780206aee576edc828adcb7ddbdcc8d2c8b672d4a9ffe0f34e42e9b5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/gZPw9q08kn.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/goH33JQfVq.pdf",
+      "size_bytes": 13015595,
+      "sha256": "3c1eadd3582e3ad42c3cf80e3c6b3fd76aa9f9193b6909c3e1ca5219e3474482",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/goH33JQfVq.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/gxiXGkKVPd.pdf",
+      "size_bytes": 9389131,
+      "sha256": "9c6139521c4132a6ae2ca91c8aef059cc2a1c5678ddbb4fe636265a574a7bfaa",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/gxiXGkKVPd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/h82LGBJebf.pdf",
+      "size_bytes": 1546154,
+      "sha256": "3b4b6dc7d00068c43d24ce21a6c2a42c99dae4c9b9c76d2b553f7e42af28f3e4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/h82LGBJebf.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/hAUiXDubZl.pdf",
+      "size_bytes": 1534475,
+      "sha256": "3dbbf52e49b2642b15322c21b39385451e3f6218ecd499872b7db2acde6d13c5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/hAUiXDubZl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/hC1gbWXAz8.pdf",
+      "size_bytes": 134866,
+      "sha256": "40e2923c3e602495a87cb8449f79be527b3e98244e6441c8a35a9dbce8d6347c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/hC1gbWXAz8.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/hCzHZb2UUK.pdf",
+      "size_bytes": 1891991,
+      "sha256": "7b4cbbf6a8c3e19c819e5d3cbd58ba8491dc80c5b84eb0dac65c3821bfdf09df",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/hCzHZb2UUK.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/hMUhEgmrTA.pdf",
+      "size_bytes": 2450880,
+      "sha256": "5359eb9b4d0aade9275949900103def009888127fdd07146a01d586a3b9e70c5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/hMUhEgmrTA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/hpqZUJ53T5.pdf",
+      "size_bytes": 1772850,
+      "sha256": "92d748072df6f007e2ea3c24b96fac0fbeb588ff81afc52e3811d4653ce59bd6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/hpqZUJ53T5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/htejUiJ6tZ.pdf",
+      "size_bytes": 6753363,
+      "sha256": "b7760f11d7ec61da75bbf3e568dc5275919f919109e9f148ad4457499f4b9ffa",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/htejUiJ6tZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/imgCJXHKw4.pdf",
+      "size_bytes": 8651837,
+      "sha256": "16334d8d10125b53fd67048839f8709089646f54cb1a4b796bfd77dd3ae07489",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/imgCJXHKw4.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/isON29o8IO.pdf",
+      "size_bytes": 1215163,
+      "sha256": "8a5c3d63060f3331e2add0ae6808284f1c7881a7bec6f73b6dcb55c187d2e543",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/isON29o8IO.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ixfeqZYdBW.pdf",
+      "size_bytes": 621845,
+      "sha256": "bd4ad971477c46e6a5bf28c28cc60944003beddc9b8e8ab2506194dcbbc45903",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ixfeqZYdBW.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/izn6l7hEeY.pdf",
+      "size_bytes": 15707271,
+      "sha256": "49624c1a0fc989dfc2966c4e1fb64ce3467076d86439506fcb8905210a3ec6f9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/izn6l7hEeY.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/jOBU1tXYra.pdf",
+      "size_bytes": 2685127,
+      "sha256": "812b3d97032c9b3f2dfb93b157ab4c97852a0044d0da38a6b187e22828da6cbb",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/jOBU1tXYra.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/jR8tOtUXNc.pdf",
+      "size_bytes": 2704681,
+      "sha256": "e09127f477d3e1755b5daf5d0081f274118a5addef917da866bc3fa19a382fe2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/jR8tOtUXNc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/jTV6XPth76.pdf",
+      "size_bytes": 434374,
+      "sha256": "834ece59f01122516e618d90d2f69f5168ead16b461fd387385bc696a1322ef5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/jTV6XPth76.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/k6VvnjIICL.pdf",
+      "size_bytes": 768331,
+      "sha256": "5c322f9e97431a2cdb6412dcfb5b474af67c8f91b884714ccee79a11eb93ddc1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/k6VvnjIICL.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/kNWTLVGMSO.pdf",
+      "size_bytes": 3516717,
+      "sha256": "fd2c50ab9b1f1858afcad7ce41d4241adb9b2e9efa5c946b0b559dde1a06f295",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/kNWTLVGMSO.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/kStCZrQWzE.pdf",
+      "size_bytes": 3421338,
+      "sha256": "03038cc6cdff4c72524f5ea4f76aa74cb389a7fc626c6e5eaecfbae2879c7a14",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/kStCZrQWzE.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/kmq2zfsggI.pdf",
+      "size_bytes": 2283079,
+      "sha256": "6431b116ccb27b667759ad38283fe36d71ba00466460c69a831c428268ea81a2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/kmq2zfsggI.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/l88gnbsMy2.pdf",
+      "size_bytes": 9456791,
+      "sha256": "2d5135ca2fbeacdd5df9833bcbc0357bff1e77e4aa77a9f8f0559e51bc532ea6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/l88gnbsMy2.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/lM2ij0rwqU.pdf",
+      "size_bytes": 4337134,
+      "sha256": "14faf9cf0e60f03dea267398acbdc3e2db525c4b4159f61f81b3931a9e104ef6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/lM2ij0rwqU.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/llXnJqESjd.pdf",
+      "size_bytes": 4453879,
+      "sha256": "c9046f035801130045d467b06f4433576f1848421caf14c54fab08ae02821ca0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/llXnJqESjd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/lybOwGFK7y.pdf",
+      "size_bytes": 939712,
+      "sha256": "c32110f60cba5dddaa3e9e91fab4953b9521412070aebb6d6ebe26e623e83e3e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/lybOwGFK7y.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/m5yptAaVCC.pdf",
+      "size_bytes": 820429,
+      "sha256": "ed869488725833a161f0c7f0407eb817511c2bc65a209e94fa4a0d7d97a4d7fe",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/m5yptAaVCC.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/m9NdfLpDdr.pdf",
+      "size_bytes": 919942,
+      "sha256": "8a4e4c7c43cfd52952dd335f2343d00f53ae94722859758f137919355fb5fabb",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/m9NdfLpDdr.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/mBg7Ay7cgA.pdf",
+      "size_bytes": 975660,
+      "sha256": "2fc589c2b57e13c73bc60c4d219e6aaf8f0b2b177a7c779666e4206763fe392f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/mBg7Ay7cgA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/mTdlkHe3Hz.pdf",
+      "size_bytes": 10025481,
+      "sha256": "36665e68773cea0188a7e34ce967e8675fd9106e6bf0571c802d71c3c1fdd7cd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/mTdlkHe3Hz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/mjNmE6WWxS.pdf",
+      "size_bytes": 4630924,
+      "sha256": "4377e0cb537ee81b8c7f5069a5e65a4b2eb4d9cf3d8e9105df7162ff2fa0b07c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/mjNmE6WWxS.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/n1uZvGIcko.pdf",
+      "size_bytes": 621215,
+      "sha256": "634ea261395986cb87da1883cd8c13d36d4ea106b6cea98c6bb72c62aee35a20",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/n1uZvGIcko.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/nDWc2eHmC1.pdf",
+      "size_bytes": 545165,
+      "sha256": "6ed55fd31d0148b6c7f5c2620734ee9faae6349b8b43545de5cb9698f954ae73",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/nDWc2eHmC1.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ndJKvferGA.pdf",
+      "size_bytes": 2574198,
+      "sha256": "bb62d288c42dcd9a6182fd817948b640d2859130f91a3772fa7ed58166d044c8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ndJKvferGA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ndfdTrESWc.pdf",
+      "size_bytes": 36536607,
+      "sha256": "ad6e251ae7c0ee502f212062dde17bf0caae96a41658c0560f11d7c05b73e6b4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ndfdTrESWc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/oEBjEuOcrx.pdf",
+      "size_bytes": 914896,
+      "sha256": "506e1f8f15ff03f716dd248943b6be7fb432f6bf2d2899a1d596f8779394e627",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/oEBjEuOcrx.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/oKXWhv8qXm.pdf",
+      "size_bytes": 4716988,
+      "sha256": "d9d6f5b07cccdc0ccdbdae47870911e302faac438c1c33c498f09ca549f1f9a4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/oKXWhv8qXm.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/oXd4jS9kY2.pdf",
+      "size_bytes": 654071,
+      "sha256": "fffe2c8e5b68b3debee364b1ddde7b7660ce99a4e85c44f6c0c0491aec47a1a6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/oXd4jS9kY2.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/obm4Fp1qRg.pdf",
+      "size_bytes": 1648915,
+      "sha256": "9fcaeebdbbd07c57cb73d72c99004a25d8412212cfc20028502f8553fcfd7dfe",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/obm4Fp1qRg.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/ofatIdsz8s.pdf",
+      "size_bytes": 158658,
+      "sha256": "3e16492e0a9d2266e290ca7cfa0ecf90f7c7ec0797ecaee29b287524ad0c61ec",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/ofatIdsz8s.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/otlF21boKP.pdf",
+      "size_bytes": 1097597,
+      "sha256": "e3f6263d43b0a1d2fa48937d4033f6a4bd54333db3afe0ea7297fb161539edbb",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/otlF21boKP.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/pC742MC3Jc.pdf",
+      "size_bytes": 785341,
+      "sha256": "6c8dc9dc77a783f8efda4f7543b90665336ff63fa49b011de1f1813672882c4b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/pC742MC3Jc.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/piX2AnZo9J.pdf",
+      "size_bytes": 161520,
+      "sha256": "62c766968185690e8e11378e0e326a9026253c5e00421dbba9868c6a2a3894d8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/piX2AnZo9J.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/pijEJvoM2Y.pdf",
+      "size_bytes": 156715,
+      "sha256": "3cc53dfb6396803bf0062bc50ece45f41cc07a528635d58f3f2da84844db9cd3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/pijEJvoM2Y.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/pqz5ytFqnQ.pdf",
+      "size_bytes": 2848536,
+      "sha256": "85691da8150ccc852daa6676af778bf63209c3d5af47156112e3f59814f840c2",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/pqz5ytFqnQ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/q9y3M2wxtk.pdf",
+      "size_bytes": 6660132,
+      "sha256": "4e896041041fd52025a9f35579637491fa8ea60745bb9286c526b1e774f64249",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/q9y3M2wxtk.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/qkG7zOtJtZ.pdf",
+      "size_bytes": 2202993,
+      "sha256": "5600b1673be0f2f2bba40b4dddf544550c5a302a4f634f2025b84674b8fb3d86",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/qkG7zOtJtZ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/qmXvEvcWzz.pdf",
+      "size_bytes": 3196161,
+      "sha256": "2720c81de1f09393702594acb18431269d882e03d14b52f2fb9d331a6a663985",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/qmXvEvcWzz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/qq8QRBAdmP.pdf",
+      "size_bytes": 18427969,
+      "sha256": "8096756368a5f6caa8d62b26951db72a6c39b195736dd2761e345e85d5872807",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/qq8QRBAdmP.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/qxS5WbhqKV.pdf",
+      "size_bytes": 771069,
+      "sha256": "c7594c5ff2667593eb4a611d5bd4393fc87959afc42c7ea3f890c8fe3698d9dc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/qxS5WbhqKV.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/rNTfpHWVIx.pdf",
+      "size_bytes": 856647,
+      "sha256": "edd4f52a2b0f8c00ca5dd2ca177f905f3594ffc76f8bd24e2aa439c309c29d0f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/rNTfpHWVIx.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/s3Ncu4SVjI.pdf",
+      "size_bytes": 2122734,
+      "sha256": "eb4b8411b01414a33781d792a13b0749b729eca45ce4f8c2a630e04fa917320f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/s3Ncu4SVjI.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/sE3RiEdZ83.pdf",
+      "size_bytes": 1072809,
+      "sha256": "b152501527fb4baaa456263a823ac4b61ff4fa97c7ad8e4292bc3a9962fc75cd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/sE3RiEdZ83.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/sjA95F73NI.pdf",
+      "size_bytes": 5227523,
+      "sha256": "a4d95e3f97ea57e6235edfcc5c4864daf9dd07a4e73ed884c50fc1412fa95e84",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/sjA95F73NI.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/snejaXOT1f.pdf",
+      "size_bytes": 1902109,
+      "sha256": "6e8db2731f815d36319bf965a7d9b96cf11a85a0ff87cf1d21f353ea33786cf7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/snejaXOT1f.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/tLTfYMCz9V.pdf",
+      "size_bytes": 8023151,
+      "sha256": "c35609ec16443d5898964508da90a207dad49023d2c1b5d4e26a88bb2a301df5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/tLTfYMCz9V.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/td1MP3YsoL.pdf",
+      "size_bytes": 21018796,
+      "sha256": "5f0c03cb62a3b032f4481a5d303d29fcdf8c0386df6c936298ea202686722b06",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/td1MP3YsoL.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/thyJabPFdF.pdf",
+      "size_bytes": 7253683,
+      "sha256": "999f1bd5a4e2111b17c6852f92e7887390dea49ca8897ec06d63a6201b56d068",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/thyJabPFdF.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/tklhvozQ5d.pdf",
+      "size_bytes": 212051,
+      "sha256": "60bd63a1b15c5ea3b888f557dc42c43d1763d5d7f0c13e3ac79a9ac0f253fbc3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/tklhvozQ5d.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/uDL0Y1cI4D.pdf",
+      "size_bytes": 566363,
+      "sha256": "eff4be4f4aab1d7b47d64ba2076a41058c5345039338af4303a42b37367dcdc3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/uDL0Y1cI4D.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/uaXMsfaSjW.pdf",
+      "size_bytes": 4012865,
+      "sha256": "6a5ed106a23516174706a77a5ee608646a55f2fd8101e4f566f6461f46e02fa3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/uaXMsfaSjW.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/vBbX6tkbnv.pdf",
+      "size_bytes": 5614439,
+      "sha256": "69bde247f8933423aef3871b5dbcf9e1d03fe0d04bcd8144b586d0100b341cf7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/vBbX6tkbnv.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/vdpVvU8Xft.pdf",
+      "size_bytes": 17423877,
+      "sha256": "75745bedcd8f6587976b38e2aa9e270f70d4c864bd7f20a025f6b22ce4d24296",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/vdpVvU8Xft.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/viA1sAStQ5.pdf",
+      "size_bytes": 1801414,
+      "sha256": "90cebd7cdabb5e5c085e8b09916d4d2a80dbe6dc3aa625d9fa9b0a811ac4a5df",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/viA1sAStQ5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/viFMXjn6IR.pdf",
+      "size_bytes": 1173397,
+      "sha256": "2109122e385d2be78ed296a6c1db49145f243ac656d57a877526021bc03a4045",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/viFMXjn6IR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/vtII8dVYxR.pdf",
+      "size_bytes": 514110,
+      "sha256": "32c7f29a7fe8beb0e2cc39815a8ee76250a4ec06ec12a83f292b9fe2b7fefc94",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/vtII8dVYxR.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/vwpIElLJRO.pdf",
+      "size_bytes": 9748709,
+      "sha256": "a737bc6e6fc24ef849562db83ba8109cf8a69708494c22b2f7f25d96e14d629a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/vwpIElLJRO.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wA1xQ76qI6.pdf",
+      "size_bytes": 10281969,
+      "sha256": "0c07a660e1bc17d62b1f1d69c0a1a0fffcf9ac31b9bf2687a00ef3a36fa27381",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wA1xQ76qI6.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wAeQD7s0Wi.pdf",
+      "size_bytes": 2049911,
+      "sha256": "60018eac1c266276ae16e998ae29a944801feabab2171f226823ad9ae7c00500",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wAeQD7s0Wi.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wRVvSwPrtC.pdf",
+      "size_bytes": 11378465,
+      "sha256": "380c842c860866594985c98af86c7a1c6ad35e9a8c42ca2ccf7763104793b3fd",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wRVvSwPrtC.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wonXbOq9bl.pdf",
+      "size_bytes": 1142559,
+      "sha256": "9de4579fd97618c76bc61af9af89c7241c9f35455f8ca8349c78e8a54fb95f73",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wonXbOq9bl.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wpLzxce3Uz.pdf",
+      "size_bytes": 635370,
+      "sha256": "1788271782d0a250462b30dcf82a24e656930f727a00b2f09bddf20619ba5bba",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wpLzxce3Uz.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/wvo4dhOmYx.pdf",
+      "size_bytes": 956538,
+      "sha256": "4157f3b724eda6077c5a1352e9d0a99097a07517210a48f7ec58bbd97eac60e9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/wvo4dhOmYx.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/x4H7YrlInt.pdf",
+      "size_bytes": 10439714,
+      "sha256": "df8eb71ade5cb2662de7b7ca7f97239ee90dac616336facf014e211ea7f7f9d3",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/x4H7YrlInt.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/xE5ralu58Q.pdf",
+      "size_bytes": 3009028,
+      "sha256": "049d0356acb919cfe7db71b1060a87603cfbe01c86be0a8f3fe1a44ccc56b6f7",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/xE5ralu58Q.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/xJosNGAXku.pdf",
+      "size_bytes": 645986,
+      "sha256": "4bcf983e573b835b88274805476d1d4df74ba235bcbc60692a1fc3a1d452199e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/xJosNGAXku.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/xQfgWuW5Iw.pdf",
+      "size_bytes": 954779,
+      "sha256": "93015a5814edcf1f569b7c0d2491cd9ead91ae1045b86ee965d60afd444378a9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/xQfgWuW5Iw.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/xlcBvydUxJ.pdf",
+      "size_bytes": 1963882,
+      "sha256": "0cc53b735f7dd0a5851c7e7c10e604fda0baa912352378998745a118bc70efc4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/xlcBvydUxJ.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/y9UQgHDJ0h.pdf",
+      "size_bytes": 74677,
+      "sha256": "f104eea6aa144708efe3cdde8fd0985a53a90b19883de166d158bd30b576a81c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/y9UQgHDJ0h.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/yUVfF9gCzA.pdf",
+      "size_bytes": 703489,
+      "sha256": "d7e4c76f362c7719242dce04d36ee839d128ec176958d9608525f14b877e20a4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/yUVfF9gCzA.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/yZ2MpQ3Pkk.pdf",
+      "size_bytes": 797767,
+      "sha256": "cd137bdae7de6fd1d18df7e3a99b6ed5d002a1d376d13fe6a78a38b3cf41d6ce",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/yZ2MpQ3Pkk.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/yrKHxB1rRD.pdf",
+      "size_bytes": 942521,
+      "sha256": "1cd13b3231cb4365589839028c56cb77ed54bf20689a70c0adac1cb0aeaebe14",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/yrKHxB1rRD.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/yxLx6PXrb5.pdf",
+      "size_bytes": 3212561,
+      "sha256": "ef46b3381eb3987ee8b443782d30775f56375a63684e4200b69946dcb3bb4766",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/yxLx6PXrb5.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/z5Ypdhntrq.pdf",
+      "size_bytes": 528745,
+      "sha256": "3a7e7175a6b3479ab1dbfa8a6d3e1860ae9ccac2ff3f209b490afb2843ea840b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/z5Ypdhntrq.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/z7rn4ErtFd.pdf",
+      "size_bytes": 5626465,
+      "sha256": "7ba4f7ab469963b8dce9334d2e4f9e2182a28f7257fb70151ffe43b955b0ae94",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/z7rn4ErtFd.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/zmaxTOkhWr.pdf",
+      "size_bytes": 702765,
+      "sha256": "9a1bc3b0ba92c646bda8de231c39ce0667c0d385e123006ea1c0ad4626e6b715",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/zmaxTOkhWr.pdf"
+      }
+    },
+    {
+      "path": "data/corpus/zrcPkiWZQc.pdf",
+      "size_bytes": 425699,
+      "sha256": "c8942c262bff13060225eecc11dc1ff326e5a483e63fcd24a9ca99d44906fae1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/corpus/zrcPkiWZQc.pdf"
+      }
+    },
+    {
+      "path": "data/validation/golden_answers.jsonl",
+      "size_bytes": 2498,
+      "sha256": "4a6a8e2ae1372505819ccd069eac1867ddd26450d01cf8b85ae9add48c58657a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/validation/golden_answers.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 7417,
+      "sha256": "a27a74696e2835d24a4c7d8f22ab73b4bbe452378f46d3b70975be0c2c9d235e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-1-3/validation/queries.jsonl"
+      }
+    }
+  ]
+}

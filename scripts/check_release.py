@@ -12,8 +12,11 @@ import tomllib
 from download_assets import REPO, matches, read_manifest, relative_path
 
 
-def check_release(repo, hf_data=None, verify_data=False):
+def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False):
     errors, warnings = [], []
+    pending_tasks = set()
+    if allow_unpublished and hf_data is None:
+        errors.append("Unpublished asset checks require a local HF staging directory.")
     license_path = repo / "LICENSE"
     if not license_path.is_file() or not license_path.read_text().strip():
         warnings.append("Code license is unspecified; choose it before an open-source release.")
@@ -46,7 +49,11 @@ def check_release(repo, hf_data=None, verify_data=False):
                         errors.append(f"{task.name}/{entry['path']}: invalid bundled metadata")
                     continue
                 if not re.fullmatch(r"[0-9a-f]{40}", source.get("revision") or ""):
-                    errors.append(f"{task.name}/{entry['path']}: source revision is not an immutable commit")
+                    if (allow_unpublished and hf_data is not None and source.get("revision") is None
+                            and source.get("repo_type") == "dataset" and source.get("repo_id") == "search-swe/Search-SWE"):
+                        pending_tasks.add(task.name)
+                    else:
+                        errors.append(f"{task.name}/{entry['path']}: source revision is not an immutable commit")
                 if not source.get("repo_id") or source.get("repo_type") not in ("dataset", "model"):
                     errors.append(f"{task.name}/{entry['path']}: invalid source repository")
                 relative_path(source["filename"])
@@ -129,6 +136,8 @@ def check_release(repo, hf_data=None, verify_data=False):
                 errors.append(f"HF staging: task asset missing from manifest: {name}")
         except (OSError, ValueError, KeyError, TypeError) as error:
             errors.append(f"HF staging: {error}")
+    for name in sorted(pending_tasks):
+        warnings.append(f"{name}: local dataset assets are staged; publish them and pin the HF commit before remote downloads.")
     return errors, warnings
 
 
@@ -136,10 +145,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hf-data", type=Path, help="Optional local Hugging Face staging directory")
     parser.add_argument("--verify-data", action="store_true", help="Also hash every HF data file")
+    parser.add_argument("--allow-unpublished", action="store_true", help="Check local staging with unpinned new dataset assets; requires --hf-data")
     args = parser.parse_args()
     if args.verify_data and args.hf_data is None:
         parser.error("--verify-data requires --hf-data")
-    errors, warnings = check_release(REPO, args.hf_data, args.verify_data)
+    if args.allow_unpublished and args.hf_data is None:
+        parser.error("--allow-unpublished requires --hf-data")
+    errors, warnings = check_release(REPO, args.hf_data, args.verify_data, args.allow_unpublished)
     for message in errors:
         print(f"ERROR: {message}")
     for message in warnings:

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 3305297266,
+      "sha256": "a7d63ac2095e6bc21d6aa644fa5a9881a78a11634d4f4d2568dab3f98ab259f4",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-2-4/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/qrels_gold.txt",
+      "size_bytes": 872,
+      "sha256": "a5337f09b6b518dbd1eefaa1951ce210874f7be148ee4a1ef429e2c81c5a44dc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-2-4/validation/qrels_gold.txt"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 10550,
+      "sha256": "82a99d40a88f2e02560c2606769195dd53e916a566f91c2fd49196fe5ecc6586",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "77386ea1bfcf0a88c0f557d0170efd2dd9850980",
+        "filename": "tasks/task-2-4/validation/queries.jsonl"
+      }
+    }
+  ]
+}

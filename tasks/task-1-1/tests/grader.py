@@ -167,6 +167,7 @@ def submission_command(command: list[str]) -> list[str]:
     ]
     for name in (
         "OPENROUTER_API_KEY",
+        "JINA_API_KEY",
         "http_proxy",
         "https_proxy",
         "HTTP_PROXY",

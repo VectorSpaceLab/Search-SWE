@@ -57,6 +57,38 @@ class Downloads(unittest.TestCase):
                 self.restore()
         download.assert_not_called()
 
+    def test_unpublished_data_restores_from_checked_local_staging_without_network(self):
+        self.entry["source"] = {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": None,
+                                "filename": "tasks/package/corpus.jsonl"}
+        self.entry["path"] = "data/corpus.jsonl"
+        self.args.local_data_dir = self.root / "hf-data"
+        source = self.args.local_data_dir / self.entry["source"]["filename"]
+        source.parent.mkdir(parents=True)
+        source.write_bytes(self.content)
+        with patch("huggingface_hub.hf_hub_download") as download:
+            self.assertEqual(self.restore(), "restored local data")
+        self.assertEqual((self.output / self.entry["path"]).read_bytes(), self.content)
+        download.assert_not_called()
+
+    def test_invalid_local_staging_cannot_replace_an_existing_asset(self):
+        self.restore()
+        target = self.output / self.entry["path"]
+        target.write_bytes(b"keep the existing output")
+        self.args.force = True
+        self.args.local_data_dir = self.root / "hf-data"
+        self.args.local_data_dir.mkdir()
+        self.entry["source"] = {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": None,
+                                "filename": "data.json"}
+        source = self.args.local_data_dir / "data.json"
+        source.write_bytes(b"invalid content")
+        with self.assertRaisesRegex(ValueError, "missing or invalid"):
+            self.restore()
+        source.unlink()
+        source.symlink_to(self.task / "metadata.json")
+        with self.assertRaisesRegex(ValueError, "missing or invalid"):
+            self.restore()
+        self.assertEqual(target.read_bytes(), b"keep the existing output")
+
     def test_corrupt_download_preserves_existing_file_and_cleans_temporary(self):
         self.restore()
         target = self.output / self.entry["path"]

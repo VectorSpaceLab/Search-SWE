@@ -8,6 +8,7 @@ from pathlib import Path
 import shlex
 import shutil
 import sys
+import tomllib
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -43,6 +44,8 @@ def main():
         parser.error("Set --model or AGENT_MODEL")
 
     task = REPO / "tasks" / args.task
+    task_config = tomllib.loads((task / "task.toml").read_text())
+    verifier_env = task_config.get("verifier", {}).get("env", {})
     output = args.output.resolve() if args.output else REPO / "jobs" / args.task
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
@@ -63,12 +66,21 @@ def main():
         command.extend(["--ak", f"config={config}"])
 
     required = []
-    for flag, prefix in (("--ae", "AGENT"), ("--verifier-env", "VERIFIER")):
+    services = [("--ae", "AGENT")]
+    if "OPENAI_API_KEY" in verifier_env:
+        services.append(("--verifier-env", "VERIFIER"))
+    for flag, prefix in services:
         for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
             source = f"{prefix}_{name}"
             required.append(source)
             # Harbor resolves these from its environment. Secrets do not enter argv.
             command.extend([flag, f"{name}=${{{source}}}"])
+
+    # Task-specific judge settings are resolved by task.toml from Harbor's
+    # environment; require only the groups used by the selected task.
+    for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
+        if name in verifier_env:
+            required.append(name)
 
     if env.get("CONTAINER_PROXY"):
         env.setdefault("CONTAINER_NO_PROXY", "127.0.0.1,localhost")

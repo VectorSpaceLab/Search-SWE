@@ -62,7 +62,7 @@ Search-SWE/
 
 Task data is hosted on Hugging Face in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE). Pretrained weights are downloaded from their original model repositories.
 
-Each task's `assets.json` records its fixed input files, sizes, SHA-256 checksums, and download sources. Public data belongs in `tasks/<task-id>/data/` and fixed models in `tasks/<task-id>/models/`; these directories are excluded from Git. Dataset and model revisions are pinned to immutable commits. See the [asset guide](docs/assets.md) for the directory layout and download options.
+Each task's `assets.json` records its fixed input files, sizes, SHA-256 checksums, and download sources. Runtime data belongs in `tasks/<task-id>/data/` and fixed models in `tasks/<task-id>/models/`; these directories are excluded from Git. Dataset and model revisions are pinned to immutable commits. See the [asset guide](docs/assets.md) for the directory layout, downloads, and local restoration options.
 
 Dataset provenance, processing details, and licensing information are documented in the Hugging Face dataset card. Hidden evaluation queries and labels belong in the task package's `tests/data/` and are kept separate from the downloadable task data.
 

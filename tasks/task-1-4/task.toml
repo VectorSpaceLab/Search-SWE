@@ -1,0 +1,65 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-1-4"
+version = "0.3.0"
+description = "Build a natural-language evidence locator inside a single very long document."
+authors = [{ name = "Search-SWE" }]
+keywords = ["information-retrieval", "search", "evidence locator"]
+
+[metadata]
+task_type = "create"
+dataset = "long PDF collection"
+primary_metric = "Recall@5"
+metric_k = 5
+public_example_count = 30
+hidden_query_count = 30
+data_status = "Public and hidden PDF/query splits installed"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = [
+    "openrouter.ai",
+    "*.openrouter.ai",
+    "api.jina.ai",
+    "*.jina.ai",
+]
+
+[verifier]
+timeout_sec = 10800.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+[environment]
+network_mode = "allowlist"
+allowed_hosts = [
+    "openrouter.ai",
+    "*.openrouter.ai",
+    "api.jina.ai",
+    "*.jina.ai",
+]
+build_timeout_sec = 1800.0
+workdir = "/app"
+cpus = 16
+memory_mb = 65536
+storage_mb = 102400
+gpus = 0
+os = "linux"
+
+[environment.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

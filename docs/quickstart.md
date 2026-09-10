@@ -39,7 +39,10 @@ Edit `.env` and fill in:
 | `AGENT_OPENAI_API_KEY` | Agent API key |
 | `VERIFIER_OPENAI_BASE_URL` | Integrity-judge API base URL |
 | `VERIFIER_OPENAI_API_KEY` | Integrity-judge API key |
-| `TASK_1_1_OPENROUTER_API_KEY` | Required when using task 1-1's permitted task-resource APIs |
+| `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL`, `ANSWER_JUDGE_API_KEY` | Independent answer judge for task 1-3; Chat Completions API |
+| `OPENROUTER_API_KEY` | Shared submission resource key for tasks 1-3, 1-4, and 2-4 |
+| `JINA_API_KEY` | Shared submission resource key for tasks 1-1, 1-3, 1-4, and 2-4 |
+| `TASK_1_1_OPENROUTER_API_KEY` | Task 1-1's separate OpenRouter key, restricted to its permitted models |
 
 The launcher maps the `AGENT_` pair to the agent's `OPENAI_BASE_URL` and
 `OPENAI_API_KEY`, and the `VERIFIER_` pair to the verifier's variables of the same
@@ -47,8 +50,18 @@ names. They can use different services. To share a service, fill in the same
 values in both sections.
 
 Choose a verifier service that supports the Responses API and the judge model
-specified in the task's `tests/jailbreak_judge/codex.toml`. `--model` selects
+specified in the task's `tests/jailbreak_judge/codex.toml`. Tasks 1-3 and 1-4
+use `gpt-5.6-sol`, matching task 1-1. `--model` selects
 the coding agent; it does not change the task's judge model.
+
+Task 1-3 requires both judge groups. Task 1-4 requires only the trajectory
+judge; page Recall@5 is deterministic. Task 2-4 uses Gold Recall@5 and requires
+neither judge group. The launcher requires and forwards judge settings only
+for tasks that use them. Submission commands receive only their permitted
+task-resource keys. Task 1-1 maps its dedicated OpenRouter key to
+`OPENROUTER_API_KEY` inside the container and uses the shared Jina key. Tasks
+1-3, 1-4, and 2-4 use the shared OpenRouter and Jina keys directly. Task 2-4
+does not use SiliconFlow.
 
 The repository `.env` is loaded automatically if present. `--env-file` selects
 another file. Exported shell variables override file values. Values in the file
