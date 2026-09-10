@@ -1,0 +1,52 @@
+{
+  "blind_baseline": {
+    "source": "unpruned no-weight binary-overlap reference on adaptive hidden split",
+    "wall_seconds": 22.179525140672922
+  },
+  "dataset_version": "task36-msmarco-splade-adaptive-blind-v1",
+  "hidden_search": {
+    "latency_ms": {
+      "mean": 19.443611136637628,
+      "p50": 18.376806285232306,
+      "p95": 33.77725789323449,
+      "p99": 42.66165779903531
+    },
+    "posting_evaluations": 1990834341,
+    "query_count": 1000,
+    "wall_seconds": 19.443611136637628
+  },
+  "public_search": {
+    "latency_ms": {
+      "mean": 20.53154783323407,
+      "p50": 20.312102045863867,
+      "p95": 34.010586421936736,
+      "p99": 43.288964247330995
+    },
+    "posting_evaluations": 415702531,
+    "query_count": 200,
+    "wall_seconds": 4.106309566646814
+  },
+  "reference_index": {
+    "manifest": {
+      "block_count": 950742,
+      "block_size": 128,
+      "build_seconds": 211.60372084192932,
+      "corpus_sha256": "70c730f31f74b9328c0b70e2b8771804321400a367372d8172e79e0034014dd4",
+      "document_count": 1000000,
+      "eligible_postings": 119870771,
+      "format_version": 2,
+      "indexed_postings": 119870771,
+      "indexed_term_count": 27647,
+      "input_postings": 119870771,
+      "known_defects": [],
+      "max_df": 0,
+      "max_postings_per_term": 0,
+      "min_weight": 0.0,
+      "pruning_enabled": false,
+      "source_term_count": 27647,
+      "stats_sha256": "ca29b4cc9a2c74b907aeb0362d405a3cf7ec2026d51df6494451b792f737aebf"
+    }
+  },
+  "schema_version": 1,
+  "top_k": 100
+}

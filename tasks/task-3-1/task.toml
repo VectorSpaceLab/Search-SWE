@@ -1,0 +1,48 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-3-1"
+version = "0.4.0"
+description = "Optimize Python learned-sparse retrieval under binary quality and starter-relative latency gates."
+authors = [{ name = "Search-SWE" }]
+keywords = ["information-retrieval", "search", "ms-marco", "splade", "sparse-retrieval", "postings"]
+
+[metadata]
+task_type = "debug"
+dataset = "MS MARCO Passage v1 with frozen SPLADE sparse vectors"
+primary_metric = "binary_quality_and_starter_latency_pass"
+metric_k = 10
+public_example_count = 200
+hidden_query_count = 1000
+output_k = 100
+data_status = "Formal 1,000,000-document MS MARCO SPLADE bundle with 200 public and 1,000 verifier-only hidden queries."
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "public"
+
+[verifier]
+timeout_sec = 4800.0
+user = "root"
+environment_mode = "separate"
+network_mode = "public"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "public"
+cpus = 1
+memory_mb = 32768
+storage_mb = 81920
+gpus = 0
+
+[verifier.env]
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${OPENAI_API_KEY:-}"

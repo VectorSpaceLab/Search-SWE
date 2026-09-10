@@ -1,0 +1,23 @@
+services:
+  main:
+    cpus: 1.0
+    mem_limit: 32g
+    volumes:
+      - type: bind
+        source: ../data
+        target: /task/data
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./starter
+        target: /baseline-starter
+        read_only: true
+        bind:
+          create_host_path: false

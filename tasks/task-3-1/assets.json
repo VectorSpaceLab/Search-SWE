@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 3526252359,
+      "sha256": "2a67dc7a1ddcd09db088b30a5772efc9cab486d42d4e268a5219b70152e8c338",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
+        "filename": "tasks/task-3-1/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 295934,
+      "sha256": "73e45d11b25cbb168bf0af6f08b4b3f8e3fbda8da19a48a4f17829361b9eacbc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
+        "filename": "tasks/task-3-1/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/qrels.tsv",
+      "size_bytes": 11950,
+      "sha256": "15b778099edfa934e24de3202b429dff7cc17c93d0de147f11af2a427e564053",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
+        "filename": "tasks/task-3-1/validation/qrels.tsv"
+      }
+    },
+    {
+      "path": "data/validation/stats.json",
+      "size_bytes": 2113077,
+      "sha256": "fb2242f3afad0e86415e54d09725311df29babd3b381ff09103bddf2c74e7610",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
+        "filename": "tasks/task-3-1/validation/stats.json"
+      }
+    },
+    {
+      "path": "data/validation/reference_top100.jsonl",
+      "size_bytes": 1343179,
+      "sha256": "f27f06a8dadd15ccbf812bb2b106078c463b7e15619ec653ed4b2d109906f295",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
+        "filename": "tasks/task-3-1/validation/reference_top100.jsonl"
+      }
+    }
+  ]
+}
