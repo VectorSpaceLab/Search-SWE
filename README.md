@@ -4,13 +4,14 @@
 
 **Benchmarking coding agents on search-system engineering.**
 
-[Project Website](https://search-swe.github.io/) · [Task Gallery](https://search-swe.github.io/tasks.html)
+[![Project Website](https://img.shields.io/badge/github-Search--SWE-blue?logo=github)](https://search-swe.github.io/) [![Task Gallery](https://img.shields.io/badge/github-Task_Gallery-blue?logo=github)](https://search-swe.github.io/tasks.html) [![Data](https://img.shields.io/badge/HuggingFace-Search--SWE-blue?logo=huggingface)](https://huggingface.co/datasets/search-swe/Search-SWE) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 Search-SWE evaluates whether coding agents can **implement, optimize, and repair** search systems under fixed resource constraints. Agents inspect an environment, write and run code, test their systems, and iterate toward an executable submission. Evaluation measures the behavior of the resulting system, including retrieval quality, functional correctness, and resource use.
 
 > In progress
 
-## Task Categories
+## 📝 Task Categories
 
 | Category | Agent objective | Example problems |
 | --- | --- | --- |
@@ -20,7 +21,7 @@ Search-SWE evaluates whether coding agents can **implement, optimize, and repair
 
 Each task specifies its inputs, submission interface, evaluation criteria, and resource budget. Depending on the task, agents receive a corpus, public validation examples, starter code, or fixed model assets. Task-specific rules govern access to models, tools, and network services.
 
-## Evaluation
+## 📊 Evaluation
 
 Tasks use sandboxed environments and a separate verifier. Depending on the task, verification checks:
 
@@ -31,7 +32,7 @@ Tasks use sandboxed environments and a separate verifier. Depending on the task,
 
 Scoring is defined per task. Some tasks require all correctness and resource checks to pass; others measure improvement over a supplied baseline.
 
-## Repository Structure
+## 🧩 Repository Structure
 
 The repository separates task code from downloadable data and model assets.
 
@@ -57,7 +58,7 @@ Search-SWE/
 └── docs/                         # Installation and evaluation guides
 ```
 
-## Data and Models
+## 🧠 Data and Models
 
 Task data is hosted on Hugging Face in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE). Pretrained weights are downloaded from their original model repositories.
 
@@ -65,7 +66,7 @@ Each task's `assets.json` records its fixed input files, sizes, SHA-256 checksum
 
 Dataset provenance, processing details, and licensing information are documented in the Hugging Face dataset card. Hidden evaluation queries and labels belong in the task package's `tests/data/` and are kept separate from the downloadable task data.
 
-## Getting Started
+## 🚀 Getting Started
 
 Clone the repository:
 
@@ -89,3 +90,8 @@ Running the benchmark also requires a compatible Harbor installation, Docker, th
 The [launcher guide](docs/quickstart.md) describes the prerequisites, independent agent and verifier API configuration, optional container proxies, and launch commands.
 
 For task descriptions, visit the [project website](https://search-swe.github.io/). The website is maintained in a [separate repository](https://github.com/search-swe/search-swe.github.io).
+
+## Citation
+
+## Acknowledgments
+This repository and documentation page are maintained by the VectorSpaceLab.
