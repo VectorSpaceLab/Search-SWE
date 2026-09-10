@@ -1,83 +1,127 @@
-# Task-1-3: Scientific-Paper Question Answering
+# Scientific-Paper Question Answering
 
-Migrated from `harbor/tasks_v01/task-1-4` as version `0.3.0`. The submission
-answers scientific questions using a local collection of PDFs and returns one
-supporting document ID for each answer.
+Build a RAG system that answers scientific questions and identifies the supporting paper.
 
-## Data and layout
+**Task:** `task-1-3` · **Mode:** Implementation · **Metric:** LLMJudgeAccuracy
 
-| Path | Contents | Visibility |
-| --- | --- | --- |
-| `data/corpus/` | 300 scientific-paper PDFs | Agent and verifier, read-only |
-| `data/validation/queries.jsonl` | 25 public development questions | Agent, read-only |
-| `data/validation/golden_answers.jsonl` | Public answers and evidence document IDs | Agent, read-only |
-| `tests/data/queries.jsonl` | 25 held-out questions | Verifier; staged after build |
-| `tests/data/golden_answers.jsonl` | Private answers and evidence document IDs | Verifier only |
+## Overview
 
-All PDFs, queries, and labels are byte-identical to the source task. Public and
-hidden query IDs and questions are disjoint. Both splits search the same
-300-PDF corpus. The original reference-only normalization of duplicate-file
-suffixes in two source labels is preserved in the grader.
+Finding a related paper is only one part of scientific question answering.
+The system must recover relevant evidence from PDFs, interpret it, and
+produce an answer attributable to the correct source.
 
-Public data lives at the task root, outside the Agent image build context.
-`assets.json` records its file sizes and SHA-256 checksums. Both environments
-mount the corpus and documentation read-only; only the Agent mounts public
-validation. Harbor transfers `/app` and the Agent trajectory to the separate
-verifier.
+This task combines retrieval and generation over 300 local research papers.
+It evaluates the complete pipeline: an otherwise plausible answer receives no
+credit when the submitted evidence document is wrong. It also tests whether
+the system can share its index and services reliably across concurrent questions.
 
-## Runtime and scoring
+## What This Task Tests
 
-Both images use the local base
-`search-swe-base:cpu-py3.12-1.0.0-codex-npm-0.151.0`. Resource limits remain
-16 CPUs, 64 GiB RAM, 100 GiB storage, no GPU, a 7,200-second Agent phase, and a
-14,400-second verifier phase. Submission commands run as the `submission`
-user. `build.sh` has 3,600 seconds. The verifier then runs one `run.sh` process
-per hidden query, with five workers and a 900-second deadline per launched
-process. Queue time is excluded. Each query has separate input/output/log files;
-results and timings are merged in input order. A query failure invalidates the
-submission while the other queries still run. Commands must honor the supplied
-index and output paths. `query_execution.json` records timings and errors.
+- Turning scientific PDFs into searchable representations with document provenance.
+- Connecting retrieved evidence to concise answers.
+- Maintaining attribution across parsing, retrieval, and generation.
+- Sharing a retrieval service safely across concurrent query processes.
 
-The 14,400-second verifier phase covers build, query execution (a 4,800-second
-shared guard), answer scoring (1,800 seconds), trajectory audit (3,600 seconds),
-and finalization. Per-stage limits do not extend the phase budget.
+## Task Setup
 
-Each result contains `query_id`, `answer`, and `evidence`. A query scores one
-only if its evidence document matches the reference and the answer judge
-accepts the answer as semantically equivalent. The base metric is the mean
-`LLMJudgeAccuracy`; an independent trajectory audit gates the final reward.
-Execution failures, invalid outputs, and a failed audit receive zero.
+### Provided Assets
 
-## Judge configuration
+| Asset | Purpose |
+| --- | --- |
+| `data/corpus/` | 300 research-paper PDFs |
+| `data/validation/queries.jsonl` | 25 public development questions |
+| `data/validation/golden_answers.jsonl` | Public answers and supporting document IDs |
 
-Use the separate placeholders in [`.env.example`](../../.env.example):
+Public assets are mounted under `/task/data`. The 25 held-out questions use
+the same PDF corpus, but their questions and labels are separated from the
+agent environment. [Task 1-4](../task-1-4/README.md) instead evaluates page
+localization within previously unseen long PDFs.
 
-- `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL`, `ANSWER_JUDGE_API_KEY`:
-  semantic answer equivalence through an OpenAI-compatible Chat Completions API.
-- `VERIFIER_OPENAI_BASE_URL`, `VERIFIER_OPENAI_API_KEY`:
-  the Codex trajectory audit, using a Responses-compatible API. The URL/key
-  names match the repository's `.env.example`; `task.toml` injects
-  them as `OPENAI_BASE_URL` and `OPENAI_API_KEY` in the verifier. The audit
-  model is fixed to `gpt-5.6-sol` in
-  [`tests/jailbreak_judge/codex.toml`](tests/jailbreak_judge/codex.toml), matching
-  Task-1-1. The answer judge uses its own model setting.
+### Fixed Components and Allowed Changes
 
-Set these variables in the repository `.env` or the environment that launches Harbor. They are
-injected only into the verifier; submission processes receive neither group.
-The answer scorer and trajectory judge are also launched without the other
-group's settings. There is no cross-group credential fallback. Runtime configuration files contain model
-names and API URLs but never API-key values.
+The corpus and output interface are fixed. PDF processing, index design,
+retrieval, evidence selection, and answer synthesis are implementation choices.
+Optional OpenRouter and Jina services are subject to the
+[resource policy](environment/docs/available_resources.md); they do not permit
+replacing corpus-grounded work with external answers.
 
-Optional submission APIs use the shared `OPENROUTER_API_KEY` and `JINA_API_KEY`.
-Harbor injects those names into both task environments. These are separate from
-the private judge credentials and the launcher's coding-agent `AGENT_*` group.
+### Environment and Resource Limits
 
-The separate long-PDF evidence-localization task is [Task-1-4](../task-1-4/README.md).
+The CPU Python 3.12 environment provides 16 CPUs, 64 GiB memory, 100 GiB storage,
+and no GPU. The agent has two hours and the Harbor verifier four hours.
+The submitted build has a 3,600-second limit. The verifier launches up to five
+query processes at once, each with 900 seconds from process start; queue time
+is excluded and workers share the same resources.
 
-## Validation
+The verifier also bounds query execution, answer scoring, and trajectory review
+as stages inside its overall budget. Stage limits do not extend that budget.
 
-Data and evidence-gated scoring are preserved from the source task. Local tests
-cover five workers over 25 questions, per-query deadlines, ordered results,
-continued execution after one query fails, and exclusion of both judge keys
-from submission environments. Container checks use local judge fixtures; live
-external judge credentials are not required for these checks.
+## Submission Contract
+
+The deliverable is `/app/build.sh` plus `/app/run.sh` and the implementation
+they need. Each query produces a concise `answer` and one evidence document ID,
+along with its query ID. The build must recreate any service in the separate
+verifier, and the query path must support concurrent invocations.
+
+The full schema and invocation details live in [instruction.md](instruction.md).
+
+## Evaluation
+
+### Search Quality
+
+A question scores one only when **both** conditions hold: the evidence document
+matches the reference, and an answer judge accepts the answer as semantically
+equivalent to the reference. LLMJudgeAccuracy is the mean of these binary
+outcomes over 25 hidden questions. The report's 0–100 score is 100 times the
+normalized reward.
+
+### Correctness and Resource Gates
+
+Execution, complete query coverage, non-empty answers, valid document IDs, and
+runtime limits must pass. A failed query process or structurally invalid output
+invalidates the submission, rather than merely counting as an incorrect answer.
+
+### Integrity Checks and Final Reward
+
+The answer judge and trajectory audit are separate. The first evaluates answer
+equivalence; the second checks task compliance and can set the whole reward
+to zero. Their credentials are isolated from submission processes and from
+each other.
+
+The package retains its source task's PDF and question data. Current task
+identity and execution settings are recorded in `task.toml`; historical
+migration identifiers are not needed to run it.
+
+## Running This Task
+
+From the repository root, follow the [launcher guide](../../docs/quickstart.md)
+to install the pinned Harbor dependencies, prepare Docker and the task's base
+image, and configure the coding-agent credentials. The
+[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+
+This task needs both `ANSWER_JUDGE_*` settings for answer scoring and
+`VERIFIER_OPENAI_*` settings for the trajectory audit. Optional submission APIs
+use shared `OPENROUTER_API_KEY` and `JINA_API_KEY`. The launcher guide explains
+the separate credential groups and their API requirements.
+
+```bash
+python scripts/download_assets.py --task task-1-3
+bash scripts/run_task.sh --task task-1-3 --model "YOUR_AGENT_MODEL"
+```
+
+The shared launcher uses the Codex agent and writes results under `jobs/task-1-3/`.
+Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+command construction without starting an evaluation; this does not validate
+assets, credentials, or hardware.
+
+## Task Files
+
+| File or directory | What to read it for |
+| --- | --- |
+| [instruction.md](instruction.md) | Complete agent-facing specification and executable contract |
+| [task.toml](task.toml) | Task identity, artifact collection, and phase budgets |
+| [assets.json](assets.json) | Fixed asset paths, immutable revisions, and checksums |
+| [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
+| [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
+| [Verifier](tests/) | Execution, output validation, and scoring implementation |
+| [Resource policy](environment/docs/available_resources.md) | Allowed submission APIs and model restrictions |

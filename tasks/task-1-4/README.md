@@ -1,81 +1,124 @@
-# Task-1-4: Long-PDF Evidence Localization
+# Long-PDF Evidence Localization
 
-Migrated from `harbor/tasks_v01/task-1-3` as version `0.3.0`. Given a query and
-target PDF, the submission returns five distinct physical page numbers with
-supporting text and ranked scores. The primary metric is macro `Recall@5`
-over relevant pages, subject to the existing trajectory anti-jailbreak gate.
+Find the physical pages in a long PDF that support a natural-language information need.
 
-## Data and layout
+**Task:** `task-1-4` · **Mode:** Implementation · **Metric:** Page Recall@5
 
-| Path | Contents | Visibility |
-| --- | --- | --- |
-| `data/corpus/` | 6 public PDFs | Agent, read-only |
-| `data/validation/queries.jsonl` | 30 public queries | Agent, read-only |
-| `data/validation/ground_truth.jsonl` | Public page relevance labels | Agent, read-only |
-| `data/validation/golden_answers.jsonl` | Original public label file | Agent, read-only |
-| `data/verifier/corpus/` | 6 held-out PDFs | Verifier-only mount; staged read-only for submission execution |
-| `tests/data/queries.jsonl` | 30 hidden queries | Verifier; staged after build |
-| `tests/data/golden_answers.jsonl` | Hidden page relevance labels | Verifier only |
+## Overview
 
-All PDFs, queries, and labels are byte-identical to the source task. Public and
-hidden target PDFs are disjoint. Query IDs such as `q_001` are local to each
-split and are reused across splits; the queries themselves differ.
+This task is a natural-language version of finding a passage inside a document.
+The target PDF is already known; the system must identify where relevant
+evidence occurs, rather than retrieve a different document or generate an answer.
 
-Public data lives at the task root, outside the Agent image build context.
-`assets.json` records its file sizes and SHA-256 checksums. The verifier mounts
-`data/verifier/corpus/` read-only at `/tests/corpus`;
-hidden queries and labels remain in its image. The Agent mounts only the public
-`data/corpus/` and `data/validation/` directories.
+The challenge is to preserve the connection between searchable content and its
+original physical page. Useful semantic matches can span sections or use
+different wording from the question. A system must generalize its parsing
+and retrieval approach to new PDFs, not just build a lookup for development documents.
 
-## Runtime and verification
+## What This Task Tests
 
-Both images use the local benchmark base
-`search-swe-base:cpu-py3.12-1.0.0-codex-npm-0.151.0`. The task retains 16 CPUs,
-64 GiB RAM, 100 GiB storage, no GPU, a 7,200-second Agent phase, and a
-10,800-second verifier phase.
+- Extracting and indexing long PDFs while retaining physical page provenance.
+- Translating an information need into relevant page-level results.
+- Returning supporting text that actually appears on each selected page.
+- Rebuilding the pipeline on unseen documents within a fixed resource budget.
 
-Harbor transfers `/app` and the Agent trajectory to the separate verifier.
-Documentation is mounted read-only; public data is not mounted. The verifier
-stages its hidden PDFs under `/tmp/task-1-4-eval/corpus`, then runs the submitted
-`build.sh` and `run.sh` as the `submission` user. Both commands must honor their
-supplied paths. The build may take 2,400 seconds; one run processes all 30
-hidden queries within 1,800 seconds, using `--top-k 5`.
+## Task Setup
 
-The deterministic grader validates query coverage, five unique in-range pages,
-evidence membership on each reported page, finite descending scores, and
-ascending page order for ties. It computes the mean fraction of relevant pages
-retrieved. The existing Codex trajectory audit gates that score; invalid
-execution, invalid output, or a failed audit receives zero. Audit credentials
-remain private to the verifier; permitted submission APIs retain the source
-task's configuration.
+### Provided Assets
 
-Task names, report paths, grader identifiers, and the audit prompt use
-`task-1-4`. The source task remains available at its original path.
+| Asset | Purpose |
+| --- | --- |
+| `data/corpus/` | Six public development PDFs |
+| `data/validation/` | 30 public queries and page relevance labels |
+| `data/verifier/corpus/` | Six different PDFs mounted only for verification |
 
-## Judge configuration
+The verifier evaluates 30 hidden queries against held-out PDFs. Neither the
+PDFs nor the questions are the public examples. Query IDs are local to each
+split and can repeat without referring to the same question.
 
-This task does not use an answer-correctness judge. Page relevance and Recall@5
-are computed directly from the gold labels; the existing trajectory audit is
-the only model-based gate.
+Held-out PDFs are downloadable assets but excluded from the agent's mounts;
+hidden questions and labels remain in `tests/data/`. This is environment
+isolation, not a claim that repository readers cannot inspect published files.
 
-Configure `VERIFIER_OPENAI_BASE_URL` and `VERIFIER_OPENAI_API_KEY` using
-[`.env.example`](../../.env.example).
-The URL/key names match the repository's `.env.example`; `task.toml`
-maps them to `OPENAI_BASE_URL` and `OPENAI_API_KEY` inside the verifier. The
-audit uses the Codex CLI and a Responses-compatible API. These variables are
-excluded from submission commands and are independent of Task-1-3's
-`ANSWER_JUDGE_*` settings. API-key values are never written into runtime
-configuration files. The audit model is fixed to `gpt-5.6-sol` in
-[`tests/jailbreak_judge/codex.toml`](tests/jailbreak_judge/codex.toml), matching
-Task-1-1; no model-name environment variable is required.
+### Fixed Components and Allowed Changes
 
-Optional submission APIs use the shared `OPENROUTER_API_KEY` and `JINA_API_KEY`.
-Harbor injects those names into both task environments. These are separate from
-the private judge credentials and the launcher's coding-agent `AGENT_*` group.
+The target document, physical page numbering, and five-result interface are
+fixed. Parsing, chunking, indexing, and page ranking may change. Optional
+OpenRouter and Jina resources follow the
+[resource policy](environment/docs/available_resources.md).
 
-## Validation
+### Environment and Resource Limits
 
-The data, deterministic page scorer, and executable interface are unchanged.
-Migration checks covered both 30-question splits, page/evidence validation,
-submission permissions, and process cleanup. Trajectory checks use a local
-fixture; no live external judge is called during those checks.
+The CPU Python 3.12 environment has 16 CPUs, 64 GiB memory, 100 GiB storage,
+and no GPU. The agent has two hours; the Harbor verifier has three hours.
+The submitted build receives up to 2,400 seconds, followed by one 1,800-second
+query run covering all 30 questions.
+
+The verifier stages a different PDF collection and supplies its paths to the
+submission. Development-time services and indexes cannot be assumed to survive.
+
+## Submission Contract
+
+The system is delivered through `/app/build.sh` and `/app/run.sh`. For each
+question it returns five distinct, ranked physical page numbers, supporting
+text, and numeric scores. Page numbers are **one-based PDF page positions**,
+which may differ from printed page labels.
+
+See [instruction.md](instruction.md) for the exact interface. This task returns
+evidence locations; [task 1-3](../task-1-3/README.md) returns answers with
+document-level attribution.
+
+## Evaluation
+
+### Search Quality
+
+For each query, Recall@5 is the fraction of its relevant pages found among
+the five returned pages. The metric is the arithmetic mean of these fractions
+across hidden queries. The report also expresses normalized reward on a 0–100 scale.
+
+### Correctness and Resource Gates
+
+Results must cover every query, reference valid unique pages in the target PDF,
+and include evidence text belonging to those pages. Ranking, execution, and
+resource checks must pass before the metric is accepted.
+
+### Integrity Checks and Final Reward
+
+Page relevance is scored deterministically against labels; there is no
+answer-correctness model. A separate trajectory audit checks compliance.
+Final reward is mean Recall@5 when execution, output, and audit checks pass,
+and zero otherwise.
+
+## Running This Task
+
+From the repository root, follow the [launcher guide](../../docs/quickstart.md)
+to install the pinned Harbor dependencies, prepare Docker and the task's base
+image, and configure the coding-agent credentials. The
+[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+
+Configure the trajectory judge's `VERIFIER_OPENAI_*` settings. This task does
+not need `ANSWER_JUDGE_*`. Optional submission APIs use shared OpenRouter
+and Jina keys. Downloading also restores the held-out PDF assets; Compose keeps
+them out of the agent environment.
+
+```bash
+python scripts/download_assets.py --task task-1-4
+bash scripts/run_task.sh --task task-1-4 --model "YOUR_AGENT_MODEL"
+```
+
+The shared launcher uses the Codex agent and writes results under `jobs/task-1-4/`.
+Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+command construction without starting an evaluation; this does not validate
+assets, credentials, or hardware.
+
+## Task Files
+
+| File or directory | What to read it for |
+| --- | --- |
+| [instruction.md](instruction.md) | Complete agent-facing specification and executable contract |
+| [task.toml](task.toml) | Task identity, artifact collection, and phase budgets |
+| [assets.json](assets.json) | Fixed asset paths, immutable revisions, and checksums |
+| [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
+| [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
+| [Verifier](tests/) | Execution, output validation, and scoring implementation |
+| [Resource policy](environment/docs/available_resources.md) | Permitted submission APIs |

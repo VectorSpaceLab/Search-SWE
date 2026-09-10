@@ -1,143 +1,158 @@
-# Task-2-4: BrowseComp-Plus Multi-Constraint Retrieval
+# Agentic Search Optimization
 
-Optimize the ReAct starter to return exactly five distinct corpus document IDs
-for each multi-constraint question. The sole metric is macro Gold Recall@5.
-This task was migrated from `harbor/tasks/task-1-6`, retaining its corpus and
-allowed retrieval resources.
+Improve a ReAct search system's document coverage on BrowseComp-Plus questions.
 
-## Task contents
+**Task:** `task-2-4` · **Mode:** Optimization · **Metric:** Gold Recall@5
 
-| Path | Purpose | Visibility |
-| --- | --- | --- |
-| `data/corpus.jsonl` | Full BrowseComp-Plus corpus | Shared read-only input |
-| `data/validation/queries.jsonl` | 20 public development questions | Agent-visible |
-| `data/validation/qrels_gold.txt` | 63 public gold relevance labels | Agent-visible |
-| `tests/data/queries.jsonl` | 20 held-out questions | Verifier-only |
-| `tests/data/qrels_gold.txt` | 63 hidden gold relevance labels | Verifier-only |
-| `environment/docs/` | Runtime and allowed API resources | Agent-visible |
+## Overview
 
-The task installs a ReAct starter under `/app/starter`, with executable
-`/app/build.sh` and `/app/run.sh` wrappers. The Agent improves or replaces the
-baseline while preserving these interfaces. Each output line
-contains `query_id` and a `doc_ids` array of exactly five distinct strings that
-match corpus `docid` values.
+BrowseComp-Plus questions often require combining several constraints.
+A search system may need to decompose a question, inspect intermediate results,
+and reformulate its search before choosing its final documents.
 
-The public assets follow the [asset directory convention](../../docs/assets.md):
-they live outside Docker build contexts, and `assets.json` records their sizes
-and SHA-256 checksums. The verifier mounts only the corpus, while its hidden
-inputs are packaged under `/tests/data` in the verifier image.
+This task supplies an editable ReAct starter built around SQLite FTS5/BM25.
+The agent improves or replaces its retrieval and reasoning components while
+working within a bounded number of searches. Evaluation measures the documents
+ultimately retrieved, not the fluency of an answer or the appearance of a trace.
+The current repository identifier is task 2-4.
 
-## Validation and test splits
+## What This Task Tests
 
-Each split is a stratified 20-question subset of its prior 30-question split,
-selected with seed `20260909`. The source dataset has 830 questions, including
-725 with 1–5 gold documents. The current gold-count distribution is:
+- Turning compound information needs into effective search actions.
+- Using observations to improve later retrieval and final document selection.
+- Balancing document coverage with a finite retrieval-round budget.
+- Serving concurrent questions through a shared index and search service.
 
-| Gold documents per question | Validation questions | Test questions |
-| --- | --- | --- |
-| 1 | 3 | 3 |
-| 2 | 4 | 4 |
-| 3 | 4 | 4 |
-| 4 | 5 | 5 |
-| 5 | 4 | 4 |
-| Total | 20 | 20 |
+## Task Setup
 
-Each split contains 63 question–gold-document pairs, averaging 3.15 gold
-documents per question. Gold Recall@5 has a theoretical ceiling of 1.0 on both
-splits. This is a gold-count-stratified selection rather than an estimate of
-performance over the full dataset's natural distribution.
+### Provided Assets
 
-Question text comes from `dataset/qa_ground_truth.jsonl`; positive document
-labels come from `dataset/qrels_gold.txt`. Every selected gold ID was checked
-against the task corpus. Validation is sampled first; test candidates exclude
-its query IDs and gold document IDs.
+| Asset | Purpose |
+| --- | --- |
+| `data/corpus.jsonl` | The 100,195-document BrowseComp-Plus corpus |
+| `data/validation/queries.jsonl` | 20 public development questions |
+| `data/validation/qrels_gold.txt` | Public gold document relevance labels |
+| `environment/starter/` | Editable ReAct loop, lexical service, and entry points |
 
-The packaged query and relevance files preserve this selection. `assets.json`
-records the exact public file sizes and SHA-256 checksums. The task package
-contains questions and document relevance labels; answer labels are not used.
+The verifier has 20 separate questions and gold labels. Both splits have
+1–5 gold documents per question, with matching gold-count distributions:
+3, 4, 4, 5, and 4 questions respectively. Each split contains 63 gold pairs.
+The sampling seed is `20260909`; test selection excludes validation query IDs
+and gold document IDs.
 
-## Runtime and credentials
+This stratified subset has a theoretical Gold Recall@5 ceiling of 1.0.
+It is not an estimate over the full dataset's natural question distribution.
+Answer labels are not used.
 
-Both Dockerfiles use the existing benchmark base image
-`search-swe-base:cpu-py3.12-1.0.0-codex-npm-0.151.0`. This local image must be
-available before building the task.
+### Fixed Components and Allowed Changes
 
-The environment uses 32 CPUs, 128 GiB RAM, 200 GiB storage, and no GPU. Agent and
-verifier timeouts are 7,200 and 15,600 seconds respectively. The verification
-subprocess has a 15,300-second shared budget, including a 600-second build
-limit and 120 seconds for scoring. There is no individual query timeout;
-queries share the remaining execution budget. Harbor allows a further 300
-seconds for finalization. Each query may use at most 20 retrieval rounds.
+The corpus, five-document output, and resource limits are fixed. Indexing,
+document coverage, query planning, retrieval, observations, and selection may
+change. The initial starter indexes the first 6,000 characters of each document
+and uses an allowed OpenRouter planner when configured; without a key it
+falls back to one lexical search.
 
-Use the shared optional `OPENROUTER_API_KEY` and `JINA_API_KEY` from
-[`.env.example`](../../.env.example). Harbor injects those names into both
-task environments. SiliconFlow is not an available resource. This task needs
-neither trajectory nor answer-judge settings. Coding-agent configuration follows the launcher's
-`AGENT_*` group. Allowed OpenRouter generation models may support query decomposition, rewriting, and
-relevance reasoning. The scoring code uses only the Python standard library
-and needs no API credentials or network access. Submission execution retains
-its configured access to the permitted APIs.
+Optional APIs follow the [resource policy](environment/docs/available_resources.md).
+Each question may use at most **20 retrieval rounds**; independent searches in
+a batch count separately. A submission-generated trace is diagnostic, not
+trusted proof of compliance.
 
-## Verification and scoring
+### Environment and Resource Limits
 
-Harbor transfers `/app` and the Agent trajectory to a separate verifier. The
-submission is rebuilt and run as UID/GID 65534. It can write to `/app`, temporary
-storage, and the query output directory; evaluation reports, hidden labels,
-and final rewards remain verifier-owned.
+The CPU Python 3.12 environment provides 32 CPUs, 128 GiB memory, 200 GiB storage,
+and no GPU. The agent has two hours; the Harbor verifier has 15,600 seconds.
+A shared 15,300-second verification budget includes a 600-second build cap and
+120 seconds reserved for scoring. Five query workers share the remaining budget;
+there is **no individual query timeout**.
 
-The verifier builds once and invokes `run.sh` once per hidden question, using a
-pool of five concurrent workers. Each query has separate input, output, and
-stdout/stderr log files; the service and index are shared. Queries have no
-individual timeout. Results and timings
-are merged in input order regardless of completion order. Run-phase elapsed
-time records wall time, with summed query durations reported separately.
+The previously documented offline lexical baseline completed a full-corpus
+build in about 38 seconds and achieved public Gold Recall@5 of `0.1741666667`.
+That is a historical local measurement, not a new run or a result for the
+model-driven planner.
 
-For a valid submission, it computes each query's retrieved gold count divided by its
-gold count, then takes the arithmetic mean across all 20 queries. The five
-positions are weighted equally, and gold documents are counted once per query.
+## Submission Contract
 
-`reward.txt` contains that mean in `[0, 1]`; `reward.json` contains only the
-`gold_recall_at_5` metric. The evaluation report also expresses it on a 0–100
-scale and records per-query counts and recall. Failed execution, missing or
-extra query outputs, invalid IDs, duplicates, or any result with a document
-count other than five invalidate the entire submission and receive zero.
+The deliverable contains `/app/build.sh`, `/app/run.sh`, and the implementation.
+The verifier rebuilds once and launches one query process per question with up
+to five workers. The service and index are shared, while input/output files are
+separate.
 
-Local unit tests:
+Each result contains a query ID and exactly five distinct corpus IDs in `doc_ids`.
+This differs from the scored `results` objects used by several other tasks.
+See [instruction.md](instruction.md) for the exact contract.
+
+## Evaluation
+
+### Search Quality
+
+For each query, Gold Recall@5 is the number of retrieved gold documents divided
+by its gold count. Reward is the arithmetic mean across 20 queries, in `[0, 1]`.
+All five positions are weighted equally; this is neither answer accuracy nor
+a rank-discounted metric. The evaluation report also gives a 0–100 score.
+
+### Correctness and Resource Gates
+
+Failed execution, missing or extra query outputs, unknown or duplicate document
+IDs, or a result count other than five invalidate the whole submission.
+The build, shared execution budget, concurrency contract, and search-round
+limit remain task requirements.
+
+### Integrity Checks and Final Reward
+
+This task uses **neither an answer judge nor a trajectory judge**. The evaluator
+is deterministic and its sole quality metric is Gold Recall@5. Runtime isolation
+and output validation remain in place; removing model-based judges does not
+relax the restrictions on hidden labels or unauthorized resources.
+For valid execution, `reward.txt` contains mean recall and `reward.json`
+contains `gold_recall_at_5`.
+
+## Running This Task
+
+From the repository root, follow the [launcher guide](../../docs/quickstart.md)
+to install the pinned Harbor dependencies, prepare Docker and the task's base
+image, and configure the coding-agent credentials. The
+[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+
+No `ANSWER_JUDGE_*` or `VERIFIER_OPENAI_*` settings are required for this task.
+Optional submission APIs use shared `OPENROUTER_API_KEY` and `JINA_API_KEY`;
+the coding agent still needs its own launcher configuration.
+
+For an existing public prediction file, the deterministic scorer can also be
+run from the repository root:
 
 ```bash
-python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-```
-
-The standalone evaluator can score a validation result file with:
-
-```bash
-python3 tests/evaluate.py \
-  --corpus data/corpus.jsonl \
-  --queries data/validation/queries.jsonl \
-  --qrels data/validation/qrels_gold.txt \
+python tasks/task-2-4/tests/evaluate.py \
+  --corpus tasks/task-2-4/data/corpus.jsonl \
+  --queries tasks/task-2-4/data/validation/queries.jsonl \
+  --qrels tasks/task-2-4/data/validation/qrels_gold.txt \
   --predictions /path/to/results.jsonl \
   --report /tmp/task-2-4-validation.json
 ```
 
-No Oracle solution is included. Synthetic fixtures check the submission
-interface and scoring; the measured baseline results are described below.
+This scores predictions; it does not reproduce the full Harbor execution.
+Local fixture tests are available via
+`python -B -m unittest discover -s tasks/task-2-4/tests -p 'test_*.py' -v`.
+No oracle solution is included.
 
-## ReAct baseline and checks
+```bash
+python scripts/download_assets.py --task task-2-4
+bash scripts/run_task.sh --task task-2-4 --model "YOUR_AGENT_MODEL"
+```
 
-The [starter README](environment/starter/README.md) describes the editable
-SQLite FTS5/BM25 service and search/observation loop. It indexes the first
-6,000 characters of each document, uses an allowed OpenRouter planner when
-configured, and otherwise performs one lexical search. The loop caps searches
-at 20 and writes a diagnostic trace beside the results. Arbitrarily rewritten
-submission code must still honor this limit; the trace is not trusted proof of
-its actual internal search count.
+The shared launcher uses the Codex agent and writes results under `jobs/task-2-4/`.
+Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+command construction without starting an evaluation; this does not validate
+assets, credentials, or hardware.
 
-The offline baseline was checked in a network-disabled container on the full
-100,195-document corpus: construction took about 38 seconds, and all 20 public
-queries ran successfully through five workers. Its public Gold Recall@5 was
-`0.1741666667`. Index reuse and service restart also passed. This is a basic
-lexical baseline measurement, not a measurement of the model-driven planner.
+## Task Files
 
-Local tests cover scoring, five-worker execution, early finish, follow-up
-searches from observations, and the 20-search cap. External model calls are
-simulated in tests; no live judge or planner credentials are used.
+| File or directory | What to read it for |
+| --- | --- |
+| [instruction.md](instruction.md) | Complete agent-facing specification and executable contract |
+| [task.toml](task.toml) | Task identity, artifact collection, and phase budgets |
+| [assets.json](assets.json) | Fixed asset paths, immutable revisions, and checksums |
+| [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
+| [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
+| [Verifier](tests/) | Execution, output validation, and scoring implementation |
+| [Starter notes](environment/starter/README.md) | ReAct loop, lexical fallback, and service design |
+| [Resource policy](environment/docs/available_resources.md) | Allowed models and API operations |
