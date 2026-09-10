@@ -1,7 +1,7 @@
-# Task-3-1 release package
+# Task-3-1 Sparse Retrieval Postings Pruning
 
 Task-3-1 evaluates a Python-only learned-sparse retrieval optimization over a
-1,000,000-document MS MARCO/SPLADE corpus. The agent receives opaque,
+1,000,000-document MS MARCO corpus. The agent receives opaque,
 unweighted term IDs and public development data. Hidden queries, qrels, and
 reference rankings remain in the separate verifier image.
 
