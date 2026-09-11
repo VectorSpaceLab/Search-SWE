@@ -8,14 +8,14 @@ artifacts = [
 [task]
 name = "search-swe/task-3-1"
 version = "0.4.0"
-description = "Optimize Python learned-sparse retrieval under binary quality and starter-relative latency gates."
+description = "Optimize Python learned-sparse retrieval under quality gates and a continuous starter-relative latency reward."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "ms-marco", "splade", "sparse-retrieval", "postings"]
 
 [metadata]
-task_type = "debug"
+task_type = "optimize"
 dataset = "MS MARCO Passage v1 with frozen SPLADE sparse vectors"
-primary_metric = "binary_quality_and_starter_latency_pass"
+primary_metric = "quality_gated_linear_starter_latency"
 metric_k = 10
 public_example_count = 200
 hidden_query_count = 1000

@@ -157,7 +157,7 @@ from pathlib import Path
 error, report_path, reward_path = sys.argv[1:]
 report = {
     "status": "invalid",
-    "reward_metric": "binary_quality_and_starter_latency_pass",
+    "reward_metric": "quality_gated_linear_starter_latency",
     "reward": 0.0,
     "error": error,
 }

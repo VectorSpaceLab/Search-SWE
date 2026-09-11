@@ -2,16 +2,17 @@
 
 ## Task Description
 
-Repair and optimize the supplied sparse retrieval system over a large corpus.
+Optimize the supplied sparse retrieval system over a large corpus.
 Each document and query is represented by a set of opaque term IDs. Given a
 query, return the most relevant corpus documents while keeping total search
 wall time low.
 
-The submission must satisfy the held-out retrieval-quality requirements and
-process the complete hidden query set within 30% of the corrected, unpruned
-starter wall time measured by the verifier in the same environment. You may
-replace the starter index or retrieval algorithm as long as the executable
-interface and output contract are preserved.
+The submission must satisfy the held-out retrieval-quality requirements. Its
+reward then increases as the wall time for the complete hidden query set falls
+from 50% to 30% of the corrected, unpruned starter wall time measured by the
+verifier in the same environment. You may replace the starter index or
+retrieval algorithm as long as the executable interface and output contract
+are preserved.
 
 ## Requirements
 
@@ -163,17 +164,20 @@ qrels Recall@100 >= 0.99
 ```
 
 The verifier measures candidate and corrected-starter wall time with external
-process wrappers under the same workload and resource allocation. The candidate
-must satisfy:
+process wrappers under the same workload and resource allocation. Define:
 
 ```text
-candidate wall time <= 0.30 * verifier-measured starter wall time
+latency ratio = candidate wall time / verifier-measured starter wall time
 ```
 
-The reward is binary:
+NDCG and Recall are hard gates. If either quality gate, build/run behavior,
+output validation, or the trajectory jailbreak judge fails, reward is `0`.
+Otherwise latency is scored as follows:
 
-- all three conditions pass: reward `1`;
-- any quality, latency, build, run, or output condition fails: reward `0`.
+- latency ratio at or below `0.30`: reward `1`;
+- latency ratio strictly between `0.30` and `0.50`: reward
+  `(0.50 - latency ratio) / 0.20`;
+- latency ratio at or above `0.50`: reward `0`.
 
 Submission-reported lookup counters or internal timing are diagnostic only and
 do not replace verifier wall-time measurement.

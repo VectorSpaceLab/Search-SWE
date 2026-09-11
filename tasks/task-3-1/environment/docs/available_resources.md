@@ -18,5 +18,5 @@ provided to `build.sh`. It must not depend on credentials, undeclared files,
 background services, or files outside the task inputs and its own index.
 
 See `environment.md` for runtime limits and `index_format.md` for the starter
-index layout. The formal thresholds and binary reward are defined in
+index layout. The formal quality gates and latency reward are defined in
 `/task/instruction.md`.

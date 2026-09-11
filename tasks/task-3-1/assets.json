@@ -8,8 +8,8 @@
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
-        "filename": "tasks/task-3-1/corpus.jsonl"
+        "revision": "b1bf8b61563f6cf7b0eea0bf0d98b1da6aaea34f",
+        "filename": "tasks/task-2-5/corpus.jsonl"
       }
     },
     {
@@ -19,8 +19,8 @@
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
-        "filename": "tasks/task-3-1/validation/queries.jsonl"
+        "revision": "b1bf8b61563f6cf7b0eea0bf0d98b1da6aaea34f",
+        "filename": "tasks/task-2-5/validation/queries.jsonl"
       }
     },
     {
@@ -30,8 +30,8 @@
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
-        "filename": "tasks/task-3-1/validation/qrels.tsv"
+        "revision": "b1bf8b61563f6cf7b0eea0bf0d98b1da6aaea34f",
+        "filename": "tasks/task-2-5/validation/qrels.tsv"
       }
     },
     {
@@ -41,8 +41,8 @@
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
-        "filename": "tasks/task-3-1/validation/stats.json"
+        "revision": "b1bf8b61563f6cf7b0eea0bf0d98b1da6aaea34f",
+        "filename": "tasks/task-2-5/validation/stats.json"
       }
     },
     {
@@ -52,8 +52,8 @@
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4df7328243ac663ab2557a5a34bacdb681e02894",
-        "filename": "tasks/task-3-1/validation/reference_top100.jsonl"
+        "revision": "b1bf8b61563f6cf7b0eea0bf0d98b1da6aaea34f",
+        "filename": "tasks/task-2-5/validation/reference_top100.jsonl"
       }
     }
   ]

@@ -1,8 +1,8 @@
-# Sparse Retrieval Index Repair
+# Sparse Retrieval Postings Pruning
 
-Repair and accelerate a sparse retrieval system while preserving strict quality requirements.
+Optimize a sparse retrieval system while preserving strict quality requirements.
 
-**Task:** `task-3-1` · **Mode:** Repair · **Metric:** Binary quality and relative-runtime pass
+**Task:** `task-3-1` · **Mode:** Optimization · **Metric:** Quality-gated linear latency reward
 
 ## Overview
 
@@ -15,9 +15,9 @@ The current task packages one million MS MARCO documents as sets of opaque,
 unweighted term IDs derived from frozen sparse representations. It evaluates
 a Python implementation against a corrected, unpruned starter.
 The goal is to preserve strong retrieval quality while reducing total query
-wall time to at most 30% of that reference. This is the executable task's
-current definition, rather than the earlier draft's collection of proposed
-postings and latency targets.
+wall time relative to that reference. Quality thresholds are hard gates;
+passing submissions receive a latency reward that decreases linearly between
+30% and 50% of starter wall time.
 
 ## What This Task Tests
 
@@ -43,7 +43,8 @@ measuring the runtime baseline.
 
 The public assets now have an immutable dataset revision in [assets.json](assets.json).
 The old README's pending-publication note no longer applies. Downloading uses
-the same size and SHA-256 checks as other tasks.
+the same size and SHA-256 checks as other tasks. Their Hugging Face source
+paths are under `tasks/task-2-5/`.
 
 ### Fixed Components and Allowed Changes
 
@@ -63,8 +64,8 @@ encoder outputs or a retrainable transformer are supplied.
 The CPU Python 3.12 environment has one CPU, 32 GiB memory, 80 GiB storage,
 and no GPU. The agent has two hours; the Harbor verifier has 80 minutes.
 The current execution wrapper caps the candidate build at 3,600 seconds and
-query run at 900 seconds. The relative-runtime gate still applies within
-those bounds, and all verification stages share the overall phase budget.
+query run at 900 seconds. The starter-relative latency reward is measured
+within those bounds, and all verification stages share the overall phase budget.
 
 The formal build/search path requires no external service, credentials, or
 downloads. The private integrity judge's API access is a separate concern.
@@ -88,20 +89,20 @@ but that particular storage format is not a required output artifact.
 Quality is measured using mean NDCG@10 and qrels-based Recall@100. The current
 minimums are **0.89** and **0.99** respectively.
 
-### Correctness and Resource Gates
+### Correctness and Latency Reward
 
 The verifier measures the candidate and corrected starter on the same workload
-and resource allocation. Candidate query wall time must be no more than
-**0.30 times starter query wall time**. Passing only quality or only runtime
-is insufficient. Successful build/run, valid outputs, and implementation
-restrictions also remain required.
+and resource allocation. A latency ratio at or below **0.30** receives reward
+`1`; a ratio at or above **0.50** receives reward `0`; values strictly between
+those boundaries receive `(0.50 - ratio) / 0.20`. Successful build/run, valid
+outputs, and implementation restrictions remain hard requirements.
 
 ### Integrity Checks and Final Reward
 
-Final reward is `1` only if both quality thresholds, the runtime gate, output
-and execution checks, and the trajectory audit pass. Any failure gives `0`.
-The corrected starter is a measured runtime reference, not a fixed published
-timing that submissions can assume on every machine.
+If either quality threshold, output and execution checks, or the trajectory
+audit fails, final reward is `0`. Otherwise the final reward is the latency
+reward described above. The corrected starter is a measured runtime reference,
+not a fixed published timing that submissions can assume on every machine.
 
 ## Running This Task
 

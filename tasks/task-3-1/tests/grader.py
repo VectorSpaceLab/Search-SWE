@@ -15,8 +15,19 @@ QUALITY_K = 10
 EPSILON = 1e-12
 MIN_NDCG = 0.89
 MIN_RECALL = 0.99
-MAX_STARTER_WALL_RATIO = 0.30
-REWARD_METRIC = "binary_quality_and_starter_latency_pass"
+FULL_REWARD_STARTER_WALL_RATIO = 0.30
+ZERO_REWARD_STARTER_WALL_RATIO = 0.50
+REWARD_METRIC = "quality_gated_linear_starter_latency"
+
+
+def latency_reward(ratio: float) -> float:
+    if ratio <= FULL_REWARD_STARTER_WALL_RATIO:
+        return 1.0
+    if ratio >= ZERO_REWARD_STARTER_WALL_RATIO:
+        return 0.0
+    return (ZERO_REWARD_STARTER_WALL_RATIO - ratio) / (
+        ZERO_REWARD_STARTER_WALL_RATIO - FULL_REWARD_STARTER_WALL_RATIO
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -178,14 +189,20 @@ def main() -> int:
         if baseline_seconds <= 0 or candidate_seconds <= 0:
             raise ValueError("starter and candidate wall_seconds must be positive")
         latency_ratio = candidate_seconds / baseline_seconds
-        max_candidate_seconds = baseline_seconds * MAX_STARTER_WALL_RATIO
+        full_reward_candidate_seconds = (
+            baseline_seconds * FULL_REWARD_STARTER_WALL_RATIO
+        )
+        zero_reward_candidate_seconds = (
+            baseline_seconds * ZERO_REWARD_STARTER_WALL_RATIO
+        )
         floors = {
             "ndcg@10": candidate_quality["ndcg@10"] >= MIN_NDCG,
             "qrels_recall@100": candidate_quality["qrels_recall@100"] >= MIN_RECALL,
-            "starter_wall_ratio": latency_ratio <= MAX_STARTER_WALL_RATIO,
         }
-        success = all(floors.values())
-        reward = 1.0 if success else 0.0
+        quality_pass = all(floors.values())
+        latency_score = latency_reward(latency_ratio)
+        reward = latency_score if quality_pass else 0.0
+        success = quality_pass and reward > 0.0
         report: dict[str, Any] = {
             "status": "ok",
             "reward_metric": REWARD_METRIC,
@@ -205,9 +222,12 @@ def main() -> int:
             "latency": {
                 "candidate_wall_seconds": candidate_seconds,
                 "starter_wall_seconds": baseline_seconds,
-                "max_starter_wall_ratio": MAX_STARTER_WALL_RATIO,
-                "max_candidate_wall_seconds": max_candidate_seconds,
+                "full_reward_starter_wall_ratio": FULL_REWARD_STARTER_WALL_RATIO,
+                "zero_reward_starter_wall_ratio": ZERO_REWARD_STARTER_WALL_RATIO,
+                "full_reward_candidate_wall_seconds": full_reward_candidate_seconds,
+                "zero_reward_candidate_wall_seconds": zero_reward_candidate_seconds,
                 "ratio": latency_ratio,
+                "reward": latency_score,
                 "starter_run_metrics": baseline_metrics,
                 "run_metrics": run_metrics,
             },
