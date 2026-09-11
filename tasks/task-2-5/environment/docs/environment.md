@@ -1,4 +1,4 @@
-# Task-3-1 Environment
+# Task-2-5 Environment
 
 The task runs in a prebuilt CPU-only container. The submission works in
 `/app`; task data and documentation are mounted read-only under `/task/data` and

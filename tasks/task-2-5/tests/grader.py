@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quality and same-host starter-relative latency grader for Task-3-1."""
+"""Quality and same-host starter-relative latency grader for Task-2-5."""
 
 from __future__ import annotations
 

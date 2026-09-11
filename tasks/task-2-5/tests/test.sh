@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
-RESULTS_DIR=/logs/artifacts/task-3-1-eval
+RESULTS_DIR=/logs/artifacts/task-2-5-eval
 INDEX_DIR=$RESULTS_DIR/index
 OUTPUT_PATH=$RESULTS_DIR/results.jsonl
 BUILD_METRICS=$RESULTS_DIR/build.metrics.json

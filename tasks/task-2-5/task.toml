@@ -6,7 +6,7 @@ artifacts = [
 ]
 
 [task]
-name = "search-swe/task-3-1"
+name = "search-swe/task-2-5"
 version = "0.4.0"
 description = "Optimize Python learned-sparse retrieval under quality gates and a continuous starter-relative latency reward."
 authors = [{ name = "Search-SWE" }]

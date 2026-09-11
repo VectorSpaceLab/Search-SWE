@@ -2,7 +2,7 @@
 
 Optimize a sparse retrieval system while preserving strict quality requirements.
 
-**Task:** `task-3-1` · **Mode:** Optimization · **Metric:** Quality-gated linear latency reward
+**Task:** `task-2-5` · **Mode:** Optimization · **Metric:** Quality-gated linear latency reward
 
 ## Overview
 
@@ -117,11 +117,11 @@ download. The standard asset command now restores the published corpus and
 validation files directly.
 
 ```bash
-python scripts/download_assets.py --task task-3-1
-bash scripts/run_task.sh --task task-3-1 --model "YOUR_AGENT_MODEL"
+python scripts/download_assets.py --task task-2-5
+bash scripts/run_task.sh --task task-2-5 --model "YOUR_AGENT_MODEL"
 ```
 
-The shared launcher uses the Codex agent and writes results under `jobs/task-3-1/`.
+The shared launcher uses the Codex agent and writes results under `jobs/task-2-5/`.
 Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
