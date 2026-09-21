@@ -5,7 +5,7 @@
 <h1 align="center">
   Search-SWE
   <br>
-  <sub>🔍 Benchmarking coding agents on search-system engineering. 🤖</sub>
+  <sub>🔍 Benchmarking coding agents on building search engines. 🤖</sub>
 </h1>
 
 <p align="center">
