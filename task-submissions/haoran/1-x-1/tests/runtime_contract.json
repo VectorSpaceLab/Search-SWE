@@ -1,9 +1,9 @@
 {
   "memory_ratio": 0.05,
-  "memory_payload_ratio": 0.2,
   "max_retrieved_records": 10,
   "retrieval_timeout_seconds": 150,
   "answer_timeout_seconds": 1800,
   "max_answer_chars": 2000,
-  "judge_repetitions": 3
+  "judge_repetitions": 3,
+  "build_timeout_seconds": 300
 }

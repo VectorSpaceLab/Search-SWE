@@ -1,13 +1,16 @@
 schema_version = "1.4"
 
 artifacts = [
-    "/app",
+    "/app/memory.json",
+    "/app/build_index.sh",
+    "/app/search.sh",
+    "/app/answer.sh",
     "/logs/agent/trajectory.json",
 ]
 
 [task]
 name = "search-swe/task-1-x-1"
-version = "0.2.0"
+version = "0.3.1"
 description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]
@@ -18,7 +21,7 @@ dataset = "ICSI Meeting Corpus"
 primary_metric = "EvidenceGroundedAnswerAccuracy"
 public_example_count = 30
 hidden_query_count = 118
-retained_dialogue_ratio = 0.2
+memory_ratio = 0.05
 data_status = "Transcript-grounded generated queries"
 
 [agent]
@@ -44,6 +47,10 @@ network_mode = "no-network"
 os = "linux"
 
 [environment.env]
+OMP_NUM_THREADS = "1"
+OPENBLAS_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
+NUMEXPR_NUM_THREADS = "1"
 HOME = "/home/agentdev"
 ANSWER_API_KEY = "${ANSWER_API_KEY:-}"
 ANSWER_API_BASE_URL = "${ANSWER_API_BASE_URL:-}"

@@ -34,7 +34,7 @@ class Prog(C.Structure):
     _fields_ = [("len", C.c_ushort), ("filter", C.POINTER(Filter))]
 
 
-def restrict(read, write, allow_network=False):
+def restrict(read, write, allow_network=False, execute=()):
     check(lib.prctl(38, 1, 0, 0, 0))
     abi = check(lib.syscall(444, 0, 0, 1))
     if abi < 3:
@@ -42,10 +42,10 @@ def restrict(read, write, allow_network=False):
     mask = (1 << 15) - 1
     rules = Rules(mask)
     fd = check(lib.syscall(444, C.byref(rules), C.sizeof(rules), 0))
-    for p, writable in [(x, False) for x in read] + [(x, True) for x in write]:
+    for p, access in ([(x, 12) for x in read] + [(x, mask & ~1) for x in write]
+                      + [(x, 1) for x in execute]):
         if not os.path.exists(p):
             continue
-        access = mask if writable else 13  # execute, read_file, read_dir
         if not os.path.isdir(p):
             access &= (1 << 0) | (1 << 1) | (1 << 2) | (1 << 14)
         h = os.open(p, os.O_PATH | os.O_CLOEXEC)
@@ -77,5 +77,5 @@ def restrict(read, write, allow_network=False):
 if __name__ == "__main__":
     config = json.loads(sys.argv[1])
     argv = sys.argv[2:]
-    restrict(config["read"], config["write"])
+    restrict(config["read"], config["write"], execute=config.get("execute", []))
     os.execvpe(argv[0], argv, os.environ)

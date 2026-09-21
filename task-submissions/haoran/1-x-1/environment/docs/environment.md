@@ -8,8 +8,8 @@ The image also includes JDK 21, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq
 
 ## Task-specific execution
 
-The runtime provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Development runs as `agentdev`; `/app` and your home directory are writable. Task data and system libraries are read-only.
+The runtime provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Numerical libraries default to one thread per process during development to avoid excessive threading on shared hosts. Development runs as `agentdev`; `/app` and your home directory are writable. Task data and system libraries are read-only.
 
-`/app` starts empty. Submit the finished memory and both executable entry points there. Only declared artifacts are transferred to the separate verifier; development home files, extra installed packages and running services are not transferred. No local model weights are provided under `/opt/models`.
+`/app` starts empty. Submit `memory.json`, `build_index.sh`, `search.sh` and `answer.sh` there. Only declared artifacts are transferred to the separate verifier; development home files, extra installed packages and running services are not transferred. No local model weights are provided under `/opt/models`.
 
-Evaluation runs retrieval and answering as an unprivileged user with read-only submission files and separate filesystem permissions. Use the supplied output directory for runtime scratch files. The task instruction defines each stage's inputs and limits; [available_resources.md](available_resources.md) documents the answering API transport.
+Evaluation runs index construction, retrieval and answering as an unprivileged user with read-only submission files and separate filesystem permissions. Use the supplied output directory for runtime scratch files. The task instruction defines each stage's inputs and limits; [available_resources.md](available_resources.md) documents the answering API transport.

@@ -12,11 +12,13 @@ from llm_gateway import Gateway
 
 
 class AnswerContractTests(unittest.TestCase):
-    def test_recall_does_not_impose_the_removed_memory_schema_limits(self):
-        records = [{"id": "n" * 100, "text": "evidence " * 500, "custom_metadata": 7}]
-        self.assertEqual(validate_recalled_notes(records, {"max_retrieved_records": 10}), records)
-        with self.assertRaises(ValueError):
-            validate_recalled_notes(records * 2, {"max_retrieved_records": 10})
+    def test_retrieval_is_a_list_of_at_most_ten_strings(self):
+        contract = {"max_retrieved_records": 10}
+        for records in ([], ["a"], ["a"] * 10, ["evidence " * 500]):
+            self.assertEqual(validate_recalled_notes(records, contract), records)
+        for records in ({}, ["a"] * 11, [{"text": "a"}], [None], [1]):
+            with self.assertRaises(ValueError):
+                validate_recalled_notes(records, contract)
 
     def test_plain_answer(self):
         self.assertEqual(validate_answer("They agreed.", {"max_answer_chars": 2000}), "They agreed.")

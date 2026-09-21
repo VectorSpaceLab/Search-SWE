@@ -2,7 +2,7 @@
 
 ## Answering API configuration
 
-Read the following runtime environment variables when implementing and testing your answerer:
+During development, use the following runtime environment variables to test your answerer:
 
 | Variable | Meaning |
 | --- | --- |
@@ -10,7 +10,7 @@ Read the following runtime environment variables when implementing and testing y
 | `ANSWER_API_BASE_URL` | OpenAI-compatible API base URL; the chat endpoint is this URL plus `/chat/completions` |
 | `ANSWER_MODEL` | The only model your answerer may call |
 
-Harbor injects these values into the development environment and the answering process at runtime. Read them as environment variables; do not source a `.env` file inside the container or hard-code a key, URL, or model. Check that the variables are set without printing the key:
+Harbor injects these values into the development environment for local answerer tests. During evaluation, the submitted answerer receives only `ANSWER_MODEL` and the task-provided transport; the verifier retains the real API key and upstream URL. Read them as environment variables; do not source a `.env` file inside the container or hard-code a key, URL, or model. For direct development calls, check that the variables are set without printing the key:
 
 ```python
 import os
@@ -27,11 +27,11 @@ Only the answerer may call the configured API, using the current question and th
 
 The allowed API host is `api.deepseek.com`. Use only the endpoint and model named by the injected settings. The coding agent's model access and verifier judge credentials are separate resources.
 
-At evaluation time, retrieval has no network access or API credentials. The answerer can read only its corpus-independent code, runtime dependencies and the current question's retrieved records. The original history, full memory and previous requests are unavailable to it.
+At evaluation time, index construction and retrieval have no network access or API credentials. The answerer can read only its corpus-independent code, runtime dependencies and the current question's retrieved records. The original history, full memory and previous requests are unavailable to it.
 
 ## Calling the API from your answerer
 
-Use the task-provided Chat Completions transport in your submitted answerer. It forwards your request to `ANSWER_API_BASE_URL` using `ANSWER_API_KEY`; you supply the prompts and parse the response. Direct network access is disabled during evaluation, so this transport is the permitted API route.
+Use the task-provided Chat Completions transport in your submitted `answer.sh`. It forwards your request to `ANSWER_API_BASE_URL` using `ANSWER_API_KEY`; you supply the prompts and parse the response. Direct network access is disabled during evaluation, so this transport is the permitted API route.
 
 ```python
 import importlib.util
@@ -49,7 +49,7 @@ response = api.chat_completion(
 text = response["choices"][0]["message"]["content"]
 ```
 
-During evaluation, the runtime supplies `TASK_LLM_CLIENT` and `TASK_LLM_FD` to `answer.sh`. Preserve `TASK_LLM_FD` if launching another process to implement the answerer. The API key and base URL remain available under the configuration names above; the retrieval process does not receive them.
+During evaluation, the runtime supplies `TASK_LLM_CLIENT` and `TASK_LLM_FD` to `answer.sh`. Preserve `TASK_LLM_FD` if launching another process to implement the answerer. Neither `ANSWER_API_KEY` nor `ANSWER_API_BASE_URL` is passed to submitted programs during evaluation. Do not require them when `TASK_LLM_CLIENT` is present.
 
 ### Development self-tests
 
@@ -70,10 +70,10 @@ result = response.json()
 
 `request_body` is your answerer's Chat Completions request, built only from the current question and the retriever's output. Use the same call and token limits in both modes. The direct route is unavailable during evaluation; do not fall back to another endpoint or model when a call fails.
 
-Run your retriever on a public question, then pass that exact output file to your answerer using the two interfaces in the task instruction. Keep test outputs outside `/app`.
+Run your retriever on a public question, then pass that exact output file to your answerer using the interfaces in the task instruction, after building an index from `memory.json`. Keep test outputs outside `/app`.
 
 Allowed request options are `model`, `messages`, `temperature`, `top_p`, `max_tokens`, `response_format`, and `thinking`. Each request may contain 1–32 messages, each with string `role` and `content` fields; roles are `system`, `user`, or `assistant`. Serialized requests must fit within 128 KiB including the newline. Each question permits up to two API calls and each call up to 2,000 output tokens. Streaming, tool calls, and alternate endpoints are unsupported. Provider-specific options should be used only if supported by the configured endpoint.
 
-The answerer must use only the current query and retrieved evidence. Its prompts and static dependencies must not contain corpus-specific facts. Do not reuse information from previous questions. When the evidence is insufficient, say so in plain text.
+The answerer must use only the current query and retrieved evidence. Its prompts and script must not contain corpus-specific facts. Do not reuse information from previous questions. When the evidence is insufficient, say so in plain text.
 
 Using an API outside the answering component, accessing unprovided evidence, or otherwise bypassing the memory and retrieval pipeline is a task violation and sets the entire score to zero.

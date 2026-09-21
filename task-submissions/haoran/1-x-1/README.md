@@ -13,7 +13,7 @@ and changing proposals.
 
 The agent receives the complete history during development and builds a
 finished memory, a retriever and an answerer. Evaluation withholds the original
-transcripts from both submitted programs. Each answer must be supported by the
+transcripts from all three submitted programs. Each answer must be supported by the
 records retrieved from the compact memory.
 
 ## What This Task Tests
@@ -59,25 +59,27 @@ Across the question set, retrieval has 150 seconds and answering 1,800 seconds.
 Each answer permits at most two API calls, 2,000 output tokens per call and
 2,000 Unicode characters in the final text.
 
-The submitted memory has a 735,924-byte expanded-size budget, including relative
-paths. All submitted files, including code, indexes and paths, must also fit
-within 183,981 bytes on disk. These budgets are respectively 20% and 5% of the
-3,679,621 dialogue-text bytes in the history.
+`memory.json` is readable UTF-8 JSON and may occupy at most 183,981 bytes,
+5% of the 3,679,621 dialogue-text bytes. Scripts are outside this memory budget
+and contain corpus-independent code.
 
 ## Submission Contract
 
-The deliverable is a finished `/app/memory/`, executable `/app/run.sh` and
-`/app/answerer/answer.sh` scripts, and their implementation files. Evaluation
-uses the submitted memory without running a memory builder.
+The agent submits exactly four files: `memory.json`, `build_index.sh`, `search.sh`
+and `answer.sh`. Each script is self-contained and executable.
 
-For each question, retrieval runs offline and writes at most ten records.
-Answering receives only the question and those records, its corpus-independent
-code and runtime dependencies. It writes a plain-text answer and may call the
-configured model through the task-provided API transport.
+The verifier builds an index from `memory.json` offline, with a 300-second
+limit. For each question, offline search reads the index and returns a JSON
+array of at most ten strings. The answerer receives the question and that array
+and returns plain text. Only the answerer can call the configured generation
+model, through a task-provided transport.
 
-Both stages run unprivileged with submission files read-only. The verifier
-supplies the question and output paths. See [instruction.md](instruction.md)
-for the complete invocation and output contracts.
+Each stage runs unprivileged with a fresh working directory and a separate file
+allowlist. The builder reads the memory; search reads the generated index; the
+answerer reads only the current retrieved strings. The original history,
+hidden evaluation data and grading files are not available to these programs.
+Only the four submitted files are transferred; the index is created at runtime.
+See [instruction.md](instruction.md) for flags and output formats.
 
 ## Evaluation
 
@@ -86,18 +88,24 @@ for the complete invocation and output contracts.
 A question scores one only when both an evidence hit and answer correctness
 are accepted. The evidence judge compares retrieved text with supporting
 transcript excerpts, accepting faithful paraphrases. At least one
-question-relevant fact must be preserved. The answer judge checks the final
+question-relevant fact must be preserved. Relevant passages are first extracted
+without access to the reference evidence. The verifier checks their origin in
+the recalled strings before comparing them with the reference. Positive
+judgments identify the passages supporting the matched facts. A further check,
+without the reference evidence, verifies that the cited passages support those
+facts, without requiring a complete answer. The answer judge checks the final
 answer against its reference and required facts.
 
 These are separate judgments: the evidence judge does not see the submitted
 answer, and the answer judge does not see the retrieved records. Each uses
-three calls with majority voting. EvidenceGroundedAnswerAccuracy is the mean
+three votes with majority voting; positive evidence votes also require the
+reference-blind support check. EvidenceGroundedAnswerAccuracy is the mean
 of the joint outcomes over the 118 held-out questions; the report also includes
 `evidence_accuracy` and `answer_accuracy`.
 
 ### Correctness and Resource Gates
 
-Both entry points, output formats, execution limits and size budgets must
+All three entry points, output formats, execution limits and the memory budget must
 pass. Invalid output or a failed submission process invalidates the submission.
 Empty retrieval is an evidence miss. A malformed judge response or model
 service failure invalidates the measurement.
@@ -105,6 +113,9 @@ service failure invalidates the measurement.
 ### Integrity Checks and Final Reward
 
 A separate trajectory and file audit checks task and resource compliance.
+It runs under its own user, with read-only access to the submission and a copy
+of the trajectory. Its model relay holds provider credentials outside the
+auditing process. The judge cannot read hidden labels or write final scores.
 A violation sets the final reward to zero; an incomplete audit is an
 infrastructure failure. The audit uses `deepseek-flash` through pinned RewardKit
 0.1.7; evidence and answer grading use independently configured judge settings.
@@ -163,6 +174,3 @@ certification. Semantic grading remains subject to model variability.
 Public assets are pinned in [assets.json](assets.json) to the
 [development dataset](https://huggingface.co/datasets/hrjinbb12345/search-swe-development/tree/7fe4b0bfb7699cb393bc5b11835c47ffeb13aaec).
 Official asset migration and final task numbering remain maintainer steps.
-
-Compressed-memory accounting can undercount deeply nested, concatenated or
-oversized streams. This issue must be fixed before release.

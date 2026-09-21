@@ -8,6 +8,7 @@ COPY requirements.txt /tmp/verifier-requirements.txt
 RUN /opt/conda/bin/python -m pip install --no-cache-dir -r /tmp/verifier-requirements.txt \
     && npm install --global @openai/codex@0.151.0 \
     && useradd --create-home --uid 10001 --user-group submission
+RUN useradd --create-home --uid 10002 --user-group trajectoryjudge
 COPY . /tests/
 RUN chmod 700 /tests && chmod 700 /tests/test.sh
 WORKDIR /app

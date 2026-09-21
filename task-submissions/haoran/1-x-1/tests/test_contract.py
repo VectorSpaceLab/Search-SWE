@@ -11,7 +11,7 @@ import unittest
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from finalize_reward import combine
-from harness import payload, size
+from harness import size, validate_submission
 
 
 class RewardTests(unittest.TestCase):
@@ -55,53 +55,49 @@ class RewardTests(unittest.TestCase):
         self.assertEqual(result["status"], "complete")
 
 
-class PayloadTests(unittest.TestCase):
-    """A compressed memory is measured by the dialogue it retains."""
+class MemoryTests(unittest.TestCase):
+    def submission(self, root, content=b'{"notes": ["A readable memory."]}'):
+        art = root / "app"
+        art.mkdir()
+        (art / "memory.json").write_bytes(content)
+        for name in ("build_index.sh", "search.sh", "answer.sh"):
+            (art / name).write_text("#!/bin/sh\nexit 0\n")
+            (art / name).chmod(0o755)
+        return art
 
-    text = ("speaker: a long stretch of meeting dialogue. " * 200).encode()
+    def test_only_memory_bytes_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            art = self.submission(Path(tmp))
+            memory_bytes = (art / "memory.json").stat().st_size
+            (art / "answer.sh").write_text("#!/bin/sh\n#" + "a" * 10000)
+            self.assertEqual(validate_submission(art, memory_bytes), memory_bytes)
+            with self.assertRaises(ValueError):
+                validate_submission(art, memory_bytes - 1)
 
-    def tree(self, name, blob):
-        import tempfile
-        d = tempfile.mkdtemp()
-        p = Path(d) / "memory"
-        p.mkdir()
-        (p / name).write_bytes(blob)
-        return p
+    def test_invalid_json_and_compressed_bytes_are_rejected(self):
+        import gzip
+        for content in (b"not json", b"{", b"NaN", b"1e309", b'{"x":1,"x":2}', b"\xff", gzip.compress(b'[]')):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as tmp:
+                art = self.submission(Path(tmp), content)
+                with self.assertRaises((ValueError, UnicodeError)):
+                    validate_submission(art, 10000)
 
-    def test_plain_text_counts_as_its_bytes(self):
-        p = self.tree("mem.tsv", self.text)
-        self.assertEqual(payload(p), len(self.text) + len("mem.tsv"))
+    def test_extra_submission_files_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            art = self.submission(Path(tmp))
+            (art / "secret.py").write_text("extra data")
+            with self.assertRaises(ValueError):
+                validate_submission(art, 10000)
 
-    def test_compressed_memory_counts_decompressed(self):
-        import bz2, gzip, lzma
-        for name, blob in (
-            ("mem.xz", lzma.compress(self.text)),
-            ("mem.gz", gzip.compress(self.text)),
-            ("mem.bz2", bz2.compress(self.text)),
-        ):
-            with self.subTest(name=name):
-                p = self.tree(name, blob)
-                self.assertLess(len(blob), len(self.text))
-                self.assertEqual(payload(p), len(self.text) + len(name))
-
-    def test_nested_containers_do_not_hide_payload(self):
-        import lzma
-        p = self.tree("mem.xz", lzma.compress(lzma.compress(self.text)))
-        self.assertEqual(payload(p), len(self.text) + len("mem.xz"))
-
-    def test_unreadable_binary_counts_as_stored(self):
-        blob = bytes(range(256)) * 40
-        p = self.tree("mem.bin", blob)
-        self.assertEqual(payload(p), len(blob) + len("mem.bin"))
-
-    def test_links_are_rejected(self):
-        import tempfile
-        d = Path(tempfile.mkdtemp()) / "memory"
-        d.mkdir()
-        (d / "real").write_text("data")
-        (d / "link").symlink_to("real")
-        with self.assertRaises(ValueError):
-            payload(d)
+    def test_missing_script_or_execute_permission_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            art = self.submission(Path(tmp))
+            (art / "search.sh").chmod(0o644)
+            with self.assertRaises(ValueError):
+                validate_submission(art, 10000)
+            (art / "search.sh").unlink()
+            with self.assertRaises(ValueError):
+                validate_submission(art, 10000)
 
 
 class StorageTests(unittest.TestCase):
@@ -143,7 +139,7 @@ class PackageTests(unittest.TestCase):
         """Only the author holds the known-good implementation.
 
         Any directory that would hand the agent a working pipeline is a defect
-        for an implementation task: the memory, both entry points, and every
+        for an implementation task: the memory, all three entry points, and every
         index are the agent's deliverable.
         """
         task = self.task()
@@ -154,8 +150,8 @@ class PackageTests(unittest.TestCase):
         task = self.task()
         contract = json.loads((HERE / "runtime_contract.json").read_text())
         config = tomllib.loads((task / "task.toml").read_text())
-        self.assertEqual(contract["memory_payload_ratio"],
-                         config["metadata"]["retained_dialogue_ratio"])
+        self.assertEqual(contract["memory_ratio"],
+                         config["metadata"]["memory_ratio"])
 
     def test_question_splits(self):
         public = HERE.parent / "data/validation/queries.jsonl"
