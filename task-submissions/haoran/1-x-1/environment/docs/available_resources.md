@@ -1,37 +1,56 @@
 # Available Resources
 
-## Answering API configuration
+The submission may use the generation API below only in its answering component. Memory preparation, index construction and retrieval use local computation.
 
-During development, use the following runtime environment variables to test your answerer:
+Harbor supplies the following environment variables during development. Read them directly with shell variables or `os.environ`; do not source a `.env` file inside the container. Only the variables explicitly configured for the task are supplied, not the runner's entire environment.
 
 | Variable | Meaning |
 | --- | --- |
 | `ANSWER_API_KEY` | Credential for the answering API |
-| `ANSWER_API_BASE_URL` | OpenAI-compatible API base URL; the chat endpoint is this URL plus `/chat/completions` |
-| `ANSWER_MODEL` | The only model your answerer may call |
+| `ANSWER_API_BASE_URL` | OpenAI-compatible base URL; append `/chat/completions` for chat requests |
+| `ANSWER_MODEL` | The exact model ID permitted for the answerer |
 
-Harbor injects these values into the development environment for local answerer tests. During evaluation, the submitted answerer receives only `ANSWER_MODEL` and the task-provided transport; the verifier retains the real API key and upstream URL. Read them as environment variables; do not source a `.env` file inside the container or hard-code a key, URL, or model. For direct development calls, check that the variables are set without printing the key:
+The benchmark runner fills in these settings before starting the task:
+
+```dotenv
+ANSWER_API_KEY=<YOUR_ANSWER_API_KEY>
+ANSWER_API_BASE_URL=<YOUR_ANSWER_API_BASE_URL>
+ANSWER_MODEL=<YOUR_ANSWER_MODEL>
+```
+
+For development self-tests, check that the settings exist without displaying their values:
 
 ```python
 import os
+
 for name in ("ANSWER_API_KEY", "ANSWER_API_BASE_URL", "ANSWER_MODEL"):
     if not os.environ.get(name):
         raise RuntimeError(f"Missing runtime setting: {name}")
 ```
 
-Only the configured endpoint and model are allowed. Do not use other providers, external search or answer services, or benchmark-answer datasets. Credentials must not be written into submitted code, memory, indexes, prompts, or logs. The model running your coding session is separate from this API resource.
+Credentials are supplied at runtime, not during image build. Keep them out of code, memory, indexes, prompts and logs. During evaluation, submitted programs do not receive the real API key or base URL; the answerer uses the transport described below.
 
-## Permitted API use
+Harbor limits task API access to `api.deepseek.com`. The official launcher separately allows the coding agent's model host when needed. Coding-agent and judge access does not authorize additional services for the submission. Documentation links are references, not additional permitted network destinations.
 
-Only the answerer may call the configured API, using the current question and the records returned by the submitted retriever. This restriction applies during development and evaluation. Do not call helper APIs for memory construction, interpretation of the raw corpus, summarization, indexing, embedding or ranking. Local computation and installed libraries are allowed.
+## Retrieval resources
 
-The allowed task API host is `api.deepseek.com`. Harbor enforces a network allowlist during development and evaluation. The official launcher adds the selected coding agent's model host to the development allowlist when needed; this does not permit the submitted system to use that service. Use only the endpoint and model named by the injected settings. The coding agent's model access and verifier judge credentials are separate resources.
+Use installed libraries and local computation to prepare the memory, build the index and retrieve records. No external embedding, reranking, summarization or other helper API is permitted for these operations, including during development. The model running the coding session is separate from these submission resources.
 
-At evaluation time, index construction and retrieval have no network access or API credentials. The answerer can read only its corpus-independent code, runtime dependencies and the current question's retrieved records. The original history, full memory and previous requests are unavailable to it.
+## Generative LLM resources
 
-## Calling the API from your answerer
+Only `answer.sh` may call the configured DeepSeek API. Each request must use only the current question and the strings returned by the retriever. The answerer must not read the original transcripts, full memory, index or previous requests, or contain corpus-specific facts in its code or prompts.
 
-Use the task-provided Chat Completions transport in your submitted `answer.sh`. It forwards your request to `ANSWER_API_BASE_URL` using `ANSWER_API_KEY`; you supply the prompts and parse the response. Direct network access is disabled during evaluation, so this transport is the permitted API route.
+The complete model allowlist is the single exact ID supplied in `ANSWER_MODEL`. Read that value at runtime; do not select another model from the provider's catalog. Read the configured base URL rather than hard-coding an endpoint.
+
+DeepSeek generation resources:
+
+- Quickstart and API documentation: [DeepSeek API Docs](https://api-docs.deepseek.com/).
+- API host: `api.deepseek.com`.
+- Chat endpoint: `ANSWER_API_BASE_URL` with trailing slashes removed, followed by `/chat/completions`.
+
+### Evaluation API transport
+
+During evaluation, `answer.sh` receives `ANSWER_MODEL`, `TASK_LLM_CLIENT` and `TASK_LLM_FD`. The provided client forwards Chat Completions requests while the verifier retains the real provider credential. Direct network access from the submitted process is disabled.
 
 ```python
 import importlib.util
@@ -49,14 +68,15 @@ response = api.chat_completion(
 text = response["choices"][0]["message"]["content"]
 ```
 
-During evaluation, the runtime supplies `TASK_LLM_CLIENT` and `TASK_LLM_FD` to `answer.sh`. Preserve `TASK_LLM_FD` if launching another process to implement the answerer. Neither `ANSWER_API_KEY` nor `ANSWER_API_BASE_URL` is passed to submitted programs during evaluation. Do not require them when `TASK_LLM_CLIENT` is present.
+Preserve the file descriptor named by `TASK_LLM_FD` when starting an answerer subprocess. When `TASK_LLM_CLIENT` is present, use this transport and do not require `ANSWER_API_KEY` or `ANSWER_API_BASE_URL`.
 
 ### Development self-tests
 
-The development environment supplies `ANSWER_API_KEY`, `ANSWER_API_BASE_URL`, and `ANSWER_MODEL`, but no verifier transport descriptor. Your answerer should use the transport above when `TASK_LLM_CLIENT` is present. Otherwise, during development only, it may send the same request directly to the configured endpoint:
+The development container provides the three `ANSWER_*` variables but no evaluation transport. When `TASK_LLM_CLIENT` is absent, your answerer may send the same request directly to the configured API:
 
 ```python
 import requests
+
 response = requests.post(
     os.environ["ANSWER_API_BASE_URL"].rstrip("/") + "/chat/completions",
     headers={"Authorization": "Bearer " + os.environ["ANSWER_API_KEY"]},
@@ -68,12 +88,16 @@ response.raise_for_status()
 result = response.json()
 ```
 
-`request_body` is your answerer's Chat Completions request, built only from the current question and the retriever's output. Use the same call and token limits in both modes. The direct route is unavailable during evaluation; do not fall back to another endpoint or model when a call fails.
+Build `request_body` from the current question and your retriever's output. Run the three submission commands on the public questions using the interfaces in the task instruction; keep development outputs outside `/app`. The same API limits apply in development and evaluation. A failed call does not permit switching providers, models or endpoints.
 
-Run your retriever on a public question, then pass that exact output file to your answerer using the interfaces in the task instruction, after building an index from `memory.json`. Keep test outputs outside `/app`.
+### Request limits
 
-Allowed request options are `model`, `messages`, `temperature`, `top_p`, `max_tokens`, `response_format`, and `thinking`. Each request may contain 1–32 messages, each with string `role` and `content` fields; roles are `system`, `user`, or `assistant`. Serialized requests must fit within 128 KiB including the newline. Each question permits up to two API calls and each call up to 2,000 output tokens. Streaming, tool calls, and alternate endpoints are unsupported. Provider-specific options should be used only if supported by the configured endpoint.
+Each question permits at most two API calls, with at most 2,000 output tokens per call. Allowed request options are `model`, `messages`, `temperature`, `top_p`, `max_tokens`, `response_format` and `thinking`. Use provider-specific options only when the configured endpoint supports them.
 
-The answerer must use only the current query and retrieved evidence. Its prompts and script must not contain corpus-specific facts. Do not reuse information from previous questions. When the evidence is insufficient, say so in plain text.
+A request may contain 1–32 messages with string `role` and `content` fields; permitted roles are `system`, `user` and `assistant`. The serialized request, including its newline, must fit within 128 KiB. Streaming, tool calls and alternate endpoints are not supported. If the retrieved information is insufficient, answer accordingly rather than seeking other evidence.
 
-Using an API outside the answering component, accessing unprovided evidence, or otherwise bypassing the memory and retrieval pipeline is a task violation and sets the entire score to zero.
+### Strict allowlist and jailbreak penalty
+
+The configured host, endpoint, model and answering-only use are mandatory restrictions. Do not use other providers, external search or answer services, benchmark-answer datasets, or helper APIs for memory preparation or retrieval. Do not reuse information across answering requests.
+
+A prohibited API call, access to unprovided evidence or bypass of the required pipeline is a task violation. If detected by the verifier or trajectory audit, it sets the entire task score to `0`, regardless of retrieval or answer quality.
