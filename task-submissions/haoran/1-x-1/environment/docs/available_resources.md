@@ -25,7 +25,7 @@ Only the configured endpoint and model are allowed. Do not use other providers, 
 
 Only the answerer may call the configured API, using the current question and the records returned by the submitted retriever. This restriction applies during development and evaluation. Do not call helper APIs for memory construction, interpretation of the raw corpus, summarization, indexing, embedding or ranking. Local computation and installed libraries are allowed.
 
-The allowed API host is `api.deepseek.com`. Use only the endpoint and model named by the injected settings. The coding agent's model access and verifier judge credentials are separate resources.
+The allowed task API host is `api.deepseek.com`. Harbor enforces a network allowlist during development and evaluation. The official launcher adds the selected coding agent's model host to the development allowlist when needed; this does not permit the submitted system to use that service. Use only the endpoint and model named by the injected settings. The coding agent's model access and verifier judge credentials are separate resources.
 
 At evaluation time, index construction and retrieval have no network access or API credentials. The answerer can read only its corpus-independent code, runtime dependencies and the current question's retrieved records. The original history, full memory and previous requests are unavailable to it.
 

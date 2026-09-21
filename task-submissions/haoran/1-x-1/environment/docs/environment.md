@@ -8,7 +8,7 @@ The image also includes JDK 21, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq
 
 ## Task-specific execution
 
-The runtime provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Numerical libraries default to one thread per process during development to avoid excessive threading on shared hosts. Development runs as `agentdev`; `/app` and your home directory are writable. Task data and system libraries are read-only.
+The runtime provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Numerical libraries default to one thread per process during development to avoid excessive threading on shared hosts. Development runs as `root` inside the container. Task data is mounted read-only. Network access is restricted to the configured API hosts; package registries and arbitrary websites are not available.
 
 `/app` starts empty. Submit `memory.json`, `build_index.sh`, `search.sh` and `answer.sh` there. Only declared artifacts are transferred to the separate verifier; development home files, extra installed packages and running services are not transferred. No local model weights are provided under `/opt/models`.
 

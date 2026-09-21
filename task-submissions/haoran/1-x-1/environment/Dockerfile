@@ -15,7 +15,4 @@ RUN npm install --global --ignore-scripts \
     && test "$(claude --version)" = "${SEARCH_SWE_CLAUDE_CODE_VERSION} (Claude Code)"
 RUN claude --help | grep -F "(low, medium, high, xhigh, max)" >/dev/null
 
-RUN useradd --create-home --uid 10000 --user-group agentdev \
-    && mkdir -p /app \
-    && chown agentdev:agentdev /app
 WORKDIR /app

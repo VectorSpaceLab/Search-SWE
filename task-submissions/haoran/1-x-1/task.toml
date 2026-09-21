@@ -10,7 +10,7 @@ artifacts = [
 
 [task]
 name = "search-swe/task-1-x-1"
-version = "0.3.1"
+version = "0.3.2"
 description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]
@@ -26,8 +26,9 @@ data_status = "Transcript-grounded generated queries"
 
 [agent]
 timeout_sec = 7200
-user = "agentdev"
-network_mode = "public"
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = ["api.deepseek.com"]
 
 [verifier]
 timeout_sec = 5400
@@ -43,7 +44,8 @@ cpus = 8
 memory_mb = 8192
 storage_mb = 8192
 gpus = 0
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = ["api.deepseek.com"]
 os = "linux"
 
 [environment.env]
@@ -51,7 +53,7 @@ OMP_NUM_THREADS = "1"
 OPENBLAS_NUM_THREADS = "1"
 MKL_NUM_THREADS = "1"
 NUMEXPR_NUM_THREADS = "1"
-HOME = "/home/agentdev"
+HOME = "/root"
 ANSWER_API_KEY = "${ANSWER_API_KEY:-}"
 ANSWER_API_BASE_URL = "${ANSWER_API_BASE_URL:-}"
 ANSWER_MODEL = "${ANSWER_MODEL:-}"

@@ -135,9 +135,12 @@ covers downloads and checksums.
 Configure `ANSWER_API_KEY`, `ANSWER_API_BASE_URL` and `ANSWER_MODEL` for the
 submitted answerer, `ANSWER_JUDGE_*` for evidence and answer grading, and
 `VERIFIER_OPENAI_*` for the trajectory audit. These settings default to empty
-values in the task configuration. The verifier's network allowlist permits
-`api.deepseek.com`; using another provider requires a matching task configuration
-change. Credentials must remain outside the task package.
+values in the task configuration. Development runs as `root`; both development
+and verification restrict task API access to `api.deepseek.com`. The official
+launcher also allows the selected coding model's host during development.
+Using another task API provider requires a matching configuration change.
+Submitted programs run as an unprivileged user during verification. Credentials
+must remain outside the task package.
 
 ```bash
 python scripts/download_assets.py --task-path task-submissions/haoran/1-x-1
