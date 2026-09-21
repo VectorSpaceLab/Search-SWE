@@ -6,15 +6,23 @@ from pathlib import Path
 import requests
 
 
+OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+ALLOWED_MODELS = (
+    "qwen/qwen3.6-35b-a3b",
+    "qwen/qwen3.5-35b-a3b",
+    "qwen/qwen3.5-9b",
+    "qwen/qwen3-30b-a3b-instruct-2507",
+)
+
+
 class Gateway:
     class Error(RuntimeError):
         """The generation service failed, which is an infrastructure error."""
 
-    def __init__(self, key, limit, log, base_url, model):
-        if not key or not base_url or not model:
-            raise self.Error("Answer API key, base URL and model are required")
+    def __init__(self, key, limit, log):
+        if not key:
+            raise self.Error("OPENROUTER_API_KEY is required")
         self.key, self.limit, self.log = key, limit, Path(log)
-        self.base_url, self.model = base_url.rstrip("/"), model
         self.parent, self.worker = socket.socketpair()
         self.calls = 0
         self.failures = []
@@ -38,12 +46,13 @@ class Gateway:
             raise self.Error("Generation service failed; see generation-api.json")
 
     @staticmethod
-    def validate(payload, model):
-        allowed = {"model", "messages", "temperature", "top_p", "max_tokens", "response_format", "thinking"}
+    def validate(payload):
+        allowed = {"model", "messages", "temperature", "top_p", "max_tokens", "response_format"}
         if not isinstance(payload, dict) or set(payload) - allowed:
             raise ValueError("unsupported generation request fields")
-        if payload.get("model", model) != model:
-            raise ValueError("only the configured answer model is allowed")
+        model = payload.get("model")
+        if not isinstance(model, str) or model not in ALLOWED_MODELS:
+            raise ValueError("model must be one of the four allowed OpenRouter model IDs")
         messages = payload.get("messages")
         if not isinstance(messages, list) or not 1 <= len(messages) <= 32:
             raise ValueError("messages must contain 1..32 messages")
@@ -57,7 +66,7 @@ class Gateway:
     def forward(self, payload):
         try:
             response = requests.post(
-                self.base_url + "/chat/completions",
+                OPENROUTER_ENDPOINT,
                 headers={"Authorization": "Bearer " + self.key},
                 json=payload, timeout=(10, 45), allow_redirects=False,
             )
@@ -84,7 +93,7 @@ class Gateway:
                     try:
                         if len(line) > 131072 or not line.endswith(b"\n"):
                             raise ValueError("generation request exceeds 128 KiB")
-                        payload = self.validate(json.loads(line), self.model)
+                        payload = self.validate(json.loads(line))
                         self.calls += 1
                         if self.calls > self.limit:
                             raise ValueError("generation call budget exceeded")

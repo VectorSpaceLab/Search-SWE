@@ -9,7 +9,7 @@ _channel = None
 
 
 def chat_completion(messages, **options):
-    """Send one Chat Completions request to the configured endpoint and model."""
+    """Send one Chat Completions request to the OpenRouter endpoint with an explicitly selected allowed model."""
     global _channel
     payload = dict(options, messages=messages)
     encoded = json.dumps(payload).encode() + b"\n"

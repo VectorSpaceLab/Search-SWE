@@ -126,7 +126,6 @@ def invoke(argv, read, work, log, label, timeout, gateway=None):
         "OPENBLAS_NUM_THREADS": "4",
     }
     if gateway is not None:
-        env["ANSWER_MODEL"] = gateway.model
         env["TASK_LLM_FD"] = str(gateway.worker.fileno())
         env["TASK_LLM_CLIENT"] = str(gateway.client_path)
     command = [
@@ -186,18 +185,11 @@ def invoke(argv, read, work, log, label, timeout, gateway=None):
 
 
 def llm(system, payload):
-    if os.environ.get("ANSWER_JUDGE_API_KEY"):
-        key = os.environ["ANSWER_JUDGE_API_KEY"]
-        endpoint = os.environ.get("ANSWER_JUDGE_BASE_URL", "").rstrip("/")
-        model = os.environ.get("ANSWER_JUDGE_MODEL_NAME", "")
-        if not endpoint or not model:
-            raise RuntimeError("Answer judge URL and model are required")
-    else:
-        key = os.environ.get("ANSWER_API_KEY")
-        endpoint = os.environ.get("ANSWER_API_BASE_URL", "").rstrip("/")
-        model = os.environ.get("ANSWER_MODEL", "")
-    if not key:
-        raise RuntimeError("Answer judge API credential missing")
+    key = os.environ.get("ANSWER_JUDGE_API_KEY")
+    endpoint = os.environ.get("ANSWER_JUDGE_BASE_URL", "").rstrip("/")
+    model = os.environ.get("ANSWER_JUDGE_MODEL_NAME", "")
+    if not key or not endpoint or not model:
+        raise RuntimeError("Answer judge API credential, base URL and model are required")
     for attempt in range(3):
         try:
             res = requests.post(
@@ -521,9 +513,7 @@ def evaluate(art, history, queries, gold, log, answerer=True, evidence=None):
                 if remaining <= 0:
                     raise ValueError("answering time budget exceeded")
                 api_log = log / f"generation-{index}.json"
-                with Gateway(os.environ.get("ANSWER_API_KEY"), 2, api_log,
-                             base_url=os.environ.get("ANSWER_API_BASE_URL"),
-                             model=os.environ.get("ANSWER_MODEL")) as gateway:
+                with Gateway(os.environ.get("OPENROUTER_API_KEY"), 2, api_log) as gateway:
                     gateway.client_path = client
                     answer_seconds += invoke(
                         [art / "answer.sh", "--question", q["question"],

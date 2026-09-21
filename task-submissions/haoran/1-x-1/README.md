@@ -48,7 +48,7 @@ format, information selection, indexing, retrieval and answer generation are
 implementation choices. The task starts without a starter implementation.
 
 Memory construction and retrieval must use local computation, including during
-development. Only the answerer may call the configured generation API, subject
+development. Only the answerer may call the allowed OpenRouter generation models, subject
 to the [resource policy](environment/docs/available_resources.md).
 
 ### Environment and Resource Limits
@@ -71,8 +71,9 @@ and `answer.sh`. Each script is self-contained and executable.
 The verifier builds an index from `memory.json` offline, with a 300-second
 limit. For each question, offline search reads the index and returns a JSON
 array of at most ten strings. The answerer receives the question and that array
-and returns plain text. Only the answerer can call the configured generation
-model, through a task-provided transport.
+and returns plain text. Only the answerer can call generation
+models, choosing among the four allowed OpenRouter models through a task-provided
+transport.
 
 Each stage runs unprivileged with a fresh working directory and a separate file
 allowlist. The builder reads the memory; search reads the generated index; the
@@ -132,13 +133,14 @@ to prepare the runtime and Docker. The [evaluation guide](../../../docs/evaluati
 explains agent and verifier configuration; the [asset guide](../../../docs/assets.md)
 covers downloads and checksums.
 
-Configure `ANSWER_API_KEY`, `ANSWER_API_BASE_URL` and `ANSWER_MODEL` for the
-submitted answerer, `ANSWER_JUDGE_*` for evidence and answer grading, and
+Configure `OPENROUTER_API_KEY` for the submitted answerer,
+`ANSWER_JUDGE_*` for evidence and answer grading, and
 `VERIFIER_OPENAI_*` for the trajectory audit. These settings default to empty
-values in the task configuration. Development runs as `root`; both development
-and verification restrict task API access to `api.deepseek.com`. The official
-launcher also allows the selected coding model's host during development.
-Using another task API provider requires a matching configuration change.
+values in the task configuration. Development runs as `root` with task API
+access limited to `openrouter.ai`. The verifier also allows `api.deepseek.com`
+for its judges. The official launcher separately allows the coding model's host
+during development. The answerer selects a model from the four-model allowlist
+in the resource policy; no fixed answer model is injected.
 Submitted programs run as an unprivileged user during verification. Credentials
 must remain outside the task package.
 

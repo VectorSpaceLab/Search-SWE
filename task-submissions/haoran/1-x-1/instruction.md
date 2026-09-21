@@ -19,9 +19,11 @@ Submit exactly four files under `/app`:
 
 The scripts are not included in that memory budget. They must contain corpus-independent implementation code, not additional memories, transcript excerpts or question-to-answer tables. Each script must be self-contained: it may embed Python or use installed libraries, but may not depend on extra submitted files. Files must be regular files; links are not supported. Keep development outputs outside `/app`.
 
-Memory preparation, index construction and retrieval must use local computation only. Do not call helper APIs for these operations, including during development. The externally configured coding Agent itself is exempt from this helper-API restriction. Only the submitted answerer may use the configured generation API, with the current question and retrieved strings. Read `/task/docs/available_resources.md` for its configuration and transport.
+Memory preparation, index construction and retrieval must use local computation only. Do not call helper APIs for these operations, including during development. The externally configured coding Agent itself is exempt from this helper-API restriction. Only the submitted answerer may use the OpenRouter generation API, with the current question and retrieved strings. It may choose any of the four model IDs listed in the resource policy. Read `/task/docs/available_resources.md` for its configuration and transport.
 
 Treat `/task` as read-only. Do not access held-out labels, modify the evaluator or embed answers to particular evaluation questions. Complete implementation and validation within 120 minutes.
+
+The container provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Development runs as root, with numerical libraries defaulting to one thread per process. No local model weights are supplied under `/opt/models`. Network access follows the resource policy.
 
 ### Index construction
 
@@ -63,7 +65,7 @@ The verifier then runs:
 
 The memories file contains exactly the string array from retrieval. Write the final answer as nonempty UTF-8 text of at most **2,000 Unicode characters**, without a JSON wrapper or recalled-memory listing. If the retrieved information is insufficient, say so in plain text.
 
-Answering can read only `answer.sh`, the current recalled strings, the task-provided API transport and installed runtime dependencies. The question is provided through the argument above. It cannot read the full memory, index, other scripts, original transcripts or previous requests. It may call only the configured LLM through the provided transport; other network access is disabled. The transport holds the real API credential outside the submitted process.
+Answering can read only `answer.sh`, the current recalled strings, the task-provided API transport and installed runtime dependencies. The question is provided through the argument above. It cannot read the full memory, index, other scripts, original transcripts or previous requests. It may call only the allowed OpenRouter models through the provided transport; other network access is disabled. The transport holds the real API credential outside the submitted process.
 
 Answering has a combined 1,800-second budget, with at most two API calls per question and 2,000 output tokens per call. Use the output file's parent for temporary work.
 
@@ -90,7 +92,7 @@ Check the JSON format and size, then run the three commands above on the public 
 └── answer.sh
 ```
 
-Only these four submission files are transferred to the separate evaluation environment. Make all three scripts executable. The index is generated during evaluation and is not a submitted artifact.
+Only these four submission files are transferred to the separate evaluation environment. Files in the development home directory, extra installed packages and running services are not transferred. Make all three scripts executable. The index is generated during evaluation and is not a submitted artifact.
 
 ## Verification
 

@@ -10,7 +10,7 @@ artifacts = [
 
 [task]
 name = "search-swe/task-1-x-1"
-version = "0.3.2"
+version = "0.4.0"
 description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]
@@ -28,14 +28,14 @@ data_status = "Transcript-grounded generated queries"
 timeout_sec = 7200
 user = "root"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai"]
 
 [verifier]
 timeout_sec = 5400
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai", "api.deepseek.com"]
 
 [environment]
 build_timeout_sec = 1800
@@ -45,7 +45,7 @@ memory_mb = 8192
 storage_mb = 8192
 gpus = 0
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai"]
 os = "linux"
 
 [environment.env]
@@ -54,14 +54,10 @@ OPENBLAS_NUM_THREADS = "1"
 MKL_NUM_THREADS = "1"
 NUMEXPR_NUM_THREADS = "1"
 HOME = "/root"
-ANSWER_API_KEY = "${ANSWER_API_KEY:-}"
-ANSWER_API_BASE_URL = "${ANSWER_API_BASE_URL:-}"
-ANSWER_MODEL = "${ANSWER_MODEL:-}"
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 
 [verifier.env]
-ANSWER_API_KEY = "${ANSWER_API_KEY:-}"
-ANSWER_API_BASE_URL = "${ANSWER_API_BASE_URL:-}"
-ANSWER_MODEL = "${ANSWER_MODEL:-}"
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 ANSWER_JUDGE_MODEL_NAME = "${ANSWER_JUDGE_MODEL_NAME:-}"
 ANSWER_JUDGE_BASE_URL = "${ANSWER_JUDGE_BASE_URL:-}"
 ANSWER_JUDGE_API_KEY = "${ANSWER_JUDGE_API_KEY:-}"

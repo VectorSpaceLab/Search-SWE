@@ -52,7 +52,7 @@ class IsolationTests(unittest.TestCase):
         return '''import json, os, socket
 from pathlib import Path
 assert os.geteuid() == 10001
-for key in ("ANSWER_API_KEY", "ANSWER_API_BASE_URL", "ANSWER_JUDGE_API_KEY", "OPENAI_API_KEY"):
+for key in ("OPENROUTER_API_KEY", "ANSWER_API_KEY", "ANSWER_API_BASE_URL", "ANSWER_MODEL", "ANSWER_JUDGE_API_KEY", "OPENAI_API_KEY"):
     assert key not in os.environ, key
 for path in ALLOWED:
     Path(path).read_bytes()
@@ -98,11 +98,11 @@ with open("/dev/null", "w") as sink: sink.write("discarded")
 import importlib.util
 s=importlib.util.spec_from_file_location("client", os.environ["TASK_LLM_CLIENT"])
 m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
-r=m.chat_completion(messages=[{"role":"user", "content":"A question"}], model=os.environ["ANSWER_MODEL"])
+r=m.chat_completion(messages=[{"role":"user", "content":"A question"}], model="qwen/qwen3.5-9b")
 assert r["choices"][0]["message"]["content"] == "A response"
 ''')
         seal(self.art)
-        with Gateway('test-provider-key', 2, self.log / 'api.json', 'https://unused.example', 'test-model') as gateway:
+        with Gateway('test-provider-key', 2, self.log / 'api.json') as gateway:
             gateway.client_path = client
             with patch.object(gateway, 'forward', return_value={'choices':[{'message':{'content':'A response'}}]}):
                 invoke([script], [script, inputs], self.root / 'answer', self.log, 'answer', 15, gateway)
@@ -137,7 +137,7 @@ Path(a.output).write_text(json.loads(Path(a.memories).read_text())[0])
             ('evidence', {'query_id':'q', 'evidence':[{'text':'Use a headset.'}]}),
         ):
             (self.root / (name + '.jsonl')).write_text(json.dumps(row) + '\n')
-        with patch.dict(os.environ, {'ANSWER_API_KEY':'test-key', 'ANSWER_API_BASE_URL':'https://unused.example', 'ANSWER_MODEL':'test-model'}), \
+        with patch.dict(os.environ, {'OPENROUTER_API_KEY':'test-key'}), \
              patch('harness.llm', side_effect=lambda system, payload: ({'citations':[{'memory_index':0,'quote':'Use a headset.'}]} if 'retrieved_texts' in payload else {'hit':True,'matches':[{'passage_index':0,'reference_fact':'Use a headset.'}]} if 'retrieved_passages' in payload else {'supported':True} if 'claims' in payload else {'correct':True}, {})):
             result = harness.evaluate(self.art, history, self.root / 'queries.jsonl',
                                       self.root / 'golden_answers.jsonl', self.log)
@@ -153,6 +153,7 @@ Path(a.output).write_text(json.loads(Path(a.memories).read_text())[0])
         with JudgeGateway('https://unused.example', 'real-provider-key', 'test-model') as gateway:
             env = prepare(judge, gateway, trajectory)
             self.assertNotIn('real-provider-key', json.dumps(env))
+            self.assertNotIn('OPENROUTER_API_KEY', env)
             self.assertNotIn('ANSWER_API_KEY', env)
             self.assertNotIn('ANSWER_JUDGE_API_KEY', env)
             # Exercise the exact judge_fs policy, replacing only the final exec with a probe.

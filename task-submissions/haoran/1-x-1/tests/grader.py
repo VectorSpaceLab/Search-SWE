@@ -17,9 +17,7 @@ def main():
     (log / "reward.json").write_text('{"reward":0}\n')
 
     required = [
-        "ANSWER_API_KEY",
-        "ANSWER_API_BASE_URL",
-        "ANSWER_MODEL",
+        "OPENROUTER_API_KEY",
         "ANSWER_JUDGE_API_KEY",
         "ANSWER_JUDGE_BASE_URL",
         "ANSWER_JUDGE_MODEL_NAME",
