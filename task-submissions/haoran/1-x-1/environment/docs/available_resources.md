@@ -1,8 +1,8 @@
 # Available Resources
 
-The submission may use the generation API below only in its answering component. Memory preparation, index construction and retrieval use local computation.
+The submission may use Jina embedding and reranking APIs for memory preparation, index construction and retrieval, and the OpenRouter generation API only in its answering component.
 
-Harbor injects `OPENROUTER_API_KEY` into the development container at runtime. Read it directly with `$OPENROUTER_API_KEY` or `os.environ["OPENROUTER_API_KEY"]`; do not source a `.env` file inside the container. Only explicitly configured variables are supplied, not the runner's entire environment.
+Harbor injects `OPENROUTER_API_KEY` and `JINA_API_KEY` into the development container at runtime. Read them as ordinary environment variables, for example `$OPENROUTER_API_KEY` or `os.environ["JINA_API_KEY"]`; do not source a `.env` file inside the container. Only explicitly configured variables are supplied, not the runner's entire environment.
 
 For development self-tests, check that the credential exists without displaying its value:
 
@@ -20,17 +20,27 @@ if not os.environ.get("OPENROUTER_API_KEY"):
     raise RuntimeError("OPENROUTER_API_KEY is not set")
 ```
 
-Credentials are runtime resources, not build-time settings. Keep them out of code, memory, indexes, prompts and logs. During evaluation, the answerer uses the transport documented in the task instruction and does not receive the real API key.
+Credentials are runtime resources, not build-time settings. Keep them out of code, memory, indexes, prompts and logs. During evaluation, build and search use the Jina transport and the answerer uses the OpenRouter transport documented in the task instruction. Submitted processes do not receive real provider keys.
 
-Harbor limits submission API access to `openrouter.ai`. The coding agent and verifier judges use separate model access, which is not an additional submission resource. Documentation links are references, not additional permitted network destinations.
+Harbor limits submission API access to `openrouter.ai` and `api.jina.ai`. The coding agent and verifier judges use separate model access, which is not an additional submission resource. Documentation links are references, not additional permitted network destinations.
 
 ```dotenv
 OPENROUTER_API_KEY=<YOUR_OPENROUTER_API_KEY>
+JINA_API_KEY=<YOUR_JINA_API_KEY>
 ```
 
 ## Retrieval resources
 
-Use installed libraries and local computation to prepare the memory, build the index and retrieve records. No external embedding, reranking, summarization or other helper API is permitted for these operations, including during development. The model running the coding session is separate from these submission resources.
+Embedding and reranking models may be used through Jina during memory preparation, index construction and retrieval. Use the exact model IDs and request formats supported by Jina. These endpoints are for text embedding, candidate scoring and reranking; do not use them for generation, external search or answer lookup. OpenRouter embedding and reranking endpoints are not provided for this task. Local computation remains available without Jina calls.
+
+Jina:
+
+- Quickstart: `https://docs.jina.ai/get-started/quickstart`
+- Embedding API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings`
+- Reranking API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/rerank`
+- Models: `https://jina.ai/models`
+
+Use `JINA_API_KEY` for development calls to `https://api.jina.ai/v1/embeddings` or `https://api.jina.ai/v1/rerank`. Evaluation provides the same endpoints through the task transport. Select a model supported by the corresponding Jina endpoint; this task does not fix a single retrieval model. Text inputs are supported; fetching URLs, images or external documents is not permitted. The model running the coding session is separate from these submission resources.
 
 ## Generative LLM resources
 
@@ -51,6 +61,6 @@ OpenRouter generation resources:
 
 ### Strict allowlist and jailbreak penalty
 
-The four model IDs above, OpenRouter endpoint and answering-only use are mandatory restrictions, not recommendations. Do not use other providers, external search or answer services, benchmark-answer datasets, or helper APIs for memory preparation or retrieval. Do not reuse information across answering requests.
+The four model IDs above, OpenRouter endpoint and answering-only use are mandatory restrictions, not recommendations. Do not use other providers, external search or answer services, benchmark-answer datasets, or generative APIs for memory preparation or retrieval. Only the Jina embedding and reranking endpoints above are permitted retrieval APIs. Do not reuse information across answering requests.
 
 A prohibited API call, access to unprovided evidence or bypass of the required pipeline is a task violation. If detected by the verifier or trajectory audit, it sets the entire task score to `0`, regardless of retrieval or answer quality.

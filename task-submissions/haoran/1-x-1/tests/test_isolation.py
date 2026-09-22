@@ -52,7 +52,7 @@ class IsolationTests(unittest.TestCase):
         return '''import json, os, socket
 from pathlib import Path
 assert os.geteuid() == 10001
-for key in ("OPENROUTER_API_KEY", "ANSWER_API_KEY", "ANSWER_API_BASE_URL", "ANSWER_MODEL", "ANSWER_JUDGE_API_KEY", "OPENAI_API_KEY"):
+for key in ("JINA_API_KEY", "OPENROUTER_API_KEY", "ANSWER_API_KEY", "ANSWER_API_BASE_URL", "ANSWER_MODEL", "ANSWER_JUDGE_API_KEY", "OPENAI_API_KEY"):
     assert key not in os.environ, key
 for path in ALLOWED:
     Path(path).read_bytes()
@@ -107,6 +107,33 @@ assert r["choices"][0]["message"]["content"] == "A response"
             with patch.object(gateway, 'forward', return_value={'choices':[{'message':{'content':'A response'}}]}):
                 invoke([script], [script, inputs], self.root / 'answer', self.log, 'answer', 15, gateway)
         self.assertEqual(json.loads((self.log / 'api.json').read_text())['calls'], 1)
+
+    def test_jina_transport_in_build_and_search_preserves_isolation(self):
+        from harness import invoke_retrieval
+        client = self.root / 'jina_client.py'
+        shutil.copyfile(Path(__file__).with_name('jina_client.py'), client)
+        client.chmod(0o444)
+        for stage in ('build_index.sh', 'search.sh'):
+            script = self.script(stage, self.probe([client], [self.private / 'labels.json'], [client]) + """
+assert 'TASK_LLM_FD' not in os.environ
+import importlib.util
+s=importlib.util.spec_from_file_location('jina', os.environ['TASK_JINA_CLIENT'])
+m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
+r=m.embeddings(model='jina-embeddings-v3', input=['a memory'])
+assert r['data'][0]['embedding'] == [1.0, 0.0]
+r=m.rerank(model='jina-reranker-v2-base-multilingual', query='q', documents=['a memory'])
+assert r['results'][0]['index'] == 0
+""")
+            seal(self.art)
+            def forward(payload):
+                if payload['operation'] == 'embeddings':
+                    return {'data':[{'embedding':[1.0,0.0]}]}
+                return {'results':[{'index':0,'relevance_score':0.9}]}
+            with patch.dict(os.environ, {'JINA_API_KEY':'private-jina-key'}), \
+                 patch('jina_gateway.JinaGateway.forward', side_effect=forward) as api:
+                invoke_retrieval([script], [script], self.root/stage.replace('.sh',''),
+                                 self.log, stage, 15, client)
+                self.assertEqual(api.call_count,2)
 
     def test_real_builder_search_and_answer_pipeline(self):
         import harness

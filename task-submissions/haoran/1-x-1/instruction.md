@@ -19,11 +19,11 @@ Submit exactly four files under `/app`:
 
 The scripts are not included in that memory budget. They must contain corpus-independent implementation code, not additional memories, transcript excerpts or question-to-answer tables. Each script must be self-contained: it may embed Python or use installed libraries, but may not depend on extra submitted files. Files must be regular files; links are not supported. Keep development outputs outside `/app`.
 
-Memory preparation, index construction and retrieval must use local computation only. Do not call helper APIs for these operations, including during development. The externally configured coding Agent itself is exempt from this helper-API restriction. Only the submitted answerer may use the OpenRouter generation API, with the current question and retrieved strings. It may choose any of the four model IDs listed in the resource policy. Read `/task/docs/available_resources.md` for credentials and the model allowlist.
+Memory preparation, index construction and retrieval may use local computation and the provided Jina embedding and reranking APIs. Generative helper APIs are not permitted for these operations. The externally configured coding Agent itself is separate from these submission resources. Only the submitted answerer may use the OpenRouter generation API, with the current question and retrieved strings. It may choose any of the four model IDs listed in the resource policy. Read `/task/docs/available_resources.md` for credentials and the model allowlist.
 
 Treat `/task` as read-only. Do not access held-out labels, modify the evaluator or embed answers to particular evaluation questions. Complete implementation and validation within 120 minutes.
 
-The container provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Development runs as root, with numerical libraries defaulting to one thread per process. No local model weights are supplied under `/opt/models`. Network access follows the resource policy.
+The container provides 8 CPUs, 8 GiB RAM, 8 GiB storage and no GPU. Development runs as root. No local model weights are supplied under `/opt/models`. Network access follows the resource policy.
 
 ### Build interface
 
@@ -35,7 +35,7 @@ The verifier first runs:
   --output /path/to/index
 ```
 
-Create the requested index directory and write the index there. The directory does not exist initially; its parent exists and is writable. This phase runs once, offline, with a 300-second timeout. It can read `memory.json`, `build_index.sh` and installed runtime dependencies. It cannot read the other submitted scripts, original transcripts or evaluation data. Use the output directory's parent for temporary work. Only the index directory is retained for retrieval; its contents become read-only. Index entries must be regular files or directories, without links. The index's runtime size is not part of the submitted-memory budget.
+Create the requested index directory and write the index there. The directory does not exist initially; its parent exists and is writable. This phase runs once with a 300-second timeout, including Jina API calls. It can read `memory.json`, `build_index.sh`, the task-provided Jina transport and installed runtime dependencies. It cannot read the other submitted scripts, original transcripts or evaluation data. Use the output directory's parent for temporary work. Only the index directory is retained for retrieval; its contents become read-only. Index entries must be regular files or directories, without links. The index's runtime size is not part of the submitted-memory budget.
 
 ### Search interface
 
@@ -48,7 +48,22 @@ For each question, the verifier runs:
   --output /path/to/memories.json
 ```
 
-Retrieval runs offline and can read only the index, `search.sh` and installed runtime dependencies. It cannot read `memory.json`, other scripts, original transcripts or other requests. Use the output file's parent for temporary work. Retrieval has a combined 150-second budget for the question set.
+Retrieval can use the Jina embedding and reranking APIs and can read only the index, `search.sh`, the task-provided Jina transport and installed runtime dependencies. It cannot read `memory.json`, other scripts, original transcripts or other requests. Use the output file's parent for temporary work. Retrieval has a combined 150-second budget for the question set, including Jina API calls.
+
+During evaluation, both `build_index.sh` and `search.sh` receive `TASK_JINA_CLIENT` and `TASK_JINA_FD`. Use the provided client for Jina calls; direct network access remains disabled and the real key stays outside the submitted process. Preserve the named file descriptor when starting a subprocess.
+
+```python
+import importlib.util
+import os
+
+spec = importlib.util.spec_from_file_location("task_jina", os.environ["TASK_JINA_CLIENT"])
+jina = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(jina)
+result = jina.embeddings(model=embedding_model_id, input=text_batch)
+ranking = jina.rerank(model=reranker_model_id, query=question, documents=candidate_texts)
+```
+
+Use text inputs from the supplied history during development, and from the permitted stage inputs during evaluation. When `TASK_JINA_CLIENT` is absent in development, call the Jina endpoints listed in the resource policy using `JINA_API_KEY`. The answerer does not receive this retrieval transport.
 
 The verifier then runs:
 
@@ -110,9 +125,11 @@ Write a JSON array containing at most ten strings, in relevance order. An empty 
 
 The memories file contains exactly the string array from retrieval. Write the final answer as nonempty UTF-8 text of at most **2,000 Unicode characters**, without a JSON wrapper or recalled-memory listing. If the retrieved information is insufficient, say so in plain text.
 
-Each question permits at most two API calls, with at most 2,000 output tokens per call. Allowed request options are `model`, `messages`, `temperature`, `top_p`, `max_tokens`, and `response_format`. Only the listed request options are accepted by the evaluation transport.
+Each question permits at most two generation API calls, with at most 2,000 output tokens per call. Allowed request options are `model`, `messages`, `temperature`, `top_p`, `max_tokens`, and `response_format`. Only the listed request options are accepted by the evaluation transport.
 
-A request may contain 1–32 messages with string `role` and `content` fields; permitted roles are `system`, `user` and `assistant`. The serialized request, including its newline, must fit within 128 KiB. Streaming, tool calls and alternate endpoints are not supported. If the retrieved information is insufficient, answer accordingly rather than seeking other evidence.
+Jina transport requests contain an operation (`embeddings` or `rerank`) and the provider request body. Each serialized request, including its newline, must fit within 128 KiB; batch larger inputs. There is no separate Jina call-count limit, but all calls count toward the current stage's time budget. The following message limits apply only to generation.
+
+A generation request may contain 1–32 messages with string `role` and `content` fields; permitted roles are `system`, `user` and `assistant`. The serialized request, including its newline, must fit within 128 KiB. Streaming, tool calls and alternate endpoints are not supported. If the retrieved information is insufficient, answer accordingly rather than seeking other evidence.
 
 ## Available Validation Data
 
@@ -163,6 +180,6 @@ Evaluation uses 118 held-out questions over the same 67 meetings. The questions,
 Before implementing the system, read:
 
 - [`/task/docs/environment.md`](/task/docs/environment.md): installed Python environment, runtime and tools.
-- [`/task/docs/available_resources.md`](/task/docs/available_resources.md): answering API configuration, model and endpoint restrictions, and usage rules.
+- [`/task/docs/available_resources.md`](/task/docs/available_resources.md): retrieval and answering API configuration, model and endpoint restrictions, and usage rules.
 
 These read-only documents are part of the task data. Follow their restrictions. The benchmark runner configures API access at runtime; credentials must not be placed in submitted files.

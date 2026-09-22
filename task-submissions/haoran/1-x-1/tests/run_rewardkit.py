@@ -18,7 +18,7 @@ def main():
     root = Path(tempfile.mkdtemp(prefix="icsi-audit-", dir="/run"))
     process = None
     try:
-        model = os.environ.get("TRAJECTORY_JUDGE_MODEL_NAME") or "deepseek-flash"
+        model = "deepseek-flash"
         with JudgeGateway(os.environ.get("OPENAI_BASE_URL"),
                           os.environ.get("OPENAI_API_KEY"), model) as gateway:
             env = prepare(root, gateway, "/logs/agent/trajectory.json")

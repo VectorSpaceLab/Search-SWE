@@ -4,6 +4,7 @@ import os, signal, json, stat, shutil, subprocess, tempfile, time, hashlib, reso
 from pathlib import Path
 import requests
 from llm_gateway import Gateway
+from jina_gateway import JinaGateway
 
 HERE = Path(__file__).resolve().parent
 RUNTIME = [
@@ -126,8 +127,9 @@ def invoke(argv, read, work, log, label, timeout, gateway=None):
         "OPENBLAS_NUM_THREADS": "4",
     }
     if gateway is not None:
-        env["TASK_LLM_FD"] = str(gateway.worker.fileno())
-        env["TASK_LLM_CLIENT"] = str(gateway.client_path)
+        env[gateway.env_prefix + "_FD"] = str(gateway.worker.fileno())
+        env[gateway.env_prefix + "_CLIENT"] = str(gateway.client_path)
+        read = [*read, gateway.client_path]
     command = [
         "/opt/conda/bin/python",
         "-I",
@@ -182,6 +184,14 @@ def invoke(argv, read, work, log, label, timeout, gateway=None):
             + (log / (label + ".stderr")).read_text(errors="replace")[-1500:]
         )
     return round(time.monotonic() - t, 3)
+
+
+def invoke_retrieval(argv, read, work, log, label, timeout, client):
+    # Only retrieval stages get the Jina channel; no generation or judge access.
+    with JinaGateway(os.environ.get("JINA_API_KEY"), float("inf"),
+                     log / (label + "-jina.json")) as gateway:
+        gateway.client_path = client
+        return invoke(argv, read, work, log, label, timeout, gateway=gateway)
 
 
 def llm(system, payload):
@@ -459,12 +469,15 @@ def evaluate(art, history, queries, gold, log, answerer=True, evidence=None):
                 or any(not isinstance(v, list) or not v for v in byevidence.values())):
             raise ValueError("questions, answers and evidence must have matching unique IDs")
         result["phase"] = "index_build"
+        jina_client = base / "jina_client.py"
+        shutil.copyfile(HERE / "jina_client.py", jina_client)
+        jina_client.chmod(0o444)
         build_work = base / "build"
         built_index = build_work / "index"
-        result["build_seconds"] = invoke(
+        result["build_seconds"] = invoke_retrieval(
             [art / "build_index.sh", "--memory", art / "memory.json", "--output", built_index],
             [art / "build_index.sh", art / "memory.json"], build_work, log,
-            "build", contract["build_timeout_seconds"])
+            "build", contract["build_timeout_seconds"], jina_client)
         if built_index.is_symlink() or not built_index.is_dir():
             raise ValueError("build_index.sh must create the requested index directory")
         size(built_index)  # Validate regular files/directories before transfer.
@@ -483,10 +496,10 @@ def evaluate(art, history, queries, gold, log, answerer=True, evidence=None):
             remaining = contract["retrieval_timeout_seconds"] - retrieval_seconds
             if remaining <= 0:
                 raise ValueError("retrieval time budget exceeded")
-            retrieval_seconds += invoke(
+            retrieval_seconds += invoke_retrieval(
                 [art / "search.sh", "--index", frozen_index,
                  "--question", q["question"], "--output", work / "memories.json"],
-                [art / "search.sh", frozen_index], work, log, f"query-{index}", remaining)
+                [art / "search.sh", frozen_index], work, log, f"query-{index}", remaining, jina_client)
             output = work / "memories.json"
             if output.is_symlink() or not output.is_file():
                 raise ValueError("invalid retrieval output file")

@@ -148,7 +148,7 @@ class PipelineTests(unittest.TestCase):
             question = argv[argv.index('--question') + 1]
             i = questions.index(question)
             calls.append((label, question))
-            if gateway is None:
+            if label.startswith('query-'):
                 self.assertEqual(read[0], art / 'search.sh')
                 self.assertEqual(Path(argv[argv.index('--index') + 1]), read[1])
                 self.assertTrue((read[1] / 'notes.json').exists())

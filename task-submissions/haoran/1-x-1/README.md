@@ -58,16 +58,16 @@ The history, submission interfaces and resource limits are fixed. Memory
 format, information selection, indexing, retrieval and answer generation are
 implementation choices. The task starts without a starter implementation.
 
-Memory construction and retrieval must use local computation, including during
-development. Only the answerer may call the allowed OpenRouter generation models, subject
-to the [resource policy](environment/docs/available_resources.md).
+Memory construction and retrieval may use local computation and Jina embedding
+and reranking APIs. Only the answerer may call the allowed OpenRouter generation
+models, subject to the [resource policy](environment/docs/available_resources.md).
 
 ### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 8 CPUs, 8 GiB memory, 8 GiB storage
 and no GPU. The agent has 120 minutes; the Harbor verifier phase has 90 minutes.
 Index construction has 300 seconds. Across the question set, retrieval has 150 seconds and answering 1,800 seconds. Stage budgets do not extend the overall verifier budget.
-Each answer permits at most two API calls, 2,000 output tokens per call and
+Each answer permits at most two generation API calls, 2,000 output tokens per call and
 2,000 Unicode characters in the final text.
 
 `memory.json` is readable UTF-8 JSON and may occupy at most 183,981 bytes,
@@ -95,7 +95,7 @@ service failure invalidates the measurement.
 
 ### Integrity Checks and Final Reward
 
-Evidence and answer judging are separate from the trajectory audit. The audit checks task compliance and can set the whole reward to zero. An incomplete audit is an infrastructure failure. Submitted programs and the audit process do not receive the judges' provider credentials. The trajectory audit defaults to `deepseek-flash` through pinned RewardKit 0.1.7; evidence and answer grading use independently configured judge settings.
+Evidence and answer judging are separate from the trajectory audit. The audit checks task compliance and can set the whole reward to zero. An incomplete audit is an infrastructure failure. Submitted programs and the audit process do not receive the judges' provider credentials. The trajectory audit uses `deepseek-flash` through pinned RewardKit 0.1.7; evidence and answer grading use independently configured judge settings.
 
 Task identity and execution settings are recorded in `task.toml`. Final numbering and official asset migration remain maintainer steps.
 
@@ -106,7 +106,7 @@ to prepare the runtime and Docker. The [evaluation guide](../../../docs/evaluati
 explains agent and verifier configuration; the [asset guide](../../../docs/assets.md)
 covers downloads and checksums.
 
-Configure `OPENROUTER_API_KEY` for the submitted answerer, `ANSWER_JUDGE_*` for evidence and answer grading, and `VERIFIER_OPENAI_*` for the trajectory audit. The answerer selects among the four models in the [resource policy](environment/docs/available_resources.md); judge settings are separate. Credentials must remain outside the task package.
+Configure `JINA_API_KEY` for optional embedding and reranking, `OPENROUTER_API_KEY` for the submitted answerer, `ANSWER_JUDGE_*` for evidence and answer grading, and `VERIFIER_OPENAI_*` for the trajectory audit. The answerer selects among the four models in the [resource policy](environment/docs/available_resources.md); judge settings are separate. Credentials must remain outside the task package.
 
 ```bash
 python scripts/download_assets.py --task-path task-submissions/haoran/1-x-1

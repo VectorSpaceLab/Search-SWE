@@ -17,11 +17,16 @@ ALLOWED_MODELS = (
 
 class Gateway:
     class Error(RuntimeError):
-        """The generation service failed, which is an infrastructure error."""
+        """The provider service failed, which is an infrastructure error."""
+
+    credential_name = "OPENROUTER_API_KEY"
+    require_key = True
+    env_prefix = "TASK_LLM"
+    service_name = "Generation"
 
     def __init__(self, key, limit, log):
-        if not key:
-            raise self.Error("OPENROUTER_API_KEY is required")
+        if not key and self.require_key:
+            raise self.Error(self.credential_name + " is required")
         self.key, self.limit, self.log = key, limit, Path(log)
         self.parent, self.worker = socket.socketpair()
         self.calls = 0
@@ -43,7 +48,7 @@ class Gateway:
         self.thread.join(timeout=1)
         self.log.write_text(json.dumps({"calls": self.calls, "errors": self.failures}) + "\n")
         if self.upstream_error:
-            raise self.Error("Generation service failed; see generation-api.json")
+            raise self.Error(self.service_name + " service failed; see " + self.log.name)
 
     @staticmethod
     def validate(payload):
@@ -92,11 +97,11 @@ class Gateway:
                         break
                     try:
                         if len(line) > 131072 or not line.endswith(b"\n"):
-                            raise ValueError("generation request exceeds 128 KiB")
+                            raise ValueError(self.service_name + " request exceeds 128 KiB")
                         payload = self.validate(json.loads(line))
                         self.calls += 1
                         if self.calls > self.limit:
-                            raise ValueError("generation call budget exceeded")
+                            raise ValueError(self.service_name + " call budget exceeded")
                         result = {"response": self.forward(payload)}
                     except self.Error as e:
                         self.upstream_error = True

@@ -10,7 +10,7 @@ artifacts = [
 
 [task]
 name = "search-swe/task-1-x-1"
-version = "0.4.0"
+version = "0.4.1"
 description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]
@@ -28,14 +28,14 @@ data_status = "Transcript-grounded generated queries"
 timeout_sec = 7200
 user = "root"
 network_mode = "allowlist"
-allowed_hosts = ["openrouter.ai"]
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
 
 [verifier]
 timeout_sec = 5400
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["openrouter.ai", "api.deepseek.com"]
+allowed_hosts = ["openrouter.ai", "api.jina.ai", "api.deepseek.com"]
 
 [environment]
 build_timeout_sec = 1800
@@ -45,22 +45,18 @@ memory_mb = 8192
 storage_mb = 8192
 gpus = 0
 network_mode = "allowlist"
-allowed_hosts = ["openrouter.ai"]
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
 os = "linux"
 
 [environment.env]
-OMP_NUM_THREADS = "1"
-OPENBLAS_NUM_THREADS = "1"
-MKL_NUM_THREADS = "1"
-NUMEXPR_NUM_THREADS = "1"
-HOME = "/root"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
 
 [verifier.env]
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
 ANSWER_JUDGE_MODEL_NAME = "${ANSWER_JUDGE_MODEL_NAME:-}"
 ANSWER_JUDGE_BASE_URL = "${ANSWER_JUDGE_BASE_URL:-}"
 ANSWER_JUDGE_API_KEY = "${ANSWER_JUDGE_API_KEY:-}"
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
 OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
-TRAJECTORY_JUDGE_MODEL_NAME = "${TRAJECTORY_JUDGE_MODEL_NAME:-deepseek-flash}"
