@@ -17,7 +17,7 @@ a Python implementation against a corrected, unpruned starter.
 The goal is to preserve strong retrieval quality while reducing total query
 wall time relative to that reference. Quality thresholds are hard gates;
 passing submissions receive a latency reward that decreases linearly between
-30% and 50% of starter wall time.
+25% and 35% of starter wall time.
 
 ## What This Task Tests
 
@@ -92,9 +92,9 @@ minimums are **0.89** and **0.99** respectively.
 ### Correctness and Latency Reward
 
 The verifier measures the candidate and corrected starter on the same workload
-and resource allocation. A latency ratio at or below **0.30** receives reward
-`1`; a ratio at or above **0.50** receives reward `0`; values strictly between
-those boundaries receive `(0.50 - ratio) / 0.20`. Successful build/run, valid
+and resource allocation. A latency ratio at or below **0.25** receives reward
+`1`; a ratio at or above **0.35** receives reward `0`; values strictly between
+those boundaries receive `(0.35 - ratio) / 0.10`. Successful build/run, valid
 outputs, and implementation restrictions remain hard requirements.
 
 ### Integrity Checks and Final Reward
