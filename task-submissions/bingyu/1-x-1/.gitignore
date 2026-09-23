@@ -1,0 +1,7 @@
+/data/
+/models/
+/jobs/
+/solution/
+__pycache__/
+.pytest_cache/
+*.py[cod]

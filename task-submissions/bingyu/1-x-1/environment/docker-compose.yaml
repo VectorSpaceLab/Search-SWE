@@ -1,0 +1,15 @@
+services:
+  main:
+    volumes:
+      - type: bind
+        source: ../data
+        target: /task/data
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false
