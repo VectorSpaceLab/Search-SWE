@@ -37,7 +37,7 @@ EXPECTED = {
     "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
     "task-2-1": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
     "task-2-2": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
-    "task-2-3": ("no-network", [], "public", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-2-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
     "task-2-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
     "task-2-5": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
 }
@@ -317,14 +317,20 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 }[agent]
                 self.assertEqual(argv[argv.index("--agent") + 1], expected_import)
 
-        public = self.run_preview("task-2-3", "pi", "deepseek/deepseek-flash", {})
-        self.assertEqual(public.returncode, 0, public.stderr)
-        self.assertNotIn("--allow-agent-host", self.argv(public))
-        public = self.run_preview(
+        restricted = self.run_preview("task-2-3", "pi", "deepseek/deepseek-flash", {})
+        self.assertEqual(restricted.returncode, 0, restricted.stderr)
+        self.assertEqual(
+            self.flag_values(self.argv(restricted), "--allow-agent-host"),
+            ["api.deepseek.com"],
+        )
+        restricted = self.run_preview(
             "task-2-3", "claude-code", "claude-sonnet-4-6", {}
         )
-        self.assertEqual(public.returncode, 0, public.stderr)
-        self.assertNotIn("--allow-agent-host", self.argv(public))
+        self.assertEqual(restricted.returncode, 0, restricted.stderr)
+        self.assertEqual(
+            self.flag_values(self.argv(restricted), "--allow-agent-host"),
+            ["api.anthropic.com"],
+        )
 
     def test_claude_code_preview_uses_pinned_cli_and_namespaced_key(self):
         secret = "fixture-anthropic-secret"

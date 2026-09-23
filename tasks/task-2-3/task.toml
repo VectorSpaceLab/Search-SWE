@@ -26,14 +26,22 @@ hidden_query_count = 100
 [agent]
 timeout_sec = 43200.0
 user = "root"
-network_mode = "public"
+network_mode = "allowlist"
+allowed_hosts = [
+    "openrouter.ai",
+    "api.jina.ai",
+]
 
 [verifier]
 timeout_sec = 5700.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = [
+    "openrouter.ai",
+    "api.jina.ai",
+    "api.deepseek.com",
+]
 
 [verifier.env]
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
@@ -43,7 +51,11 @@ OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
 build_timeout_sec = 1800.0
 workdir = "/app"
 os = "linux"
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = [
+    "openrouter.ai",
+    "api.jina.ai",
+]
 cpus = 8
 memory_mb = 32768
 storage_mb = 102400

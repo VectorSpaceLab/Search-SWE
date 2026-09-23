@@ -44,9 +44,10 @@ There are 100 hidden evaluation queries, isolated from the agent environment.
 
 The query-side system may be adapted within the supplied 0.6B backbone
 requirement. Document vectors must not be modified, re-encoded, replaced,
-or reordered. Development-time network access may support documentation and
-tools, but not replacement backbones, evaluation labels, or external retrieval
-results. The final submission must be self-contained and offline.
+or reordered. Task network access during development is restricted to
+`openrouter.ai` and `api.jina.ai`. Do not acquire replacement backbones,
+evaluation labels, or external retrieval results. The final submission must
+be self-contained and offline.
 
 ### Environment and Resource Limits
 

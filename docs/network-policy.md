@@ -25,7 +25,7 @@ access.
 | `task-1-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com` |
 | `task-2-1` | Fixed local reranker only | no network | model host only | `api.deepseek.com` only |
 | `task-2-2` | Explicitly offline training | no network | model host only | `api.deepseek.com` only |
-| `task-2-3` | Public access only during Agent development; final submission is self-contained | no network | public | `api.deepseek.com` only |
+| `task-2-3` |  OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com` |
 | `task-2-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts only; no model judge |
 | `task-2-5` | Formal build/search is offline | no network | model host only | `api.deepseek.com` only |
 
