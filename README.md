@@ -106,6 +106,9 @@ For other runs, fill only the matching sections already present in `.env`:
   `OPENROUTER_API_KEY`, or `JINA_API_KEY` only for the tasks identified by the
   comments in `.env.example`.
 
+If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
+[network guide](docs/network-policy.md); otherwise leave it empty.
+
 The [evaluation guide](docs/evaluation.md) documents credential isolation,
 custom endpoints, proxies, and the complete per-task matrix.
 
@@ -194,7 +197,7 @@ hardware matrix plus GPU, network-policy, and custom-provider options.
 | --- | --- |
 | [Quick start guide](docs/quickstart.md) | A first CPU evaluation, end to end |
 | [Evaluation guide](docs/evaluation.md) | Per-task credentials, coding agents, GPU, network policy, and custom providers |
-| [Network policy](docs/network-policy.md) | Harbor egress modes and exact per-task host allowlists |
+| [Network policy](docs/network-policy.md) | Per-task allowlists, default direct gateway, and optional proxy egress |
 | [Asset guide](docs/assets.md) | Downloading, verifying, and restoring fixed data and models |
 | [Benchmark design](docs/benchmark.md) | Evaluation, repository layout, and data provenance |
 | [Contributing guide](docs/contributing.md) | Task-authoring workflow, validation, and PR expectations |

@@ -98,6 +98,8 @@ VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
 - 可选 submission API：只在 `.env.example` 注释所列任务确实使用时，填写
   `TASK_1_1_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
 
+需要代理时，按[网络配置](docs/network-policy.md)设置 `.env` 的 `EGRESS_CONFIG`，否则留空。
+
 凭证隔离、自定义服务地址、网络权限和完整的逐任务配置矩阵见
 [评测指南](docs/evaluation.md)。
 
@@ -182,7 +184,7 @@ gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings。�
 | --- | --- |
 | [快速开始指南](docs/quickstart.md) | 完整的一次 CPU 评测流程 |
 | [评测指南](docs/evaluation.md) | 各任务凭证、编码智能体、GPU、网络策略和自定义模型服务 |
-| [网络权限](docs/network-policy.md) | Harbor 网络模式与各任务精确的 host allowlist |
+| [网络权限](docs/network-policy.md) | 各任务的 host allowlist、默认直连网关与可选代理出口 |
 | [资源说明](docs/assets.md) | 固定数据与模型的下载、校验和恢复 |
 | [基准设计](docs/benchmark.md) | 评测方式、仓库结构和数据来源 |
 | [贡献指南](docs/contributing.md) | 任务创作流程、验证要求和 PR 说明 |

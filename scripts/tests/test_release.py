@@ -34,7 +34,7 @@ class ReleasePackage(unittest.TestCase):
         for name in ("environment/docker-compose.yaml", "tests/docker-compose.yaml"):
             (self.task / name).write_text("services: {}\n")
         (self.task / "task.toml").write_text(
-            '[task]\nname = "task-new"\nversion = "0.1"\n'
+            '[task]\nname = "fixture/task-new"\nversion = "0.1"\n'
             '[verifier.env]\nOPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"\n'
             'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
         )
@@ -166,6 +166,26 @@ class ReleasePackage(unittest.TestCase):
         self.assertIn("OPENAI_API_KEY=${AGENT_OPENAI_API_KEY}", argv)
         self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}", argv)
 
+    def test_step_restriction_selects_gateway_and_model_host(self):
+        (self.task / "task.toml").write_text(
+            '[environment]\nnetwork_mode = "public"\n'
+            '[agent]\nnetwork_mode = "public"\n'
+            '[[steps]]\nname = "online"\n'
+            '[[steps]]\nname = "offline"\n[steps.agent]\nnetwork_mode = "no-network"\n'
+        )
+        command = [sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "task-new",
+                   "--agent", "pi", "--model", "deepseek/deepseek-flash", "--dry-run"]
+        result = subprocess.run(command, cwd=self.root, env=self.launcher_env(), capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        argv = shlex.split(result.stdout.splitlines()[-1])
+        self.assertEqual(argv[argv.index("--env")+1], "scripts.harbor_environments:PhaseScopedDocker")
+        self.assertEqual(self.flag_values(argv, "--allow-agent-host"), ["api.deepseek.com"])
+        result = subprocess.run(command, cwd=self.root,
+                                env={**self.launcher_env(), "CONTAINER_PROXY": "http://192.0.2.1:7890"},
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("general proxy can bypass", result.stderr)
+
     def test_launcher_makes_repository_agents_importable(self):
         # A console script starts with its bin directory on sys.path, not cwd.
         # Import the real adapter in a new interpreter, not just inspect argv.
@@ -245,7 +265,7 @@ class ReleasePackage(unittest.TestCase):
         for gpus, expected in ((0, []), (1, ["0"])):
             with self.subTest(gpus=gpus):
                 (self.task / "task.toml").write_text(
-                    '[task]\nname = "task-new"\nversion = "0.1"\n'
+                    '[task]\nname = "fixture/task-new"\nversion = "0.1"\n'
                     f'[environment]\ngpus = {gpus}\n'
                     '[verifier.env]\nOPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"\n'
                     'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
@@ -558,7 +578,7 @@ class ReleasePackage(unittest.TestCase):
         ]:
             with self.subTest(keys=keys, success=success):
                 (self.task / "task.toml").write_text(
-                    '[task]\nname = "task-new"\nversion = "0.1"\n[verifier.env]\n'
+                    '[task]\nname = "fixture/task-new"\nversion = "0.1"\n[verifier.env]\n'
                     + ''.join(f'{key} = "${{{key}:-}}"\n' for key in keys)
                 )
                 (self.repo / ".env").write_text(values)

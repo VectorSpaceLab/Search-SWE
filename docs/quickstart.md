@@ -62,6 +62,9 @@ configuration groups and only the verifier receives the `VERIFIER_*` values.
 their keys are optional and are not needed for an implementation that uses only
 the provided corpus and local runtime.
 
+If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
+[network guide](network-policy.md); otherwise leave it empty.
+
 The local `.env` is ignored by Git. Do not commit or print credentials. On a
 multi-user Unix host, restrict it after adding credentials:
 

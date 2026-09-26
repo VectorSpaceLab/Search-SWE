@@ -260,13 +260,17 @@ Compose overlays request the real GPU.
 Harbor 0.22.0's Docker backend rejects `gpus = 1` during its own preflight and
 does not translate that field into the Compose GPU request. The shared launcher
 therefore supplies `--override-gpus 0` automatically while leaving the truthful
-task metadata and Compose reservations intact. If invoking `harbor run --env
-docker` directly with that Harbor version, add the same override. Recheck this
-workaround when upgrading Harbor.
+task metadata and Compose reservations intact. Direct Harbor invocations using
+`--env scripts.harbor_environments:PhaseScopedDocker` need the same override
+with that Harbor version. Recheck this workaround when upgrading Harbor.
 
 ## Runtime network enforcement
 
-Every current task uses a restricted agent or verifier phase. Keep
+Every current task uses a restricted agent or verifier phase, so the launcher
+automatically selects the direct gateway and pulls its image if missing. For an
+upstream HTTP(S) proxy, configure `EGRESS_CONFIG` using the
+[network guide](network-policy.md); proxy mode rejects public phases, including
+task-2-3's public agent phase. Keep
 `CONTAINER_PROXY` unset: a general proxy would let the proxy choose arbitrary
 destinations and would defeat Harbor's hostname policy, so the launcher rejects
 it. Configure image-pull and Docker build proxies separately at the Docker
