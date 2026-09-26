@@ -6,17 +6,16 @@ import os
 from pathlib import Path
 import shlex
 import shutil
-import subprocess
 import sys
 import tomllib
 from urllib.parse import urlsplit
 
 if __package__:
-    from .docker_dns import create_overlay, parse_servers
+    from .docker_dns import parse_servers
     from .task_paths import select_task, task_key
     from .download_assets import destination_path, read_manifest, relative_path
 else:
-    from docker_dns import create_overlay, parse_servers
+    from docker_dns import parse_servers
     from task_paths import select_task, task_key
     from download_assets import destination_path, read_manifest, relative_path
 
@@ -93,29 +92,6 @@ def host_is_allowed(host, allowed_hosts):
     )
 
 
-def prepare_network_probe():
-    """Prepare Harbor's probe image outside its short kernel-test deadline."""
-    from harbor.environments.docker.docker import DockerEnvironment
-
-    image = DockerEnvironment._EGRESS_CONTROL_KERNEL_PROBE_IMAGE
-    inspected = subprocess.run(
-        ["docker", "image", "inspect", image], capture_output=True, timeout=30
-    )
-    if inspected.returncode:
-        print("Preparing Harbor network-isolation probe image...", flush=True)
-        subprocess.run(["docker", "pull", image], check=True, timeout=300)
-    result = subprocess.run(
-        ["docker", "run", "--rm", image, "sh", "-c",
-         DockerEnvironment._EGRESS_CONTROL_KERNEL_PROBE_SCRIPT],
-        capture_output=True, text=True, timeout=30,
-    )
-    if result.returncode:
-        raise RuntimeError(
-            "Docker network-isolation probe failed: "
-            + (result.stderr.strip() or "kernel lacks CONFIG_NFT_FIB_INET")
-        )
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
@@ -131,6 +107,8 @@ def main():
     parser.add_argument("--codex-config", type=Path, help="Optional native Codex TOML configuration")
     parser.add_argument("--thinking", choices=PI_THINKING_LEVELS, help="Pi thinking level; overrides PI_THINKING")
     parser.add_argument("--container-dns", help="Comma-separated upstream IPv4 DNS servers; overrides CONTAINER_DNS. Keeps Harbor's API allowlist.")
+    parser.add_argument("--egress-config", type=Path, help="Direct/proxy gateway JSON; overrides EGRESS_CONFIG. Without it, restricted tasks use the direct gateway.")
+    parser.add_argument("--egress-image", help="Direct gateway image (pulled if missing); overrides EGRESS_IMAGE. Cannot be combined with EGRESS_CONFIG.")
     parser.add_argument("--output", type=Path, help="Job output directory; relative to the current directory")
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     args = parser.parse_args()
@@ -147,6 +125,7 @@ def main():
     elif args.env_file is not None:
         parser.error(f"Environment file does not exist: {env_file}")
     env = {**file_env, **os.environ}
+    egress_path = args.egress_config or (REPO / env["EGRESS_CONFIG"] if env.get("EGRESS_CONFIG") else None)
     dns_servers = None
     if dns_value := (args.container_dns or env.get("CONTAINER_DNS")):
         try:
@@ -257,7 +236,9 @@ def main():
     verifier_network_mode, verifier_allowed_hosts = effective_network_policy(
         task_config, "verifier"
     )
-    if agent_network_mode != "public":
+    agent_requires_host = any(step.get("agent", {}).get("network_mode", agent_network_mode) != "public"
+                              for step in task_config.get("steps") or [{}])
+    if agent_requires_host:
         if agent_host is None:
             parser.error(
                 "Set AGENT_OPENAI_BASE_URL so Harbor can allow only the selected "
@@ -299,8 +280,26 @@ def main():
                 "[verifier].allowed_hosts"
             )
 
+    if __package__:
+        from .egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+    else:
+        from egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+    egress_image = args.egress_image or env.get("EGRESS_IMAGE")
+    try:
+        if egress_path is not None:
+            if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
+                parser.error("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
+            egress = load_config(egress_path)
+        else:
+            egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
+        restricted = validate_task_networks(task, agent_host, egress.settings.get("upstream_host"),
+                                            allow_public=egress.settings.get("transport") == "direct")
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    use_gateway = restricted or egress_path is not None
+
     if env.get("CONTAINER_PROXY"):
-        if agent_network_mode != "public" or verifier_network_mode != "public":
+        if restricted:
             parser.error(
                 "CONTAINER_PROXY is incompatible with this task's Harbor network "
                 "allowlists because a general proxy can bypass destination filtering"
@@ -312,6 +311,15 @@ def main():
             for name in ("no_proxy", "NO_PROXY"):
                 command.extend([flag, f"{name}=${{CONTAINER_NO_PROXY}}"])
 
+    if use_gateway:
+        command[command.index("--env") + 1] = "scripts.harbor_environments:PhaseScopedDocker"
+        if egress_path is not None:
+            command.extend(["--environment-kwarg", f"egress_config={egress.path}"])
+        else:
+            command.extend(["--environment-kwarg", f"egress_image={egress.image}"])
+            if dns_servers:
+                command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
+
     # This launcher uses explicit API keys, without consulting a host auth.json.
     env.pop("CODEX_AUTH_JSON_PATH", None)
     env.pop("CODEX_FORCE_AUTH_JSON", None)
@@ -321,10 +329,13 @@ def main():
 
     if args.dry_run:
         print("Preview only; credentials, assets, Docker, GPU, and API access are not checked.")
+        if use_gateway:
+            mode = egress.settings.get("transport", "proxy")
+            print(f"Phase-scoped {mode} gateway; task and phase allowlists are enforced by the trusted sidecar.")
+        if dns_servers:
+            print("Trusted gateway DNS servers: " + ", ".join(dns_servers))
         print("Environment values are passed to Harbor separately from the command:")
         print(shlex.join(command))
-        if dns_servers:
-            print("Docker sidecar DNS override (allowlist preserved): " + ", ".join(dns_servers))
         return 0
 
     missing = [name for name in required if not env.get(name)]
@@ -341,18 +352,8 @@ def main():
         parser.error(f"Run python scripts/download_assets.py {selection_flag} to restore the missing or incomplete assets: " + ", ".join(unavailable))
     if shutil.which("harbor", path=env.get("PATH")) is None:
         parser.error("harbor was not found; activate the supported Harbor environment")
-    if any(effective_network_policy(task_config, phase)[0] != "public"
-           for phase in ("environment", "agent", "verifier")):
-        try:
-            prepare_network_probe()
-        except (OSError, subprocess.SubprocessError, RuntimeError) as error:
-            parser.error(f"Docker network preflight failed (allowlist remains enforced): {error}")
-    if dns_servers:
-        if all(effective_network_policy(task_config, phase)[0] == "public"
-               for phase in ("environment", "agent", "verifier")):
-            parser.error("CONTAINER_DNS currently requires Harbor's network-isolation sidecar")
-        command.extend(["--extra-docker-compose", str(create_overlay(dns_servers))])
-        print("Docker DNS upstreams (API allowlist unchanged): " + ", ".join(dns_servers), flush=True)
+    if dns_servers and not use_gateway:
+        parser.error("CONTAINER_DNS requires a restricted task or an explicit direct EGRESS_CONFIG")
 
     # Harbor is a console script: changing cwd alone does not put this checkout
     # on its interpreter's search path for scripts.harbor_agents.

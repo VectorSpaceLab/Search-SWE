@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "repository": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/",
+  "archives": {
+    "libcrypto3-3.5.8-r0.apk": "a5592b5cf276bc7a30ac7b161d46446085490b640faa1f839ea98eb15aacad31",
+    "libssl3-3.5.8-r0.apk": "f80b76cb5e5a52cfc1ced08f8dc3022adc0ce0a3d6e7741976731b22c71fe310"
+  },
+  "installed": {
+    "libcrypto3": "3.5.8-r0",
+    "libssl3": "3.5.8-r0"
+  }
+}
