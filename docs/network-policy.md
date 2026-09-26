@@ -77,7 +77,7 @@ compatibility without pulling images, reading proxy credentials or calling APIs.
 - Native Linux amd64, local rootful Docker through a Unix socket, Harbor 0.22.0,
   and IPv4. Docker Desktop, remote/rootless Docker and userns remapping are unsupported.
 - Direct mode supports public and restricted phases. **Proxy mode rejects any
-  public phase**, including task-2-3's agent phase.
+  public phase**.
 - Custom network topologies, extra capabilities/devices, host/control mounts,
   external/shared volumes and kept containers are rejected. Named volumes must
   be project-local plain Docker volumes.

@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -23,9 +24,23 @@ class EgressLauncherTests(unittest.TestCase):
                          "dns": {"doh_url": "https://resolver.example/dns-query"}}
         self.config.write_text(json.dumps(self.document))
 
-    def launch(self, *arguments, task="task-1-1", env=None):
+    def launch(self, *arguments, task="task-1-1", env=None, public=False):
+        repo = ROOT
+        if public:
+            # Public-policy coverage must not depend on a benchmark task's
+            # evolving network requirements (for example, task-2-3).
+            repo = self.root / "repo"
+            shutil.copytree(ROOT / "scripts", repo / "scripts",
+                            ignore=shutil.ignore_patterns("__pycache__", "tests"))
+            task = "task-fixture"
+            fixture = repo / "tasks" / task
+            fixture.mkdir(parents=True)
+            (fixture / "task.toml").write_text(
+                '[environment]\nnetwork_mode = "no-network"\n'
+                '[agent]\nnetwork_mode = "public"\n'
+                '[verifier]\nnetwork_mode = "no-network"\n')
         return subprocess.run(
-            [sys.executable, str(ROOT / "scripts/run_task.py"), "--task", task, "--agent", "pi",
+            [sys.executable, str(repo / "scripts/run_task.py"), "--task", task, "--agent", "pi",
              "--model", "deepseek/deepseek-flash", "--env-file", str(self.env_file), "--dry-run", *arguments],
             env={"PATH": os.environ["PATH"], "HOME": str(self.root), **(env or {})},
             capture_output=True, text=True, timeout=30)
@@ -45,13 +60,13 @@ class EgressLauncherTests(unittest.TestCase):
         self.assertNotIn("--extra-docker-compose", response.stdout)
 
     def test_public_agent_with_restricted_verifier_uses_direct_gateway(self):
-        response = self.launch(task="task-2-3")
+        response = self.launch(public=True)
         self.assertEqual(response.returncode, 0, response.stderr)
         self.assertIn("PhaseScopedDocker", response.stdout)
 
     def test_direct_configuration_supports_public_phases(self):
         self.config.write_text(json.dumps({"version": 1, "mode": "direct", "image": "fixture:direct", "dns": {}}))
-        response = self.launch("--egress-config", str(self.config), task="task-2-3")
+        response = self.launch("--egress-config", str(self.config), public=True)
         self.assertEqual(response.returncode, 0, response.stderr)
         self.assertIn("PhaseScopedDocker", response.stdout)
 
@@ -83,9 +98,11 @@ class EgressLauncherTests(unittest.TestCase):
         self.assertIn("general proxy can bypass", response.stderr)
 
     def test_public_phase_rejected_without_changing_task(self):
-        response = self.launch("--egress-config", str(self.config), task="task-2-3")
-        self.assertNotEqual(response.returncode, 0)
+        response = self.launch("--egress-config", str(self.config), public=True)
+        self.assertNotEqual(response.returncode, 0, response.stdout + response.stderr)
         self.assertIn("any public phase", response.stderr)
+        self.assertIn('network_mode = "public"',
+                      (self.root / "repo/tasks/task-fixture/task.toml").read_text())
 
     def test_rejected_url_does_not_echo_embedded_secret(self):
         self.document["upstream"]["url"] = "https://user:do-not-leak-this@proxy.example"

@@ -269,8 +269,7 @@ with that Harbor version. Recheck this workaround when upgrading Harbor.
 Every current task uses a restricted agent or verifier phase, so the launcher
 automatically selects the direct gateway and pulls its image if missing. For an
 upstream HTTP(S) proxy, configure `EGRESS_CONFIG` using the
-[network guide](network-policy.md); proxy mode rejects public phases, including
-task-2-3's public agent phase. Keep
+[network guide](network-policy.md); proxy mode rejects public phases. Keep
 `CONTAINER_PROXY` unset: a general proxy would let the proxy choose arbitrary
 destinations and would defeat Harbor's hostname policy, so the launcher rejects
 it. Configure image-pull and Docker build proxies separately at the Docker
