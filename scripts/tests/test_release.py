@@ -166,6 +166,44 @@ class ReleasePackage(unittest.TestCase):
         self.assertIn("OPENAI_API_KEY=${AGENT_OPENAI_API_KEY}", argv)
         self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}", argv)
 
+    def test_openrouter_launch_requires_its_own_key_and_keeps_it_out_of_argv(self):
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        fake_harbor = bin_dir / "harbor"
+        fake_harbor.write_text(
+            f"#!{sys.executable}\nimport json, os, sys\n"
+            "assert os.environ['AGENT_OPENROUTER_API_KEY'] == 'fixture-agent-openrouter-key'\n"
+            "assert os.environ['OPENROUTER_API_KEY'] == 'fixture-submission-key'\n"
+            "assert os.environ['VERIFIER_OPENAI_API_KEY'] == 'fixture-judge-key'\n"
+            "assert 'OPENAI_BASE_URL' not in os.environ\n"
+            "print(json.dumps(sys.argv[1:]))\n"
+        )
+        fake_harbor.chmod(0o755)
+        env = self.launcher_env()
+        env.update({
+            "PATH": str(bin_dir) + os.pathsep + env.get("PATH", ""),
+            "OPENROUTER_API_KEY": "fixture-submission-key",
+            "VERIFIER_OPENAI_BASE_URL": "https://judge.example/v1",
+            "VERIFIER_OPENAI_API_KEY": "fixture-judge-key",
+            "OPENAI_BASE_URL": "https://wrong-provider.example/v1",
+        })
+        command = [sys.executable, str(self.repo / "scripts/run_task.py"),
+                   "--task", "task-new", "--agent", "codex", "--openrouter",
+                   "--model", "openai/gpt-6-astra"]
+        missing = subprocess.run(command, cwd=self.root, env=env,
+                                 capture_output=True, text=True)
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn("AGENT_OPENROUTER_API_KEY", missing.stderr)
+        env["AGENT_OPENROUTER_API_KEY"] = "fixture-agent-openrouter-key"
+        result = subprocess.run(command, cwd=self.root, env=env,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        argv = json.loads(result.stdout.splitlines()[-1])
+        self.assertIn("OPENAI_API_KEY=${AGENT_OPENROUTER_API_KEY}", argv)
+        self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}", argv)
+        self.assertNotIn("fixture-agent-openrouter-key", result.stdout + result.stderr)
+        self.assertNotIn("fixture-submission-key", result.stdout + result.stderr)
+
     def test_step_restriction_selects_gateway_and_model_host(self):
         (self.task / "task.toml").write_text(
             '[environment]\nnetwork_mode = "public"\n'

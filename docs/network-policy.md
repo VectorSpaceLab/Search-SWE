@@ -110,9 +110,10 @@ these counters are not HTTP request counts.
 ## Current task matrix
 
 `model host` below means exactly one coding-model hostname selected by the
-launcher: the hostname in `AGENT_OPENAI_BASE_URL` for Codex,
+launcher: the hostname in `AGENT_OPENAI_BASE_URL` for direct Codex,
 `api.deepseek.com` for Pi + DeepSeek, `api.z.ai` for Pi + Z.AI, or the fixed
-`api.anthropic.com` host for Claude Code. The launcher passes it through
+`api.anthropic.com` host for direct Claude Code. With `--openrouter`, Codex and
+Claude Code use `openrouter.ai`. The launcher passes the selected host through
 Harbor's `--allow-agent-host`, which augments only the `agent.run()` phase.
 Codex 0.157.1, Pi 0.87.1, and Claude Code 2.1.283 are preinstalled in every
 agent image, so agent setup does not need package-registry or general internet
