@@ -5,6 +5,7 @@ from harbor.agents.installed.claude_code import ClaudeCode
 from harbor.agents.installed.pi import Pi
 from harbor.environments.base import BaseEnvironment
 import json
+import shlex
 import tempfile
 from pathlib import Path
 
@@ -12,9 +13,9 @@ from harbor.models.trajectories.trajectory import Trajectory
 from scripts.pi_trajectory import convert_events
 
 
-CODEX_VERSION = "0.147.0"
-CLAUDE_CODE_VERSION = "2.1.273"
-PI_VERSION = "0.85.1"
+CODEX_VERSION = "0.157.1"
+CLAUDE_CODE_VERSION = "2.1.283"
+PI_VERSION = "0.87.1"
 
 
 async def _require_version(
@@ -48,6 +49,27 @@ class PreinstalledCodex(Codex):
         )
 
 
+class PreinstalledOpenRouterCodex(PreinstalledCodex):
+    """Keep the full OpenRouter model slug in Harbor's Codex command."""
+
+    async def exec_as_agent(self, environment, command, **kwargs):
+        # Harbor 0.22.0 strips the provider prefix in Codex.run(). Replace
+        # only its model flag; fail if a future Harbor release changes it.
+        if "codex exec " in command:
+            flags, separator, instruction = command.partition("-- ")
+            bare_model = self.model_name.split("/")[-1]
+            old = f"--model {bare_model} --json "
+            if not separator or flags.count(old) != 1:
+                raise RuntimeError(
+                    "Harbor's Codex command format changed; OpenRouter model may be truncated"
+                )
+            command = (
+                flags.replace(old, f"--model {shlex.quote(self.model_name)} --json ", 1)
+                + separator + instruction
+            )
+        return await super().exec_as_agent(environment, command, **kwargs)
+
+
 class PreinstalledClaudeCode(ClaudeCode):
     """Run the pinned Claude Code CLI without runtime package downloads."""
 
@@ -63,6 +85,21 @@ class PreinstalledClaudeCode(ClaudeCode):
             parse=self.parse_version,
             name="Claude Code",
         )
+
+
+class PreinstalledOpenRouterClaudeCode(PreinstalledClaudeCode):
+    """Use OpenRouter's bearer token with Claude Code's Anthropic endpoint."""
+
+    def _resolve_auth_env(self):
+        env = super()._resolve_auth_env()
+        token = self._get_env("ANTHROPIC_AUTH_TOKEN")
+        if not token or env.get("ANTHROPIC_BASE_URL") != "https://openrouter.ai/api":
+            raise RuntimeError(
+                "OpenRouter Claude Code requires its bearer token and fixed base URL"
+            )
+        env["ANTHROPIC_API_KEY"] = ""
+        env["ANTHROPIC_AUTH_TOKEN"] = token
+        return env
 
 
 class PreinstalledPi(Pi):

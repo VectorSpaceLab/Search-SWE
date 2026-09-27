@@ -4,6 +4,7 @@
 import argparse
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import sys
@@ -22,10 +23,15 @@ else:
 
 REPO = Path(__file__).resolve().parents[1]
 TASKS = tuple(sorted(path.parent.name for path in (REPO / "tasks").glob("*/task.toml")))
-CODEX_VERSION = "0.147.0"
-CLAUDE_CODE_VERSION = "2.1.273"
+CODEX_VERSION = "0.157.1"
+CLAUDE_CODE_VERSION = "2.1.283"
 CLAUDE_CODE_EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 ANTHROPIC_HOST = "api.anthropic.com"
+OPENROUTER_HOST = "openrouter.ai"
+OPENROUTER_CLAUDE_BASE_URL = "https://openrouter.ai/api"
+OPENROUTER_MODEL = re.compile(
+    r"^[a-z0-9][a-z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._:+-]*$"
+)
 CLAUDE_HOST_ENV_VARS = (
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
@@ -36,7 +42,7 @@ CLAUDE_HOST_ENV_VARS = (
     "CLAUDE_CODE_USE_VERTEX",
     "AWS_BEARER_TOKEN_BEDROCK",
 )
-PI_VERSION = "0.85.1"
+PI_VERSION = "0.87.1"
 PI_THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh")
 PI_MODEL_KEYS = {
     "deepseek/deepseek-flash": "DEEPSEEK_API_KEY",
@@ -50,6 +56,10 @@ AGENT_IMPORTS = {
     "claude-code": "scripts.harbor_agents:PreinstalledClaudeCode",
     "codex": "scripts.harbor_agents:PreinstalledCodex",
     "pi": "scripts.harbor_agents:PreinstalledPi",
+}
+OPENROUTER_AGENT_IMPORTS = {
+    "codex": "scripts.harbor_agents:PreinstalledOpenRouterCodex",
+    "claude-code": "scripts.harbor_agents:PreinstalledOpenRouterClaudeCode",
 }
 
 
@@ -98,6 +108,10 @@ def main():
     selection.add_argument("--task", choices=TASKS)
     selection.add_argument("--task-path", help="Explicit repository-relative package, including a reviewed submission")
     parser.add_argument("--agent", default="codex", choices=tuple(AGENT_IMPORTS))
+    parser.add_argument(
+        "--openrouter", action="store_true",
+        help="Route Codex or Claude Code through OpenRouter using AGENT_OPENROUTER_API_KEY",
+    )
     parser.add_argument("--model", help="Agent model; defaults to AGENT_MODEL")
     parser.add_argument("--env-file", type=Path, help="Defaults to the repository .env if present")
     parser.add_argument(
@@ -135,6 +149,15 @@ def main():
     model = args.model or env.get("AGENT_MODEL")
     if not model:
         parser.error("Set --model or AGENT_MODEL")
+    if args.openrouter:
+        if args.agent not in OPENROUTER_AGENT_IMPORTS:
+            parser.error("--openrouter is only valid with --agent codex or claude-code")
+        if not OPENROUTER_MODEL.fullmatch(model):
+            parser.error("OpenRouter requires a complete provider/model slug in --model or AGENT_MODEL")
+        if args.agent == "claude-code" and not model.startswith("anthropic/"):
+            parser.error("OpenRouter Claude Code requires an anthropic/ model slug")
+        if args.agent == "codex" and args.codex_config is not None:
+            parser.error("--openrouter uses its own Codex config; omit --codex-config")
     if args.agent == "pi":
         if model not in PI_MODEL_KEYS:
             parser.error(
@@ -169,7 +192,9 @@ def main():
     output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
-        "--agent", AGENT_IMPORTS[args.agent], "--force-build", "--yes", "-o", str(output),
+        "--agent",
+        (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
+        "--force-build", "--yes", "-o", str(output),
         "--agent-setup-timeout-multiplier", "3", "-m", model,
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
     ]
@@ -185,7 +210,7 @@ def main():
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={effort}"])
-        config = args.codex_config
+        config = REPO / "scripts/openrouter_codex.toml" if args.openrouter else args.codex_config
         if config is None and env.get("AGENT_CODEX_CONFIG"):
             config = REPO / env["AGENT_CODEX_CONFIG"]
         if config is not None:
@@ -193,12 +218,17 @@ def main():
             if not config.is_file():
                 parser.error(f"Codex configuration does not exist: {config}")
             command.extend(["--ak", f"config={config}"])
-        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
-            source = f"AGENT_{name}"
-            required.append(source)
-            # Harbor resolves these from its environment. Secrets do not enter argv.
-            command.extend(["--ae", f"{name}=${{{source}}}"])
-        if env.get("AGENT_OPENAI_BASE_URL"):
+        if args.openrouter:
+            required.append("AGENT_OPENROUTER_API_KEY")
+            command.extend(["--ae", "OPENAI_API_KEY=${AGENT_OPENROUTER_API_KEY}"])
+            agent_host = OPENROUTER_HOST
+        else:
+            for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
+                source = f"AGENT_{name}"
+                required.append(source)
+                # Harbor resolves these from its environment. Secrets do not enter argv.
+                command.extend(["--ae", f"{name}=${{{source}}}"])
+        if not args.openrouter and env.get("AGENT_OPENAI_BASE_URL"):
             try:
                 agent_host = endpoint_hostname(
                     env["AGENT_OPENAI_BASE_URL"], "AGENT_OPENAI_BASE_URL"
@@ -210,14 +240,17 @@ def main():
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={effort}"])
-        required.append("AGENT_ANTHROPIC_API_KEY")
-        command.extend(
-            [
-                "--ae",
-                "ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}",
-            ]
-        )
-        agent_host = ANTHROPIC_HOST
+        if args.openrouter:
+            required.append("AGENT_OPENROUTER_API_KEY")
+            command.extend([
+                "--ae", "ANTHROPIC_AUTH_TOKEN=${AGENT_OPENROUTER_API_KEY}",
+                "--ae", f"ANTHROPIC_BASE_URL={OPENROUTER_CLAUDE_BASE_URL}",
+            ])
+            agent_host = OPENROUTER_HOST
+        else:
+            required.append("AGENT_ANTHROPIC_API_KEY")
+            command.extend(["--ae", "ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}"])
+            agent_host = ANTHROPIC_HOST
     else:
         thinking = args.thinking or env.get("PI_THINKING")
         if thinking and thinking not in PI_THINKING_LEVELS:
@@ -323,6 +356,8 @@ def main():
     # This launcher uses explicit API keys, without consulting a host auth.json.
     env.pop("CODEX_AUTH_JSON_PATH", None)
     env.pop("CODEX_FORCE_AUTH_JSON", None)
+    if args.openrouter:
+        env.pop("OPENAI_BASE_URL", None)
     if args.agent == "claude-code":
         for name in CLAUDE_HOST_ENV_VARS:
             env.pop(name, None)

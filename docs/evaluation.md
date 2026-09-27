@@ -112,9 +112,35 @@ AGENT_CODEX_CONFIG=provider.local.toml
 The equivalent CLI option is `--codex-config`; CLI paths are resolved from the
 current directory.
 
+### Codex or Claude Code through OpenRouter
+
+Set a separate Agent key in `.env`:
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+Use a full OpenRouter model slug and select the route explicitly:
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --dry-run
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --dry-run
+```
+
+Remove `--dry-run` to launch. This mode fixes Codex's Responses base URL to
+`https://openrouter.ai/api/v1` and Claude Code's Anthropic base URL to
+`https://openrouter.ai/api`. Claude Code accepts only `anthropic/` slugs here.
+The launcher permits `openrouter.ai` in restricted Agent phases and keeps the
+OpenRouter Agent key separate from `OPENROUTER_API_KEY` for submissions and
+`ANSWER_JUDGE_API_KEY` for task-1-3. Verifier configuration is unchanged.
+When using Codex, omit `--codex-config`; the launcher supplies the required
+native provider configuration and ignores the direct mode's `AGENT_CODEX_CONFIG`.
+
 ### Claude Code with the official Anthropic API
 
-Claude Code is pinned to version 2.1.273 and preinstalled in every task image.
+Claude Code is pinned to version 2.1.283 and preinstalled in every task image.
 Set a model available to your Anthropic API account and its dedicated
 coding-agent key:
 
@@ -133,22 +159,21 @@ bash scripts/run_task.sh \
   --dry-run
 ```
 
-Claude Code 2.1.273 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
+Claude Code 2.1.283 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
 Use `AGENT_REASONING_EFFORT` as a local default or `--reasoning-effort` for an
 explicit run. The launcher maps `AGENT_ANTHROPIC_API_KEY` to the agent-only
 `ANTHROPIC_API_KEY`, permits only `api.anthropic.com` during restricted Agent
 phases, and removes inherited Anthropic gateway, OAuth, and Bedrock selectors
 before starting Harbor.
 
-The shared launcher intentionally does not support custom Anthropic-compatible
-gateways, Claude subscription OAuth, Bedrock, Vertex, ACP, or custom Claude
-settings. These modes have different credential, executable-configuration, or
-network requirements and must not be enabled by adding host environment
-variables.
+Other custom Anthropic-compatible gateways, Claude subscription OAuth, Bedrock,
+Vertex, ACP, and custom Claude settings are not supported. They need different
+credentials, executable configuration, or network permissions and must not be
+enabled by adding host environment variables.
 
 ### Pi native providers
 
-Pi is pinned to version 0.85.1 by the launcher. It currently accepts these
+Pi is pinned to version 0.87.1 by the launcher. It currently accepts these
 verified provider/model combinations:
 
 | Model | Required variable |

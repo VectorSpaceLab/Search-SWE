@@ -100,7 +100,9 @@ For other runs, fill only the matching sections already present in `.env`:
 - Pi + GLM-5.3-Flash: `AGENT_MODEL=zai/glm-5.3-flash` and `ZAI_API_KEY`.
 - Codex: `AGENT_MODEL`, `AGENT_OPENAI_BASE_URL`, and `AGENT_OPENAI_API_KEY`.
 - Claude Code: `AGENT_MODEL` and `AGENT_ANTHROPIC_API_KEY`; the launcher uses
-  only Anthropic's official API.
+  Anthropic's official API by default.
+- OpenRouter Agent mode: `AGENT_OPENROUTER_API_KEY`, `--openrouter`, and a full
+  `provider/model` slug with Codex or Claude Code.
 - Task 1-3: the three `ANSWER_JUDGE_*` values are also required.
 - Optional submission APIs: use `TASK_1_1_OPENROUTER_API_KEY`,
   `OPENROUTER_API_KEY`, or `JINA_API_KEY` only for the tasks identified by the
@@ -169,7 +171,7 @@ it.
 
 #### Claude Code and the official Anthropic API
 
-Claude Code 2.1.273 is preinstalled in every task image. Set an Anthropic model
+Claude Code 2.1.283 is preinstalled in every task image. Set an Anthropic model
 available to your API account and the dedicated coding-agent key:
 
 ```dotenv
@@ -182,9 +184,31 @@ bash scripts/run_task.sh --task task-1-1 --agent claude-code \
   --reasoning-effort high --output jobs/task-1-1-claude
 ```
 
-The shared launcher supports API-key authentication to `api.anthropic.com`;
-custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom Claude
-settings are intentionally outside the initial support scope. The
+#### Codex or Claude Code through OpenRouter
+
+Add a dedicated OpenRouter Agent key to `.env`:
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+Choose an Agent and pass its full OpenRouter model ID:
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --output jobs/task-1-1-codex-openrouter
+
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --output jobs/task-1-1-claude-openrouter
+```
+
+Add `--dry-run` to either command to preview it before launching. The launcher
+sets the OpenRouter API addresses and keeps this key separate from the
+submission `OPENROUTER_API_KEY` and verifier credentials. Keep the `VERIFIER_*`
+settings from the main example.
+
+Other custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom
+Claude settings remain outside the supported scope. The
 [quick start guide](docs/quickstart.md) covers the default Codex path;
 the [evaluation guide](docs/evaluation.md) covers the per-task credential and
 hardware matrix plus GPU, network-policy, and custom-provider options.

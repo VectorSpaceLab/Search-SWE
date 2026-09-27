@@ -93,7 +93,9 @@ VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
 - Codex：设置 `AGENT_MODEL`、`AGENT_OPENAI_BASE_URL` 和
   `AGENT_OPENAI_API_KEY`。
 - Claude Code：设置 `AGENT_MODEL` 和 `AGENT_ANTHROPIC_API_KEY`；共享启动器
-  只使用 Anthropic 官方 API。
+  默认使用 Anthropic 官方 API。
+- OpenRouter Agent 模式：设置 `AGENT_OPENROUTER_API_KEY`，并为 Codex 或
+  Claude Code 指定 `--openrouter` 和完整的 `provider/model` 模型 ID。
 - Task 1-3：还必须填写三个 `ANSWER_JUDGE_*` 变量。
 - 可选 submission API：只在 `.env.example` 注释所列任务确实使用时，填写
   `TASK_1_1_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
@@ -158,7 +160,7 @@ bash scripts/run_task.sh --task task-1-1 --agent codex \
 
 #### Claude Code 和 Anthropic 官方 API
 
-所有任务镜像都预装 Claude Code 2.1.273。填写 API 账户可用的 Anthropic 模型
+所有任务镜像都预装 Claude Code 2.1.283。填写 API 账户可用的 Anthropic 模型
 和独立的编码智能体密钥：
 
 ```dotenv
@@ -171,8 +173,30 @@ bash scripts/run_task.sh --task task-1-1 --agent claude-code \
   --reasoning-effort high --output jobs/task-1-1-claude
 ```
 
-共享启动器只支持通过 API key 访问 `api.anthropic.com`；首版有意不支持自定义
-gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings。默认 Codex
+#### 通过 OpenRouter 运行 Codex 或 Claude Code
+
+在 `.env` 中填写独立的 OpenRouter Agent 密钥：
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+选择 Agent，并传入完整的 OpenRouter 模型 ID：
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --output jobs/task-1-1-codex-openrouter
+
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --output jobs/task-1-1-claude-openrouter
+```
+
+可以先为命令加上 `--dry-run` 预览。启动器已配置 OpenRouter 的 API 地址；
+这个 Agent 密钥与任务提交用的 `OPENROUTER_API_KEY` 和裁判密钥分开。
+保留主示例中的 `VERIFIER_*` 配置。
+
+其他自定义 gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings
+仍不受支持。默认 Codex
 流程见[快速开始指南](docs/quickstart.md)；各任务的凭证与硬件矩阵，以及 GPU、
 网络权限和自定义模型服务配置见[评测指南](docs/evaluation.md)。
 
