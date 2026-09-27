@@ -169,7 +169,7 @@ it.
 
 #### Claude Code and the official Anthropic API
 
-Claude Code 2.1.273 is preinstalled in every task image. Set an Anthropic model
+Claude Code 2.1.283 is preinstalled in every task image. Set an Anthropic model
 available to your API account and the dedicated coding-agent key:
 
 ```dotenv

@@ -158,7 +158,7 @@ bash scripts/run_task.sh --task task-1-1 --agent codex \
 
 #### Claude Code 和 Anthropic 官方 API
 
-所有任务镜像都预装 Claude Code 2.1.273。填写 API 账户可用的 Anthropic 模型
+所有任务镜像都预装 Claude Code 2.1.283。填写 API 账户可用的 Anthropic 模型
 和独立的编码智能体密钥：
 
 ```dotenv

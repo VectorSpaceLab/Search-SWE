@@ -12,9 +12,9 @@ from harbor.models.trajectories.trajectory import Trajectory
 from scripts.pi_trajectory import convert_events
 
 
-CODEX_VERSION = "0.147.0"
-CLAUDE_CODE_VERSION = "2.1.273"
-PI_VERSION = "0.85.1"
+CODEX_VERSION = "0.157.1"
+CLAUDE_CODE_VERSION = "2.1.283"
+PI_VERSION = "0.87.1"
 
 
 async def _require_version(

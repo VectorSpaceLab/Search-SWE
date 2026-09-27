@@ -114,7 +114,7 @@ current directory.
 
 ### Claude Code with the official Anthropic API
 
-Claude Code is pinned to version 2.1.273 and preinstalled in every task image.
+Claude Code is pinned to version 2.1.283 and preinstalled in every task image.
 Set a model available to your Anthropic API account and its dedicated
 coding-agent key:
 
@@ -133,7 +133,7 @@ bash scripts/run_task.sh \
   --dry-run
 ```
 
-Claude Code 2.1.273 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
+Claude Code 2.1.283 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
 Use `AGENT_REASONING_EFFORT` as a local default or `--reasoning-effort` for an
 explicit run. The launcher maps `AGENT_ANTHROPIC_API_KEY` to the agent-only
 `ANTHROPIC_API_KEY`, permits only `api.anthropic.com` during restricted Agent
@@ -148,7 +148,7 @@ variables.
 
 ### Pi native providers
 
-Pi is pinned to version 0.85.1 by the launcher. It currently accepts these
+Pi is pinned to version 0.87.1 by the launcher. It currently accepts these
 verified provider/model combinations:
 
 | Model | Required variable |

@@ -22,8 +22,8 @@ else:
 
 REPO = Path(__file__).resolve().parents[1]
 TASKS = tuple(sorted(path.parent.name for path in (REPO / "tasks").glob("*/task.toml")))
-CODEX_VERSION = "0.147.0"
-CLAUDE_CODE_VERSION = "2.1.273"
+CODEX_VERSION = "0.157.1"
+CLAUDE_CODE_VERSION = "2.1.283"
 CLAUDE_CODE_EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 ANTHROPIC_HOST = "api.anthropic.com"
 CLAUDE_HOST_ENV_VARS = (
@@ -36,7 +36,7 @@ CLAUDE_HOST_ENV_VARS = (
     "CLAUDE_CODE_USE_VERTEX",
     "AWS_BEARER_TOKEN_BEDROCK",
 )
-PI_VERSION = "0.85.1"
+PI_VERSION = "0.87.1"
 PI_THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh")
 PI_MODEL_KEYS = {
     "deepseek/deepseek-flash": "DEEPSEEK_API_KEY",

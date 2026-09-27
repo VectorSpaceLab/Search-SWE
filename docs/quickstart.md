@@ -100,7 +100,7 @@ the run as successful.
 ## Next steps
 
 - Read the [full evaluation guide](evaluation.md) before selecting another task
-  or agent. It documents Codex, Pi, and the pinned Claude Code 2.1.273 launcher,
+  or agent. It documents Codex, Pi, and the pinned Claude Code 2.1.283 launcher,
   and its task matrix lists exactly which additional credentials and hardware
   each task uses.
 - Read the selected task's `README.md` and `instruction.md` for its resource
