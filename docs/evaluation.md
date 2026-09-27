@@ -124,9 +124,9 @@ Use a full OpenRouter model slug and select the route explicitly:
 
 ```bash
 bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
-  --model openai/gpt-6-astra --dry-run
+  --model openai/gpt-6-astra --reasoning-effort xhigh --dry-run
 bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
-  --model anthropic/claude-opus-5.5 --dry-run
+  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh --dry-run
 ```
 
 Remove `--dry-run` to launch. This mode fixes Codex's Responses base URL to

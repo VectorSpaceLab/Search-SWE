@@ -196,10 +196,12 @@ Choose an Agent and pass its full OpenRouter model ID:
 
 ```bash
 bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
-  --model openai/gpt-6-astra --output jobs/task-1-1-codex-openrouter
+  --model openai/gpt-6-astra --reasoning-effort xhigh \
+  --output jobs/task-1-1-codex-openrouter
 
 bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
-  --model anthropic/claude-opus-5.5 --output jobs/task-1-1-claude-openrouter
+  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
+  --output jobs/task-1-1-claude-openrouter
 ```
 
 Add `--dry-run` to either command to preview it before launching. The launcher
