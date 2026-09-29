@@ -186,7 +186,7 @@ if (( judge_status == 0 )); then
         --kill-after="${KILL_AFTER_SECONDS}s" \
         "${JUDGE_TIMEOUT_SECONDS}s" \
         /opt/conda/bin/python /tests/rewardkit_deepseek.py \
-            /tests \
+            /audit \
             --workspace /app \
             --output "$REWARD_JSON" \
             --max-concurrent-agent 1 \

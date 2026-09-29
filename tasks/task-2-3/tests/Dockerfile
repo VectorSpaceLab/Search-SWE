@@ -25,6 +25,6 @@ COPY --chmod=755 test.sh run_evaluation.sh finalize_reward.py /tests/
 COPY --chmod=644 grader.py rewardkit_deepseek.py /tests/
 COPY --chmod=555 starter/ /tests/starter/
 COPY --chmod=600 data/queries.jsonl data/ground_truth.jsonl /tests/data/
-COPY jailbreak_judge/ /tests/jailbreak_judge/
+COPY jailbreak_judge/ /audit/jailbreak_judge/
 
-RUN chmod 700 /tests /tests/data
+RUN chmod 700 /tests /tests/data /audit
