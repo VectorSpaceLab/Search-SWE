@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/history.jsonl",
+      "size_bytes": 12155329,
+      "sha256": "d71fbbc8f233145e155131bd01b6c104a9a5c578379cb66bfa4c8c2bba54cb52",
+      "source": {
+        "repo_id": "hrjinbb12345/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "7fe4b0bfb7699cb393bc5b11835c47ffeb13aaec",
+        "filename": "development/task-1-x-1/history.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/evidence.jsonl",
+      "size_bytes": 74062,
+      "sha256": "d7419b529598c2c392fbe346b5045789a20ecb763fb336fa7140a793d5befbf7",
+      "source": {
+        "repo_id": "hrjinbb12345/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "7fe4b0bfb7699cb393bc5b11835c47ffeb13aaec",
+        "filename": "development/task-1-x-1/validation/evidence.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/golden_answers.jsonl",
+      "size_bytes": 11271,
+      "sha256": "d6d2588018a278a86d9fa9a2e7f358b3b243a8de026d97a1338ee636575fbec6",
+      "source": {
+        "repo_id": "hrjinbb12345/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "7fe4b0bfb7699cb393bc5b11835c47ffeb13aaec",
+        "filename": "development/task-1-x-1/validation/golden_answers.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 6950,
+      "sha256": "1bc181d04d065275401a5972c710912ea6c77375b10389652fc83ffff83afaa1",
+      "source": {
+        "repo_id": "hrjinbb12345/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "7fe4b0bfb7699cb393bc5b11835c47ffeb13aaec",
+        "filename": "development/task-1-x-1/validation/queries.jsonl"
+      }
+    }
+  ]
+}

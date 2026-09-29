@@ -1,0 +1,62 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app/memory.json",
+    "/app/build_index.sh",
+    "/app/search.sh",
+    "/app/answer.sh",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/task-1-x-1"
+version = "0.4.1"
+description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
+authors = [{ name = "Haoran Jin" }]
+keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]
+
+[metadata]
+task_type = "create"
+dataset = "ICSI Meeting Corpus"
+primary_metric = "EvidenceGroundedAnswerAccuracy"
+public_example_count = 30
+hidden_query_count = 118
+memory_ratio = 0.05
+data_status = "Transcript-grounded generated queries"
+
+[agent]
+timeout_sec = 7200
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+
+[verifier]
+timeout_sec = 5400
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai", "api.deepseek.com"]
+
+[environment]
+build_timeout_sec = 1800
+workdir = "/app"
+cpus = 8
+memory_mb = 8192
+storage_mb = 8192
+gpus = 0
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+os = "linux"
+
+[environment.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+ANSWER_JUDGE_MODEL_NAME = "${ANSWER_JUDGE_MODEL_NAME:-}"
+ANSWER_JUDGE_BASE_URL = "${ANSWER_JUDGE_BASE_URL:-}"
+ANSWER_JUDGE_API_KEY = "${ANSWER_JUDGE_API_KEY:-}"
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

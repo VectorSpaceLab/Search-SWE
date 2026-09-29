@@ -1,0 +1,10 @@
+harbor-rewardkit==0.1.7
+requests==2.34.2
+# Pin the dependencies added on top of the versioned common base image.
+litellm==1.100.1
+fastuuid==0.14.0
+importlib-metadata==8.9.0
+boto3==1.43.93
+botocore==1.43.93
+s3transfer==0.19.2
+jmespath==1.1.0
