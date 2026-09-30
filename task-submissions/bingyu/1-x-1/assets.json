@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus/config.json",
+      "size_bytes": 194,
+      "sha256": "6ea9278f9b46ff0cc2dc2b0d61741224aa9a91c1e147268aaec04c2714b5ef57",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/corpus/config.json"
+      }
+    },
+    {
+      "path": "data/corpus/metadata.spmat",
+      "size_bytes": 945683840,
+      "sha256": "2f9c9a533fde31cb062edfdf5c9410f088bb5d7bf4a721ab98c47e3d2954287d",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/corpus/metadata.spmat"
+      }
+    },
+    {
+      "path": "data/corpus/vectors.u8bin",
+      "size_bytes": 1920000008,
+      "sha256": "589030afcbcc44a50ff798cec935f0980815a02eb7075b224d4f7c12febe96bf",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/corpus/vectors.u8bin"
+      }
+    },
+    {
+      "path": "data/example/ground_truth.jsonl",
+      "size_bytes": 3197,
+      "sha256": "faa8d8576a226952824699125796d3807c6fbf0d94404d8df0d033eaf7e3da30",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/example/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/example/metadata.spmat",
+      "size_bytes": 1680,
+      "sha256": "b5a27083b6f29606130de3a2f5fdc85101acb6003aded8d177163b15d1770351",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/example/metadata.spmat"
+      }
+    },
+    {
+      "path": "data/example/queries.jsonl",
+      "size_bytes": 16221,
+      "sha256": "5628db7064338187f250ae4ee6fbbefa80d313d164d2ef6cf222089ad3a9df30",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/example/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/example/vectors.u8bin",
+      "size_bytes": 12296,
+      "sha256": "252eaaa1883e3f06248e6ac725fa5199b3e7343b99e886fa299e75a7042b22c0",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/example/vectors.u8bin"
+      }
+    },
+    {
+      "path": "data/validation/ground_truth.jsonl",
+      "size_bytes": 2840,
+      "sha256": "cdedf6d38d12193103afa62695242dde237dace90e6524fc7f338bed975e517f",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/validation/ground_truth.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 10212,
+      "sha256": "3d088f2e857f94282d78e623f87d94333da8bace1a5454139b6adf0f5ef8fe60",
+      "source": {
+        "repo_id": "Cooki-e/search-swe-development",
+        "repo_type": "dataset",
+        "revision": "d82ef21a21cecab959c77a7133e0ab00146a8318",
+        "filename": "development/bingyu/1-x-1/validation/queries.jsonl"
+      }
+    }
+  ]
+}
