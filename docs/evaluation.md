@@ -112,9 +112,35 @@ AGENT_CODEX_CONFIG=provider.local.toml
 The equivalent CLI option is `--codex-config`; CLI paths are resolved from the
 current directory.
 
+### Codex or Claude Code through OpenRouter
+
+Set a separate Agent key in `.env`:
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+Use a full OpenRouter model slug and select the route explicitly:
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --reasoning-effort xhigh --dry-run
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh --dry-run
+```
+
+Remove `--dry-run` to launch. This mode fixes Codex's Responses base URL to
+`https://openrouter.ai/api/v1` and Claude Code's Anthropic base URL to
+`https://openrouter.ai/api`. Claude Code accepts only `anthropic/` slugs here.
+The launcher permits `openrouter.ai` in restricted Agent phases and keeps the
+OpenRouter Agent key separate from `OPENROUTER_API_KEY` for submissions and
+`ANSWER_JUDGE_API_KEY` for task-1-3. Verifier configuration is unchanged.
+When using Codex, omit `--codex-config`; the launcher supplies the required
+native provider configuration and ignores the direct mode's `AGENT_CODEX_CONFIG`.
+
 ### Claude Code with the official Anthropic API
 
-Claude Code is pinned to version 2.1.273 and preinstalled in every task image.
+Claude Code is pinned to version 2.1.283 and preinstalled in every task image.
 Set a model available to your Anthropic API account and its dedicated
 coding-agent key:
 
@@ -133,22 +159,21 @@ bash scripts/run_task.sh \
   --dry-run
 ```
 
-Claude Code 2.1.273 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
+Claude Code 2.1.283 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
 Use `AGENT_REASONING_EFFORT` as a local default or `--reasoning-effort` for an
 explicit run. The launcher maps `AGENT_ANTHROPIC_API_KEY` to the agent-only
 `ANTHROPIC_API_KEY`, permits only `api.anthropic.com` during restricted Agent
 phases, and removes inherited Anthropic gateway, OAuth, and Bedrock selectors
 before starting Harbor.
 
-The shared launcher intentionally does not support custom Anthropic-compatible
-gateways, Claude subscription OAuth, Bedrock, Vertex, ACP, or custom Claude
-settings. These modes have different credential, executable-configuration, or
-network requirements and must not be enabled by adding host environment
-variables.
+Other custom Anthropic-compatible gateways, Claude subscription OAuth, Bedrock,
+Vertex, ACP, and custom Claude settings are not supported. They need different
+credentials, executable configuration, or network permissions and must not be
+enabled by adding host environment variables.
 
 ### Pi native providers
 
-Pi is pinned to version 0.85.1 by the launcher. It currently accepts these
+Pi is pinned to version 0.87.1 by the launcher. It currently accepts these
 verified provider/model combinations:
 
 | Model | Required variable |
@@ -176,34 +201,44 @@ levels are `off`, `minimal`, `low`, `medium`, `high`, and `xhigh`. Use
 `PI_THINKING` as a local default or `--thinking` for an explicit run. Pi's
 native provider key does not replace verifier or task-resource credentials.
 
+Pi records native events in `agent/pi.txt` and sessions in `agent/pi/sessions/`.
+Search-SWE's adapter converts those events to `agent/trajectory.json` (ATIF);
+this is not Pi's native HTML export. It preserves Pi's real `session_id` for
+traceability and compatibility with viewers such as ATIF Preview. If an
+incomplete log has no session header, the export instead carries a deterministic
+content-hash `trajectory_id` and an explanatory note, not a fabricated session ID.
+The conversion maps text, reasoning, timestamps and reported token/cost metrics
+to standard ATIF fields, retaining raw Pi messages in `extra.pi_message` on
+steps and observations. Failed runs are exported before the error is reported.
+
 ## Configure judges
 
 All current tasks except `task-2-4` use the trajectory judge. Add:
 
 ```dotenv
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 The verifier images pin `harbor-rewardkit==0.2.0` with its Codex CLI 0.147.0
-preloaded, and every RewardKit judge is fixed to `deepseek-flash`. `--model`
+preloaded, and every RewardKit judge is fixed to `deepseek/deepseek-v4.1-flash`. `--model`
 changes the coding-agent model; it does not change this judge model. The
-endpoint is fixed to DeepSeek's official `api.deepseek.com` host by the task
-verifier allowlists. A relay on another hostname is rejected rather than
+trajectory-judge endpoint is `https://openrouter.ai/api/v1`, checked by
+the backend and permitted by the verifier allowlists. A relay on another hostname is rejected rather than
 silently broadening verifier egress.
 
 RewardKit 0.2.0 creates a fresh temporary `CODEX_HOME` for each agent judge, so
 setting only a host `CODEX_HOME` or `OPENAI_BASE_URL` does not configure that
 Codex process. Search-SWE therefore registers a `deepseek-codex` backend that
-writes `model_provider = "deepseek"`, `wire_api = "responses"`, the endpoint,
-and a `deepseek-flash` model catalog into RewardKit's actual temporary home.
+writes `model_provider = "openrouter"`, `wire_api = "responses"`, the endpoint,
+and a `deepseek/deepseek-v4.1-flash` model catalog into RewardKit's actual temporary home.
 The launcher maps the host `VERIFIER_OPENAI_*` pair to verifier-only
 `OPENAI_*` variables. RewardKit moves the key to the child process, where the
-provider reads it through `env_key = "DEEPSEEK_API_KEY"`. Search-SWE never
+provider reads it through `env_key = "OPENROUTER_API_KEY"`. Search-SWE never
 writes the key to TOML or the model catalog and never includes it in a
 submission process environment; keep verifier logs private as you would for
-any authenticated client. This matches DeepSeek's
-[Codex integration](https://api-docs.deepseek.com/zh-cn/quick_start/agent_integrations/codex).
+any authenticated client. The backend uses the
+[OpenRouter Responses API](https://openrouter.ai/docs/api/api-reference/responses/create-responses).
 
 Task 1-3 additionally uses a Chat Completions-compatible answer-equivalence
 judge:
@@ -250,13 +285,16 @@ Compose overlays request the real GPU.
 Harbor 0.22.0's Docker backend rejects `gpus = 1` during its own preflight and
 does not translate that field into the Compose GPU request. The shared launcher
 therefore supplies `--override-gpus 0` automatically while leaving the truthful
-task metadata and Compose reservations intact. If invoking `harbor run --env
-docker` directly with that Harbor version, add the same override. Recheck this
-workaround when upgrading Harbor.
+task metadata and Compose reservations intact. Direct Harbor invocations using
+`--env scripts.harbor_environments:PhaseScopedDocker` need the same override
+with that Harbor version. Recheck this workaround when upgrading Harbor.
 
 ## Runtime network enforcement
 
-Every current task uses a restricted agent or verifier phase. Keep
+Every current task uses a restricted agent or verifier phase, so the launcher
+automatically selects the direct gateway and pulls its image if missing. For an
+upstream HTTP(S) proxy, configure `EGRESS_CONFIG` using the
+[network guide](network-policy.md); proxy mode rejects public phases. Keep
 `CONTAINER_PROXY` unset: a general proxy would let the proxy choose arbitrary
 destinations and would defeat Harbor's hostname policy, so the launcher rejects
 it. Configure image-pull and Docker build proxies separately at the Docker

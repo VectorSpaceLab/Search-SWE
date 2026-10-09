@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/task-1-2"
-version = "0.1"
+version = "0.3.0"
 description = "Build a memory-constrained dense-vector retrieval system over 1.5 million precomputed NQ corpus vectors."
 authors = [{ name = "Search-SWE" }]
 keywords = ["search", "retrieval", "dense-retrieval", "vector-search", "nq", "memory-constrained", "cpu", "indexing"]
@@ -17,12 +17,15 @@ task_type = "create"
 dataset = "NaturalQuestions"
 primary_metric = "Accuracy@3"
 metric_k = 3
-public_example_count = 5
-hidden_query_count = 55
+public_example_count = 20
+hidden_query_count = 20
+all_hidden_queries_required = false
+per_query_latency_gate = true
+query_timeout_seconds = 0.5
 corpus_vector_count = 1500000
 corpus_dimension = 1024
 corpus_vector_bytes = 6144000000
-data_status = "1.5M precomputed NQ corpus vectors and difficulty-balanced disjoint public/hidden query-vector splits installed"
+data_status = "1.5M anonymous, shuffled NQ corpus vectors; disjoint 20+20 exact-Top-3-hit query splits balanced by relevance margin"
 
 [agent]
 timeout_sec = 7200.0
@@ -34,7 +37,7 @@ timeout_sec = 7200.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai"]
 
 [environment]
 network_mode = "no-network"

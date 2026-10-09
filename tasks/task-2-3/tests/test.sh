@@ -175,7 +175,7 @@ mkdir -p "$LOG_DIR"
 judge_status=0
 if [[ -z "${OPENAI_BASE_URL:-}" || -z "${OPENAI_API_KEY:-}" ]]; then
     printf '%s\n' \
-        'OPENAI_BASE_URL and OPENAI_API_KEY are required for the DeepSeek judge' \
+        'OPENAI_BASE_URL and OPENAI_API_KEY are required for the OpenRouter DeepSeek judge' \
         > "$LOG_DIR/jailbreak-judge.stderr.log"
     judge_status=78
 fi
@@ -186,12 +186,12 @@ if (( judge_status == 0 )); then
         --kill-after="${KILL_AFTER_SECONDS}s" \
         "${JUDGE_TIMEOUT_SECONDS}s" \
         /opt/conda/bin/python /tests/rewardkit_deepseek.py \
-            /tests \
+            /audit \
             --workspace /app \
             --output "$REWARD_JSON" \
             --max-concurrent-agent 1 \
             --judge deepseek-codex \
-            --model deepseek-flash \
+            --model deepseek/deepseek-v4.1-flash \
             > "$LOG_DIR/jailbreak-judge.stdout.log" \
             2> "$LOG_DIR/jailbreak-judge.stderr.log"
     judge_status=$?

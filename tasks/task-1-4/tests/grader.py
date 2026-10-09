@@ -21,6 +21,7 @@ RESULTS_DIR = Path(
 )
 PREDICTIONS_PATH = RESULTS_DIR / "results.jsonl"
 REPORT_PATH = RESULTS_DIR / "evaluation.json"
+EXECUTION_PATH = RESULTS_DIR / "query_execution.json"
 EXECUTION_ERROR = os.environ.get("SEARCH_SWE_EXECUTION_ERROR", "")
 TOP_K = 5
 MAX_EVIDENCE_CHARS = 100_000
@@ -67,8 +68,9 @@ class PdfCorpus:
             if path.stem in self.paths:
                 raise VerificationError(f"duplicate PDF target {path.stem!r}")
             self.paths[path.stem] = path
-        if not self.paths:
-            raise VerificationError("hidden corpus contains no PDF files")
+        if len(self.paths) != 1:
+            raise VerificationError("corpus must contain exactly one PDF file")
+        self.target = next(iter(self.paths))
         self.documents: dict[str, Any] = {}
         self.page_cache: dict[tuple[str, int], str] = {}
 
@@ -128,14 +130,12 @@ def load_reference_data(
         if not isinstance(record, dict):
             raise VerificationError(f"invalid query object at line {line_number}")
         query_id = record.get("query_id")
-        target = record.get("target")
+        target = corpus.target
         query_text = record.get("query")
         if (
             not isinstance(query_id, str)
             or not query_id
             or query_id in query_ids
-            or not isinstance(target, str)
-            or target not in corpus.paths
             or not isinstance(query_text, str)
             or not query_text.strip()
         ):
@@ -147,7 +147,6 @@ def load_reference_data(
     if not queries:
         raise VerificationError("queries file is empty")
 
-    expected_targets = {row["query_id"]: row["target"] for row in queries}
     relevant_pages: dict[str, set[int]] = {}
     for line_number, record in iter_jsonl(GROUND_TRUTH_PATH):
         if not isinstance(record, dict):
@@ -155,13 +154,12 @@ def load_reference_data(
                 f"invalid ground-truth object at line {line_number}"
             )
         query_id = record.get("query_id")
-        target = record.get("target")
+        target = corpus.target
         raw_pages = record.get("relevant_pages")
         if (
             not isinstance(query_id, str)
             or query_id not in query_ids
             or query_id in relevant_pages
-            or target != expected_targets[query_id]
             or not isinstance(raw_pages, list)
             or not raw_pages
         ):
@@ -195,6 +193,13 @@ def load_reference_data(
                 raise VerificationError(
                     f"ground truth for {query_id!r}, page {page} has invalid evidence"
                 )
+            page_text = corpus.canonical_page_text(target, page)
+            if any(not canonical_text(text) or canonical_text(text) not in page_text
+                   for text in evidence):
+                raise VerificationError(
+                    f"ground truth for {query_id!r}, page {page} has evidence "
+                    "not found on that physical page"
+                )
             page_numbers.add(page)
         relevant_pages[query_id] = page_numbers
 
@@ -207,113 +212,148 @@ def load_reference_data(
     return queries, relevant_pages
 
 
-def load_predictions(
-    corpus: PdfCorpus,
-    queries: list[dict[str, str]],
-) -> dict[str, list[int]]:
-    rows = [record for _, record in iter_jsonl(PREDICTIONS_PATH)]
-    if len(rows) != len(queries):
+def validate_prediction(
+    corpus: PdfCorpus, query: dict[str, str], record: dict[str, Any],
+) -> list[int]:
+    query_id = query["query_id"]
+    results = record.get("results")
+    if not isinstance(results, list) or len(results) != TOP_K:
         raise VerificationError(
-            f"expected {len(queries)} output records, got {len(rows)}"
+            f"query {query_id!r} must contain exactly {TOP_K} results"
         )
-
-    expected = {row["query_id"]: row for row in queries}
-    predictions: dict[str, list[int]] = {}
-    for line_number, record in enumerate(rows, start=1):
-        if not isinstance(record, dict):
-            raise VerificationError(f"results line {line_number} is not an object")
-        query_id = record.get("query_id")
+    target = query["target"]
+    page_count = corpus.page_count(target)
+    pages: list[int] = []
+    previous_score: float | None = None
+    previous_page: int | None = None
+    for position, item in enumerate(results, start=1):
+        if not isinstance(item, dict):
+            raise VerificationError(
+                f"query {query_id!r}, result {position} is not an object"
+            )
+        page = item.get("page")
+        evidence = item.get("evidence")
+        raw_score = item.get("score")
         if (
-            not isinstance(query_id, str)
-            or query_id not in expected
-            or query_id in predictions
+            isinstance(page, bool)
+            or not isinstance(page, int)
+            or not 1 <= page <= page_count
         ):
             raise VerificationError(
-                f"invalid or duplicate output query_id {query_id!r}"
+                f"query {query_id!r}, result {position} has invalid page {page!r}"
             )
-        results = record.get("results")
-        if not isinstance(results, list) or len(results) != TOP_K:
+        if page in pages:
             raise VerificationError(
-                f"query {query_id!r} must contain exactly {TOP_K} results"
+                f"query {query_id!r} contains duplicate page {page}"
             )
+        if (
+            not isinstance(evidence, str)
+            or not evidence.strip()
+            or len(evidence) > MAX_EVIDENCE_CHARS
+        ):
+            raise VerificationError(
+                f"query {query_id!r}, result {position} has invalid evidence"
+            )
+        canonical_evidence = canonical_text(evidence)
+        canonical_page = corpus.canonical_page_text(target, page)
+        if not canonical_evidence or canonical_evidence not in canonical_page:
+            raise VerificationError(
+                f"query {query_id!r}, result {position} evidence is not text "
+                f"from target {target!r} page {page}"
+            )
+        if (
+            isinstance(raw_score, bool)
+            or not isinstance(raw_score, (int, float))
+        ):
+            raise VerificationError(
+                f"query {query_id!r}, result {position} has a non-numeric score"
+            )
+        score = float(raw_score)
+        if not math.isfinite(score):
+            raise VerificationError(
+                f"query {query_id!r}, result {position} has a non-finite score"
+            )
+        if previous_score is not None:
+            if score > previous_score:
+                raise VerificationError(
+                    f"query {query_id!r} scores are not in descending order"
+                )
+            if (
+                score == previous_score
+                and previous_page is not None
+                and page < previous_page
+            ):
+                raise VerificationError(
+                    f"query {query_id!r} does not use ascending page order "
+                    "for equal scores"
+                )
+        pages.append(page)
+        previous_score = score
+        previous_page = page
+    return pages
 
-        target = expected[query_id]["target"]
-        page_count = corpus.page_count(target)
-        pages: list[int] = []
-        previous_score: float | None = None
-        previous_page: int | None = None
-        for position, item in enumerate(results, start=1):
-            if not isinstance(item, dict):
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} is not an object"
-                )
-            page = item.get("page")
-            evidence = item.get("evidence")
-            raw_score = item.get("score")
-            if (
-                isinstance(page, bool)
-                or not isinstance(page, int)
-                or not 1 <= page <= page_count
-            ):
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} has invalid page {page!r}"
-                )
-            if page in pages:
-                raise VerificationError(
-                    f"query {query_id!r} contains duplicate page {page}"
-                )
-            if (
-                not isinstance(evidence, str)
-                or not evidence.strip()
-                or len(evidence) > MAX_EVIDENCE_CHARS
-            ):
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} has invalid evidence"
-                )
-            canonical_evidence = canonical_text(evidence)
-            canonical_page = corpus.canonical_page_text(target, page)
-            if not canonical_evidence or canonical_evidence not in canonical_page:
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} evidence is not text "
-                    f"from target {target!r} page {page}"
-                )
-            if (
-                isinstance(raw_score, bool)
-                or not isinstance(raw_score, (int, float))
-            ):
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} has a non-numeric score"
-                )
-            score = float(raw_score)
-            if not math.isfinite(score):
-                raise VerificationError(
-                    f"query {query_id!r}, result {position} has a non-finite score"
-                )
-            if previous_score is not None:
-                if score > previous_score:
-                    raise VerificationError(
-                        f"query {query_id!r} scores are not in descending order"
-                    )
-                if (
-                    score == previous_score
-                    and previous_page is not None
-                    and page < previous_page
-                ):
-                    raise VerificationError(
-                        f"query {query_id!r} does not use ascending page order "
-                        "for equal scores"
-                    )
-            pages.append(page)
-            previous_score = score
-            previous_page = page
-        predictions[query_id] = pages
 
-    missing = set(expected) - set(predictions)
-    if missing:
-        raise VerificationError(
-            f"missing results for {len(missing)} queries: {sorted(missing)[:10]}"
-        )
-    return predictions
+def load_predictions(
+    corpus: PdfCorpus, queries: list[dict[str, str]],
+) -> tuple[dict[str, list[int]], dict[str, str], list[str]]:
+    expected = {row["query_id"]: row for row in queries}
+    predictions: dict[str, list[int]] = {}
+    errors: dict[str, str] = {}
+    output_errors: list[str] = []
+    seen: set[str] = set()
+    try:
+        lines = PREDICTIONS_PATH.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as error:
+        return {}, {qid: f"cannot read predictions: {error}" for qid in expected}, []
+    for line_number, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except ValueError:
+            output_errors.append(f"invalid JSON at output line {line_number}")
+            continue
+        query_id = record.get("query_id") if isinstance(record, dict) else None
+        if not isinstance(query_id, str) or query_id not in expected:
+            output_errors.append(f"unknown or invalid query_id at output line {line_number}")
+            continue
+        if query_id in seen:
+            errors[query_id] = "duplicate output query_id"
+            predictions.pop(query_id, None)
+            continue
+        seen.add(query_id)
+        try:
+            predictions[query_id] = validate_prediction(corpus, expected[query_id], record)
+        except (VerificationError, ValueError, OverflowError) as error:
+            errors[query_id] = str(error)
+    for query_id in expected.keys() - seen:
+        errors[query_id] = "missing output for query"
+    return predictions, errors, output_errors
+
+
+def load_execution_errors(queries: list[dict[str, str]]) -> dict[str, str]:
+    # Standalone output checks may omit the runner's private execution manifest.
+    # test.sh requires it for an actual verifier run.
+    if not EXECUTION_PATH.exists():
+        return {}
+    try:
+        manifest = json.loads(EXECUTION_PATH.read_text(encoding="utf-8"))
+        rows = manifest["queries"]
+        expected = {row["query_id"] for row in queries}
+        if (not isinstance(rows, list) or len(rows) != len(expected)
+                or any(not isinstance(row, dict) for row in rows)
+                or {row["query_id"] for row in rows} != expected):
+            raise ValueError("execution/query IDs do not match")
+        errors = {}
+        for row in rows:
+            error = row.get("error")
+            if error is not None:
+                if not isinstance(error, str) or not error:
+                    raise ValueError("invalid query execution error")
+                errors[row["query_id"]] = error
+        return errors
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise VerificationError(f"invalid private execution manifest: {error}") from error
 
 
 def write_report(report: dict[str, Any]) -> None:
@@ -341,20 +381,24 @@ def main() -> int:
         queries, relevant_pages = load_reference_data(corpus)
         if EXECUTION_ERROR:
             raise VerificationError(EXECUTION_ERROR)
-        predictions = load_predictions(corpus, queries)
+        predictions, query_errors, output_errors = load_predictions(corpus, queries)
+        query_errors.update(load_execution_errors(queries))
 
         per_query: list[dict[str, Any]] = []
         recall_sum = 0.0
         for row in queries:
             query_id = row["query_id"]
             relevant = relevant_pages[query_id]
-            retrieved = predictions[query_id]
+            error = query_errors.get(query_id)
+            retrieved = predictions.get(query_id, []) if error is None else []
             hit_count = len(set(retrieved) & relevant)
             recall = hit_count / len(relevant)
             recall_sum += recall
             per_query.append(
                 {
                     "query_id": query_id,
+                    "valid": error is None,
+                    "error": error,
                     "retrieved_pages": retrieved,
                     "relevant_page_count": len(relevant),
                     "hit_count": hit_count,
@@ -368,12 +412,13 @@ def main() -> int:
             "valid": True,
             "score": 100.0 * mean_recall,
             "query_count": len(queries),
+            "invalid_query_count": len(query_errors),
             "primary_metric": {"name": "Recall@5", "value": mean_recall},
             "per_query_metrics": per_query,
-            "errors": [],
+            "errors": output_errors,
             "scoring_rule": (
                 "macro average of |top-5 predicted pages intersect relevant pages| "
-                "/ |relevant pages|"
+                "/ |relevant pages| over all queries; failed or invalid queries score zero"
             ),
         }
         write_report(report)

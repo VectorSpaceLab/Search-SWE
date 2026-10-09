@@ -12,15 +12,15 @@ evidence occurs, rather than retrieve a different document or generate an answer
 
 The challenge is to preserve the connection between searchable content and its
 original physical page. Useful semantic matches can span sections or use
-different wording from the question. A system must generalize its parsing
-and retrieval approach to new PDFs, not just build a lookup for development documents.
+different wording from the question. Public and hidden queries search the same
+2,043-page PDF of *War and Peace*, with different passages labelled in each split.
 
 ## What This Task Tests
 
 - Extracting and indexing long PDFs while retaining physical page provenance.
 - Translating an information need into relevant page-level results.
 - Returning supporting text that actually appears on each selected page.
-- Rebuilding the pipeline on unseen documents within a fixed resource budget.
+- Rebuilding the pipeline in a fresh verifier and sharing its index across concurrent queries.
 
 ## Task Setup
 
@@ -28,17 +28,18 @@ and retrieval approach to new PDFs, not just build a lookup for development docu
 
 | Asset | Purpose |
 | --- | --- |
-| `data/corpus/` | Six public development PDFs |
-| `data/validation/` | 30 public queries and page relevance labels |
-| `data/verifier/corpus/` | Six different PDFs mounted only for verification |
+| `data/corpus/lp4P6AUxur.pdf` | One shared 2,043-page PDF |
+| `data/validation/queries.jsonl` | 10 public development queries |
+| `data/validation/golden_answers.jsonl` | Public physical-page labels and evidence excerpts |
 
-The verifier evaluates 30 hidden queries against held-out PDFs. Neither the
-PDFs nor the questions are the public examples. Query IDs are local to each
-split and can repeat without referring to the same question.
+The verifier evaluates 10 hidden queries against the same PDF. Public and hidden
+query IDs, question texts, and labelled pages are disjoint. IDs are independent
+opaque identifiers, and each split is shuffled so query order does not indicate
+page position. Input records contain `query_id` and `query`; the sole PDF is
+inferred without a `target` field.
 
-Held-out PDFs are downloadable assets but excluded from the agent's mounts;
-hidden questions and labels remain in `tests/data/`. This is environment
-isolation, not a claim that repository readers cannot inspect published files.
+Hidden questions and labels remain in `tests/data/` and are excluded from the
+agent environment. Public validation is excluded from the verifier's mounts.
 
 ### Fixed Components and Allowed Changes
 
@@ -51,11 +52,14 @@ OpenRouter and Jina resources follow the
 
 The CPU Python 3.12 environment has 16 CPUs, 64 GiB memory, 100 GiB storage,
 and no GPU. The agent has two hours; the Harbor verifier has three hours.
-The submitted build receives up to 2,400 seconds, followed by one 1,800-second
-query run covering all 30 questions.
+The submitted build receives up to 2,400 seconds. Each hidden query runs in its
+own process with a 900-second limit and up to five processes in parallel.
+All queries share a 1,800-second execution budget; unfinished or unlaunched
+queries at the deadline score zero. The outer runner allows another 60 seconds
+for cleanup. Workers share the same CPU, memory, index, and build-started service.
 
-The verifier stages a different PDF collection and supplies its paths to the
-submission. Development-time services and indexes cannot be assumed to survive.
+The verifier stages the shared PDF read-only and supplies its paths to the
+submission. The build must recreate the service in the fresh verifier environment.
 
 ## Submission Contract
 
@@ -74,21 +78,25 @@ document-level attribution.
 
 For each query, Recall@5 is the fraction of its relevant pages found among
 the five returned pages. The metric is the arithmetic mean of these fractions
-across hidden queries. The report also expresses normalized reward on a 0–100 scale.
+across all ten hidden queries. A failed or invalid query contributes zero and
+remains in the denominator. The report also shows 100 times this mean before
+the trajectory audit; final reward uses the 0–1 scale.
 
 ### Correctness and Resource Gates
 
-Results must cover every query, reference valid unique pages in the target PDF,
-and include evidence text belonging to those pages. Ranking, execution, and
-resource checks must pass before the metric is accepted.
+Each query must return five valid unique pages and evidence text belonging to
+those pages, with finite scores in the required order. A failed or timed-out
+process, missing output, or invalid result makes only that query score zero.
+Shared build/setup failure prevents all queries from scoring. Per-query timing
+and execution errors are recorded in the verifier's private `query_execution.json`.
 
 ### Integrity Checks and Final Reward
 
 Page relevance is scored deterministically against labels; there is no
 answer-correctness model. A separate trajectory audit checks compliance.
-Final reward is mean Recall@5 when execution, output, and audit checks pass,
-and zero otherwise.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+Final reward is mean Recall@5, including zeros for failed or invalid queries,
+when the trajectory audit passes. A failed audit makes the whole reward zero.
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only endpoint and key settings.
 
 ## Running This Task
@@ -101,8 +109,8 @@ task credential profile. The
 
 Configure the trajectory judge's `VERIFIER_OPENAI_*` settings. This task does
 not need `ANSWER_JUDGE_*`. Optional submission APIs use shared OpenRouter
-and Jina keys. Downloading also restores the held-out PDF assets; Compose keeps
-them out of the agent environment.
+and Jina keys. Downloading restores the shared PDF and public validation files;
+Compose keeps private queries and labels out of the agent environment.
 
 ```bash
 python scripts/download_assets.py --task task-1-4

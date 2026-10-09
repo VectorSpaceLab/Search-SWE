@@ -10,9 +10,10 @@ import sys
 import tomllib
 
 from download_assets import REPO, matches, read_manifest, relative_path
+from task_paths import no_symlinks, safe_path
 
 
-def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False):
+def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False, *, packages=None):
     errors, warnings = [], []
     pending_tasks = set()
     if allow_unpublished and hf_data is None:
@@ -21,7 +22,8 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
     if not license_path.is_file() or not license_path.read_text().strip():
         warnings.append("Code license is unspecified; choose it before an open-source release.")
 
-    tasks = sorted(path for path in (repo / "tasks").iterdir() if path.is_dir())
+    tasks = (sorted(path for path in (repo / "tasks").iterdir() if path.is_dir())
+             if packages is None else packages)
     if not tasks:
         errors.append("No task packages found.")
     runtime_paths, dataset_files = [], {}
@@ -31,6 +33,12 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
         "tests/docker-compose.yaml", "tests/test.sh",
     )
     for task in tasks:
+        try:
+            safe_path(repo, task.relative_to(repo).as_posix())
+            no_symlinks(task)
+        except ValueError as error:
+            errors.append(str(error))
+            continue
         for name in required:
             path = task / name
             if not path.is_file() or not path.stat().st_size:
@@ -41,7 +49,7 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
                 errors.append(f"{task.name}: missing task version")
             manifest = read_manifest(task)
             for entry in manifest["files"]:
-                runtime_paths.append(f"tasks/{task.name}/{entry['path']}")
+                runtime_paths.append(f"{task.relative_to(repo).as_posix()}/{entry['path']}")
                 source = entry.get("source", {})
                 if "local_path" in source:
                     local = task / relative_path(source["local_path"])
@@ -74,9 +82,15 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
         secret = re.compile(r"\b(?:sk-[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{25,}|gh[pousr]_[A-Za-z0-9]{25,})\b|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")
         for name in candidates:
             path = repo / name
+            if path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
+                errors.append(f"Symlink would enter Git: {name}")
+                continue
             if not path.is_file():
                 continue  # A tracked deletion is absent from the next commit.
-            if name in runtime_paths:
+            parts = Path(name).parts
+            task_payload = ((len(parts) > 3 and parts[0] == "tasks" and parts[2] in ("data", "models", "jobs", "solution"))
+                            or (len(parts) > 4 and parts[0] == "task-submissions" and parts[3] in ("data", "models", "jobs", "solution")))
+            if name in runtime_paths or task_payload:
                 errors.append(f"Downloaded runtime asset would enter Git: {name}")
             if path.stat().st_size >= 100 * 1024**2:
                 errors.append(f"Git file is at least 100 MiB: {name}")
@@ -87,6 +101,8 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
                 text = path.read_text()
             except UnicodeError:
                 continue
+            if name.startswith("tasks/") and re.search(r"task-[12]-x-[1-9][0-9]*\b", text):
+                errors.append(f"Unfinalized temporary task ID in formal package: {name}")
             if secret.search(text):
                 errors.append(f"Possible credential in Git file: {name} (value omitted)")
         if runtime_paths:

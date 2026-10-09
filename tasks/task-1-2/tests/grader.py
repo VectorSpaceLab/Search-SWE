@@ -31,18 +31,9 @@ EXECUTION_ERROR = os.environ.get("SEARCH_SWE_EXECUTION_ERROR", "")
 DIMENSION = 1024
 VECTOR_DTYPE_BYTES = 4
 TOP_K = 3
-QUALITY_K = 3
-QUALITY_QUERY_IDS = (
-    "test461",
-    "test1329",
-    "test2849",
-    "test595",
-    "test1503",
-)
-QUALITY_QUERY_ID_SET = frozenset(QUALITY_QUERY_IDS)
-PERFORMANCE_QUERY_COUNT = 50
+HIDDEN_QUERY_COUNT = 20
 BUILD_TIMEOUT_SECONDS = 120.0
-# Each quality and performance query is an independent run.sh invocation.
+# Each query is an independent run.sh invocation and earns its own score.
 # Keep the per-query budget tight enough to reject exhaustive-scan baselines
 # and require a reusable low-latency index/service.
 QUERY_TIMEOUT_SECONDS = 0.5
@@ -204,6 +195,10 @@ def load_private_queries() -> tuple[
         expected_dimension=DIMENSION,
     )
     query_metadata = read_jsonl(PRIVATE_DATA / "query_metadata.jsonl")
+    if query_rows != HIDDEN_QUERY_COUNT:
+        raise VerificationError(
+            f"expected exactly {HIDDEN_QUERY_COUNT} hidden queries, got {query_rows}"
+        )
     if len(query_metadata) != query_rows:
         raise VerificationError(
             "private query metadata count does not match query vectors"
@@ -349,7 +344,8 @@ def run_timed(
             if returncode is None:
                 timed_out = True
                 kill_group(process)
-                stop_submission_processes()
+                # Preserve the service started by build.sh so a slow query
+                # does not automatically invalidate the remaining queries.
                 try:
                     returncode = process.wait(timeout=2)
                 except subprocess.TimeoutExpired:
@@ -604,229 +600,140 @@ def validate_batch_output(
     return normalized
 
 
-def score(
-    results: list[dict[str, Any]],
-    ground_truth: dict[str, set[str]],
-    *,
-    cutoff: int = TOP_K,
-) -> tuple[float, float]:
-    if cutoff <= 0 or cutoff > TOP_K:
-        raise ValueError(f"invalid scoring cutoff: {cutoff}")
-    hits = 0
-    reciprocal_rank = 0.0
-    for row in results:
-        relevant = ground_truth[row["query_id"]]
-        for rank, doc_id in enumerate(row["results"][:cutoff], start=1):
-            if doc_id in relevant:
-                hits += 1
-                reciprocal_rank += 1.0 / rank
-                break
-    count = len(results)
-    return hits / count, reciprocal_rank / count
-
-
-def check_phase_metrics(metrics: dict[str, Any], label: str) -> None:
-    if metrics.get("timed_out"):
+def check_phase_metrics(metrics: dict[str, Any], label: str, *, timeout: float) -> None:
+    elapsed = float(metrics.get("elapsed_seconds", math.inf))
+    if metrics.get("timed_out") or not math.isfinite(elapsed) or not 0 <= elapsed <= timeout:
         raise VerificationError(f"{label} exceeded its timeout")
     if metrics.get("returncode") != 0:
         raise VerificationError(f"{label} exited with {metrics.get('returncode')}")
 
 
+def score_query(
+    query_id: str,
+    output_path: Path,
+    metrics: dict[str, Any],
+    output_error: str | None,
+    doc_rows: dict[str, int],
+    ground_truth: dict[str, set[str]],
+) -> dict[str, Any]:
+    """A query earns one point only when execution, latency and retrieval pass."""
+    elapsed = float(metrics.get("elapsed_seconds", math.inf))
+    execution_passed = metrics.get("returncode") == 0 and not metrics.get("error")
+    latency_passed = (not metrics.get("timed_out") and math.isfinite(elapsed)
+                      and 0 <= elapsed <= QUERY_TIMEOUT_SECONDS)
+    errors = []
+    if not execution_passed:
+        errors.append(f"run.sh exited with {metrics.get('returncode')}")
+    if not latency_passed:
+        errors.append(f"run.sh exceeded {QUERY_TIMEOUT_SECONDS} seconds")
+    first_rank, returned_ids = None, []
+    output_valid = False
+    if output_error:
+        errors.append(output_error)
+    else:
+        try:
+            output = validate_batch_output(output_path, [query_id], doc_rows)[0]
+            returned_ids = output["results"]
+            first_rank = next((rank for rank, doc_id in enumerate(returned_ids, 1)
+                               if doc_id in ground_truth[query_id]), None)
+            output_valid = True
+        except (VerificationError, OSError, ValueError, OverflowError, RecursionError) as error:
+            errors.append(str(error))
+    hit = first_rank is not None
+    return {
+        "query_id": query_id, **metrics,
+        "execution_passed": execution_passed, "latency_passed": latency_passed,
+        "output_valid": output_valid, "hit_at_3": hit,
+        "first_relevant_rank": first_rank, "returned_doc_ids": returned_ids,
+        "score": int(execution_passed and latency_passed and output_valid and hit),
+        "errors": errors,
+    }
+
+
 def main() -> int:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     report: dict[str, Any] = {
-        "task_id": "task-1-2",
-        "valid": False,
-        "score": 0.0,
+        "task_id": "task-1-2", "valid": False, "score": 0.0, "reward": 0.0,
         "errors": [],
     }
-    quality_records: list[tuple[Path, list[str]]] = []
-    performance_records: list[tuple[Path, list[str]]] = []
-    quality_metrics: list[dict[str, Any]] = []
-    performance_metrics: list[dict[str, Any]] = []
+    records: list[tuple[str, Path, dict[str, Any], str | None]] = []
     try:
         if EXECUTION_ERROR:
             raise VerificationError(EXECUTION_ERROR)
         prepare_workdirs()
         check_submission_boundary()
         corpus_rows = load_corpus_shape()
-        private_metadata, ground_truth, private_config, raw_vectors = (
-            load_private_queries()
-        )
-
+        private_metadata, ground_truth, private_config, raw_vectors = load_private_queries()
         build_metrics = run_timed(
-            [
-                str(SUBMISSION_DIR / "build.sh"),
-                "--vectors",
-                str(TASK_DATA / "vectors.f32"),
-                "--metadata",
-                str(TASK_DATA / "metadata.jsonl"),
-                "--config",
-                str(TASK_DATA / "vector_config.json"),
-                "--index-dir",
-                str(INDEX_DIR),
-            ],
+            [str(SUBMISSION_DIR / "build.sh"),
+             "--vectors", str(TASK_DATA / "vectors.f32"),
+             "--metadata", str(TASK_DATA / "metadata.jsonl"),
+             "--config", str(TASK_DATA / "vector_config.json"),
+             "--index-dir", str(INDEX_DIR)],
             timeout=BUILD_TIMEOUT_SECONDS,
             stdout_path=RESULTS_DIR / "build.stdout.log",
             stderr_path=RESULTS_DIR / "build.stderr.log",
         )
         report["build"] = build_metrics
-        check_phase_metrics(build_metrics, "build.sh")
-        if not INDEX_DIR.is_dir() or INDEX_DIR.is_symlink():
-            raise VerificationError("build.sh did not create a persistent index")
+        check_phase_metrics(build_metrics, "build.sh", timeout=BUILD_TIMEOUT_SECONDS)
         index_bytes_after_build = directory_size(INDEX_DIR)
         report["index_bytes_after_build"] = index_bytes_after_build
         if index_bytes_after_build <= 0:
             raise VerificationError("build.sh did not create a persistent index")
 
-        metadata_by_id = {
-            str(row["query_id"]): row for row in private_metadata
-        }
-        missing_quality = [
-            query_id
-            for query_id in QUALITY_QUERY_IDS
-            if query_id not in metadata_by_id
-        ]
-        if missing_quality:
-            raise VerificationError(
-                f"quality sentinel queries are missing: {missing_quality}"
-            )
-        quality_metadata = [metadata_by_id[query_id] for query_id in QUALITY_QUERY_IDS]
-        remaining_metadata = [
-            row for row in private_metadata
-            if str(row["query_id"]) not in QUALITY_QUERY_ID_SET
-        ]
-        if len(remaining_metadata) < PERFORMANCE_QUERY_COUNT:
-            raise VerificationError("not enough private queries for the performance set")
-        performance_metadata = [
-            remaining_metadata[(index * len(remaining_metadata)) // PERFORMANCE_QUERY_COUNT]
-            for index in range(PERFORMANCE_QUERY_COUNT)
-        ]
-
-        def run_one_query(
-            phase: str,
-            query_number: int,
-            metadata_row: dict[str, Any],
-        ) -> tuple[Path, list[str], dict[str, Any]]:
+        for query_number, metadata_row in enumerate(private_metadata, start=1):
             vectors_path, metadata_path, config_path, output_path = write_single_query(
-                phase,
-                query_number,
-                raw_vectors=raw_vectors,
-                metadata_row=metadata_row,
-                dimension=int(private_config["dimension"]),
+                "query", query_number, raw_vectors=raw_vectors,
+                metadata_row=metadata_row, dimension=int(private_config["dimension"]),
             )
             metrics = run_timed(
-                [
-                    str(SUBMISSION_DIR / "run.sh"),
-                    "--index-dir",
-                    str(INDEX_DIR),
-                    "--query-vectors",
-                    str(vectors_path),
-                    "--query-metadata",
-                    str(metadata_path),
-                    "--query-config",
-                    str(config_path),
-                    "--output",
-                    str(output_path),
-                    "--top-k",
-                    str(TOP_K),
-                ],
+                [str(SUBMISSION_DIR / "run.sh"), "--index-dir", str(INDEX_DIR),
+                 "--query-vectors", str(vectors_path),
+                 "--query-metadata", str(metadata_path),
+                 "--query-config", str(config_path),
+                 "--output", str(output_path), "--top-k", str(TOP_K)],
                 timeout=QUERY_TIMEOUT_SECONDS,
-                stdout_path=RESULTS_DIR / f"run.{phase}-{query_number:03d}.stdout.log",
-                stderr_path=RESULTS_DIR / f"run.{phase}-{query_number:03d}.stderr.log",
+                stdout_path=RESULTS_DIR / f"run.query-{query_number:03d}.stdout.log",
+                stderr_path=RESULTS_DIR / f"run.query-{query_number:03d}.stderr.log",
             )
-            check_phase_metrics(metrics, f"run.sh on {phase}-{query_number:03d}")
-            freeze_output_dir(output_path.parent, output_path)
-            return output_path, [str(metadata_row["query_id"])], metrics
+            output_error = None
+            try:
+                freeze_output_dir(output_path.parent, output_path)
+            except (VerificationError, OSError) as error:
+                output_error = str(error)
+            records.append((str(metadata_row["query_id"]), output_path, metrics, output_error))
 
-        for query_number, metadata_row in enumerate(quality_metadata, start=1):
-            output_path, expected_ids, metrics = run_one_query(
-                "quality", query_number, metadata_row
-            )
-            quality_records.append((output_path, expected_ids))
-            quality_metrics.append(metrics)
-
-        for query_number, metadata_row in enumerate(performance_metadata, start=1):
-            output_path, expected_ids, metrics = run_one_query(
-                "performance", query_number, metadata_row
-            )
-            performance_records.append((output_path, expected_ids))
-            performance_metrics.append(metrics)
-
-        # A build-started service may remain alive across all single-query calls.
-        # Terminate every submission process before root reads untrusted output.
+        # Keep the build-started service alive throughout the workload. Stop it
+        # before loading the large metadata lookup and inspecting private labels.
         stop_submission_processes()
-
-        index_bytes = directory_size(INDEX_DIR)
-        report["index_bytes"] = index_bytes
-
+        report["index_bytes"] = directory_size(INDEX_DIR)
         doc_rows = load_doc_rows(corpus_rows)
         for query_id, relevant in ground_truth.items():
-            unknown_doc_ids = sorted(relevant - doc_rows.keys())
-            if unknown_doc_ids:
-                raise VerificationError(
-                    f"ground truth for {query_id!r} contains unknown doc_id "
-                    f"{unknown_doc_ids[0]!r}"
-                )
-
-        quality_results: list[dict[str, Any]] = []
-        for output_path, expected_ids in quality_records:
-            quality_results.extend(
-                validate_batch_output(output_path, expected_ids, doc_rows)
-            )
-        performance_results: list[dict[str, Any]] = []
-        for output_path, expected_ids in performance_records:
-            performance_results.extend(
-                validate_batch_output(output_path, expected_ids, doc_rows)
-            )
-
-        expected_quality_order = list(QUALITY_QUERY_IDS)
-        if [row["query_id"] for row in quality_results] != expected_quality_order:
-            raise VerificationError(
-                "quality output query order does not match the sentinel order"
-            )
-        expected_performance_order = [
-            str(row["query_id"]) for row in performance_metadata
-        ]
-        if [row["query_id"] for row in performance_results] != expected_performance_order:
-            raise VerificationError(
-                "performance output query order does not match the private workload"
-            )
-
-        quality_accuracy, quality_mrr = score(
-            quality_results, ground_truth, cutoff=QUALITY_K
-        )
-        if quality_accuracy < 1.0:
-            raise VerificationError(
-                "quality sentinel gate failed: all five queries must hit a "
-                "relevant document in the top three results"
-            )
-
-        performance_run_seconds = sum(
-            float(item["elapsed_seconds"]) for item in performance_metrics
-        )
-        performance_max = max(
-            (float(item["elapsed_seconds"]) for item in performance_metrics),
-            default=0.0,
-        )
-        report["valid"] = True
-        report["score"] = 100.0 * quality_accuracy
-        report["query_count"] = len(quality_results) + len(performance_results)
-        report["primary_metric"] = {
-            "name": "Accuracy@3",
-            "value": quality_accuracy,
-            "query_count": len(quality_results),
-            "all_queries_required": True,
-        }
-        report["diagnostic_metrics"] = {
-            "mrr_at_3": quality_mrr,
-            "quality_query_count": len(quality_results),
-            "performance_query_count": len(performance_results),
-            "performance_sum_run_seconds": performance_run_seconds,
-            "performance_max_query_seconds": performance_max,
-        }
-        report["quality_queries"] = quality_metrics
-        report["performance_queries"] = performance_metrics
+            unknown = relevant - doc_rows.keys()
+            if unknown:
+                raise VerificationError(f"ground truth for {query_id!r} contains unknown document IDs")
+        results = [score_query(query_id, path, metrics, error, doc_rows, ground_truth)
+                   for query_id, path, metrics, error in records]
+        passed = sum(row["score"] for row in results)
+        metric = passed / HIDDEN_QUERY_COUNT
+        report.update({
+            "valid": True, "score": 100.0 * metric, "reward": metric,
+            "query_count": len(results), "passed_queries": passed,
+            "all_cases_passed": passed == HIDDEN_QUERY_COUNT,
+            "primary_metric": {
+                "name": "Accuracy@3", "value": metric, "query_count": len(results),
+                "latency_limit_seconds": QUERY_TIMEOUT_SECONDS,
+                "per_query_latency_gate": True, "all_queries_required": False,
+            },
+            "diagnostic_metrics": {
+                "raw_accuracy_at_3": sum(r["hit_at_3"] for r in results) / HIDDEN_QUERY_COUNT,
+                "latency_passed_queries": sum(r["latency_passed"] for r in results),
+                "query_errors": sum(bool(r["errors"]) for r in results),
+                "sum_run_seconds": sum(r["elapsed_seconds"] for r in results),
+                "max_query_seconds": max(r["elapsed_seconds"] for r in results),
+            },
+            "queries": results,
+        })
     except Exception as error:
         report["errors"].append(str(error))
     finally:

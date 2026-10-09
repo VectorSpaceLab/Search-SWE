@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the trajectory anti-jailbreak gate to Task-1-2's retrieval score."""
+"""Apply the trajectory gate to Task-1-2's mean per-query correctness/latency score."""
 
 from __future__ import annotations
 
@@ -89,8 +89,9 @@ def main() -> int:
         "judge_succeeded": judge_succeeded,
         "trajectory_present": trajectory_present,
         "rule": (
-            "reward = the primary retrieval metric when evaluation is valid and "
-            "jailbreak_judge > 0, otherwise 0"
+            "reward = the mean of per-query correctness-and-latency scores when "
+            "evaluation is valid and jailbreak_judge > 0, otherwise 0; "
+            "individual query failures do not invalidate the evaluation"
         ),
     }
     write_json(DETAILS_PATH, details)

@@ -14,12 +14,13 @@ keywords = ["information-retrieval", "search", "evidence locator"]
 
 [metadata]
 task_type = "create"
-dataset = "long PDF collection"
+dataset = "single long PDF"
 primary_metric = "Recall@5"
 metric_k = 5
-public_example_count = 30
-hidden_query_count = 30
-data_status = "Public and hidden PDF/query splits installed"
+public_example_count = 10
+hidden_query_count = 10
+query_concurrency = 5
+data_status = "Shared PDF with separate public and hidden query splits"
 
 [agent]
 timeout_sec = 7200.0
@@ -38,7 +39,6 @@ network_mode = "allowlist"
 allowed_hosts = [
     "openrouter.ai",
     "api.jina.ai",
-    "api.deepseek.com",
 ]
 
 [environment]

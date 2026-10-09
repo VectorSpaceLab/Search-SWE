@@ -1,112 +1,15 @@
-# Task: Task-1-3
+I'm Elena Park, working from a desk in our research institute's reading room with a collection of scientific papers that I need to consult repeatedly. I want you, my coding agent, to build an executable retrieval-augmented question answering system over the PDFs supplied here. When I ask a scientific question, it should give a concise answer and identify the paper supporting it. Please aim for the best answer correctness and source attribution on held-out questions; you may choose any method that respects the execution interface and resources.
 
-## Task Description
+There are 300 scientific-paper PDFs in /task/data/corpus. Public development questions are in /task/data/validation/queries.jsonl and use the same record schema as hidden questions; /task/data/validation/golden_answers.jsonl supplies their reference answers and evidence document IDs. Use these papers to answer, without precomputed query-to-answer mappings, hidden labels, hard-coded evaluation answers, or external datasets or services containing evaluation answers. The held-out queries and private relevance judgments are disjoint from the development examples and unavailable in your environment.
 
-Build an executable retrieval-augmented question answering system over the supplied collection of scientific-paper PDFs. Given a scientific question, the system should return a concise answer together with the paper that support the answer.
+Before implementing the system, read /task/docs/environment.md for the installed Python environment, runtime, packages and system tools, and /task/docs/available_resources.md for the optional retrieval and generative APIs, exact model allowlists, provider and endpoint restrictions, usage rules, runtime credential handling and jailbreak penalties. Follow those restrictions rather than assuming an unlisted service, model or endpoint is allowed; unauthorized datasets and services are prohibited. Harbor supplies the documented credentials at runtime, and they must never be put in the task package or Docker image. These documents and all of /task are read-only. Create or change submission files only under /app, and finish implementation, validation and debugging within the 120-minute agent allowance.
 
-The objective is to maximize answer correctness and source attribution quality on held-out questions. You may use any method that satisfies the executable interface and resource constraints.
+I need executable /app/build.sh and /app/run.sh files in the final handover. You can organize optional modules under /app/src and leave optional implementation and self-test notes in /app/README.md. The preparation call is /app/build.sh --corpus /task/data/corpus --index-dir /app/index. Build all required indexes and runtime artifacts, start the search service and return exit status 0 only after it is ready for queries. It must stay available through repeated run.sh invocations. Use the supplied --index-dir for persistent indexes and other build artifacts, and honor supplied paths generally: the verifier's index and output directories may differ from the example locations. The build must finish within 3600 seconds.
 
-## Requirements
+After a successful build, the query interface is /app/run.sh --index-dir /app/index --queries /path/to/queries.jsonl --output /path/to/results.jsonl. Whatever internal protocol or service endpoint you use must work with the build process and this interface. Process every supplied query and write exactly one result object for each. The verifier builds once and then invokes run.sh once for each hidden query, with up to five invocations in parallel. They share the task's CPU, memory, index and service resources. Each query has 900 seconds, counted from the start of its run.sh process; waiting for an available slot does not use up that query's individual allowance.
 
-- Create or modify submission files only under `/app`.
-- Treat `/task` as read-only.
-- Do not use precomputed query-to-answer mappings or external datasets/services containing evaluation answers.
-- Read `/task/docs/environment.md` for the installed runtime, packages, and system tools available in the container.
-- Read `/task/docs/available_resources.md` for optional external retrieval and generative resources, runtime credential handling, exact model allowlists, API restrictions, and jailbreak penalties.
-- `build.sh` and `run.sh` must be executable files under `/app`.
-- `build.sh` must complete within 3600 seconds.
-- Each query must complete within 900 seconds.
-- The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
+For the output, write one JSON object per line in the form {"query_id":"query-id","answer":"The answer for the query","evidence":"document-id"}. Preserve each input query's identifier in query_id, provide a non-empty answer string that directly answers the question, and include evidence identifying the supporting document from the supplied corpus. The evidence value must be the PDF filename with its .pdf extension removed, so document-id.pdf is reported as document-id. Both an answer and a valid supporting corpus document ID are required for every query.
 
-### Build interface
+Harbor will transfer /app into a separate verifier with the same runtime and the private split after you finish; your build.sh must restart the service there. The verifier phase has 14,400 seconds overall, including the arrangement of a 3,600-second build and 900 seconds per query with up to five concurrent queries. It checks retrieval and answer integrity, resource compliance, executable interfaces and output validity. A failed execution or invalid output gives score 0 to the entire submission, rather than just dropping the affected question.
 
-The verifier invokes:
-
-```bash
-/app/build.sh \
-  --corpus /task/data/corpus \
-  --index-dir /app/index
-```
-
-`build.sh` must build all required index and runtime artifacts, start the search service, and return exit status `0` only after the service is ready to accept queries. The service must remain available across repeated `run.sh` calls.
-
-The `--index-dir` argument is the location for persistent indexes and other build artifacts. Use the supplied paths: the verifier's index and output directories may differ from these examples.
-
-### Search interface
-
-After a successful build, the verifier invokes:
-
-```bash
-/app/run.sh \
-  --index-dir /app/index \
-  --queries /path/to/queries.jsonl \
-  --output /path/to/results.jsonl
-```
-
-`run.sh` must process every supplied query and write exactly one result object for each input query. It may use any internal protocol or service endpoint, as long as it works with the `build.sh` process and the command-line interface.
-
-The verifier runs `build.sh` once, then invokes `run.sh` once per hidden query with up to five invocations in parallel. A query's time limit starts when its `run.sh` process starts; time waiting for an available slot is excluded. All invocations share the task's CPU, memory, index, and service resources.
-
-### Output contract
-
-Each output line must be a JSON object with this shape:
-
-```json
-{"query_id":"query-id","answer":"The answer for the query","evidence":"document-id"}
-```
-
-For every valid query:
-
-- `query_id` must preserve the identifier of the corresponding input query;
-- `answer` must be a non-empty string that directly answers the question;
-- every result must contain a `answer` for the query and a `evidence` identifying the document for the answer from the supplied corpus.
-
-## Available Validation Data
-
-The following files are available in the task environment:
-
-- `/task/data/corpus` — the collection of 300 scientific-paper PDFs.
-- `/task/data/validation/queries.jsonl` — 25 public development queries. Each record follows the same schema used by hidden queries.
-- `/task/data/validation/golden_answers.jsonl` — reference answers and evidence document IDs for the public queries.
-
-## Expected Artifacts
-
-The finalized submission must contain executable `build.sh` and `run.sh` files under `/app`.
-
-```text
-/app/
-├── build.sh          # executable build and service-start entry point
-├── run.sh            # executable query entry point
-├── src/              # optional implementation modules
-└── README.md         # optional implementation notes and self-test details
-```
-
-## Verification
-
-After the Agent phase, Harbor transfers `/app` to a separate verifier with the same runtime and the private test split. `build.sh` must restart the service. The verifier checks the following items:
-
-1. **Retrieval and answer integrity.** Answer questions using the supplied PDFs. Do not use hidden labels, hard-coded evaluation answers, or unauthorized datasets or services.
-2. **Resource compliance.** Follow `/task/docs/available_resources.md`. The verifier allows 3,600 seconds for `build.sh` and 900 seconds per query, running up to five queries concurrently, within a 14,400-second verifier phase.
-3. **Executable and output validity.** `build.sh` and `run.sh` must be executable and follow the specified interfaces. Each query must produce exactly one result with its `query_id`, a non-empty `answer`, and a valid corpus document ID in `evidence`. Failed execution or invalid output receives a score of `0` for the entire submission.
-4. **Final answer score.** The metric is LLMJudgeAccuracy, averaged equally across all hidden queries. The LLM judge evaluates an answer only when its evidence document matches the reference; the answer must be semantically equivalent to the reference answer.
-
-```text
-LLMJudgeAccuracy(q) = 1 if evidence matches and the judge accepts the answer, else 0
-reward = mean_q LLMJudgeAccuracy(q)
-score = 100 * reward
-```
-
-An independent trajectory audit checks compliance with the task and resource restrictions. A failed audit sets the entire submission's reward and score to `0`.
-
-## Hidden Test Overview
-
-The hidden evaluation contains 25 held-out queries with private relevance judgments. The hidden queries are disjoint from the public development examples and are not copied into the Agent-visible environment.
-
-## Environment and available resources
-
-Before implementing the system, read the following task-provided documents:
-
-- [`/task/docs/environment.md`](/task/docs/environment.md) — a concise description of the installed Python environment, system runtime, and commonly available packages and tools.
-- [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — the available retrieval and generative API resources, runtime environment-variable handling, model allowlist, provider and endpoint restrictions, and jailbreak penalty rules.
-
-These documents are part of the Agent-visible task data and should be treated as read-only. Follow the resource and model restrictions in `available_resources.md`; do not infer permission to use an unlisted provider, model, or endpoint. The credentials described there are injected by Harbor at runtime and must not be placed in the task package or Docker image.
+The final metric is LLMJudgeAccuracy, equally averaged over every hidden query. For a query to earn 1, its evidence document must match the reference and an LLM judge must accept its answer as semantically equivalent to the reference answer; otherwise it earns 0. The answer judge only evaluates an answer after its evidence document matches. The normalized reward is the mean of those query values, and the displayed score is 100 times that reward. An independent trajectory audit also checks compliance with the task and resource restrictions; a failed audit makes the entire submission's reward and score 0. That combination of a useful answer and the right source is what I need from this system.

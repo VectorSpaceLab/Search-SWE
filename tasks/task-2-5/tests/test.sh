@@ -51,8 +51,13 @@ else
 fi
 if [[ -d /tests && ! -L /tests ]]; then
     chown -R root:root /tests
-    chmod 0700 /tests
-    find /tests/data -type f -exec chmod 0600 {} +
+    # The submission must read only the hidden query file. Keep every test
+    # directory traversable but non-listable, and every test file root-only
+    # before selectively exposing the query input below.
+    find /tests -type d -exec chmod 0711 {} +
+    find /tests -type f -exec chmod 0600 {} +
+    chmod 0700 /tests/test.sh
+    chmod 0644 /tests/data/hidden_queries.jsonl
 fi
 if [[ -d /logs/agent && ! -L /logs/agent ]]; then
     chown root:root /logs/agent
@@ -220,7 +225,7 @@ if (( judge_status == 0 )); then
         --output /logs/verifier/reward.json \
         --max-concurrent-agent 1 \
         --judge deepseek-codex \
-        --model deepseek-flash \
+        --model deepseek/deepseek-v4.1-flash \
         >"$judge_stdout" 2>"$judge_stderr"
     judge_status=$?
 fi

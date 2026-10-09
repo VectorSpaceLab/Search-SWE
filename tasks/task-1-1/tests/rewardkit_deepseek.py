@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run RewardKit 0.2.0 with DeepSeek's Codex provider configuration."""
+"""Run RewardKit 0.2.0 with DeepSeek V4.1 Flash through OpenRouter's Responses API."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from rewardkit.agents import CodexBackend, register_agent
 
 
 MODEL = {
-    "slug": "deepseek-flash",
-    "display_name": "DeepSeek-Flash",
+    "slug": "deepseek/deepseek-v4.1-flash",
+    "display_name": "DeepSeek V4.1 Flash (OpenRouter)",
     "prefer_websockets": False,
     "support_verbosity": True,
     "default_verbosity": "low",
@@ -35,7 +35,6 @@ MODEL = {
     "supported_reasoning_levels": [
         {"effort": "low", "description": "Fast responses with lighter reasoning"},
         {"effort": "high", "description": "Extra reasoning for complex problems"},
-        {"effort": "max", "description": "Maximum reasoning for the hardest problems"},
     ],
     "shell_type": "shell_command",
     "visibility": "list",
@@ -56,7 +55,8 @@ def deepseek_base_url() -> str:
     value = os.environ.get("OPENAI_BASE_URL", "").strip().rstrip("/")
     parsed = urlsplit(value)
     if (
-        parsed.scheme not in {"http", "https"}
+        value != "https://openrouter.ai/api/v1"
+        or parsed.scheme not in {"http", "https"}
         or not parsed.netloc
         or parsed.username
         or parsed.password
@@ -64,8 +64,8 @@ def deepseek_base_url() -> str:
         or parsed.fragment
     ):
         raise ValueError(
-            "OPENAI_BASE_URL must be an absolute HTTP(S) URL without "
-            "credentials, query, or fragment"
+            "OPENAI_BASE_URL must be https://openrouter.ai/api/v1 for the "
+            "OpenRouter trajectory judge"
         )
     return value
 
@@ -79,14 +79,14 @@ def configure_codex_home(codex_home: Path, base_url: str) -> None:
     config = codex_home / "config.toml"
     mcp_config = config.read_text(encoding="utf-8") if config.is_file() else ""
     config.write_text(
-        'model_provider = "deepseek"\n'
+        'model_provider = "openrouter"\n'
         'model_reasoning_effort = "high"\n'
         f"model_catalog_json = {json.dumps(str(catalog))}\n\n"
-        '[model_providers.deepseek]\n'
-        'name = "deepseek"\n'
+        '[model_providers.openrouter]\n'
+        'name = "OpenRouter"\n'
         f"base_url = {json.dumps(base_url)}\n"
         'wire_api = "responses"\n'
-        'env_key = "DEEPSEEK_API_KEY"\n'
+        'env_key = "OPENROUTER_API_KEY"\n'
         + (f"\n{mcp_config}" if mcp_config else ""),
         encoding="utf-8",
     )
@@ -102,13 +102,13 @@ class DeepSeekCodexBackend(CodexBackend):
         base_url = deepseek_base_url()
         await super().__aenter__()
         try:
-            deepseek_key = self.env.pop("CODEX_API_KEY", "")
-            if not deepseek_key:
+            openrouter_key = self.env.pop("CODEX_API_KEY", "")
+            if not openrouter_key:
                 raise RuntimeError("RewardKit did not initialize the judge API key")
-            self.env["DEEPSEEK_API_KEY"] = deepseek_key
-            if self.model != "deepseek-flash":
+            self.env["OPENROUTER_API_KEY"] = openrouter_key
+            if self.model != "deepseek/deepseek-v4.1-flash":
                 raise ValueError(
-                    "the DeepSeek Codex judge model must be deepseek-flash"
+                    "the DeepSeek Codex judge model must be deepseek/deepseek-v4.1-flash"
                 )
             if self.codex_home is None:
                 raise RuntimeError("RewardKit did not initialize its Codex home")

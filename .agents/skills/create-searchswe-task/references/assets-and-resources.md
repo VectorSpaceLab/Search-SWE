@@ -7,7 +7,9 @@ task. Nothing in this reference grants permission to publish or use paid APIs.
 ## Manifest construction
 
 Keep downloadable fixed files outside the build contexts, under
-`tasks/<task-id>/data/` or `models/`. Ignore both directories in Git. Hidden
+`data/` or `models/` in the selected package (initially
+`task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>`, later `tasks/<final-id>`).
+Ignore both directories in Git. Hidden
 queries/labels and grading code go in `tests/`, not the public asset bundle.
 For a verifier-only corpus stored in `data/verifier/`, mount only public
 subdirectories into the agent; never mount all of `data/` in that case.
@@ -23,10 +25,10 @@ valid checksums/revisions to submit):
     "size_bytes": 1234,
     "sha256": "REPLACE_WITH_COMPUTED_SHA256",
     "source": {
-      "repo_id": "search-swe/Search-SWE",
+      "repo_id": "YOUR_ACCOUNT/search-swe-development",
       "repo_type": "dataset",
       "revision": "REPLACE_WITH_PUBLISHED_40_HEX_COMMIT",
-      "filename": "tasks/task-1-new/corpus.jsonl"
+      "filename": "development/corpus.jsonl"
     }
   }]
 }
@@ -44,11 +46,43 @@ file modes are `"0644"` and `"0600"`; private model directories can be declared
 as `"directory_modes": {"models/private-model": "0700"}` at manifest root.
 Do not attempt `chmod` on read-only mounted files during verification.
 
+## Development and incremental publication
+
+For pre-promotion development, use an authorized **personal public temporary HF
+dataset** with manifest, provenance and license; pin its immutable 40-hex SHA in
+submission `assets.json`. The downloader accepts arbitrary HF repositories:
+
+```bash
+python scripts/download_assets.py --task-path task-submissions/alice/1-x-1
+python scripts/download_assets.py --task-path task-submissions/alice/1-x-1 --verify-only
+```
+
+After the maintainer assigns the final ID in the same PR, prepare new official
+files at `tasks/<final-id>/...`. The target checkout's
+`scripts/prepare_hf_upload.py` accepts a current official manifest snapshot,
+the final task package and **only new data**. It verifies hashes, preserves old
+entries, refuses collisions and stages new files plus a merged manifest offline.
+Read the bundled [publication workflow](publication.md) for exact commands
+and approval boundaries. Append/update
+HF `SOURCES.md`, dataset card/license and LFS metadata. Never delete old assets.
+Publish through a **HF community PR (`create_pr=True`)** with your personal
+account, or ask a maintainer to mirror reviewed public files. Never share or
+request an official token. Refresh a stale manifest snapshot before merging.
+
+The official HF change must merge **before** pinning the resulting official SHA
+in final `assets.json` and merging the GitHub task PR. Do not pin the community
+PR SHA or use a mutable branch. Keep original model pins unchanged. Official
+publication is separately authorized; helpers do not upload. Do not publish
+permanent official paths containing temporary task IDs.
+
+## Full dataset audit (maintainers)
+
 For unpublished data, prepare an authorized local HF staging directory with
 `README.md`, `SOURCES.md`, `.gitattributes`, `manifest.json`, and `tasks/` files.
 Its manifest has `schema_version: 1` and `files` entries containing dataset-relative
 `path`, `size_bytes`, and `sha256`. It must match the checkout's complete dataset
-inventory, not just new files. Local checks support:
+inventory, not just new files. Contributors normally use the incremental
+helper above instead; it does not need all old assets. Full local checks support:
 
 ```bash
 python scripts/check_release.py --hf-data /path/to/hf-data \

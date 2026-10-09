@@ -3,67 +3,67 @@
   "files": [
     {
       "path": "data/metadata.jsonl",
-      "size_bytes": 59735458,
-      "sha256": "8a92cdf63b865f543b1c701371bd41a0c36abdf5b25f1512c69cec874d731da5",
+      "size_bytes": 99388890,
+      "sha256": "24b2d44e89f69754dad0690fbda1d3d3d6c367670b361cfaf628d01ac2cf4688",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/metadata.jsonl"
       }
     },
     {
       "path": "data/validation/ground_truth.jsonl",
-      "size_bytes": 290,
-      "sha256": "57c12d050e0bff175d2d7981005348a803bcf5432d295fd43d871313f981064e",
+      "size_bytes": 2434,
+      "sha256": "ecf9535741f4b7813cf55a1d783c5a898fdbf19afabe210ee1de1a2c0fae4fa6",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/validation/ground_truth.jsonl"
       }
     },
     {
       "path": "data/validation/queries.jsonl",
-      "size_bytes": 396,
-      "sha256": "f2ce9368500256909087b4ce42ebe0ed97c929f939a626e75d6bcd173c00f17e",
+      "size_bytes": 2272,
+      "sha256": "e7a1621e2fa124e5a1ce33d80ba471acc8d8665d7a499b03ecc9d45872cf3e1b",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/validation/queries.jsonl"
       }
     },
     {
       "path": "data/validation/query_metadata.jsonl",
-      "size_bytes": 173,
-      "sha256": "b01c916c883dd2f22bdd0c63e8253cddc25e05f31b6f24cb3c3ae664722d25b4",
+      "size_bytes": 1230,
+      "sha256": "0b2cc39ac015d03db1dd9e88d3b8f35ff3573329ecba7613357b53e94d8da089",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/validation/query_metadata.jsonl"
       }
     },
     {
       "path": "data/validation/query_vectors.f32",
-      "size_bytes": 20480,
-      "sha256": "ce8ca53e7b6efaaf718b3a81b6dddbf996f7dbaac89ca279dbec5010abab2203",
+      "size_bytes": 81920,
+      "sha256": "e4e9e3fad7bdc1266f3ad4d573c25d2c624d2d4aeaa48bfbbd270849f184ca4b",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/validation/query_vectors.f32"
       }
     },
     {
       "path": "data/validation/vector_config.json",
-      "size_bytes": 180,
-      "sha256": "55883084effcd79937a071e0df9ac988acc62d4c59732398091afc0bb40059d5",
+      "size_bytes": 181,
+      "sha256": "8d483cb8792e0ab7732b7ab3bbbcf5908808d625d058b1282d6ff6339e6193cb",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/validation/vector_config.json"
       }
     },
@@ -81,11 +81,11 @@
     {
       "path": "data/vectors.f32",
       "size_bytes": 6144000000,
-      "sha256": "6ec85127f0150642d1287e5b02fa651df0b3f965a93d2e1ce66ba186199b0a3b",
+      "sha256": "64c8e329408605273023c77ce3e2d347fd57bc9afd0d912c5d2a9418c47a9f35",
       "source": {
         "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "58394dfd3bcfcbcfb2c3a2617832574ed583b00f",
+        "revision": "fc3c457243f04b5a23a10cb33ed53bbbcdd30405",
         "filename": "tasks/task-1-2/vectors.f32"
       }
     }

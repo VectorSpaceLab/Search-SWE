@@ -7,11 +7,11 @@ INPUT_DIR=$WORK_DIR/input
 INDEX_DIR=$WORK_DIR/index
 SUBMISSION_OUTPUT_DIR=$WORK_DIR/output
 STAGED_QUERIES=$INPUT_DIR/queries.jsonl
-SUBMISSION_OUTPUT=$SUBMISSION_OUTPUT_DIR/results.jsonl
 RESULTS_DIR=/logs/verifier/task-1-4-eval
 OUTPUT_PATH=$RESULTS_DIR/results.jsonl
 BUILD_TIMEOUT_SECONDS=2400
-RUN_TIMEOUT_SECONDS=1800
+# The runner enforces 1,800 seconds of query execution; allow cleanup afterwards.
+RUN_TIMEOUT_SECONDS=1860
 MAX_OUTPUT_BYTES=$((64 * 1024 * 1024))
 SUBMISSION_USER=submission
 VERIFIER_PRIVATE_DIR=/logs/verifier/.private
@@ -63,16 +63,15 @@ install -d -o root -g submission -m 0750 "$INPUT_DIR"
 install -d -o submission -g submission -m 0750 \
     "$INDEX_DIR" "$SUBMISSION_OUTPUT_DIR"
 
-# Hidden PDFs are verifier inputs. Root stages them before build so submission
-# code can read the evaluation corpus without being able to traverse /tests.
+# The shared PDF is staged read-only before build, while /tests remains private.
 if [[ ! -d /tests/corpus || -L /tests/corpus ]]; then
-    execution_error="missing or invalid hidden PDF corpus"
+    execution_error="missing or invalid shared PDF corpus"
 elif find /tests/corpus -mindepth 1 -type l -print -quit | grep -q .; then
-    execution_error="hidden PDF corpus contains a symbolic link"
+    execution_error="shared PDF corpus contains a symbolic link"
 else
     install -d -o root -g submission -m 0550 "$CORPUS_DIR"
     if ! cp -a --reflink=auto /tests/corpus/. "$CORPUS_DIR/"; then
-        execution_error="failed to stage hidden PDF corpus"
+        execution_error="failed to stage shared PDF corpus"
     else
         chown -R root:submission "$CORPUS_DIR"
         find "$CORPUS_DIR" -type d -exec chmod 0550 {} +
@@ -96,8 +95,8 @@ else
     execution_error="missing or invalid /app directory"
 fi
 
-# Documentation is a read-only host mount. Public PDFs and validation are not
-# mounted in this environment; the hidden corpus is staged above.
+# Documentation is a read-only host mount. The shared PDF is staged above;
+# public validation queries and labels are not mounted in this environment.
 if [[ ! -d /task/docs || -L /task/docs ]] \
     || ! "${SUBMISSION_COMMAND[@]}" /usr/bin/test -r /task/docs/environment.md \
     || ! "${SUBMISSION_COMMAND[@]}" /usr/bin/test -r /task/docs/available_resources.md; then
@@ -115,6 +114,8 @@ if [[ -d /logs/agent && ! -L /logs/agent ]]; then
 fi
 
 rm -f "$OUTPUT_PATH" \
+    "$RESULTS_DIR/evaluation.json" \
+    "$RESULTS_DIR/query_execution.json" \
     /logs/verifier/reward.json \
     /logs/verifier/reward.txt \
     /logs/verifier/reward-details.json
@@ -227,32 +228,30 @@ elif [[ -z "$execution_error" ]]; then
         run_phase "$RUN_TIMEOUT_SECONDS" \
             "$RESULTS_DIR/run.stdout.log" \
             "$RESULTS_DIR/run.stderr.log" \
-            "${SUBMISSION_COMMAND[@]}" \
-            /app/run.sh \
+            /opt/conda/bin/python /tests/run_queries.py \
             --index-dir "$INDEX_DIR" \
             --queries "$STAGED_QUERIES" \
-            --output "$SUBMISSION_OUTPUT" \
-            --top-k 5
+            --output-dir "$SUBMISSION_OUTPUT_DIR" \
+            --output "$OUTPUT_PATH" \
+            --logs-dir "$RESULTS_DIR/query_logs" \
+            --timeout 900 \
+            --total-timeout 1800 \
+            --concurrency 5
         run_status=$?
         run_group_id=$phase_group_id
         stop_submission_processes
         if (( run_status == 124 )); then
-            execution_error="run.sh exceeded its timeout"
+            execution_error="query runner exceeded its shared safety timeout"
         elif (( run_status != 0 )); then
-            execution_error="run.sh exited with status $run_status"
-        elif [[ ! -f "$SUBMISSION_OUTPUT" || -L "$SUBMISSION_OUTPUT" ]]; then
-            execution_error="run.sh did not produce a regular output file"
+            execution_error="query runner exited with status $run_status"
+        elif [[ ! -f "$OUTPUT_PATH" || -L "$OUTPUT_PATH" \
+            || ! -f "$RESULTS_DIR/query_execution.json" \
+            || -L "$RESULTS_DIR/query_execution.json" ]]; then
+            execution_error="query runner did not produce private evaluation files"
         else
-            output_size=$(stat -c %s -- "$SUBMISSION_OUTPUT" 2>/dev/null || printf '%s' -1)
+            output_size=$(stat -c %s -- "$OUTPUT_PATH" 2>/dev/null || printf '%s' -1)
             if (( output_size < 0 || output_size > MAX_OUTPUT_BYTES )); then
-                execution_error="submission output size is invalid"
-            elif ! install \
-                -o root \
-                -g root \
-                -m 0600 \
-                "$SUBMISSION_OUTPUT" \
-                "$OUTPUT_PATH"; then
-                execution_error="failed to collect submission output"
+                execution_error="merged output size is invalid"
             fi
         fi
     fi
@@ -287,7 +286,7 @@ if (( judge_status == 0 )); then
         --output /logs/verifier/reward.json \
         --max-concurrent-agent 1 \
         --judge deepseek-codex \
-        --model deepseek-flash \
+        --model deepseek/deepseek-v4.1-flash \
         >"$judge_stdout" 2>"$judge_stderr" || judge_status=$?
 else
     echo "Trajectory judge configuration failed" >>"$judge_stderr"

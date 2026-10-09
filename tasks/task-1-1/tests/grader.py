@@ -29,6 +29,7 @@ RESULTS_DIR = Path(
 REPORT_PATH = RESULTS_DIR / "evaluation.json"
 CORPUS_PATH = TASK_DATA / "corpus.jsonl"
 TOP_K = 3
+HIDDEN_QUERY_COUNT = 10
 BUILD_TIMEOUT_SECONDS = 1800.0
 RUN_TIMEOUT_SECONDS = 900.0
 MAX_OUTPUT_BYTES = 4 * 1024 * 1024
@@ -113,8 +114,10 @@ def load_private_data(
             raise VerificationError(f"duplicate private query ID {query_id!r}")
         query_ids.add(query_id)
         queries.append({"query_id": query_id, "text": query_text})
-    if len(queries) != 3:
-        raise VerificationError(f"expected exactly 3 hidden queries, got {len(queries)}")
+    if len(queries) != HIDDEN_QUERY_COUNT:
+        raise VerificationError(
+            f"expected exactly {HIDDEN_QUERY_COUNT} hidden queries, got {len(queries)}"
+        )
 
     ground_truth: dict[str, set[str]] = {}
     for line_number, row in enumerate(
@@ -479,7 +482,6 @@ def main() -> int:
 
         raw_accuracy = hit_count / len(queries)
         all_cases_passed = hit_count == len(queries)
-        gated_accuracy = 1.0 if all_cases_passed else 0.0
         report.update(
             {
                 "valid": True,
@@ -489,11 +491,11 @@ def main() -> int:
                 "all_cases_passed": all_cases_passed,
                 "primary_metric": {
                     "name": "Accuracy@3",
-                    "value": gated_accuracy,
+                    "value": raw_accuracy,
                     "raw_value": raw_accuracy,
-                    "all_queries_required": True,
+                    "all_queries_required": False,
                 },
-                "reward": gated_accuracy,
+                "reward": raw_accuracy,
                 "queries": per_query,
             }
         )

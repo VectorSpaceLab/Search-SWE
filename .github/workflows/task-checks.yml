@@ -1,0 +1,46 @@
+name: Task package checks
+
+on:
+  pull_request:
+  push:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  review-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r scripts/requirements.txt PyYAML python-dotenv
+      - run: python scripts/check_release.py
+      - run: python scripts/check_submission.py
+      - name: One contributor namespace per PR (including promoted packages)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python scripts/check_submission.py --base "$BASE_SHA"
+      - run: python -m unittest discover -s scripts/tests -p 'test_*.py'
+      - run: python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
+      - run: python .agents/skills/maintain-searchswe-task/scripts/test_maintainer_skill.py
+      - run: git diff --check
+  merge-ready:
+    # Intentionally fails during submission review. Require this before merging;
+    # repository branch-protection settings are configured separately by owners.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install PyYAML
+      - run: python scripts/check_submission.py --merge-ready

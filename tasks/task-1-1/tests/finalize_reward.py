@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the retrieval score and trajectory judge as a hard final gate."""
+"""Preserve fractional retrieval credit when the trajectory judge passes."""
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ def main() -> int:
         "evaluation_valid": evaluation_valid,
         "judge_succeeded": judge_succeeded,
         "trajectory_present": trajectory_present,
-        "rule": "reward = 1 only when all hidden cases pass and the trajectory judge passes",
+        "rule": "reward = passed_queries / 10 when evaluation is valid and the trajectory judge passes; otherwise 0",
     }
     write_json(DETAILS_PATH, details)
     print(json.dumps(final_reward, ensure_ascii=False, indent=2))

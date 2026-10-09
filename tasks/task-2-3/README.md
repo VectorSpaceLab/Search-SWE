@@ -44,9 +44,10 @@ There are 100 hidden evaluation queries, isolated from the agent environment.
 
 The query-side system may be adapted within the supplied 0.6B backbone
 requirement. Document vectors must not be modified, re-encoded, replaced,
-or reordered. Development-time network access may support documentation and
-tools, but not replacement backbones, evaluation labels, or external retrieval
-results. The final submission must be self-contained and offline.
+or reordered. Task network access during development is restricted to
+`openrouter.ai` and `api.jina.ai`. Do not acquire replacement backbones,
+evaluation labels, or external retrieval results. The final submission must
+be self-contained and offline.
 
 ### Environment and Resource Limits
 
@@ -97,7 +98,7 @@ clean process termination are also checked.
 
 The normalized quality reward is accepted only after runtime and validity gates
 and the independent trajectory audit pass. Failure at any gate produces zero.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
 ## Running This Task

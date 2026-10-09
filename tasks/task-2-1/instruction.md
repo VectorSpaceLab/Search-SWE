@@ -1,115 +1,13 @@
-# Task: Task-2-1
+I'm Arun Mehta, working at the review table in our financial research office. We have a long-document search pipeline already, but the ordering of its initial results needs work. Please improve the supplied reranking system for me. Each query comes with a fixed BM25 Top-100 set of candidate documents, and I want you to rerank those candidates with our supplied local BAAI/bge-reranker-large model to maximize retrieval quality on held-out financial queries while respecting the interfaces and resources.
 
-## Task Description
+The candidate set and learned scorer are fixed. Use exactly the candidates supplied with each query: do not add, remove, replace or independently retrieve candidates. You may optimize the surrounding reranking pipeline, but only the supplied local model may perform learned relevance scoring. Do not replace, fine-tune, retrain, distill, quantize or otherwise modify the model, tokenizer or configuration. The model is mounted at /task/models/bge-reranker-large; older task notes spell this /tast/model/bge-reranker-large, and that spelling refers to the same supplied model, not permission to fetch a replacement. Read /task/docs/environment.md and /task/docs/available_resources.md for the installed Python environment, system runtime, packages and tools, local resources and network restrictions before implementing.
 
-Improve the supplied long-document reranking system. Given a query and its fixed BM25 Top-100 candidate documents, the system should rerank the candidates using the supplied local `/tast/model/bge-reranker-large` model.
+You have the full corpus at /task/data/corpus.jsonl, public development queries at /task/data/validation/queries.jsonl in the same record schema used by hidden queries, and their normalized labels at /task/data/validation/ground_truth.jsonl. Do not use precomputed query-to-document mappings, hidden relevance information, hard-coded mappings, precomputed answer files, external datasets containing evaluation labels or judgments, or external retrieval or reranking services to get relevance judgments or results. This needs to be a genuine reranking pipeline over the candidates we provide. The held-out financial questions have private relevance judgments, are disjoint from the public examples and are not copied into your environment.
 
-The candidate set and reranker model are fixed. You may optimize the reranking pipeline, but may not replace or train the model or modify the supplied candidates.
+Create or modify submission files only under /app. Treat /task, /tests and the task-provided documents as read-only. The total agent allowance for implementation, validation and debugging is 120 minutes. The final package needs executable /app/build.sh and /app/run.sh files; optional implementation modules can go in /app/src and optional notes and self-test details in /app/README.md. During verification you run as a non-root user and /app is read-only. Only the supplied --index-dir is writable for persistent and runtime-generated artifacts, including preprocessing and cache state, and the verifier must not need to know any additional fixed paths.
 
-The objective is to maximize retrieval quality on held-out queries while satisfying the executable interface and resource constraints.
+The verifier starts with /app/build.sh --corpus /task/data/corpus.jsonl --index-dir /app/index. Please have it prepare all required corpus, model and runtime artifacts, start the reranking service, and return exit status 0 only when the system can process queries. It must keep that service available across repeated run.sh calls. After build.sh succeeds, queries arrive through /app/run.sh --index-dir /app/index --queries /path/to/queries.jsonl --output /path/to/results.jsonl --top-k 5. Every query record carries its fixed BM25 Top-100 candidates; rerank only those candidates and write exactly one result object for each input query. The internal protocol or service endpoint is your choice as long as it works with the build process and the specified interface.
 
-## Requirements
+Write JSONL output with a line shaped like {"query_id":"query-id","results":[{"doc_id":"document-id","score":0.123}]}. That example shows the fields of a result item; --top-k 5 requires exactly five items for each valid query. Keep the corresponding input identifier in query_id. Each doc_id must identify one of that query's supplied candidates and each score must be finite and numeric. Document IDs must not repeat within a query. Sort by descending score and, for equal scores, preserve original candidate order as the tie-break.
 
-- Create or modify submission files only under `/app`.
-- Treat `/task` and `/tests` as read-only.
-- Use exactly the candidate documents supplied with each query. Do not add, remove, replace, or independently retrieve candidate documents.
-- Use only the supplied local `BAAI/bge-reranker-large` model for learned relevance scoring. Do not replace, fine-tune, retrain, distill, quantize, or otherwise modify the model, tokenizer, or configuration.
-- Do not use precomputed query-to-document mappings, hidden relevance information, external datasets containing evaluation labels, or external retrieval/reranking services.
-- Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the installed runtime, local resources, and network restrictions.
-- `build.sh` and `run.sh` must be executable files under `/app`.
-- During verification, `/app` is read-only and the submission runs as a non-root user. Only the supplied `--index-dir` is writable for persistent and runtime-generated artifacts.
-- The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
-
-### Build interface
-
-The verifier invokes:
-
-```bash
-/app/build.sh \
-  --corpus /task/data/corpus.jsonl \
-  --index-dir /app/index
-```
-
-`build.sh` must prepare all required corpus, model, and runtime artifacts, start the reranking service, and return exit status `0` only after the system is ready to process queries. The service must remain available across repeated `run.sh` calls.
-
-The `--index-dir` argument is the location for persistent preprocessing, cache, and other runtime artifacts. Do not require the verifier to know any additional fixed paths.
-
-### Search interface
-
-After a successful build, the verifier invokes:
-
-```bash
-/app/run.sh \
-  --index-dir /app/index \
-  --queries /path/to/queries.jsonl \
-  --output /path/to/results.jsonl \
-  --top-k 5
-```
-
-Each query contains a fixed BM25 Top-100 candidate set. `run.sh` must rerank only the candidates supplied with that query and write exactly one result object for each input query.
-
-It may use any internal protocol or service endpoint, as long as it works with the `build.sh` process and the command-line interface.
-
-### Output contract
-
-Each output line must be a JSON object with this shape:
-
-```json
-{"query_id":"query-id","results":[{"doc_id":"document-id","score":0.123}]}
-```
-
-For every valid query:
-
-- `query_id` must preserve the identifier of the corresponding input query;
-- results must contain exactly five items when invoked with `--top-k 5`;
-- every result must contain a `doc_id` identifying one of the candidate documents supplied with that query and a finite numeric `score`;
-- document IDs must be unique within a query;
-- results must be ordered from highest to lowest score; and
-- equal-score results must use the original candidate order as the tie-break.
-
-## Available Validation Data
-
-The following files are available in the task environment:
-
-- `/task/data/corpus.jsonl` — the full corpus.
-- `/task/data/validation/queries.jsonl` — public development queries. Each record follows the same schema used by hidden queries.
-- `/task/data/validation/ground_truth.jsonl` — normalized labels for the public queries.
-
-## Expected Artifacts
-
-The finalized submission must contain executable `build.sh` and `run.sh` files under `/app`.
-
-```text
-/app/
-├── build.sh          # executable build and service-start entry point
-├── run.sh            # executable query entry point
-├── src/              # optional implementation modules
-└── README.md         # optional implementation notes and self-test details
-```
-
-## Verification
-
-After the Agent phase, the Harbor verifier runs the submission in the same task environment and uses the private test split. The verifier checks the following items:
-
-1. **Reranking integrity.** The submission must implement a genuine reranking pipeline over the candidate documents supplied with each query. It must not obtain relevance judgments or results through hidden labels, hard-coded query-to-document mappings, precomputed answer files, external datasets containing the evaluation judgments, or external retrieval/reranking services.
-2. **Candidate-set and model compliance.** The submission must rerank only the fixed BM25 Top-100 candidates supplied with each query and must use the supplied local `/tast/model/bge-reranker-large` model without replacing, training, or modifying it.
-3. **Executable and output validity.** The verifier checks that build.sh and run.sh exist and are executable, invokes build.sh, waits for it to return successfully, and then invokes run.sh for the hidden queries. It also checks the JSONL result structure, query coverage, result count, duplicate handling, candidate document IDs, scores, and ranking output. Invalid output or a failed executable gate receives a zero score.
-4. **Final retrieval score.** For a valid submission, the final task score is calculated only with `Accuracy@5`:
-
-```text
-score = 100 * average(Accuracy@5)
-```
-
-For an individual query, `Accuracy@5` is `1` when at least one relevant corpus document appears in the first five returned results, and `0` otherwise.
-
-## Hidden Test Overview
-
-The hidden evaluation contains held-out financial queries with private relevance judgments. The hidden queries are disjoint from the public development examples and are not copied into the Agent-visible environment.
-
-## Environment and available resources
-
-Before implementing the system, read the following task-provided documents:
-
-- [`/task/docs/environment.md`](/task/docs/environment.md) — a concise description of the installed Python environment, system runtime, and commonly available packages and tools.
-
-These documents are part of the Agent-visible task data and should be treated as read-only.
+After the agent phase, Harbor uses the task runtime and private split to verify genuine reranking, the fixed candidate set, and use of the unchanged supplied local model. It checks that build.sh and run.sh are executable, waits for the build to return successfully, invokes the query entry point and validates the JSONL structure, query coverage, count of results, duplicates, candidate document IDs, scores and ranking. Invalid output or failure at an executable gate gives a zero score. A valid submission is scored only by Accuracy@5: a query earns 1 if at least one relevant corpus document is among its first five results and 0 otherwise, and the final score is 100 times the average of those values. Please improve how well we order the allowed candidates within those boundaries.

@@ -32,7 +32,7 @@ timeout_sec = 4800.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai"]
 
 [environment]
 build_timeout_sec = 1800.0

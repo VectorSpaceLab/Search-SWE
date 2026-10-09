@@ -1,4 +1,4 @@
 interface:
-  display_name: "Create Search-SWE Task"
-  short_description: "Create and validate a new Search-SWE task package"
-  default_prompt: "Use $create-searchswe-task to add a validated Search-SWE task package to this repository."
+  display_name: "Contribute Search-SWE Task"
+  short_description: "Author and validate a temporary task submission"
+  default_prompt: "Use $create-searchswe-task to build and locally validate a first-name task submission, then prepare an authorized PR handoff."

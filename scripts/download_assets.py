@@ -8,8 +8,15 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import ssl
 import sys
 import tempfile
+from urllib.request import getproxies, proxy_bypass
+
+try:  # Support both direct CLI execution and import through scripts.*.
+    from task_paths import select_task, task_key
+except ModuleNotFoundError:
+    from scripts.task_paths import select_task, task_key
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -60,7 +67,8 @@ def read_manifest(task):
 
 def destination_path(task_output, rel):
     target = task_output / rel
-    if target.is_symlink() or not target.resolve().is_relative_to(task_output.resolve()):
+    if (any(path.is_symlink() for path in (target, *target.parents))
+            or not target.resolve().is_relative_to(task_output.resolve())):
         raise ValueError(f"Asset destination must stay inside its task directory: {rel}")
     return target
 
@@ -76,6 +84,48 @@ def prepare_directories(task_output, rel, directory_modes):
         mode = directory_modes.get(parent.as_posix())
         if mode or new:
             path.chmod(int(mode or "0755", 8))
+
+
+def tls_handshake_failed(error):
+    pending, seen = [error], set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        message = str(current).lower()
+        if (isinstance(current, ssl.SSLEOFError)
+                or "unexpected_eof_while_reading" in message
+                or "eof occurred in violation of protocol" in message
+                or "handshake operation timed out" in message):
+            return True
+        pending.extend(item for item in (current.__cause__, current.__context__) if item is not None)
+    return False
+
+
+def proxy_configured():
+    proxies = getproxies()
+    return bool(proxies.get("https") or proxies.get("all")) and not proxy_bypass("huggingface.co")
+
+
+def configure_hf_tls12():
+    import httpx
+    from huggingface_hub import set_client_factory
+    from huggingface_hub.utils._http import hf_request_event_hook
+
+    context = httpx.create_ssl_context()
+    context.maximum_version = ssl.TLSVersion.TLSv1_2
+    set_client_factory(lambda: httpx.Client(
+        verify=context, event_hooks={"request": [hf_request_event_hook]},
+        follow_redirects=True, timeout=None,
+    ))
+
+
+def configure_hf_xet():
+    value = os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+    from huggingface_hub import constants
+
+    constants.HF_HUB_DISABLE_XET = value.upper() in {"1", "ON", "YES", "TRUE"}
 
 
 def obtain_source(task, entry, args):
@@ -97,15 +147,26 @@ def obtain_source(task, entry, args):
         raise ValueError(f"Invalid Hugging Face source for {entry['path']}")
     relative_path(source["filename"])
     try:
+        if proxy_configured():
+            configure_hf_xet()
         from huggingface_hub import hf_hub_download
     except ImportError as error:
         raise ValueError("Install dependencies: python -m pip install -r scripts/requirements.txt") from error
-    return Path(hf_hub_download(
+    download_args = dict(
         repo_id=source["repo_id"], repo_type=source["repo_type"],
         filename=source["filename"], revision=source["revision"],
         cache_dir=args.cache_dir, local_files_only=args.local_files_only,
         force_download=args.force and not args.local_files_only,
-    ))
+    )
+    try:
+        downloaded = hf_hub_download(**download_args)
+    except Exception as error:
+        if args.local_files_only or not proxy_configured() or not tls_handshake_failed(error):
+            raise
+        print("Hugging Face TLS handshake failed through the proxy; retrying with TLS 1.2", file=sys.stderr)
+        configure_hf_tls12()
+        downloaded = hf_hub_download(**download_args)
+    return Path(downloaded)
 
 
 def restore(task, task_output, entry, directory_modes, args):
@@ -142,9 +203,11 @@ def restore(task, task_output, entry, directory_modes, args):
 
 def main(default_kind="all"):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--task", nargs="+", required=True, choices=("all", *TASKS))
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--task", nargs="+", choices=("all", *TASKS))
+    selection.add_argument("--task-path", help="Explicit repository-relative package, including a submission")
     parser.add_argument("--kind", choices=("all", "data", "models"), default=default_kind)
-    parser.add_argument("--output-dir", type=Path, default=REPO / "tasks", help="Parent of task directories")
+    parser.add_argument("--output-dir", type=Path, help="Alternate parent; submission namespace is preserved")
     parser.add_argument("--cache-dir", type=Path, help="Hugging Face cache directory")
     parser.add_argument("--local-data-dir", type=Path, help="Restore Search-SWE dataset files from a local hf-data directory, with size/SHA-256 checks")
     parser.add_argument("--force", action="store_true", help="Replace files whose checksums differ")
@@ -153,10 +216,16 @@ def main(default_kind="all"):
     mode.add_argument("--dry-run", action="store_true", help="List selected assets without reading or downloading their contents")
     mode.add_argument("--verify-only", action="store_true", help="Check local file sizes and SHA-256 without downloading")
     args = parser.parse_args()
-    tasks = TASKS if "all" in args.task else tuple(dict.fromkeys(args.task))
+    try:
+        tasks = ([select_task(REPO, args.task_path)] if args.task_path else
+                 [select_task(REPO, f"tasks/{name}") for name in
+                  (TASKS if "all" in args.task else tuple(dict.fromkeys(args.task)))])
+    except ValueError as error:
+        parser.error(str(error))
     count, size, failures = 0, 0, []
-    for name in tasks:
-        task = REPO / "tasks" / name
+    for task in tasks:
+        name = task_key(REPO, task).as_posix()
+        task_output = args.output_dir / name if args.output_dir else task
         manifest = read_manifest(task)
         for entry in manifest["files"]:
             kind = "data" if entry["path"].startswith("data/") else "models"
@@ -171,7 +240,7 @@ def main(default_kind="all"):
                 print(f"{label}  {entry['size_bytes']} bytes  {origin}")
                 continue
             try:
-                status = restore(task, args.output_dir / name, entry, manifest.get("directory_modes", {}), args)
+                status = restore(task, task_output, entry, manifest.get("directory_modes", {}), args)
                 print(f"{status}: {label}", flush=True)
             except Exception as error:
                 failures.append(label)

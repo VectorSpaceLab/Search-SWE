@@ -29,13 +29,13 @@ the system can share its index and services reliably across concurrent questions
 | Asset | Purpose |
 | --- | --- |
 | `data/corpus/` | 300 research-paper PDFs |
-| `data/validation/queries.jsonl` | 25 public development questions |
+| `data/validation/queries.jsonl` | 10 public development questions |
 | `data/validation/golden_answers.jsonl` | Public answers and supporting document IDs |
 
-Public assets are mounted under `/task/data`. The 25 held-out questions use
+Public assets are mounted under `/task/data`. The 10 held-out questions use
 the same PDF corpus, but their questions and labels are separated from the
 agent environment. [Task 1-4](../task-1-4/README.md) instead evaluates page
-localization within previously unseen long PDFs.
+localization within a single long PDF.
 
 ### Fixed Components and Allowed Changes
 
@@ -59,9 +59,10 @@ as stages inside its overall budget. Stage limits do not extend that budget.
 ## Submission Contract
 
 The deliverable is `/app/build.sh` plus `/app/run.sh` and the implementation
-they need. Each query produces a concise `answer` and one evidence document ID,
-along with its query ID. The build must recreate any service in the separate
-verifier, and the query path must support concurrent invocations.
+they need. Each query produces a concise `answer` and one evidence document ID
+(the PDF filename without `.pdf`), along with its query ID. The build must
+recreate any service in the separate verifier, and the query path must support
+concurrent invocations.
 
 The full schema and invocation details live in [instruction.md](instruction.md).
 
@@ -72,7 +73,7 @@ The full schema and invocation details live in [instruction.md](instruction.md).
 A question scores one only when **both** conditions hold: the evidence document
 matches the reference, and an answer judge accepts the answer as semantically
 equivalent to the reference. LLMJudgeAccuracy is the mean of these binary
-outcomes over 25 hidden questions. The report's 0–100 score is 100 times the
+outcomes over 10 hidden questions. The report's 0–100 score is 100 times the
 normalized reward.
 
 ### Correctness and Resource Gates
@@ -87,12 +88,14 @@ The answer judge and trajectory audit are separate. The first evaluates answer
 equivalence; the second checks task compliance and can set the whole reward
 to zero. Their credentials are isolated from submission processes and from
 each other.
-The trajectory audit uses `deepseek-flash` through pinned RewardKit 0.2.0;
+The trajectory audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0;
 the answer judge keeps its independently configured model.
 
-The package retains its source task's PDF and question data. Current task
-identity and execution settings are recorded in `task.toml`; historical
-migration identifiers are not needed to run it.
+The 300 source PDFs are unchanged. Public and hidden questions were rebuilt
+to combine paper-identification conditions with evidence from tables, figures,
+and experimental details. The splits have disjoint query IDs, questions, and
+reference papers; the hidden split uses ten distinct reference papers.
+Current task identity and execution settings are recorded in `task.toml`.
 
 ## Running This Task
 

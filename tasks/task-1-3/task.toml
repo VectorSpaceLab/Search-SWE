@@ -16,8 +16,8 @@ keywords = ["information-retrieval", "search", "RAG"]
 task_type = "create"
 dataset = "research-paper PDFs"
 primary_metric = "LLMJudgeAccuracy"
-public_example_count = 25
-hidden_query_count = 25
+public_example_count = 10
+hidden_query_count = 10
 query_concurrency = 5
 data_status = "Generated queries"
 

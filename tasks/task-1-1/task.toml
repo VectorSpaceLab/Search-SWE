@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/task-1-1"
-version = "0.1"
+version = "0.3.1"
 description = "Build a reasoning-assisted semantic retrieval system over Bright biology short documents."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "biology", "BM25", "query-rewriting", "semantic-retrieval"]
@@ -17,11 +17,11 @@ task_type = "create"
 dataset = "Bright biology short-document"
 primary_metric = "Accuracy@3"
 metric_k = 3
-public_query_count = 3
-hidden_query_count = 3
-all_hidden_queries_required = true
+public_query_count = 10
+hidden_query_count = 10
+all_hidden_queries_required = false
 corpus_document_count = 57359
-data_status = "Bright biology short documents with disjoint public validation and hidden hard-case queries installed"
+data_status = "10 public and 10 disjoint hidden BRIGHT biology queries, all missed at Top-3 by BM25, BM25+Qwen3-Reranker-8B, and Qwen3-Embedding-8B; opaque random document IDs and shuffled corpus"
 
 [agent]
 timeout_sec = 7200.0
@@ -40,7 +40,6 @@ network_mode = "allowlist"
 allowed_hosts = [
     "openrouter.ai",
     "api.jina.ai",
-    "api.deepseek.com",
 ]
 
 [environment]

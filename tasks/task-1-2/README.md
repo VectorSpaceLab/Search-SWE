@@ -2,7 +2,7 @@
 
 Search a fixed vector collection larger than available RAM while meeting strict query deadlines.
 
-**Task:** `task-1-2` · **Mode:** Implementation · **Metric:** Accuracy@3 with quality and performance gates
+**Task:** `task-1-2` · **Mode:** Implementation · **Metric:** Mean per-query Accuracy@3 with a latency gate
 
 ## Overview
 
@@ -31,12 +31,20 @@ management and service lifecycle are as important as the search algorithm.
 | --- | --- |
 | `data/vectors.f32` | The fixed document-vector collection |
 | `data/metadata.jsonl` and `data/vector_config.json` | Document mapping and vector layout |
-| `data/validation/` | Five public examples, query vectors, metadata, and labels |
+| `data/validation/` | 20 public examples, query vectors, metadata, and labels |
 
 Files are restored under the task's `data/` and mounted at `/task/data`.
-The hidden workload comprises five quality sentinels and 50 additional
-performance queries. These serve different purposes: the primary quality
-metric is not averaged over all 55.
+The hidden workload contains 20 queries, disjoint from public validation.
+Every hidden query is scored for both retrieval correctness and latency.
+
+Document and query IDs are independent opaque random identifiers. Corpus
+vector rows and metadata are shuffled together, with vector values preserved
+bit for bit and relevance labels mapped consistently. Labels remain original
+NQ relevance judgments. Both splits were selected from full-corpus exact
+Top-3 hits, favoring small relevant-document margins over rank four and
+balancing those margins between splits. This margin is a difficulty proxy,
+not evidence of failure by a measured ANN baseline. Previously public
+examples remain public.
 
 ### Fixed Components and Allowed Changes
 
@@ -71,22 +79,29 @@ The complete interface is in [instruction.md](instruction.md).
 
 ### Search Quality
 
-Every hidden quality sentinel must retrieve a relevant document in the top
-three. Accuracy@3 below 1.0 fails this gate. MRR is diagnostic rather than a
-separate reward component.
+Each query earns 1 only when its invocation exits successfully within
+0.5 seconds, its output is valid, and its top three results contain a relevant
+document. Otherwise that query earns 0. The primary metric is the mean of
+these 20 binary scores; 17 passing queries give Accuracy@3 = 0.85. The report
+also records retrieval accuracy without the latency gate for diagnosis.
 
 ### Correctness and Resource Gates
 
-The verifier checks the build and each query invocation, including the additional
-50-query performance workload. Output coverage, document IDs, finite scores,
-ordering, memory, and execution limits remain mandatory. A fast but incorrect
-system and a correct but over-budget system both fail.
+The verifier checks output coverage, document IDs, finite scores, ordering,
+and the execution deadline for each invocation. Incorrect answers, malformed
+outputs, failed invocations, and timeouts affect only the corresponding query;
+the remaining queries still run. A query timeout terminates its invocation
+process group while preserving the service started during the build. Build
+failure, an invalid index, or invalid evaluator inputs still invalidate the
+evaluation. The 2 GiB container memory limit applies throughout execution.
 
 ### Integrity Checks and Final Reward
 
-A trajectory audit independently checks task compliance. Reward is `1` only
-when quality, execution, output validity, and the audit all pass; otherwise `0`.
-It uses `deepseek-flash` through pinned RewardKit 0.2.0 and receives its
+A trajectory audit independently checks task compliance. When evaluation is
+valid and the audit passes, reward is the mean per-query score (`passed / 20`);
+otherwise reward is `0`. The evaluation report displays `100 * (passed / 20)`
+before the trajectory gate.
+It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its
 DeepSeek endpoint and key only in the verifier.
 
 ## Running This Task

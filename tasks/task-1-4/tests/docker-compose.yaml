@@ -2,7 +2,7 @@ services:
   main:
     volumes:
       - type: bind
-        source: ../data/verifier/corpus
+        source: ../data/corpus
         target: /tests/corpus
         read_only: true
         bind:

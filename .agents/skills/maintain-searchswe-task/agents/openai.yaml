@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain Search-SWE Task"
+  short_description: "Review task PRs and safely promote approved tasks"
+  default_prompt: "Use $maintain-searchswe-task to review this Search-SWE task PR read-only and report validation and promotion blockers."

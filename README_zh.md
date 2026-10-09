@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/hero.png" alt="Search-SWE——面向搜索系统工程的编码智能体评测基准">
+  <img src="assets/hero.png" alt="Search-SWE——评测编码智能体构建搜索引擎的能力">
 </p>
 
 <h1 align="center">
   Search-SWE
   <br>
-  <sub>🔍 面向搜索系统工程的编码智能体评测基准。 🤖</sub>
+  <sub>🔍 评测编码智能体构建搜索引擎的能力。 🤖</sub>
 </h1>
 
 <p align="center">
@@ -78,14 +78,14 @@ chmod 600 .env
 ```dotenv
 AGENT_MODEL=deepseek/deepseek-flash
 DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 `DEEPSEEK_API_KEY` 用于 `deepseek/deepseek-flash` 的 Pi 智能体认证；`VERIFIER_*`
-通过 RewardKit 0.2.0 运行固定为 `deepseek-flash` 的独立轨迹评审，除 `task-2-4`
-外的所有任务都需要。同一个 DeepSeek key 可以填入两个变量，但启动器只把 verifier
-副本传进 verifier 容器。
+通过 RewardKit 0.2.0 和 OpenRouter 运行固定为 `deepseek/deepseek-v4.1-flash` 的独立轨迹评审，除 `task-2-4`
+外的所有任务都需要。`VERIFIER_OPENAI_API_KEY` 使用 OpenRouter 密钥，Pi 智能体
+使用独立的 DeepSeek 密钥；启动器只把 verifier 凭据传进 verifier 容器。
 
 其他运行方式只需填写 `.env` 中对应的分组：
 
@@ -93,10 +93,14 @@ VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
 - Codex：设置 `AGENT_MODEL`、`AGENT_OPENAI_BASE_URL` 和
   `AGENT_OPENAI_API_KEY`。
 - Claude Code：设置 `AGENT_MODEL` 和 `AGENT_ANTHROPIC_API_KEY`；共享启动器
-  只使用 Anthropic 官方 API。
+  默认使用 Anthropic 官方 API。
+- OpenRouter Agent 模式：设置 `AGENT_OPENROUTER_API_KEY`，并为 Codex 或
+  Claude Code 指定 `--openrouter` 和完整的 `provider/model` 模型 ID。
 - Task 1-3：还必须填写三个 `ANSWER_JUDGE_*` 变量。
 - 可选 submission API：只在 `.env.example` 注释所列任务确实使用时，填写
   `TASK_1_1_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
+
+需要代理时，按[网络配置](docs/network-policy.md)设置 `.env` 的 `EGRESS_CONFIG`，否则留空。
 
 凭证隔离、自定义服务地址、网络权限和完整的逐任务配置矩阵见
 [评测指南](docs/evaluation.md)。
@@ -124,7 +128,7 @@ dry-run 只打印 Harbor 命令、不启动容器。第二条命令会构建任�
 #### Pi 和 Z.AI GLM-5.3-Flash
 
 在 `.env` 中修改智能体模型并填写对应密钥。RewardKit judge 不会随之改变，因此
-仍需保留 `VERIFIER_*` DeepSeek 配置：
+仍需保留 `VERIFIER_*` OpenRouter 裁判配置：
 
 ```dotenv
 AGENT_MODEL=zai/glm-5.3-flash
@@ -156,7 +160,7 @@ bash scripts/run_task.sh --task task-1-1 --agent codex \
 
 #### Claude Code 和 Anthropic 官方 API
 
-所有任务镜像都预装 Claude Code 2.1.273。填写 API 账户可用的 Anthropic 模型
+所有任务镜像都预装 Claude Code 2.1.283。填写 API 账户可用的 Anthropic 模型
 和独立的编码智能体密钥：
 
 ```dotenv
@@ -169,8 +173,32 @@ bash scripts/run_task.sh --task task-1-1 --agent claude-code \
   --reasoning-effort high --output jobs/task-1-1-claude
 ```
 
-共享启动器只支持通过 API key 访问 `api.anthropic.com`；首版有意不支持自定义
-gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings。默认 Codex
+#### 通过 OpenRouter 运行 Codex 或 Claude Code
+
+在 `.env` 中填写独立的 OpenRouter Agent 密钥：
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+选择 Agent，并传入完整的 OpenRouter 模型 ID：
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --reasoning-effort xhigh \
+  --output jobs/task-1-1-codex-openrouter
+
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
+  --output jobs/task-1-1-claude-openrouter
+```
+
+可以先为命令加上 `--dry-run` 预览。启动器已配置 OpenRouter 的 API 地址；
+这个 Agent 密钥与任务提交用的 `OPENROUTER_API_KEY` 和裁判密钥分开。
+保留主示例中的 `VERIFIER_*` 配置。
+
+其他自定义 gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings
+仍不受支持。默认 Codex
 流程见[快速开始指南](docs/quickstart.md)；各任务的凭证与硬件矩阵，以及 GPU、
 网络权限和自定义模型服务配置见[评测指南](docs/evaluation.md)。
 
@@ -182,47 +210,35 @@ gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings。�
 | --- | --- |
 | [快速开始指南](docs/quickstart.md) | 完整的一次 CPU 评测流程 |
 | [评测指南](docs/evaluation.md) | 各任务凭证、编码智能体、GPU、网络策略和自定义模型服务 |
-| [网络权限](docs/network-policy.md) | Harbor 网络模式与各任务精确的 host allowlist |
+| [网络权限](docs/network-policy.md) | 各任务的 host allowlist、默认直连网关与可选代理出口 |
 | [资源说明](docs/assets.md) | 固定数据与模型的下载、校验和恢复 |
 | [基准设计](docs/benchmark.md) | 评测方式、仓库结构和数据来源 |
+| [贡献指南](docs/contributing.md) | 任务创作流程、验证要求和 PR 说明 |
 
 任务介绍和评测结果可在[项目主页](https://search-swe.github.io/)查看，主页由
 [独立仓库](https://github.com/search-swe/search-swe.github.io)维护。
 
 ## 🤝 参与贡献
 
-欢迎贡献任务包、共享镜像、启动器、测试和文档。请保持每次修改范围清晰，并提供
-实际执行过的各层验证证据。
+欢迎参与贡献。创建新任务或大幅修改已有任务时，请先使用 [`.agents/`](.agents/AGENTS.md)
+中的工作流和 skills，包括
+[`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md)（任务投稿）和
+[`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)（PR 审查与正式化）。验证要求和
+PR 说明见[贡献入口](CONTRIBUTING.md)与[贡献指南](docs/contributing.md)。
 
-创建新任务或大幅修改已有任务时，请先阅读仓库内的
-[贡献者工作流](.agents/AGENTS.md)和
-[`create-searchswe-task` skill](.agents/skills/create-searchswe-task/SKILL.md)。
-`.agents/` 目录包含面向智能体辅助贡献的 skills、参考资料和工具。兼容的智能体
-框架可以直接调用 `$create-searchswe-task`；其他环境也可以直接阅读该 skill 文件。
-其中覆盖任务设计、CPU/GPU 脚手架、固定输入、verifier 隔离和分阶段验证。
-
-请复用 [`docker/README.md`](docker/README.md) 中说明的共享镜像，不要提交 API
-密钥、下载得到的任务输入、隐藏 verifier 数据或 job 输出。修改共享用户文档时，
-应保持 `README.md` 和 `README_zh.md` 一致。
-
-提交 pull request 前，至少运行仓库级检查：
-
-```bash
-python scripts/check_release.py
-python -m unittest discover -s scripts/tests -p 'test_*.py'
-git diff --check
-```
-
-任务修改还需要完成 skill 的
-[验证指南](.agents/skills/create-searchswe-task/references/validation.md)中对应的
-任务专项和运行时检查。若修改了 skill 或脚手架，请运行：
-
-```bash
-python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
-```
-
-请在 pull request 中概述修改范围，列出执行过的命令和结果，并明确说明因外部数据、
-GPU、凭证或付费 API 而未执行的检查。
+新任务放在
+`task-submissions/<first-name-slug>/<category>-x-<positive-ordinal>`：使用贡献者提供的
+ASCII 小写 first name，**不是用户名**。一个 PR 可以新增多个任务，但必须全部位于
+同一个贡献者 namespace；临时 ordinal 在该 PR/checkout 的同一 category 内唯一，
+并非正式编号，且在该 PR 内正式化后不得复用。另一位同名贡献者须显式选择
+`alice-2`。Maintainer 在即将合并时为
+每个任务分配正式编号，并在**同一 PR**内分别提交纯 `git mv` commit 和
+finalization commit；所有任务正式化后才能合并。新任务必须使用 **merge commit**，
+不使用 squash/rebase；未完成的 submission 不进入 main。
+开发资产可使用个人公开的临时 HF dataset，并固定到 commit SHA。正式编号确定后，
+通过 HF community PR 或 maintainer mirror 发布官方资产；先合并官方 HF 变更、
+固定官方 SHA，再合并 GitHub PR。禁止共享官方 token。下载器和 launcher 支持显式
+`--task-path` 验证 submission，自动任务发现仍只包含正式任务。
 
 ## 引用
 

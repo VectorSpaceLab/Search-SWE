@@ -1,15 +1,7 @@
-# Bright biology retrieval runtime
+# CPU Docker Environment
 
-The task image is based on the Search-SWE CPU Python 3.12 image with the Codex/npm agent runtime. Use `/opt/conda/bin/python` and `/opt/conda/bin/pip` for task scripts.
+This image provides a Conda-managed Python 3.12 environment with CPU-only PyTorch and the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-cpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, and `pydantic-settings`.
 
-The image provides the usual local retrieval and numerical packages, including `numpy`, `scipy`, `scikit-learn`, `pyarrow`, `pandas`, `torch`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `faiss-cpu`, `bm25s`, `rank-bm25`, `hnswlib`, `requests`, `openai`, `fastapi`, and `uvicorn`. It also provides `curl`, `jq`, `git`, `build-essential`, and common process/file utilities.
+The task Python interpreter and its installed packages are available at `/opt/conda/bin/python`. Use `/opt/conda/bin/python` and `/opt/conda/bin/pip` when invoking Python or installing packages.
 
-The corpus is mounted read-only at `/task/data/corpus.jsonl`. It contains one JSON object per line with this schema:
-
-```json
-{"id":"document-id","content":"short document text"}
-```
-
-The three public development queries and public labels are mounted read-only under `/task/data/validation/`. The verifier's hidden data is not mounted there.
-
-The task is CPU-only (`gpus = 0`). A compact local lexical index is usually fast enough for this 57,359-document corpus. If using an embedding or reranking API, cache only non-secret model outputs and keep the API credential in the process environment; do not write it into an index or log.
+The image also includes JDK 21, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.

@@ -2,22 +2,36 @@
 """Launch a Search-SWE task with separately configured agent and judge services."""
 
 import argparse
-import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import sys
 import tomllib
 from urllib.parse import urlsplit
 
+if __package__:
+    from .docker_dns import parse_servers
+    from .task_paths import select_task, task_key
+    from .download_assets import destination_path, read_manifest, relative_path
+else:
+    from docker_dns import parse_servers
+    from task_paths import select_task, task_key
+    from download_assets import destination_path, read_manifest, relative_path
+
 
 REPO = Path(__file__).resolve().parents[1]
 TASKS = tuple(sorted(path.parent.name for path in (REPO / "tasks").glob("*/task.toml")))
-CODEX_VERSION = "0.147.0"
-CLAUDE_CODE_VERSION = "2.1.273"
+CODEX_VERSION = "0.157.1"
+CLAUDE_CODE_VERSION = "2.1.283"
 CLAUDE_CODE_EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 ANTHROPIC_HOST = "api.anthropic.com"
+OPENROUTER_HOST = "openrouter.ai"
+OPENROUTER_CLAUDE_BASE_URL = "https://openrouter.ai/api"
+OPENROUTER_MODEL = re.compile(
+    r"^[a-z0-9][a-z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._:+-]*$"
+)
 CLAUDE_HOST_ENV_VARS = (
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
@@ -28,7 +42,7 @@ CLAUDE_HOST_ENV_VARS = (
     "CLAUDE_CODE_USE_VERTEX",
     "AWS_BEARER_TOKEN_BEDROCK",
 )
-PI_VERSION = "0.85.1"
+PI_VERSION = "0.87.1"
 PI_THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh")
 PI_MODEL_KEYS = {
     "deepseek/deepseek-flash": "DEEPSEEK_API_KEY",
@@ -42,6 +56,10 @@ AGENT_IMPORTS = {
     "claude-code": "scripts.harbor_agents:PreinstalledClaudeCode",
     "codex": "scripts.harbor_agents:PreinstalledCodex",
     "pi": "scripts.harbor_agents:PreinstalledPi",
+}
+OPENROUTER_AGENT_IMPORTS = {
+    "codex": "scripts.harbor_agents:PreinstalledOpenRouterCodex",
+    "claude-code": "scripts.harbor_agents:PreinstalledOpenRouterClaudeCode",
 }
 
 
@@ -86,8 +104,14 @@ def host_is_allowed(host, allowed_hosts):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--task", required=True, choices=TASKS)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--task", choices=TASKS)
+    selection.add_argument("--task-path", help="Explicit repository-relative package, including a reviewed submission")
     parser.add_argument("--agent", default="codex", choices=tuple(AGENT_IMPORTS))
+    parser.add_argument(
+        "--openrouter", action="store_true",
+        help="Route Codex or Claude Code through OpenRouter using AGENT_OPENROUTER_API_KEY",
+    )
     parser.add_argument("--model", help="Agent model; defaults to AGENT_MODEL")
     parser.add_argument("--env-file", type=Path, help="Defaults to the repository .env if present")
     parser.add_argument(
@@ -96,6 +120,9 @@ def main():
     )
     parser.add_argument("--codex-config", type=Path, help="Optional native Codex TOML configuration")
     parser.add_argument("--thinking", choices=PI_THINKING_LEVELS, help="Pi thinking level; overrides PI_THINKING")
+    parser.add_argument("--container-dns", help="Comma-separated upstream IPv4 DNS servers; overrides CONTAINER_DNS. Keeps Harbor's API allowlist.")
+    parser.add_argument("--egress-config", type=Path, help="Direct/proxy gateway JSON; overrides EGRESS_CONFIG. Without it, restricted tasks use the direct gateway.")
+    parser.add_argument("--egress-image", help="Direct gateway image (pulled if missing); overrides EGRESS_IMAGE. Cannot be combined with EGRESS_CONFIG.")
     parser.add_argument("--output", type=Path, help="Job output directory; relative to the current directory")
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     args = parser.parse_args()
@@ -112,9 +139,25 @@ def main():
     elif args.env_file is not None:
         parser.error(f"Environment file does not exist: {env_file}")
     env = {**file_env, **os.environ}
+    egress_path = args.egress_config or (REPO / env["EGRESS_CONFIG"] if env.get("EGRESS_CONFIG") else None)
+    dns_servers = None
+    if dns_value := (args.container_dns or env.get("CONTAINER_DNS")):
+        try:
+            dns_servers = parse_servers(dns_value)
+        except ValueError as error:
+            parser.error(f"Invalid CONTAINER_DNS: {error}")
     model = args.model or env.get("AGENT_MODEL")
     if not model:
         parser.error("Set --model or AGENT_MODEL")
+    if args.openrouter:
+        if args.agent not in OPENROUTER_AGENT_IMPORTS:
+            parser.error("--openrouter is only valid with --agent codex or claude-code")
+        if not OPENROUTER_MODEL.fullmatch(model):
+            parser.error("OpenRouter requires a complete provider/model slug in --model or AGENT_MODEL")
+        if args.agent == "claude-code" and not model.startswith("anthropic/"):
+            parser.error("OpenRouter Claude Code requires an anthropic/ model slug")
+        if args.agent == "codex" and args.codex_config is not None:
+            parser.error("--openrouter uses its own Codex config; omit --codex-config")
     if args.agent == "pi":
         if model not in PI_MODEL_KEYS:
             parser.error(
@@ -140,13 +183,18 @@ def main():
                     + ", ".join(CLAUDE_CODE_EFFORT_LEVELS)
                 )
 
-    task = REPO / "tasks" / args.task
+    try:
+        task = select_task(REPO, args.task_path or f"tasks/{args.task}")
+    except ValueError as error:
+        parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
     verifier_env = task_config.get("verifier", {}).get("env", {})
-    output = args.output.resolve() if args.output else REPO / "jobs" / args.task
+    output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
-        "--agent", AGENT_IMPORTS[args.agent], "--force-build", "--yes", "-o", str(output),
+        "--agent",
+        (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
+        "--force-build", "--yes", "-o", str(output),
         "--agent-setup-timeout-multiplier", "3", "-m", model,
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
     ]
@@ -162,7 +210,7 @@ def main():
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={effort}"])
-        config = args.codex_config
+        config = REPO / "scripts/openrouter_codex.toml" if args.openrouter else args.codex_config
         if config is None and env.get("AGENT_CODEX_CONFIG"):
             config = REPO / env["AGENT_CODEX_CONFIG"]
         if config is not None:
@@ -170,12 +218,17 @@ def main():
             if not config.is_file():
                 parser.error(f"Codex configuration does not exist: {config}")
             command.extend(["--ak", f"config={config}"])
-        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
-            source = f"AGENT_{name}"
-            required.append(source)
-            # Harbor resolves these from its environment. Secrets do not enter argv.
-            command.extend(["--ae", f"{name}=${{{source}}}"])
-        if env.get("AGENT_OPENAI_BASE_URL"):
+        if args.openrouter:
+            required.append("AGENT_OPENROUTER_API_KEY")
+            command.extend(["--ae", "OPENAI_API_KEY=${AGENT_OPENROUTER_API_KEY}"])
+            agent_host = OPENROUTER_HOST
+        else:
+            for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
+                source = f"AGENT_{name}"
+                required.append(source)
+                # Harbor resolves these from its environment. Secrets do not enter argv.
+                command.extend(["--ae", f"{name}=${{{source}}}"])
+        if not args.openrouter and env.get("AGENT_OPENAI_BASE_URL"):
             try:
                 agent_host = endpoint_hostname(
                     env["AGENT_OPENAI_BASE_URL"], "AGENT_OPENAI_BASE_URL"
@@ -187,14 +240,17 @@ def main():
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={effort}"])
-        required.append("AGENT_ANTHROPIC_API_KEY")
-        command.extend(
-            [
-                "--ae",
-                "ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}",
-            ]
-        )
-        agent_host = ANTHROPIC_HOST
+        if args.openrouter:
+            required.append("AGENT_OPENROUTER_API_KEY")
+            command.extend([
+                "--ae", "ANTHROPIC_AUTH_TOKEN=${AGENT_OPENROUTER_API_KEY}",
+                "--ae", f"ANTHROPIC_BASE_URL={OPENROUTER_CLAUDE_BASE_URL}",
+            ])
+            agent_host = OPENROUTER_HOST
+        else:
+            required.append("AGENT_ANTHROPIC_API_KEY")
+            command.extend(["--ae", "ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}"])
+            agent_host = ANTHROPIC_HOST
     else:
         thinking = args.thinking or env.get("PI_THINKING")
         if thinking and thinking not in PI_THINKING_LEVELS:
@@ -213,7 +269,9 @@ def main():
     verifier_network_mode, verifier_allowed_hosts = effective_network_policy(
         task_config, "verifier"
     )
-    if agent_network_mode != "public":
+    agent_requires_host = any(step.get("agent", {}).get("network_mode", agent_network_mode) != "public"
+                              for step in task_config.get("steps") or [{}])
+    if agent_requires_host:
         if agent_host is None:
             parser.error(
                 "Set AGENT_OPENAI_BASE_URL so Harbor can allow only the selected "
@@ -255,8 +313,26 @@ def main():
                 "[verifier].allowed_hosts"
             )
 
+    if __package__:
+        from .egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+    else:
+        from egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+    egress_image = args.egress_image or env.get("EGRESS_IMAGE")
+    try:
+        if egress_path is not None:
+            if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
+                parser.error("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
+            egress = load_config(egress_path)
+        else:
+            egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
+        restricted = validate_task_networks(task, agent_host, egress.settings.get("upstream_host"),
+                                            allow_public=egress.settings.get("transport") == "direct")
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+    use_gateway = restricted or egress_path is not None
+
     if env.get("CONTAINER_PROXY"):
-        if agent_network_mode != "public" or verifier_network_mode != "public":
+        if restricted:
             parser.error(
                 "CONTAINER_PROXY is incompatible with this task's Harbor network "
                 "allowlists because a general proxy can bypass destination filtering"
@@ -268,15 +344,31 @@ def main():
             for name in ("no_proxy", "NO_PROXY"):
                 command.extend([flag, f"{name}=${{CONTAINER_NO_PROXY}}"])
 
+    if use_gateway:
+        command[command.index("--env") + 1] = "scripts.harbor_environments:PhaseScopedDocker"
+        if egress_path is not None:
+            command.extend(["--environment-kwarg", f"egress_config={egress.path}"])
+        else:
+            command.extend(["--environment-kwarg", f"egress_image={egress.image}"])
+            if dns_servers:
+                command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
+
     # This launcher uses explicit API keys, without consulting a host auth.json.
     env.pop("CODEX_AUTH_JSON_PATH", None)
     env.pop("CODEX_FORCE_AUTH_JSON", None)
+    if args.openrouter:
+        env.pop("OPENAI_BASE_URL", None)
     if args.agent == "claude-code":
         for name in CLAUDE_HOST_ENV_VARS:
             env.pop(name, None)
 
     if args.dry_run:
         print("Preview only; credentials, assets, Docker, GPU, and API access are not checked.")
+        if use_gateway:
+            mode = egress.settings.get("transport", "proxy")
+            print(f"Phase-scoped {mode} gateway; task and phase allowlists are enforced by the trusted sidecar.")
+        if dns_servers:
+            print("Trusted gateway DNS servers: " + ", ".join(dns_servers))
         print("Environment values are passed to Harbor separately from the command:")
         print(shlex.join(command))
         return 0
@@ -284,18 +376,28 @@ def main():
     missing = [name for name in required if not env.get(name)]
     if missing:
         parser.error("Set the following variables in .env or the shell: " + ", ".join(missing))
-    manifest = json.loads((task / "assets.json").read_text())
+    manifest = read_manifest(task)
     unavailable = []
     for entry in manifest["files"]:
-        path = task / entry["path"]
+        path = destination_path(task, relative_path(entry["path"]))
         if not path.is_file() or path.stat().st_size != entry["size_bytes"]:
             unavailable.append(entry["path"])
     if unavailable:
-        parser.error(f"Run python scripts/download_assets.py --task {args.task} to restore the missing or incomplete assets: " + ", ".join(unavailable))
+        selection_flag = f"--task-path {args.task_path}" if args.task_path else f"--task {args.task}"
+        parser.error(f"Run python scripts/download_assets.py {selection_flag} to restore the missing or incomplete assets: " + ", ".join(unavailable))
     if shutil.which("harbor", path=env.get("PATH")) is None:
         parser.error("harbor was not found; activate the supported Harbor environment")
+    if dns_servers and not use_gateway:
+        parser.error("CONTAINER_DNS requires a restricted task or an explicit direct EGRESS_CONFIG")
 
-    print(f"Launching {args.task}; job output: {output}", flush=True)
+    # Harbor is a console script: changing cwd alone does not put this checkout
+    # on its interpreter's search path for scripts.harbor_agents.
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = str(REPO)
+    if existing_pythonpath:
+        env["PYTHONPATH"] += os.pathsep + existing_pythonpath
+
+    print(f"Launching {task_key(REPO, task)}; job output: {output}", flush=True)
     # All task and output paths are absolute, so launching works from any directory.
     os.chdir(REPO)
     os.execvpe(command[0], command, env)

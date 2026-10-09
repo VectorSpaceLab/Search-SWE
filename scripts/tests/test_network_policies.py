@@ -31,15 +31,15 @@ REPO = Path(__file__).resolve().parents[2]
 TASK_HOSTS = ["openrouter.ai", "api.jina.ai"]
 DEEPSEEK_HOST = "api.deepseek.com"
 EXPECTED = {
-    "task-1-1": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-1-2": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-1-1": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "task-1-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
     "task-1-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-2-1": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
-    "task-2-2": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
-    "task-2-3": ("no-network", [], "public", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "task-2-1": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "task-2-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "task-2-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
     "task-2-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-2-5": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-2-5": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
 }
 
 
@@ -126,9 +126,9 @@ class TaskNetworkPolicies(unittest.TestCase):
                 text,
             )
             self.assertIn("@earendil-works/pi-coding-agent@${SEARCH_SWE_PI_VERSION}", text)
-            self.assertIn("SEARCH_SWE_CODEX_VERSION=0.147.0", text)
-            self.assertIn("SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.273", text)
-            self.assertIn("SEARCH_SWE_PI_VERSION=0.85.1", text)
+            self.assertIn("SEARCH_SWE_CODEX_VERSION=0.157.1", text)
+            self.assertIn("SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.283", text)
+            self.assertIn("SEARCH_SWE_PI_VERSION=0.87.1", text)
             claude_install = text.split("&& npm install --global", 1)[1].split(
                 "&& codex --version", 1
             )[0]
@@ -158,7 +158,7 @@ class TaskNetworkPolicies(unittest.TestCase):
                     agent = PreinstalledClaudeCode(
                         logs_dir=Path(directory),
                         model_name="fixture",
-                        version="2.1.273",
+                        version="2.1.283",
                         reasoning_effort=effort,
                     )
                     self.assertIn(f"--effort {effort}", agent.build_cli_flags())
@@ -174,14 +174,14 @@ class TaskNetworkPolicies(unittest.TestCase):
                 return SimpleNamespace(return_code=0, stdout=self.output)
 
         cases = (
-            (PreinstalledCodex, "0.147.0", "codex-cli 0.147.0\n", "codex --version"),
+            (PreinstalledCodex, "0.157.1", "codex-cli 0.157.1\n", "codex --version"),
             (
                 PreinstalledClaudeCode,
-                "2.1.273",
-                "2.1.273 (Claude Code)\n",
+                "2.1.283",
+                "2.1.283 (Claude Code)\n",
                 "claude --version",
             ),
-            (PreinstalledPi, "0.85.1", "0.85.1\n", "pi --version"),
+            (PreinstalledPi, "0.87.1", "0.87.1\n", "pi --version"),
         )
         for agent_class, version, output, version_command in cases:
             with self.subTest(agent=agent_class.__name__):
@@ -219,34 +219,34 @@ class TaskNetworkPolicies(unittest.TestCase):
             wrong_request = PreinstalledClaudeCode(
                 logs_dir=Path(directory),
                 model_name="fixture",
-                version="2.1.272",
+                version="2.1.282",
             )
             with self.assertRaisesRegex(
-                RuntimeError, "Search-SWE requires Claude Code 2.1.273"
+                RuntimeError, "Search-SWE requires Claude Code 2.1.283"
             ):
                 asyncio.run(
-                    wrong_request.install(FakeEnvironment(0, "2.1.273 (Claude Code)"))
+                    wrong_request.install(FakeEnvironment(0, "2.1.283 (Claude Code)"))
                 )
 
             wrong_installed_cli = PreinstalledClaudeCode(
                 logs_dir=Path(directory),
                 model_name="fixture",
-                version="2.1.273",
+                version="2.1.283",
             )
             with self.assertRaisesRegex(
                 RuntimeError,
-                "must provide Claude Code 2.1.273; found 2.1.272",
+                "must provide Claude Code 2.1.283; found 2.1.282",
             ):
                 asyncio.run(
                     wrong_installed_cli.install(
-                        FakeEnvironment(0, "2.1.272 (Claude Code)")
+                        FakeEnvironment(0, "2.1.282 (Claude Code)")
                     )
                 )
 
             missing_cli = PreinstalledClaudeCode(
                 logs_dir=Path(directory),
                 model_name="fixture",
-                version="2.1.273",
+                version="2.1.283",
             )
             with self.assertRaisesRegex(RuntimeError, "no usable CLI"):
                 asyncio.run(missing_cli.install(FakeEnvironment(127, "")))
@@ -266,7 +266,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
             )
         }
 
-    def run_preview(self, task, agent, model, values):
+    def run_preview(self, task, agent, model, values, options=()):
         with tempfile.NamedTemporaryFile("w", delete=False) as env_file:
             for key, value in values.items():
                 env_file.write(f"{key}={value}\n")
@@ -280,6 +280,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 "--agent", agent,
                 "--model", model,
                 "--env-file", str(env_path),
+                *options,
                 "--dry-run",
             ],
             cwd=REPO,
@@ -317,14 +318,20 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 }[agent]
                 self.assertEqual(argv[argv.index("--agent") + 1], expected_import)
 
-        public = self.run_preview("task-2-3", "pi", "deepseek/deepseek-flash", {})
-        self.assertEqual(public.returncode, 0, public.stderr)
-        self.assertNotIn("--allow-agent-host", self.argv(public))
-        public = self.run_preview(
+        restricted = self.run_preview("task-2-3", "pi", "deepseek/deepseek-flash", {})
+        self.assertEqual(restricted.returncode, 0, restricted.stderr)
+        self.assertEqual(
+            self.flag_values(self.argv(restricted), "--allow-agent-host"),
+            ["api.deepseek.com"],
+        )
+        restricted = self.run_preview(
             "task-2-3", "claude-code", "claude-sonnet-4-6", {}
         )
-        self.assertEqual(public.returncode, 0, public.stderr)
-        self.assertNotIn("--allow-agent-host", self.argv(public))
+        self.assertEqual(restricted.returncode, 0, restricted.stderr)
+        self.assertEqual(
+            self.flag_values(self.argv(restricted), "--allow-agent-host"),
+            ["api.anthropic.com"],
+        )
 
     def test_claude_code_preview_uses_pinned_cli_and_namespaced_key(self):
         secret = "fixture-anthropic-secret"
@@ -340,12 +347,66 @@ class LauncherNetworkPolicy(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn(secret, result.stdout + result.stderr)
         argv = self.argv(result)
-        self.assertIn("version=2.1.273", self.flag_values(argv, "--ak"))
+        self.assertIn("version=2.1.283", self.flag_values(argv, "--ak"))
         self.assertIn("reasoning_effort=xhigh", self.flag_values(argv, "--ak"))
         self.assertEqual(
             self.flag_values(argv, "--ae"),
             ["ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}"],
         )
+
+    def test_openrouter_agent_routes_are_isolated_from_other_keys(self):
+        values = {
+            "AGENT_OPENROUTER_API_KEY": "fixture-openrouter-agent-key",
+            "AGENT_OPENAI_BASE_URL": "https://unused.example/v1",
+            "AGENT_OPENAI_API_KEY": "fixture-openai-key",
+            "AGENT_ANTHROPIC_API_KEY": "fixture-anthropic-key",
+            "AGENT_CODEX_CONFIG": "missing-direct-provider.toml",
+            "OPENROUTER_API_KEY": "fixture-submission-key",
+            "ANSWER_JUDGE_API_KEY": "fixture-answer-key",
+        }
+        for agent, model, agent_class, expected_env in (
+            ("codex", "openai/gpt-6-astra", "PreinstalledOpenRouterCodex",
+             ["OPENAI_API_KEY=${AGENT_OPENROUTER_API_KEY}"]),
+            ("claude-code", "anthropic/claude-opus-5.5", "PreinstalledOpenRouterClaudeCode",
+             ["ANTHROPIC_AUTH_TOKEN=${AGENT_OPENROUTER_API_KEY}",
+              "ANTHROPIC_BASE_URL=https://openrouter.ai/api"]),
+        ):
+            with self.subTest(agent=agent):
+                result = self.run_preview("task-1-2", agent, model, values, ("--openrouter",))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for secret in values.values():
+                    self.assertNotIn(secret, result.stdout + result.stderr)
+                argv = self.argv(result)
+                self.assertEqual(self.flag_values(argv, "--allow-agent-host"), ["openrouter.ai"])
+                self.assertEqual(self.flag_values(argv, "--ae"), expected_env)
+                self.assertTrue(argv[argv.index("--agent") + 1].endswith(agent_class))
+                self.assertEqual(argv[argv.index("-m") + 1], model)
+                self.assertNotIn("AGENT_OPENAI_API_KEY", result.stdout)
+                self.assertNotIn("AGENT_ANTHROPIC_API_KEY", result.stdout)
+                self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}",
+                              self.flag_values(argv, "--verifier-env"))
+                if agent == "codex":
+                    config = next(value.split("=", 1)[1] for value in self.flag_values(argv, "--ak")
+                                  if value.startswith("config="))
+                    self.assertEqual(Path(config).name, "openrouter_codex.toml")
+
+    def test_openrouter_requires_supported_agent_and_complete_slug(self):
+        cases = (
+            ("pi", "deepseek/deepseek-flash", "--openrouter is only valid"),
+            ("codex", "gpt-6-astra", "complete provider/model slug"),
+            ("codex", "openai/gpt-6-astra;echo", "complete provider/model slug"),
+            ("claude-code", "openai/gpt-6-astra", "requires an anthropic/ model"),
+        )
+        for agent, model, message in cases:
+            with self.subTest(agent=agent, model=model):
+                result = self.run_preview("task-1-2", agent, model, {}, ("--openrouter",))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(message, result.stderr)
+        conflict = self.run_preview(
+            "task-1-2", "codex", "openai/gpt-6-astra", {},
+            ("--openrouter", "--codex-config", "missing.toml"),
+        )
+        self.assertIn("omit --codex-config", conflict.stderr)
 
     @staticmethod
     def flag_values(argv, flag):
@@ -404,7 +465,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
     def test_unlisted_judge_hosts_and_general_proxy_are_rejected(self):
         common = {
             "AGENT_OPENAI_BASE_URL": "https://model.example/v1",
-            "VERIFIER_OPENAI_BASE_URL": "https://api.deepseek.com/",
+            "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
         }
         cases = (
             (
@@ -436,7 +497,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
             "fixture-model",
             {
                 "AGENT_OPENAI_BASE_URL": "https://model.example/v1",
-                "VERIFIER_OPENAI_BASE_URL": "https://api.deepseek.com/",
+                "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
                 "ANSWER_JUDGE_BASE_URL": "https://openrouter.ai/api/v1",
             },
         )

@@ -36,6 +36,32 @@ python scripts/download_assets.py --task all --dry-run
 Use the preview to estimate disk requirements. Allow additional space for the
 Hugging Face cache; the downloader copies cached files into the task directories.
 
+## New-task submissions
+
+Contributors can validate before final numbering with an explicit package:
+
+```bash
+python scripts/download_assets.py --task-path task-submissions/alice/1-x-1 --dry-run
+python scripts/download_assets.py --task-path task-submissions/alice/1-x-1
+python scripts/download_assets.py --task-path task-submissions/alice/1-x-1 --verify-only
+python scripts/run_task.py --task-path task-submissions/alice/1-x-1 \
+  --agent pi --model deepseek/deepseek-flash --dry-run
+```
+
+`--task all` stays formal-only. Paths must be canonical repository-relative
+paths without traversal or symlinks. An alternate `--output-dir` preserves the
+submission namespace; launcher jobs default to `jobs/task-submissions/alice/1-x-1`
+to avoid collisions between contributors sharing a temporary task ID.
+
+For development, use a personal public temporary dataset with a manifest,
+provenance/license and pinned immutable SHA. After final numbering, use the
+[contribution publication workflow](contributing.md#asset-contribution-and-publication):
+`prepare_hf_upload.py` stages only new verified files plus a merged current
+manifest without downloading the full old inventory. Update HF SOURCES and
+license metadata, preserve all old assets, and submit an HF community PR
+(`create_pr=True`) or request a maintainer mirror. Never share official tokens.
+Official HF merge precedes final `assets.json` SHA pinning and GitHub merge.
+
 ## Directory layout
 
 Downloads are restored relative to the task root:
@@ -57,10 +83,9 @@ tasks/<task-id>/
 and `tests/` keeps large assets out of Harbor's build contexts and content hashes.
 Their contents are verified separately against `assets.json`.
 
-Task 1-4 also restores held-out PDFs to `data/verifier/corpus/`. Its Agent
-mounts only `data/corpus/` and `data/validation/`; only the verifier mounts the
-held-out corpus. These PDF files are downloadable assets, while held-out
-questions and relevance labels stay in `tests/data/`.
+Task 1-4 restores one shared PDF to `data/corpus/` and public queries and labels
+to `data/validation/`. Both environments use the same PDF; only the Agent mounts
+public validation. Hidden questions and relevance labels stay in `tests/data/`.
 
 Compose configurations mount the required data and models read-only. The agent
 receives public inputs; the verifier mounts the shared assets needed for
@@ -131,7 +156,8 @@ python scripts/download_assets.py --task task-2-1 --force
 `--cache-dir /path/to/cache` selects the Hugging Face cache. `--local-files-only`
 uses only already cached inputs. `--output-dir /path/to/tasks` restores task
 directories elsewhere; pass the same output path when verifying that copy.
-The standard launcher uses the repository's own `tasks/` directory.
+The standard launcher uses the selected package's assets in the repository,
+not an alternate output directory.
 
 The downloader uses Hugging Face login or `HF_TOKEN` when available. Public,
 ungated downloads do not require your Agent or verifier API keys. For a host

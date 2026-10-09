@@ -3,6 +3,12 @@
 !.env.example
 *.local.toml
 /jobs/
+/.venv/
 tasks/*/data/
+tasks/*/models/
+task-submissions/*/*/data/
+task-submissions/*/*/models/
+task-submissions/*/*/jobs/
+task-submissions/*/*/solution/
 __pycache__/
 *.py[cod]

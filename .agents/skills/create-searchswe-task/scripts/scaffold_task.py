@@ -90,7 +90,7 @@ def files_for(task_id: str, hardware: str, mode: str) -> dict[str, str]:
             {"schema_version": 1, "files": []}, indent=2
         )
         + "\n",
-        "instruction.md": clean(
+        "raw-instruction.md": clean(
             f"""
             # Task: {task_id}
 
@@ -126,6 +126,16 @@ def files_for(task_id: str, hardware: str, mode: str) -> dict[str, str]:
             Summarize covered scenarios without revealing hidden inputs,
             labels or reference outputs. State public performance gates in
             Requirements instead of hiding them from the agent.
+            """
+        ),
+        "instruction.md": clean(
+            f"""
+            Replace this scaffold for {task_id} after completing raw-instruction.md.
+            Write a long natural-language request from a named person in a real
+            physical setting to their coding agent. Use prose paragraphs without
+            headings, lists, tables, or fenced blocks. Preserve every source
+            condition and exact interface; follow references/instruction-rewrite.md
+            in the authoring skill and remove this author-only prompt before use.
             """
         ),
         "task.toml": clean(
@@ -238,7 +248,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "task_id",
-        help="Lowercase task directory name, for example task-1-new",
+        help="Lowercase task directory name, for example task-1-x-1",
     )
     parser.add_argument(
         "--mode",
@@ -258,6 +268,8 @@ def parse_args() -> argparse.Namespace:
         default=Path.cwd(),
         help="Search-SWE repository root; defaults to the current directory",
     )
+    parser.add_argument("--submission-first-name", help="Explicit ASCII first name, not a username")
+    parser.add_argument("--author", action="append", help="Actual author name; repeat for coauthors (required for submissions)")
     return parser.parse_args()
 
 
@@ -275,12 +287,47 @@ def main() -> int:
         print(f"error: not a Search-SWE repository root: {root}", file=sys.stderr)
         return 2
 
+    if (root / "tasks").is_symlink() or (root / "task-submissions").is_symlink():
+        print("error: task roots must not be symlinks", file=sys.stderr)
+        return 2
     destination = root / "tasks" / args.task_id
+    if args.submission_first_name is not None:
+        first_name = args.submission_first_name
+        temporary = re.fullmatch(r"task-([12])-x-([1-9][0-9]*)", args.task_id)
+        if (not first_name.isascii() or any(c in first_name for c in "/\\.")
+                or not temporary):
+            print("error: use an ASCII first name and task-<1|2>-x-<positive-ordinal>", file=sys.stderr)
+            return 2
+        expected_mode = {"1": "implementation", "2": "optimization"}[temporary[1]]
+        if args.mode != expected_mode:
+            print(f"error: {args.task_id} requires --mode {expected_mode}; hardware is independent", file=sys.stderr)
+            return 2
+        slug = re.sub(r"[^a-z0-9]+", "-", first_name.lower()).strip("-")
+        if not re.fullmatch(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", slug):
+            print("error: provide an ASCII transliteration beginning with a letter", file=sys.stderr)
+            return 2
+        if not args.author or any(not name.strip() or name.strip().lower() in
+                                  ("search-swe", "your name", "author") for name in args.author):
+            print("error: submissions require actual --author names", file=sys.stderr)
+            return 2
+        parent = root / "task-submissions"
+        parent.mkdir(exist_ok=True)
+        namespace = parent / slug
+        if namespace.is_symlink() or (namespace.exists() and not namespace.is_dir()):
+            print(f"error: contributor namespace must be a real directory: {namespace}", file=sys.stderr)
+            return 2
+        namespace.mkdir(exist_ok=True)
+        destination = namespace / args.task_id.removeprefix("task-")
     if destination.exists() or destination.is_symlink():
         print(f"error: refusing to overwrite existing path: {destination}", file=sys.stderr)
         return 1
 
     generated = files_for(args.task_id, args.hardware, args.mode)
+    if args.author:
+        authors = ", ".join('{ name = ' + json.dumps(name.strip(), ensure_ascii=False) + ' }'
+                            for name in args.author)
+        generated["task.toml"] = generated["task.toml"].replace(
+            'authors = [{ name = "Search-SWE" }]', f"authors = [{authors}]")
     # Reserve the directory before writing; never merge into an existing task.
     destination.mkdir()
     try:

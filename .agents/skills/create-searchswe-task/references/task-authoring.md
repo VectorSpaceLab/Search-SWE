@@ -22,6 +22,42 @@ dated machine observations are intentionally not copied here. They are not
 portable contributor requirements. In this repository, use the published image
 tags documented in `docker/README.md`.
 
+## Use current formal tasks as bounded precedents
+
+Before scaffolding, inspect the target checkout's current `tasks/` tree
+read-only. Select one or two closest **formal** packages for each proposed task;
+active `task-submissions/` packages are unreviewed work, not precedent. Prefer
+similarity in this order when it affects the design:
+
+1. Implementation versus Optimization and the evaluation/baseline shape;
+2. deterministic verifier versus model judge, plus artifact-transfer interface;
+3. external retrieval/LLM resources and network/credential boundaries;
+4. CPU/GPU execution and input/asset layout.
+
+Use repository search to shortlist candidates rather than reading every task:
+
+```bash
+rg -n 'task_type|gpus|environment_mode' tasks -g task.toml
+```
+
+For selected candidates, inspect `task.toml`, `raw-instruction.md` (if present),
+`instruction.md`, `assets.json`,
+both Docker/Compose definitions, environment/resource docs, and the verifier
+entrypoint relevant to the comparison. This discovery is source inspection,
+not permission to execute an existing task, download its assets, or use its
+APIs. Record the exact task paths, why they match, which structural patterns are
+being reused, and intentional differences. If no close analogue exists, record
+that and follow the current scaffold and contracts directly.
+
+An existing task proves only that a pattern was used before; it is not the
+source of truth and may predate current rules. The current skill, repository
+validators, Harbor schema, `docker/README.md`, and documented task contract win
+on conflict. Reuse structure and reviewed implementation patterns, not task-
+specific facts. Independently establish the new task's ID/authors, datasets and
+HF paths, hashes/pins, thresholds/baselines, provider/model allowlists, resource
+budgets, licenses/provenance, instructions, and hidden evaluation design. Do not
+copy a value merely to make the new package resemble its precedent.
+
 ## Define the task before packaging it
 
 A task must describe one independently buildable, repeatable, and objectively
@@ -47,8 +83,18 @@ or access to a reference solution.
 
 ## Required package contract
 
-Create the package at `tasks/<task-id>/`. `scripts/check_release.py` currently
-requires every task to contain these non-empty files:
+Create each new package at
+`task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>/`, with the exactly
+matching canonical ID (for example `task-1-x-1` or `task-2-x-1`) and actual
+`task.toml` authors. A PR may contain multiple tasks, but all use one supplied
+ASCII first-name namespace, not a username. Ordinals are temporary and unique
+within category in that PR/checkout, not final IDs. A different contributor
+with the same first name explicitly chooses `alice-2` (then `alice-3`); the
+scaffolder reuses an existing namespace rather than generating task-based suffixes.
+Formal `tasks/<task-id>/` paths below describe the layout after maintainer
+promotion in the same PR (pure rename commit, then finalization, merge commit
+only). Existing-task edits stay in place. Submission checks reuse
+`scripts/check_release.py`, which requires these non-empty files:
 
 ```text
 tasks/<task-id>/
@@ -67,6 +113,7 @@ tasks/<task-id>/
 Also provide the repository conventions that apply to the task:
 
 ```text
+├── raw-instruction.md            # Structured source for the scenario instruction
 ├── .gitignore                    # Ignore /data/, /models/, Python caches
 ├── README.md                     # Author-facing overview and provenance
 ├── environment/
@@ -83,7 +130,8 @@ Use `schema_version = "1.4"`. Set `task.name` to
 `search-swe/<task-id>`, give the task a version, and keep the objective,
 keywords, metadata, artifact paths, timeouts, network modes, and resource
 budgets mutually consistent. Follow the closest existing task for fields that
-are not explained by Harbor's schema; do not copy its dataset-specific values.
+are not explained by Harbor's schema, subject to the bounded-precedent rules
+above; do not copy its task-specific values.
 Search-SWE has exactly two engineering modes: Implementation maps to
 `metadata.task_type = "create"`, and Optimization maps to
 `metadata.task_type = "optimize"`. Do not introduce a Repair mode or another
@@ -184,7 +232,10 @@ other secrets there.
 
 ## Instructions and visible resources
 
-`instruction.md` is the agent's complete contract. State:
+`raw-instruction.md` is the structured authoring source; `instruction.md` is
+the complete agent-facing contract rewritten as a realistic request. Follow
+[instruction-rewrite.md](instruction-rewrite.md) and preserve these facts in
+both versions:
 
 - the goal and current starter state;
 - absolute input/output paths and file formats;
@@ -199,7 +250,8 @@ other secrets there.
 
 Do not hide a correctness requirement only in the grader. Conversely, do not
 mention `solution/`, reveal hidden cases/labels, or tell the agent how reward is
-implemented.
+implemented. Keep the structured source outside agent mounts and Docker COPY
+paths; never point the scenario instruction to it as an easier alternate task.
 
 Keep `environment/docs/environment.md` synchronized with the actual base image,
 task additions, paths, CPU/GPU capability, and available commands. An
@@ -219,7 +271,8 @@ task uses a less restricted profile.
 
 Prefer deterministic programmatic checks for facts that code can measure.
 Use a model judge only for a clearly subjective dimension, and pin its tooling
-and configuration following an existing task with the same judging mode.
+and configuration following a selected formal precedent with the same judging
+mode, while independently verifying that its judge and access policy apply.
 
 The separate verifier must be self-contained. Its Dockerfile copies `tests/`
 to `/tests` and installs pinned verifier-only dependencies. Protect hidden data,

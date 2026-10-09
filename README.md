@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/hero.png" alt="Search-SWE — Benchmarking coding agents on search-system engineering">
+  <img src="assets/hero.png" alt="Search-SWE — Benchmarking coding agents on building search engines">
 </p>
 
 <h1 align="center">
   Search-SWE
   <br>
-  <sub>🔍 Benchmarking coding agents on search-system engineering. 🤖</sub>
+  <sub>🔍 Benchmarking coding agents on building search engines. 🤖</sub>
 </h1>
 
 <p align="center">
@@ -85,26 +85,32 @@ unneeded groups empty:
 ```dotenv
 AGENT_MODEL=deepseek/deepseek-flash
 DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 `DEEPSEEK_API_KEY` authenticates the Pi agent for `deepseek/deepseek-flash`.
-The `VERIFIER_*` pair runs the independent `deepseek-flash` trajectory judge
-through RewardKit 0.2.0 and is required by every task except `task-2-4`. The
-same DeepSeek key may be assigned to both variables, but the launcher passes
-the verifier copy only to the verifier container.
+The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash` trajectory judge
+through OpenRouter and RewardKit 0.2.0 and is required by every task except
+`task-2-4`. Use an OpenRouter key for `VERIFIER_OPENAI_API_KEY`; the Pi agent
+uses its separate DeepSeek key. The launcher passes verifier credentials only
+to the verifier container.
 
 For other runs, fill only the matching sections already present in `.env`:
 
 - Pi + GLM-5.3-Flash: `AGENT_MODEL=zai/glm-5.3-flash` and `ZAI_API_KEY`.
 - Codex: `AGENT_MODEL`, `AGENT_OPENAI_BASE_URL`, and `AGENT_OPENAI_API_KEY`.
 - Claude Code: `AGENT_MODEL` and `AGENT_ANTHROPIC_API_KEY`; the launcher uses
-  only Anthropic's official API.
+  Anthropic's official API by default.
+- OpenRouter Agent mode: `AGENT_OPENROUTER_API_KEY`, `--openrouter`, and a full
+  `provider/model` slug with Codex or Claude Code.
 - Task 1-3: the three `ANSWER_JUDGE_*` values are also required.
 - Optional submission APIs: use `TASK_1_1_OPENROUTER_API_KEY`,
   `OPENROUTER_API_KEY`, or `JINA_API_KEY` only for the tasks identified by the
   comments in `.env.example`.
+
+If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
+[network guide](docs/network-policy.md); otherwise leave it empty.
 
 The [evaluation guide](docs/evaluation.md) documents credential isolation,
 custom endpoints, proxies, and the complete per-task matrix.
@@ -133,7 +139,7 @@ Configure only the coding-agent credential group for the option you choose.
 #### Pi and Z.AI GLM-5.3-Flash
 
 In `.env`, change the agent model and fill its matching key. Keep the
-`VERIFIER_*` DeepSeek settings because the RewardKit judge does not change:
+`VERIFIER_*` OpenRouter judge settings because the RewardKit judge does not change:
 
 ```dotenv
 AGENT_MODEL=zai/glm-5.3-flash
@@ -166,7 +172,7 @@ it.
 
 #### Claude Code and the official Anthropic API
 
-Claude Code 2.1.273 is preinstalled in every task image. Set an Anthropic model
+Claude Code 2.1.283 is preinstalled in every task image. Set an Anthropic model
 available to your API account and the dedicated coding-agent key:
 
 ```dotenv
@@ -179,9 +185,33 @@ bash scripts/run_task.sh --task task-1-1 --agent claude-code \
   --reasoning-effort high --output jobs/task-1-1-claude
 ```
 
-The shared launcher supports API-key authentication to `api.anthropic.com`;
-custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom Claude
-settings are intentionally outside the initial support scope. The
+#### Codex or Claude Code through OpenRouter
+
+Add a dedicated OpenRouter Agent key to `.env`:
+
+```dotenv
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+```
+
+Choose an Agent and pass its full OpenRouter model ID:
+
+```bash
+bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+  --model openai/gpt-6-astra --reasoning-effort xhigh \
+  --output jobs/task-1-1-codex-openrouter
+
+bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
+  --output jobs/task-1-1-claude-openrouter
+```
+
+Add `--dry-run` to either command to preview it before launching. The launcher
+sets the OpenRouter API addresses and keeps this key separate from the
+submission `OPENROUTER_API_KEY` and verifier credentials. Keep the `VERIFIER_*`
+settings from the main example.
+
+Other custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom
+Claude settings remain outside the supported scope. The
 [quick start guide](docs/quickstart.md) covers the default Codex path;
 the [evaluation guide](docs/evaluation.md) covers the per-task credential and
 hardware matrix plus GPU, network-policy, and custom-provider options.
@@ -194,9 +224,10 @@ hardware matrix plus GPU, network-policy, and custom-provider options.
 | --- | --- |
 | [Quick start guide](docs/quickstart.md) | A first CPU evaluation, end to end |
 | [Evaluation guide](docs/evaluation.md) | Per-task credentials, coding agents, GPU, network policy, and custom providers |
-| [Network policy](docs/network-policy.md) | Harbor egress modes and exact per-task host allowlists |
+| [Network policy](docs/network-policy.md) | Per-task allowlists, default direct gateway, and optional proxy egress |
 | [Asset guide](docs/assets.md) | Downloading, verifying, and restoring fixed data and models |
 | [Benchmark design](docs/benchmark.md) | Evaluation, repository layout, and data provenance |
+| [Contributing guide](docs/contributing.md) | Task-authoring workflow, validation, and PR expectations |
 
 For task descriptions and results, visit the
 [project website](https://search-swe.github.io/), maintained in a
@@ -204,43 +235,27 @@ For task descriptions and results, visit the
 
 ## 🤝 Contributing
 
-Contributions to task packages, shared images, launchers, tests, and
-documentation are welcome. Keep each change focused and include evidence for
-the validation layers you actually ran.
+Contributions are welcome. For new or substantially revised tasks, start with
+the workflow and skills in [`.agents/`](.agents/AGENTS.md), including
+[`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md) for submissions
+and [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md) for
+PR review and promotion. See the
+[contribution entry](CONTRIBUTING.md) and [guide](docs/contributing.md) for validation and PR requirements.
 
-For a new task or a substantial task revision, start with the repository-local
-[contributor workflow](.agents/AGENTS.md) and the
-[`create-searchswe-task` skill](.agents/skills/create-searchswe-task/SKILL.md).
-The `.agents/` directory contains skills, references, and helpers for
-agent-assisted contributions. A compatible agent harness can invoke
-`$create-searchswe-task`; otherwise, read the skill file directly. It covers
-task design, CPU/GPU scaffolding, fixed inputs, verifier isolation, and staged
-validation.
-
-Reuse the shared images described in [`docker/README.md`](docker/README.md),
-and never commit API keys, downloaded task inputs, hidden verifier data, or job
-outputs. Keep `README.md` and `README_zh.md` aligned when changing shared user
-documentation.
-
-Before opening a pull request, run at least the repository-level checks:
-
-```bash
-python scripts/check_release.py
-python -m unittest discover -s scripts/tests -p 'test_*.py'
-git diff --check
-```
-
-Task changes also need the task-specific and runtime checks described in the
-skill's [validation guide](.agents/skills/create-searchswe-task/references/validation.md).
-If you modify the skill or its scaffolder, run:
-
-```bash
-python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
-```
-
-In the pull request, summarize the scope, list the commands and results, and
-identify any checks that were not run because they require external data, GPU
-hardware, credentials, or paid APIs.
+New tasks use
+`task-submissions/<first-name-slug>/<category>-x-<positive-ordinal>` (your ASCII
+first name, **not** username). One PR may add multiple tasks, all under exactly
+one contributor namespace; temporary ordinals are unique within category and
+are not final IDs or reusable after promotion in that PR. A different same-name
+contributor explicitly chooses `alice-2`. Maintainers assign final IDs near
+merge, then make separate pure
+`git mv` and finalization commits for every task **in that same PR**. Use
+**merge commit only**, not squash/rebase; no unfinished submission enters main.
+Development assets may use a personal public HF dataset pinned to a commit SHA.
+After final ID assignment, official assets go through an HF community PR or
+maintainer mirror; official HF merge and SHA pinning precede the GitHub merge.
+Never share official tokens. Explicit `--task-path` supports submission downloads
+and local trials; automatic task discovery remains formal-only.
 
 ## Citation
 

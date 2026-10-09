@@ -1,0 +1,19 @@
+# Build from the audited helper image, then publish only the merged filesystem.
+# This excludes replaced GOST and OpenSSL binaries from all final OCI layers.
+ARG BASE_IMAGE=searchswe-harbor-base:build-required
+FROM ${BASE_IMAGE} AS assembled
+COPY packages/ /tmp/searchswe-apks/
+RUN apk add --no-cache --no-network --repositories-file /dev/null /tmp/searchswe-apks/*.apk && rm -rf /tmp/searchswe-apks
+COPY --chmod=755 gost-searchswe /bin/gost
+COPY LICENSE.* /usr/share/licenses/searchswe-egress/
+COPY third-party/ /usr/share/licenses/searchswe-egress/third-party/
+COPY component-manifest.json /usr/share/searchswe-egress/component.json
+
+FROM scratch
+COPY --from=assembled / /
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WORKDIR /bin/
+ENTRYPOINT ["/bin/gost"]
+ARG PATCH_SHA
+LABEL org.search-swe.egress.component="gost-x-0.10.9-searchswe-1"
+LABEL org.search-swe.egress.patch-sha256=${PATCH_SHA}

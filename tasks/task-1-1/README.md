@@ -2,7 +2,7 @@
 
 Build a retrieval system that connects difficult biology questions to supporting documents.
 
-**Task:** `task-1-1` · **Mode:** Implementation · **Metric:** Accuracy@3 with an all-query pass gate
+**Task:** `task-1-1` · **Mode:** Implementation · **Metric:** Accuracy@3 with per-query partial credit
 
 ## Overview
 
@@ -30,12 +30,22 @@ system on held-out questions, rather than judging the wording of its rewrites.
 | Asset | Purpose |
 | --- | --- |
 | `data/corpus.jsonl` | 57,359 documents with opaque IDs and document text |
-| `data/validation/` | Three public questions and relevance labels |
+| `data/validation/` | Ten public questions and relevance labels |
 | `environment/docs/` | Runtime information and permitted retrieval/generation resources |
 
 The download script restores task-relative `data/`; the container exposes it
-read-only under `/task/data`. Three different questions and their labels are
+read-only under `/task/data`. Ten different questions and their labels are
 reserved for verification and are not mounted in the agent environment.
+
+Document IDs are independent random identifiers, and the corpus rows are
+shuffled. IDs expose no topic, title, path, or canonical/chunk structure.
+Document contents and relevance judgments are preserved from the source;
+the original ID mapping is retained only in the author's private workspace.
+
+Both splits were selected from cases missed at Top-3 by the recorded
+content-only BM25, BM25 Top-100 + Qwen3-Reranker-8B, and Qwen3-Embedding-8B
+baselines. After shuffling, BM25 was recomputed and the neural scores were
+rechecked with the new tie-break order; all selected cases still missed.
 
 ### Fixed Components and Allowed Changes
 
@@ -70,8 +80,10 @@ background process is not itself a submission.
 ### Search Quality
 
 A question is a hit when at least one relevant document appears in its top three.
-All three hidden questions must be hits. The verifier reports raw Accuracy@3,
-but the task reward is binary rather than partial credit for individual hits.
+The verifier reports Accuracy@3 as the number of hits divided by the ten hidden
+questions. For example, seven hits produce `0.7`; each missed query contributes
+zero for that query. The instruction expresses the same accuracy on a 0–100
+scale; the stored metric and reward use the 0–1 scale.
 
 ### Correctness and Resource Gates
 
@@ -81,9 +93,10 @@ and the execution budgets must all pass.
 ### Integrity Checks and Final Reward
 
 A separate trajectory judge checks task and resource compliance. Final reward
-is `1` only when all hidden cases and the integrity gate pass; otherwise `0`.
+equals Accuracy@3 when the execution, output, and integrity checks pass;
+otherwise it is `0`.
 The judge assesses the agent's trajectory, not answer quality.
-It uses `deepseek-flash` through pinned RewardKit 0.2.0; configure its
+It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0; configure its
 verifier-only DeepSeek endpoint and key as described in the evaluation guide.
 
 ## Running This Task

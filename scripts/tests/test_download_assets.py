@@ -1,7 +1,9 @@
 import argparse
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
+import ssl
 import stat
 import tempfile
 import unittest
@@ -45,10 +47,111 @@ class Downloads(unittest.TestCase):
     def test_valid_download_uses_exact_revision(self):
         source = {"repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json"}
         self.entry["source"] = source
-        with patch("huggingface_hub.hf_hub_download", return_value=str(self.task / "metadata.json")) as download:
+        with patch.dict(os.environ, {}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", return_value=str(self.task / "metadata.json")) as download:
             self.assertEqual(self.restore(), "downloaded")
         for key, value in source.items():
             self.assertEqual(download.call_args.kwargs[key], value)
+
+    def test_proxy_tls_eof_retries_with_tls12(self):
+        source = {"repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json"}
+        self.entry["source"] = source
+        error = RuntimeError("metadata request failed")
+        error.__cause__ = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=[error, str(self.task / "metadata.json")]) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            self.assertEqual(self.restore(), "downloaded")
+            self.assertEqual(os.environ["HF_HUB_DISABLE_XET"], "1")
+        self.assertEqual(download.call_count, 2)
+        configure.assert_called_once_with()
+
+    def test_non_tls_download_error_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=RuntimeError("unrelated failure")) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaisesRegex(RuntimeError, "unrelated failure"):
+                self.restore()
+        download.assert_called_once_with(
+            repo_id="owner/model", repo_type="model", revision="a" * 40, filename="config.json",
+            cache_dir=None, local_files_only=False, force_download=False,
+        )
+        configure.assert_not_called()
+
+    def test_tls_error_without_proxy_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        error = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=error) as download, \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaises(ssl.SSLEOFError):
+                self.restore()
+        download.assert_called_once()
+        configure.assert_not_called()
+
+    def test_local_files_only_tls_error_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        self.args.local_files_only = True
+        error = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=error) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaises(ssl.SSLEOFError):
+                self.restore()
+        download.assert_called_once()
+        configure.assert_not_called()
+
+    def test_no_proxy_bypasses_hugging_face_proxy_workaround(self):
+        for no_proxy, expected in (("*", False), ("huggingface.co", False), (".huggingface.co", False),
+                                   ("example.com", True)):
+            with self.subTest(no_proxy=no_proxy), patch.dict(os.environ, {
+                    "HTTPS_PROXY": "http://127.0.0.1:7890", "NO_PROXY": no_proxy,
+            }, clear=True):
+                self.assertEqual(assets.proxy_configured(), expected)
+
+    def test_proxy_xet_setting_honors_user_override_after_hf_import(self):
+        from huggingface_hub import constants
+
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        for value, expected in (("0", False), ("YES", True)):
+            with self.subTest(value=value), \
+                    patch.dict(os.environ, {
+                        "https_proxy": "http://127.0.0.1:7890", "HF_HUB_DISABLE_XET": value,
+                    }, clear=True), \
+                    patch.object(constants, "HF_HUB_DISABLE_XET", not expected), \
+                    patch("huggingface_hub.hf_hub_download", return_value=str(self.task / "metadata.json")):
+                assets.obtain_source(self.task, self.entry, self.args)
+                self.assertEqual(os.environ["HF_HUB_DISABLE_XET"], value)
+                self.assertEqual(constants.HF_HUB_DISABLE_XET, expected)
+
+    def test_tls12_client_preserves_hugging_face_request_hook(self):
+        import httpx
+        from huggingface_hub.utils._http import hf_request_event_hook
+
+        context = httpx.create_ssl_context()
+        with patch("httpx.create_ssl_context", return_value=context), \
+                patch("huggingface_hub.set_client_factory") as set_factory, \
+                patch("httpx.Client") as client:
+            assets.configure_hf_tls12()
+            factory = set_factory.call_args.args[0]
+            factory()
+        self.assertEqual(context.maximum_version, ssl.TLSVersion.TLSv1_2)
+        client.assert_called_once_with(
+            verify=context, event_hooks={"request": [hf_request_event_hook]},
+            follow_redirects=True, timeout=None,
+        )
 
     def test_unpublished_revision_never_uses_main(self):
         self.entry["source"] = {"repo_id": "owner/data", "repo_type": "dataset", "revision": None, "filename": "data.json"}
