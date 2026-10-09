@@ -46,7 +46,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                     (tests / "jailbreak_judge/codex.toml").read_text()
                 )
                 self.assertEqual(rubric["judge"]["judge"], "deepseek-codex")
-                self.assertEqual(rubric["judge"]["model"], "deepseek-flash")
+                self.assertEqual(rubric["judge"]["model"], "deepseek/deepseek-v4.1-flash")
 
                 dockerfile = (tests / "Dockerfile").read_text()
                 self.assertIn('"harbor-rewardkit==0.2.0"', dockerfile)
@@ -59,7 +59,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                 script = (tests / "test.sh").read_text()
                 self.assertIn("/tests/rewardkit_deepseek.py", script)
                 self.assertIn("--judge deepseek-codex", script)
-                self.assertIn("--model deepseek-flash", script)
+                self.assertIn("--model deepseek/deepseek-v4.1-flash", script)
                 self.assertNotIn("/opt/conda/bin/rewardkit", script)
                 self.assertNotIn("CODEX_HOME=", script)
 
@@ -120,12 +120,12 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
         evaluation = (REPO / "docs/evaluation.md").read_text()
         for text in (example, evaluation):
             self.assertIn(
-                "VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/", text
+                "VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1", text
             )
             self.assertIn("0.2.0", text)
-        self.assertIn("deepseek-flash", evaluation)
-        self.assertIn("env_key = \"DEEPSEEK_API_KEY\"", evaluation)
-        self.assertIn("api-docs.deepseek.com", evaluation)
+        self.assertIn("deepseek/deepseek-v4.1-flash", evaluation)
+        self.assertIn("env_key = \"OPENROUTER_API_KEY\"", evaluation)
+        self.assertIn("openrouter.ai/docs", evaluation)
 
     def test_environment_template_lists_every_user_supplied_api_key(self):
         example = (REPO / ".env.example").read_text()
@@ -181,16 +181,18 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
 
         with mock.patch.dict(
             os.environ,
-            {"OPENAI_BASE_URL": "https://api.deepseek.com///"},
+            {"OPENAI_BASE_URL": "https://openrouter.ai/api/v1///"},
         ):
-            self.assertEqual(module.deepseek_base_url(), "https://api.deepseek.com")
+            self.assertEqual(module.deepseek_base_url(), "https://openrouter.ai/api/v1")
         for invalid in (
             "",
             "api.deepseek.com",
             "ftp://api.deepseek.com",
+            "https://api.deepseek.com",
+            "https://openrouter.ai/api/v1/other",
             "https://user:secret@api.deepseek.com",
-            "https://api.deepseek.com?token=secret",
-            "https://api.deepseek.com/#fragment",
+            "https://openrouter.ai/api/v1?token=secret",
+            "https://openrouter.ai/api/v1/#fragment",
         ):
             with self.subTest(invalid_base_url=invalid):
                 with mock.patch.dict(
@@ -204,17 +206,17 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
             (home / "config.toml").write_text(
                 '[mcp_servers.fixture]\ncommand = "true"\n', encoding="utf-8"
             )
-            module.configure_codex_home(home, "https://api.deepseek.com")
+            module.configure_codex_home(home, "https://openrouter.ai/api/v1")
             config_text = (home / "config.toml").read_text()
             config = tomllib.loads(config_text)
             catalog = json.loads((home / "models.json").read_text())
 
-        provider = config["model_providers"]["deepseek"]
-        self.assertEqual(config["model_provider"], "deepseek")
-        self.assertEqual(provider["base_url"], "https://api.deepseek.com")
+        provider = config["model_providers"]["openrouter"]
+        self.assertEqual(config["model_provider"], "openrouter")
+        self.assertEqual(provider["base_url"], "https://openrouter.ai/api/v1")
         self.assertEqual(provider["wire_api"], "responses")
-        self.assertEqual(provider["env_key"], "DEEPSEEK_API_KEY")
-        self.assertEqual(catalog["models"][0]["slug"], "deepseek-flash")
+        self.assertEqual(provider["env_key"], "OPENROUTER_API_KEY")
+        self.assertEqual(catalog["models"][0]["slug"], "deepseek/deepseek-v4.1-flash")
         self.assertIn("fixture", config["mcp_servers"])
         self.assertNotIn("OPENAI_API_KEY=", config_text)
 
@@ -247,14 +249,14 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
         with mock.patch.object(CodexBackend, "__aenter__", fake_codex_enter):
             with mock.patch.dict(
                 os.environ,
-                {"OPENAI_BASE_URL": "https://api.deepseek.com/"},
+                {"OPENAI_BASE_URL": "https://openrouter.ai/api/v1/"},
             ):
                 good = module.DeepSeekCodexBackend(
-                    AgentJudge(agent="deepseek-codex", model="deepseek-flash"),
+                    AgentJudge(agent="deepseek-codex", model="deepseek/deepseek-v4.1-flash"),
                     None,
                 )
                 asyncio.run(good.__aenter__())
-                self.assertEqual(good.env["DEEPSEEK_API_KEY"], "judge-secret")
+                self.assertEqual(good.env["OPENROUTER_API_KEY"], "judge-secret")
                 self.assertNotIn("CODEX_API_KEY", good.env)
                 self.assertNotIn(
                     "judge-secret", (good.codex_home / "config.toml").read_text()
@@ -265,7 +267,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                     AgentJudge(agent="deepseek-codex", model="not-deepseek"),
                     None,
                 )
-                with self.assertRaisesRegex(ValueError, "must be deepseek-flash"):
+                with self.assertRaisesRegex(ValueError, "must be deepseek/deepseek-v4.1-flash"):
                     asyncio.run(bad.__aenter__())
 
         self.assertEqual(len(homes), 2)

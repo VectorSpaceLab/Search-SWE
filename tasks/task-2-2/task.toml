@@ -32,7 +32,7 @@ timeout_sec = 5100.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
-allowed_hosts = ["api.deepseek.com"]
+allowed_hosts = ["openrouter.ai"]
 
 [verifier.env]
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"

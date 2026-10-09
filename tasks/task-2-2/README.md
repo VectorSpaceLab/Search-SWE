@@ -98,7 +98,7 @@ validation results do not replace the verifier's independent comparison.
 
 A trajectory audit gates the nonnegative quality gain. A failed audit or
 invalid evaluation produces zero, regardless of the apparent training result.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
 ## Running This Task

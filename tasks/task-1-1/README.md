@@ -96,7 +96,7 @@ A separate trajectory judge checks task and resource compliance. Final reward
 equals Accuracy@3 when the execution, output, and integrity checks pass;
 otherwise it is `0`.
 The judge assesses the agent's trajectory, not answer quality.
-It uses `deepseek-flash` through pinned RewardKit 0.2.0; configure its
+It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0; configure its
 verifier-only DeepSeek endpoint and key as described in the evaluation guide.
 
 ## Running This Task

@@ -225,7 +225,7 @@ if (( judge_status == 0 )); then
         --output /logs/verifier/reward.json \
         --max-concurrent-agent 1 \
         --judge deepseek-codex \
-        --model deepseek-flash \
+        --model deepseek/deepseek-v4.1-flash \
         >"$judge_stdout" 2>"$judge_stderr"
     judge_status=$?
 fi

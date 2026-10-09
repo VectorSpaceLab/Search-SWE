@@ -85,15 +85,16 @@ unneeded groups empty:
 ```dotenv
 AGENT_MODEL=deepseek/deepseek-flash
 DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 `DEEPSEEK_API_KEY` authenticates the Pi agent for `deepseek/deepseek-flash`.
-The `VERIFIER_*` pair runs the independent `deepseek-flash` trajectory judge
-through RewardKit 0.2.0 and is required by every task except `task-2-4`. The
-same DeepSeek key may be assigned to both variables, but the launcher passes
-the verifier copy only to the verifier container.
+The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash` trajectory judge
+through OpenRouter and RewardKit 0.2.0 and is required by every task except
+`task-2-4`. Use an OpenRouter key for `VERIFIER_OPENAI_API_KEY`; the Pi agent
+uses its separate DeepSeek key. The launcher passes verifier credentials only
+to the verifier container.
 
 For other runs, fill only the matching sections already present in `.env`:
 
@@ -138,7 +139,7 @@ Configure only the coding-agent credential group for the option you choose.
 #### Pi and Z.AI GLM-5.3-Flash
 
 In `.env`, change the agent model and fill its matching key. Keep the
-`VERIFIER_*` DeepSeek settings because the RewardKit judge does not change:
+`VERIFIER_*` OpenRouter judge settings because the RewardKit judge does not change:
 
 ```dotenv
 AGENT_MODEL=zai/glm-5.3-flash

@@ -88,7 +88,7 @@ The answer judge and trajectory audit are separate. The first evaluates answer
 equivalence; the second checks task compliance and can set the whole reward
 to zero. Their credentials are isolated from submission processes and from
 each other.
-The trajectory audit uses `deepseek-flash` through pinned RewardKit 0.2.0;
+The trajectory audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0;
 the answer judge keeps its independently configured model.
 
 The 300 source PDFs are unchanged. Public and hidden questions were rebuilt

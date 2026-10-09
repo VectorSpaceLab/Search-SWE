@@ -101,7 +101,7 @@ A trajectory audit independently checks task compliance. When evaluation is
 valid and the audit passes, reward is the mean per-query score (`passed / 20`);
 otherwise reward is `0`. The evaluation report displays `100 * (passed / 20)`
 before the trajectory gate.
-It uses `deepseek-flash` through pinned RewardKit 0.2.0 and receives its
+It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its
 DeepSeek endpoint and key only in the verifier.
 
 ## Running This Task

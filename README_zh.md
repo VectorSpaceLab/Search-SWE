@@ -78,14 +78,14 @@ chmod 600 .env
 ```dotenv
 AGENT_MODEL=deepseek/deepseek-flash
 DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 `DEEPSEEK_API_KEY` 用于 `deepseek/deepseek-flash` 的 Pi 智能体认证；`VERIFIER_*`
-通过 RewardKit 0.2.0 运行固定为 `deepseek-flash` 的独立轨迹评审，除 `task-2-4`
-外的所有任务都需要。同一个 DeepSeek key 可以填入两个变量，但启动器只把 verifier
-副本传进 verifier 容器。
+通过 RewardKit 0.2.0 和 OpenRouter 运行固定为 `deepseek/deepseek-v4.1-flash` 的独立轨迹评审，除 `task-2-4`
+外的所有任务都需要。`VERIFIER_OPENAI_API_KEY` 使用 OpenRouter 密钥，Pi 智能体
+使用独立的 DeepSeek 密钥；启动器只把 verifier 凭据传进 verifier 容器。
 
 其他运行方式只需填写 `.env` 中对应的分组：
 
@@ -128,7 +128,7 @@ dry-run 只打印 Harbor 命令、不启动容器。第二条命令会构建任�
 #### Pi 和 Z.AI GLM-5.3-Flash
 
 在 `.env` 中修改智能体模型并填写对应密钥。RewardKit judge 不会随之改变，因此
-仍需保留 `VERIFIER_*` DeepSeek 配置：
+仍需保留 `VERIFIER_*` OpenRouter 裁判配置：
 
 ```dotenv
 AGENT_MODEL=zai/glm-5.3-flash

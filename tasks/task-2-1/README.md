@@ -88,7 +88,7 @@ Retrieval outside the pool is not a valid way to improve this task's score.
 A separate trajectory judge checks task compliance. Final reward equals
 Accuracy@5 only when evaluation is valid and the judge passes; otherwise zero.
 The model being optimized around is the fixed reranker, not the trajectory judge.
-The trajectory judge itself uses `deepseek-flash` through pinned RewardKit
+The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit
 0.2.0 and receives its credentials only in the verifier.
 
 ## Running This Task

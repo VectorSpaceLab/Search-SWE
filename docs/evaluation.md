@@ -216,29 +216,29 @@ steps and observations. Failed runs are exported before the error is reported.
 All current tasks except `task-2-4` use the trajectory judge. Add:
 
 ```dotenv
-VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/
-VERIFIER_OPENAI_API_KEY=YOUR_DEEPSEEK_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 The verifier images pin `harbor-rewardkit==0.2.0` with its Codex CLI 0.147.0
-preloaded, and every RewardKit judge is fixed to `deepseek-flash`. `--model`
+preloaded, and every RewardKit judge is fixed to `deepseek/deepseek-v4.1-flash`. `--model`
 changes the coding-agent model; it does not change this judge model. The
-endpoint is fixed to DeepSeek's official `api.deepseek.com` host by the task
-verifier allowlists. A relay on another hostname is rejected rather than
+trajectory-judge endpoint is `https://openrouter.ai/api/v1`, checked by
+the backend and permitted by the verifier allowlists. A relay on another hostname is rejected rather than
 silently broadening verifier egress.
 
 RewardKit 0.2.0 creates a fresh temporary `CODEX_HOME` for each agent judge, so
 setting only a host `CODEX_HOME` or `OPENAI_BASE_URL` does not configure that
 Codex process. Search-SWE therefore registers a `deepseek-codex` backend that
-writes `model_provider = "deepseek"`, `wire_api = "responses"`, the endpoint,
-and a `deepseek-flash` model catalog into RewardKit's actual temporary home.
+writes `model_provider = "openrouter"`, `wire_api = "responses"`, the endpoint,
+and a `deepseek/deepseek-v4.1-flash` model catalog into RewardKit's actual temporary home.
 The launcher maps the host `VERIFIER_OPENAI_*` pair to verifier-only
 `OPENAI_*` variables. RewardKit moves the key to the child process, where the
-provider reads it through `env_key = "DEEPSEEK_API_KEY"`. Search-SWE never
+provider reads it through `env_key = "OPENROUTER_API_KEY"`. Search-SWE never
 writes the key to TOML or the model catalog and never includes it in a
 submission process environment; keep verifier logs private as you would for
-any authenticated client. This matches DeepSeek's
-[Codex integration](https://api-docs.deepseek.com/zh-cn/quick_start/agent_integrations/codex).
+any authenticated client. The backend uses the
+[OpenRouter Responses API](https://openrouter.ai/docs/api/api-reference/responses/create-responses).
 
 Task 1-3 additionally uses a Chat Completions-compatible answer-equivalence
 judge:

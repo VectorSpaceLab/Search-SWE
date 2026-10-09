@@ -39,7 +39,6 @@ network_mode = "allowlist"
 allowed_hosts = [
     "openrouter.ai",
     "api.jina.ai",
-    "api.deepseek.com",
 ]
 
 [environment]

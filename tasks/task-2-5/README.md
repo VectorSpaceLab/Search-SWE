@@ -103,7 +103,7 @@ If either quality threshold, output and execution checks, or the trajectory
 audit fails, final reward is `0`. Otherwise the final reward is the latency
 reward described above. The corrected starter is a measured runtime reference,
 not a fixed published timing that submissions can assume on every machine.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
 ## Running This Task

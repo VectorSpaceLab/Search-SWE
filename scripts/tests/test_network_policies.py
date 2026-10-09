@@ -31,15 +31,15 @@ REPO = Path(__file__).resolve().parents[2]
 TASK_HOSTS = ["openrouter.ai", "api.jina.ai"]
 DEEPSEEK_HOST = "api.deepseek.com"
 EXPECTED = {
-    "task-1-1": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-1-2": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-1-1": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "task-1-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
     "task-1-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-2-1": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
-    "task-2-2": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
-    "task-2-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
+    "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "task-2-1": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "task-2-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "task-2-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
     "task-2-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-2-5": ("no-network", [], "no-network", [], "allowlist", [DEEPSEEK_HOST]),
+    "task-2-5": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
 }
 
 
@@ -465,7 +465,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
     def test_unlisted_judge_hosts_and_general_proxy_are_rejected(self):
         common = {
             "AGENT_OPENAI_BASE_URL": "https://model.example/v1",
-            "VERIFIER_OPENAI_BASE_URL": "https://api.deepseek.com/",
+            "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
         }
         cases = (
             (
@@ -497,7 +497,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
             "fixture-model",
             {
                 "AGENT_OPENAI_BASE_URL": "https://model.example/v1",
-                "VERIFIER_OPENAI_BASE_URL": "https://api.deepseek.com/",
+                "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
                 "ANSWER_JUDGE_BASE_URL": "https://openrouter.ai/api/v1",
             },
         )

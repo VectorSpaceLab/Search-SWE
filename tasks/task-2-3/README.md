@@ -98,7 +98,7 @@ clean process termination are also checked.
 
 The normalized quality reward is accepted only after runtime and validity gates
 and the independent trajectory audit pass. Failure at any gate produces zero.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
 ## Running This Task

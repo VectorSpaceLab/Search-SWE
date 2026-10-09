@@ -86,7 +86,7 @@ class EgressHarborContractTests(unittest.TestCase):
         self.assertEqual(plan.agent_env_baseline.allowed_hosts, ["openrouter.ai", "api.jina.ai"])
         self.assertIn("model.example", plan.agent_phase.allowed_hosts)
         self.assertNotIn("model.example", plan.verifier_phase.allowed_hosts)
-        self.assertIn("api.deepseek.com", plan.verifier_phase.allowed_hosts)
+        self.assertNotIn("api.deepseek.com", plan.verifier_phase.allowed_hosts)
         self.assertNotIn("api.deepseek.com", plan.agent_phase.allowed_hosts)
         offline = self.plan("task-2-1")
         self.assertEqual(offline.agent_env_baseline.network_mode.value, "no-network")

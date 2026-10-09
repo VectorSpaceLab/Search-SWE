@@ -96,7 +96,7 @@ Page relevance is scored deterministically against labels; there is no
 answer-correctness model. A separate trajectory audit checks compliance.
 Final reward is mean Recall@5, including zeros for failed or invalid queries,
 when the trajectory audit passes. A failed audit makes the whole reward zero.
-The audit uses `deepseek-flash` through pinned RewardKit 0.2.0 with
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only endpoint and key settings.
 
 ## Running This Task

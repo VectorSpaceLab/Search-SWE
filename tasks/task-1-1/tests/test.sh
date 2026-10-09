@@ -130,7 +130,7 @@ if (( judge_status == 0 )); then
         --output "$REWARD_JSON" \
         --max-concurrent-agent 1 \
         --judge deepseek-codex \
-        --model deepseek-flash \
+        --model deepseek/deepseek-v4.1-flash \
         > "$judge_log_out" 2> "$judge_log_err"
     judge_status=$?
 fi

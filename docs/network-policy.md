@@ -121,17 +121,17 @@ access.
 
 | Task | Task/runtime requirement | `[environment]` baseline | Effective agent phase | Verifier phase |
 | --- | --- | --- | --- | --- |
-| `task-1-1` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com` |
-| `task-1-2` | Fully local vector retrieval | no network | model host only | `api.deepseek.com` only |
-| `task-1-3` | OpenRouter/Jina RAG resources | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com`; OpenRouter also serves the answer judge |
-| `task-1-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com` |
-| `task-2-1` | Fixed local reranker only | no network | model host only | `api.deepseek.com` only |
-| `task-2-2` | Explicitly offline training | no network | model host only | `api.deepseek.com` only |
-| `task-2-3` |  OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com` |
+| `task-1-1` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
+| `task-1-2` | Fully local vector retrieval | no network | model host only | `openrouter.ai` only |
+| `task-1-3` | OpenRouter/Jina RAG resources | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com`; OpenRouter serves the trajectory judge; the separate answer judge may use either allowed provider |
+| `task-1-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
+| `task-2-1` | Fixed local reranker only | no network | model host only | `openrouter.ai` only |
+| `task-2-2` | Explicitly offline training | no network | model host only | `openrouter.ai` only |
+| `task-2-3` |  OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
 | `task-2-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts only; no model judge |
-| `task-2-5` | Formal build/search is offline | no network | model host only | `api.deepseek.com` only |
+| `task-2-5` | Formal build/search is offline | no network | model host only | `openrouter.ai` only |
 
-The verifier-only DeepSeek hostname does not expose its credential to submitted
+Allowing the judge endpoint does not expose verifier credentials to submitted
 commands. Task 1-3 similarly removes both judge credential groups before
 running submission code. Submission API keys are injected only for tasks whose
 resource policy permits those APIs.

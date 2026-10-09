@@ -51,13 +51,13 @@ cp .env.example .env
 For `task-1-1`, fill in these two credential pairs:
 
 - `AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY` run the coding agent.
-- `VERIFIER_OPENAI_BASE_URL=https://api.deepseek.com/` and
-  `VERIFIER_OPENAI_API_KEY` run the independent `deepseek-flash` trajectory
+- `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
+  `VERIFIER_OPENAI_API_KEY` run the independent `deepseek/deepseek-v4.1-flash` trajectory
   judge through RewardKit 0.2.0.
 
-Set `AGENT_MODEL` in `.env`, or pass `--model` on the command line. The agent
-and verifier may use the same DeepSeek account, but they remain separate
-configuration groups and only the verifier receives the `VERIFIER_*` values.
+Set `AGENT_MODEL` in `.env`, or pass `--model` on the command line. The verifier
+uses an OpenRouter key. Agent and verifier credentials remain separate groups,
+and only the verifier receives the `VERIFIER_*` values.
 `task-1-1` also permits OpenRouter and Jina as submission resources;
 their keys are optional and are not needed for an implementation that uses only
 the provided corpus and local runtime.
