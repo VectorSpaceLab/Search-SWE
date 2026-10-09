@@ -179,7 +179,7 @@ else:
             raise AssertionError("baseline not restored")
         result["checks"].append({"case": "real-phase-exception-restores-baseline", "passed": True})
         repo = Path(__file__).resolve().parents[2]
-        task_config = TaskConfig.model_validate_toml((repo / "tasks/task-1-1/task.toml").read_text())
+        task_config = TaskConfig.model_validate_toml((repo / "tasks/reasoning-query-rewriting/task.toml").read_text())
         plan = resolve_trial_network_plan(task_config, AgentConfig(extra_allowed_hosts=["model.example"]),
                                           runtime_config, None, verifier_mode=resolve_task_verifier_mode(task_config),
                                           env_config=resolve_effective_verifier_env_config(task_config, None))

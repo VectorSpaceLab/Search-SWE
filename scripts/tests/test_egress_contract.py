@@ -82,18 +82,18 @@ class EgressHarborContractTests(unittest.TestCase):
             env_config=resolve_effective_verifier_env_config(config, None))
 
     def test_phase_policy_uses_harbor_inheritance_and_model_host_is_agent_only(self):
-        plan = self.plan("task-1-1")
+        plan = self.plan("reasoning-query-rewriting")
         self.assertEqual(plan.agent_env_baseline.allowed_hosts, ["openrouter.ai", "api.jina.ai"])
         self.assertIn("model.example", plan.agent_phase.allowed_hosts)
         self.assertNotIn("model.example", plan.verifier_phase.allowed_hosts)
         self.assertNotIn("api.deepseek.com", plan.verifier_phase.allowed_hosts)
         self.assertNotIn("api.deepseek.com", plan.agent_phase.allowed_hosts)
-        offline = self.plan("task-2-1")
+        offline = self.plan("long-document-reranking")
         self.assertEqual(offline.agent_env_baseline.network_mode.value, "no-network")
         self.assertEqual(offline.agent_phase.allowed_hosts, ["model.example"])
 
     def test_real_separate_verifier_path_preserves_adapter_and_binding_not_overlay(self):
-        plan = self.plan("task-1-1")
+        plan = self.plan("reasoning-query-rewriting")
         agent = self.create(plan.agent_env_baseline)
         external_overlay = self.root / "agent-only.json"
         external_overlay.write_text('{"services": {}}\n')
@@ -126,7 +126,7 @@ class EgressHarborContractTests(unittest.TestCase):
         self.assertEqual(self.environment_config.extra_docker_compose, [external_overlay])
 
     def test_real_phase_context_restores_baseline_on_error(self):
-        plan = self.plan("task-1-1")
+        plan = self.plan("reasoning-query-rewriting")
         environment = self.create(plan.agent_env_baseline)
 
         async def exercise():

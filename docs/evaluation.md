@@ -10,7 +10,7 @@ Search-SWE separates four kinds of configuration:
 
 1. **Coding-agent credentials** run Codex, Pi, or Claude Code.
 2. **Verifier credentials** run the private trajectory judge used by most tasks.
-3. **Answer-judge credentials** are used only by task 1-3.
+3. **Answer-judge credentials** are used only by `scientific-paper-qa`.
 4. **Submission-resource credentials** expose task-permitted OpenRouter or Jina
    APIs to the agent's implementation; they are not coding-agent credentials.
 
@@ -39,8 +39,8 @@ launcher and Hugging Face asset client. Task runtime dependencies remain inside
 Docker. Restore only the selected task:
 
 ```bash
-python scripts/download_assets.py --task TASK_ID
-python scripts/download_assets.py --task TASK_ID --verify-only
+python scripts/download_assets.py --task TASK_NAME
+python scripts/download_assets.py --task TASK_NAME --verify-only
 ```
 
 The launcher checks asset presence and size; `--verify-only` performs the full
@@ -60,18 +60,18 @@ the shared images locally.
 
 | Task | Hardware | Trajectory judge | Answer judge | Optional submission APIs |
 | --- | --- | --- | --- | --- |
-| `task-1-1` | CPU | Yes | — | `TASK_1_1_OPENROUTER_API_KEY`, `JINA_API_KEY` |
-| `task-1-2` | CPU | Yes | — | — |
-| `task-1-3` | CPU | Yes | Yes | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
-| `task-1-4` | CPU | Yes | — | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
-| `task-2-1` | CPU | Yes | — | — |
-| `task-2-2` | 1 NVIDIA GPU | Yes | — | — |
-| `task-2-3` | 1 NVIDIA GPU | Yes | — | — |
-| `task-2-4` | CPU | — | — | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
-| `task-2-5` | CPU | Yes | — | — |
+| `reasoning-query-rewriting` | CPU | Yes | — | `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY`, `JINA_API_KEY` |
+| `memory-constrained-dense-retrieval` | CPU | Yes | — | — |
+| `scientific-paper-qa` | CPU | Yes | Yes | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
+| `long-pdf-evidence` | CPU | Yes | — | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
+| `long-document-reranking` | CPU | Yes | — | — |
+| `code-embedding-finetuning` | 1 NVIDIA GPU | Yes | — | — |
+| `query-encoder-alignment` | 1 NVIDIA GPU | Yes | — | — |
+| `agentic-search` | CPU | — | — | `OPENROUTER_API_KEY`, `JINA_API_KEY` |
+| `sparse-retrieval-pruning` | CPU | Yes | — | — |
 
 The table identifies credential groups, not the complete resource budget. Read
-`tasks/TASK_ID/README.md` and `task.toml` before launching. In particular,
+`tasks/TASK_NAME/README.md` and `task.toml` before launching. In particular,
 memory, storage, time limits, and asset sizes vary substantially by task.
 
 ## Environment-file behavior
@@ -123,9 +123,9 @@ AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
 Use a full OpenRouter model slug and select the route explicitly:
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
   --model openai/gpt-6-astra --reasoning-effort xhigh --dry-run
-bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
   --model anthropic/claude-opus-5.5 --reasoning-effort xhigh --dry-run
 ```
 
@@ -134,7 +134,7 @@ Remove `--dry-run` to launch. This mode fixes Codex's Responses base URL to
 `https://openrouter.ai/api`. Claude Code accepts only `anthropic/` slugs here.
 The launcher permits `openrouter.ai` in restricted Agent phases and keeps the
 OpenRouter Agent key separate from `OPENROUTER_API_KEY` for submissions and
-`ANSWER_JUDGE_API_KEY` for task-1-3. Verifier configuration is unchanged.
+`ANSWER_JUDGE_API_KEY` for scientific-paper-qa. Verifier configuration is unchanged.
 When using Codex, omit `--codex-config`; the launcher supplies the required
 native provider configuration and ignores the direct mode's `AGENT_CODEX_CONFIG`.
 
@@ -153,7 +153,7 @@ Then preview or run with the native Harbor adapter:
 
 ```bash
 bash scripts/run_task.sh \
-  --task task-1-1 \
+  --task reasoning-query-rewriting \
   --agent claude-code \
   --reasoning-effort high \
   --dry-run
@@ -189,7 +189,7 @@ DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
 
 ```bash
 bash scripts/run_task.sh \
-  --task task-1-1 \
+  --task reasoning-query-rewriting \
   --agent pi \
   --model deepseek/deepseek-flash \
   --thinking xhigh \
@@ -213,7 +213,7 @@ steps and observations. Failed runs are exported before the error is reported.
 
 ## Configure judges
 
-All current tasks except `task-2-4` use the trajectory judge. Add:
+All current tasks except `agentic-search` use the trajectory judge. Add:
 
 ```dotenv
 VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
@@ -240,7 +240,7 @@ submission process environment; keep verifier logs private as you would for
 any authenticated client. The backend uses the
 [OpenRouter Responses API](https://openrouter.ai/docs/api/api-reference/responses/create-responses).
 
-Task 1-3 additionally uses a Chat Completions-compatible answer-equivalence
+`scientific-paper-qa` additionally uses a Chat Completions-compatible answer-equivalence
 judge:
 
 ```dotenv
@@ -249,26 +249,26 @@ ANSWER_JUDGE_BASE_URL=https://openrouter.ai/api/v1
 ANSWER_JUDGE_API_KEY=YOUR_ANSWER_JUDGE_KEY
 ```
 
-No other current task uses this group. Task 1-3 restricts this judge to the
+No other current task uses this group. `scientific-paper-qa` restricts this judge to the
 already permitted `openrouter.ai` host.
 
 ## Configure optional submission APIs
 
 Set these only when the selected task and intended submission use the permitted
-external resources documented in `tasks/TASK_ID/environment/docs/available_resources.md`.
+external resources documented in `tasks/TASK_NAME/environment/docs/available_resources.md`.
 They do not select the coding-agent or judge model.
 
-Tasks 1-3, 1-4, and 2-4 use the shared variables:
+`scientific-paper-qa`, `long-pdf-evidence`, and `agentic-search` use the shared variables:
 
 ```dotenv
 OPENROUTER_API_KEY=YOUR_OPENROUTER_KEY
 JINA_API_KEY=YOUR_JINA_KEY
 ```
 
-Task 1-1 uses a separate OpenRouter credential and the shared Jina credential:
+`reasoning-query-rewriting` uses a separate OpenRouter credential and the shared Jina credential:
 
 ```dotenv
-TASK_1_1_OPENROUTER_API_KEY=YOUR_RESTRICTED_OPENROUTER_KEY
+REASONING_QUERY_REWRITING_OPENROUTER_API_KEY=YOUR_RESTRICTED_OPENROUTER_KEY
 JINA_API_KEY=YOUR_JINA_KEY
 ```
 
@@ -278,7 +278,7 @@ resource document is the source of truth.
 
 ## GPU tasks
 
-Tasks 2-2 and 2-3 require one NVIDIA GPU. Their images use CUDA 13.0 and require
+`code-embedding-finetuning` and `query-encoder-alignment` require one NVIDIA GPU. Their images use CUDA 13.0 and require
 a compatible NVIDIA driver and Container Toolkit. Both task and verifier
 Compose overlays request the real GPU.
 
@@ -310,7 +310,7 @@ Preview command construction first:
 
 ```bash
 bash scripts/run_task.sh \
-  --task TASK_ID \
+  --task TASK_NAME \
   --model YOUR_AGENT_MODEL \
   --dry-run
 ```
@@ -321,9 +321,9 @@ a fresh jobs root:
 
 ```bash
 bash scripts/run_task.sh \
-  --task TASK_ID \
+  --task TASK_NAME \
   --model YOUR_AGENT_MODEL \
-  --output jobs/TASK_ID-run-name
+  --output jobs/TASK_NAME-run-name
 ```
 
 The launcher uses Docker, forces image builds, runs one attempt with concurrency

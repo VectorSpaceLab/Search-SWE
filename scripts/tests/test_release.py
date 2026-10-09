@@ -26,7 +26,7 @@ class ReleasePackage(unittest.TestCase):
         self.repo = self.root / "repo"
         self.repo.mkdir()
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
-        self.task = self.repo / "tasks" / "task-new"
+        self.task = self.repo / "tasks" / "example-search"
         for name in ("environment", "tests", "data"):
             (self.task / name).mkdir(parents=True)
         for name in ("instruction.md", "environment/Dockerfile", "tests/Dockerfile", "tests/test.sh"):
@@ -34,7 +34,7 @@ class ReleasePackage(unittest.TestCase):
         for name in ("environment/docker-compose.yaml", "tests/docker-compose.yaml"):
             (self.task / name).write_text("services: {}\n")
         (self.task / "task.toml").write_text(
-            '[task]\nname = "fixture/task-new"\nversion = "0.1"\n'
+            '[task]\nname = "search-swe/example-search"\nversion = "0.1"\n'
             '[verifier.env]\nOPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"\n'
             'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
         )
@@ -44,18 +44,18 @@ class ReleasePackage(unittest.TestCase):
             "path": "data/corpus.jsonl", "size_bytes": len(self.content),
             "sha256": hashlib.sha256(self.content).hexdigest(),
             "source": {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset",
-                       "revision": "a" * 40, "filename": "tasks/task-new/corpus.jsonl"},
+                       "revision": "a" * 40, "filename": "tasks/example-search/corpus.jsonl"},
         }
         self.write_manifest()
         (self.task / self.entry["path"]).write_bytes(self.content)
         self.hf = self.root / "hf-data"
-        self.hf_file = self.hf / "tasks/task-new/corpus.jsonl"
+        self.hf_file = self.hf / "tasks/example-search/corpus.jsonl"
         self.hf_file.parent.mkdir(parents=True)
         self.hf_file.write_bytes(self.content)
         for name in ("README.md", "SOURCES.md", ".gitattributes"):
             (self.hf / name).write_text("fixture\n")
         record = {key: self.entry[key] for key in ("size_bytes", "sha256")}
-        record["path"] = "tasks/task-new/corpus.jsonl"
+        record["path"] = "tasks/example-search/corpus.jsonl"
         (self.hf / "manifest.json").write_text(json.dumps({"schema_version": 1, "files": [record]}))
         shutil.copytree(SCRIPTS, self.repo / "scripts", ignore=shutil.ignore_patterns("__pycache__", "tests"))
 
@@ -112,7 +112,7 @@ class ReleasePackage(unittest.TestCase):
         self.assertTrue(any("SHA-256 mismatch" in error for error in errors))
 
     def test_forced_tracked_data_is_rejected_even_when_ignored(self):
-        subprocess.run(["git", "add", "-f", "tasks/task-new/data/corpus.jsonl"], cwd=self.repo, check=True)
+        subprocess.run(["git", "add", "-f", "tasks/example-search/data/corpus.jsonl"], cwd=self.repo, check=True)
         errors, _ = release.check_release(self.repo)
         self.assertTrue(any("runtime asset would enter Git" in error for error in errors))
 
@@ -124,12 +124,12 @@ class ReleasePackage(unittest.TestCase):
     def test_new_task_automatically_appears_in_download_and_launch_commands(self):
         for script, args in (
             ("download_assets.py", ["--task", "all", "--dry-run"]),
-            ("run_task.py", ["--task", "task-new", "--model", "example-model", "--dry-run"]),
+            ("run_task.py", ["--task", "example-search", "--model", "example-model", "--dry-run"]),
         ):
             result = subprocess.run([sys.executable, str(self.repo / "scripts" / script), *args],
                                     cwd=self.root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("task-new", result.stdout)
+            self.assertIn("example-search", result.stdout)
 
     def test_launcher_separates_agent_and_verifier_keys_without_putting_them_in_argv(self):
         (self.repo / ".env").write_text(
@@ -156,7 +156,7 @@ class ReleasePackage(unittest.TestCase):
         env["CODEX_AUTH_JSON_PATH"] = "/unused/auth.json"
         env["CODEX_FORCE_AUTH_JSON"] = "1"
         result = subprocess.run([sys.executable, str(self.repo / "scripts/run_task.py"),
-                                 "--task", "task-new"], cwd=self.root, env=env,
+                                 "--task", "example-search"], cwd=self.root, env=env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         output = result.stdout + result.stderr
@@ -188,7 +188,7 @@ class ReleasePackage(unittest.TestCase):
             "OPENAI_BASE_URL": "https://wrong-provider.example/v1",
         })
         command = [sys.executable, str(self.repo / "scripts/run_task.py"),
-                   "--task", "task-new", "--agent", "codex", "--openrouter",
+                   "--task", "example-search", "--agent", "codex", "--openrouter",
                    "--model", "openai/gpt-6-astra"]
         missing = subprocess.run(command, cwd=self.root, env=env,
                                  capture_output=True, text=True)
@@ -211,7 +211,7 @@ class ReleasePackage(unittest.TestCase):
             '[[steps]]\nname = "online"\n'
             '[[steps]]\nname = "offline"\n[steps.agent]\nnetwork_mode = "no-network"\n'
         )
-        command = [sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "task-new",
+        command = [sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "example-search",
                    "--agent", "pi", "--model", "deepseek/deepseek-flash", "--dry-run"]
         result = subprocess.run(command, cwd=self.root, env=self.launcher_env(), capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -270,7 +270,7 @@ class ReleasePackage(unittest.TestCase):
                     })
                     result = subprocess.run(
                         [sys.executable, str(self.repo / "scripts/run_task.py"),
-                         "--task", "task-new", "--agent", agent, "--model", model],
+                         "--task", "example-search", "--agent", agent, "--model", model],
                         cwd=self.root, env=env, capture_output=True, text=True, timeout=60,
                     )
                     self.assertEqual(result.returncode, 0, result.stderr)
@@ -288,7 +288,7 @@ class ReleasePackage(unittest.TestCase):
         env["PI_THINKING"] = "extreme"
         result = subprocess.run(
             [sys.executable, str(self.repo / "scripts/run_task.py"),
-             "--task", "task-new", "--agent", "codex", "--model", "example-model",
+             "--task", "example-search", "--agent", "codex", "--model", "example-model",
              "--reasoning-effort", "high", "--codex-config", str(config), "--dry-run"],
             cwd=self.root, env=env, capture_output=True, text=True,
         )
@@ -303,14 +303,14 @@ class ReleasePackage(unittest.TestCase):
         for gpus, expected in ((0, []), (1, ["0"])):
             with self.subTest(gpus=gpus):
                 (self.task / "task.toml").write_text(
-                    '[task]\nname = "fixture/task-new"\nversion = "0.1"\n'
+                    '[task]\nname = "search-swe/example-search"\nversion = "0.1"\n'
                     f'[environment]\ngpus = {gpus}\n'
                     '[verifier.env]\nOPENAI_BASE_URL = "${OPENAI_BASE_URL:-}"\n'
                     'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
                 )
                 result = subprocess.run(
                     [sys.executable, str(self.repo / "scripts/run_task.py"),
-                     "--task", "task-new", "--model", "example-model", "--dry-run"],
+                     "--task", "example-search", "--model", "example-model", "--dry-run"],
                     cwd=self.root, env=self.launcher_env(), capture_output=True, text=True,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -328,7 +328,7 @@ class ReleasePackage(unittest.TestCase):
                 env["AGENT_CODEX_CONFIG"] = "missing-codex-config.toml"
                 result = subprocess.run(
                     [sys.executable, str(self.repo / "scripts/run_task.py"),
-                     "--task", "task-new", "--agent", "pi", "--model", model,
+                     "--task", "example-search", "--agent", "pi", "--model", model,
                      "--thinking", "xhigh", "--dry-run"],
                     cwd=self.root, env=env, capture_output=True, text=True,
                 )
@@ -359,7 +359,7 @@ class ReleasePackage(unittest.TestCase):
                 sys.executable,
                 str(self.repo / "scripts/run_task.py"),
                 "--task",
-                "task-new",
+                "example-search",
                 "--agent",
                 "claude-code",
                 "--model",
@@ -412,7 +412,7 @@ class ReleasePackage(unittest.TestCase):
             with self.subTest(arguments=arguments):
                 result = subprocess.run(
                     [sys.executable, str(self.repo / "scripts/run_task.py"),
-                     "--task", "task-new", *arguments, "--dry-run"],
+                     "--task", "example-search", *arguments, "--dry-run"],
                     cwd=self.root, env=self.launcher_env(), capture_output=True, text=True,
                 )
                 self.assertNotEqual(result.returncode, 0)
@@ -420,7 +420,7 @@ class ReleasePackage(unittest.TestCase):
 
     def test_pi_defaults_version_and_validates_environment_thinking(self):
         base = [sys.executable, str(self.repo / "scripts/run_task.py"),
-                "--task", "task-new", "--agent", "pi",
+                "--task", "example-search", "--agent", "pi",
                 "--model", "deepseek/deepseek-flash", "--dry-run"]
         result = subprocess.run(base, cwd=self.root, env=self.launcher_env(),
                                 capture_output=True, text=True)
@@ -472,7 +472,7 @@ class ReleasePackage(unittest.TestCase):
         env["CONTAINER_PROXY"] = "http://shell-proxy-secret@example:7887"
         result = subprocess.run(
             [sys.executable, str(self.repo / "scripts/run_task.py"),
-             "--task", "task-new", "--agent", "pi",
+             "--task", "example-search", "--agent", "pi",
              "--model", "deepseek/deepseek-flash"],
             cwd=self.root, env=env, capture_output=True, text=True,
         )
@@ -506,7 +506,7 @@ class ReleasePackage(unittest.TestCase):
                 missing_env[other_key] = "unselected-provider-secret"
                 result = subprocess.run(
                     [sys.executable, str(self.repo / "scripts/run_task.py"),
-                     "--task", "task-new", "--agent", "pi", "--model", model],
+                     "--task", "example-search", "--agent", "pi", "--model", model],
                     cwd=self.root, env=missing_env, capture_output=True, text=True,
                 )
                 self.assertNotEqual(result.returncode, 0)
@@ -550,7 +550,7 @@ class ReleasePackage(unittest.TestCase):
                 sys.executable,
                 str(self.repo / "scripts/run_task.py"),
                 "--task",
-                "task-new",
+                "example-search",
                 "--agent",
                 "claude-code",
                 "--model",
@@ -580,7 +580,7 @@ class ReleasePackage(unittest.TestCase):
                 sys.executable,
                 str(self.repo / "scripts/run_task.py"),
                 "--task",
-                "task-new",
+                "example-search",
                 "--agent",
                 "claude-code",
                 "--model",
@@ -616,11 +616,11 @@ class ReleasePackage(unittest.TestCase):
         ]:
             with self.subTest(keys=keys, success=success):
                 (self.task / "task.toml").write_text(
-                    '[task]\nname = "fixture/task-new"\nversion = "0.1"\n[verifier.env]\n'
+                    '[task]\nname = "search-swe/example-search"\nversion = "0.1"\n[verifier.env]\n'
                     + ''.join(f'{key} = "${{{key}:-}}"\n' for key in keys)
                 )
                 (self.repo / ".env").write_text(values)
-                result = subprocess.run([sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "task-new"],
+                result = subprocess.run([sys.executable, str(self.repo / "scripts/run_task.py"), "--task", "example-search"],
                                         cwd=self.root, env=env, capture_output=True, text=True)
                 if success:
                     self.assertEqual(result.returncode, 0, result.stderr)

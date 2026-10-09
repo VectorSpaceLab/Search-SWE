@@ -26,23 +26,24 @@ missing or incompatible tools block that validation, not justify replacements.
 2. **Audit the task:** read [task audit](references/task-audit.md). Compare
    requirements/resources to grading, inspect isolation, solvability and licenses.
    Identify the closest formal task precedent independently; check the
-   contributor's stated references, structural reuse and deviations without
-   treating legacy behavior as authority or copying task-specific values.
+   contributor's stated references, structural reuse and deviations against
+   current contracts, and verify task-specific values independently.
    Missing, pending or failed checks never mean acceptance. Request explicit
    authorization before executing any PR-controlled tests/builds or code, and
    separately before credentialed runtime, API/GPU spend or downloads. Use a
    disposable isolated checkout; never unsafe checkout/reset in a dirty target.
 3. **Promote approved work:** read [promotion and merge](references/promotion.md).
    Resolve allowed contributor branch edits first. A PR may contain multiple
-   tasks only under one contributor namespace; reject direct formal additions
-   and reused temporary ordinals. Assign IDs serially from the current base,
-   then give each task separate pure-rename and finalization commits in the
-   **same PR**. Preserve authors and do not automate commits.
+   uniquely named tasks at `task-submissions/<task-name>`; reject direct formal
+   additions and reused submission paths. Check names against the current base
+   and other queued PRs. Promote to `tasks/<task-name>` with the name unchanged,
+   using a separate pure rename and any necessary finalization commit per task
+   in the **same PR**. Preserve authors and do not automate commits.
    Merge-ready requires every task promoted. Each head change invalidates prior
    conclusions.
 4. **Migrate assets:** read [publication](references/publication.md). Migrate
    assets separately for each task. The bundled
-   offline staging helper preserves old manifest entries and copies only new
+   offline staging helper preserves existing manifest entries and copies only new
    data. Hash/license review is separate from upload authorization. Merge official
    HF changes before pinning their SHA and merging GitHub with a merge commit.
 

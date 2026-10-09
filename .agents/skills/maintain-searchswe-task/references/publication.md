@@ -34,12 +34,12 @@ immutable SHA in `assets.json`. The explicit submission downloader/launcher then
 support real pre-promotion validation. Keep the temporary repo accessible through
 review and migration; only retire it after official pinned downloads are verified.
 
-### Final ID: additive official publication, then GitHub merge
+### Task name: additive official publication, then GitHub merge
 
-After ID assignment/finalization, change only the new task's dataset source
-repo/filename to `search-swe/Search-SWE` and `tasks/<final-id>/...`. Preserve
+After task-name approval and promotion, change only the new task's dataset source
+repo/filename to `search-swe/Search-SWE` and `tasks/<task-name>/...`. Preserve
 original model repo pins and bundled metadata. Prepare **only new data files**
-in `/path/to/new-data/tasks/<final-id>/...`, at the exact asset sizes/hashes.
+in `/path/to/new-data/tasks/<task-name>/...`, at the exact asset sizes/hashes.
 Do not delete, rename or overwrite existing official assets.
 
 Fetch the small current official manifest snapshot and metadata, not the whole
@@ -60,16 +60,18 @@ print(sha)
 PY
 python "$SKILL_DIR/scripts/prepare_hf_upload.py" --repo-root "$REPO" \
   --official-manifest /path/to/official-snapshot/manifest.json \
-  --task-path tasks/task-1-6 --new-data /path/to/new-data \
+  --task-path tasks/example-search --new-data /path/to/new-data \
   --output /path/to/upload-staging
 ```
 
-This offline helper verifies new files' hashes, refuses collisions/traversal/
-symlinks, and writes only new files plus a merged manifest preserving every old
-record. It does not require old data or upload anything. A trusted current
-snapshot is essential: it cannot prove remote freshness offline. Unlike the trusted target tool
-`check_release.py --hf-data`, which intentionally checks the **full inventory**,
-this is the incremental contribution path, not a replacement full release audit.
+Official asset staging requires a promoted package at `tasks/<task-name>`.
+
+The offline helper verifies hashes and safe paths for new files, rejects
+collisions and symlinks, and stages those files with a merged manifest that
+preserves all existing records. Supply a trusted current manifest snapshot;
+only the new data files are needed locally. Uploading is a separate step.
+For a full dataset audit, `check_release.py --hf-data` checks the complete
+inventory against a local dataset copy.
 
 Copy the snapshot `README.md`, `SOURCES.md`, and `.gitattributes` into staging,
 then **append** provenance, license/redistribution information, and any required
@@ -87,7 +89,7 @@ result = HfApi().upload_folder(
     repo_id='search-swe/Search-SWE', repo_type='dataset',
     folder_path='/path/to/upload-staging',
     parent_commit=Path('/path/to/official-snapshot/BASE_SHA').read_text().strip(),
-    create_pr=True, commit_message='Add task-1-6 inputs and provenance',
+    create_pr=True, commit_message='Add example-search inputs and provenance',
 )
 print(result.pr_url)
 PY
@@ -106,4 +108,4 @@ replace a newer manifest with a stale one.
 GitHub task's `assets.json`. Verify downloads using a fresh output directory or
 cache and run release checks. Commit finalization and merge the GitHub PR last.
 No new task with unpublished/unpinned assets or an unfinished submission enters
-main. Existing tasks' old pins and assets remain valid.
+main. Preserve existing tasks' pinned revisions and published assets.

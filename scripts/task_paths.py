@@ -3,9 +3,10 @@
 from pathlib import Path
 import re
 
-SLUG = r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*"
-SUBMISSION = re.compile(rf"task-submissions/({SLUG})/([12])-x-([1-9][0-9]*)")
-FORMAL = re.compile(r"task-[12]-[1-9][0-9]*")
+# Keep this contract in sync with the two independently installable skill helpers.
+TASK_NAME = r"(?!all(?:/|$))(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
+FORMAL = re.compile(TASK_NAME)
+SUBMISSION = re.compile(rf"task-submissions/({TASK_NAME})")
 
 
 def safe_path(root, value):
@@ -32,8 +33,9 @@ def no_symlinks(path):
 def select_task(root, value):
     task = safe_path(root, value)
     rel = task.relative_to(root.resolve()).as_posix()
-    if not SUBMISSION.fullmatch(rel) and not re.fullmatch(r"tasks/task-[a-z0-9]+(?:-[a-z0-9]+)*", rel):
-        raise ValueError("--task-path must name tasks/<task-id> or task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>")
+    if not SUBMISSION.fullmatch(rel) and not re.fullmatch(rf"tasks/({TASK_NAME})", rel):
+        raise ValueError("--task-path must name tasks/<task-name> or task-submissions/<task-name>; "
+                         "use at most five lowercase hyphen-separated words, without a task- prefix")
     if not (task / "task.toml").is_file():
         raise ValueError(f"Missing task.toml: {rel}")
     no_symlinks(task)
@@ -41,6 +43,6 @@ def select_task(root, value):
 
 
 def task_key(root, task):
-    """Keep submission namespaces in output paths; equal temporary IDs cannot collide."""
+    """Keep submission outputs separate from formal task outputs."""
     rel = task.relative_to(root.resolve())
     return Path(*rel.parts[1:]) if rel.parts[0] == "tasks" else rel

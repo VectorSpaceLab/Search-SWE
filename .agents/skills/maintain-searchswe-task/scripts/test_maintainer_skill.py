@@ -104,18 +104,18 @@ class MaintainerSkill(unittest.TestCase):
         (self.repo / ".gitignore").write_text("__pycache__/\n*.py[cod]\n")
         (self.repo / "base.txt").write_text("base\n")
         self.git("add", "."); self.git("commit", "-qm", "base")
-        self.source = "task-submissions/alice/1-x-1"
+        self.source = "task-submissions/example-search"
         task = self.repo / self.source
         task.mkdir(parents=True)
-        (task / "task.toml").write_text('[task]\nname = "search-swe/task-1-x-1"\nauthors = ["Alice Example", "Bob Example"]\n')
-        (task / "instruction.md").write_text("# task-1-x-1\n\nOriginal contributor content\n")
+        (task / "task.toml").write_text('[task]\nname = "search-swe/example-search"\nauthors = ["Alice Example", "Bob Example"]\n')
+        (task / "instruction.md").write_text("# example-search\n\ntask-submissions/example-search\nOriginal contributor content\n")
         (task / "assets.json").write_text('{"schema_version":1,"files":[]}\n')
         self.git("add", ".")
         self.git("commit", "-qm", "Write submission", "--author", "Alice Example <alice@example.test>")
         return task
 
     def promote(self, phase, *extra):
-        return self.cli("promote_task.py", "--repo-root", self.repo, phase, self.source, "task-1-6", *extra)
+        return self.cli("promote_task.py", "--repo-root", self.repo, phase, self.source, "example-search", *extra)
 
     def test_capture_relocated_paginated_untrusted_and_read_only(self):
         # Dirty local content is untouched; dangerous PR text remains inert.
@@ -191,7 +191,7 @@ class MaintainerSkill(unittest.TestCase):
 
     def test_promotion_relocation_collision_history_and_authors(self):
         task = self.task()
-        target = self.repo / "tasks/task-1-6"
+        target = self.repo / "tasks/example-search"
         target.mkdir()
         self.assertNotEqual(self.promote("rename").returncode, 0)
         target.rmdir()
@@ -205,29 +205,46 @@ class MaintainerSkill(unittest.TestCase):
         result = self.promote("finalize")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('authors = ["Alice Example", "Bob Example"]', (target / "task.toml").read_text())
-        self.assertIn("search-swe/task-1-6", (target / "task.toml").read_text())
+        self.assertIn("search-swe/example-search", (target / "task.toml").read_text())
         self.git("add", "."); self.git("commit", "-qm", "Finalize")
-        self.assertIn("Alice Example", self.git("log", "--follow", "--format=%an", "--", "tasks/task-1-6/instruction.md"))
-        self.assertIn("author Alice Example", self.git("blame", "--line-porcelain", "tasks/task-1-6/instruction.md"))
+        self.assertIn("Alice Example", self.git("log", "--follow", "--format=%an", "--", "tasks/example-search/instruction.md"))
+        self.assertIn("author Alice Example", self.git("blame", "--line-porcelain", "tasks/example-search/instruction.md"))
         # Explicit target is mandatory even when cwd is a Search-SWE checkout.
         self.assertNotEqual(self.cli("promote_task.py", "rename", self.source, "task-1-9").returncode, 0)
 
     def staging(self):
-        target = self.repo / "tasks/task-1-6"
+        target = self.repo / "tasks/example-search"
         target.mkdir(parents=True)
-        (target / "task.toml").write_text('[task]\nname="search-swe/task-1-6"\nauthors=["Alice Example"]\n')
+        (target / "task.toml").write_text('[task]\nname="search-swe/example-search"\nauthors=["Alice Example"]\n')
         payload = b"licensed fixture data\n"
         entry = {"path": "data/corpus.txt", "size_bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest(),
                  "source": {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": None,
-                            "filename": "tasks/task-1-6/corpus.txt"}}
+                            "filename": "tasks/example-search/corpus.txt"}}
         (target / "assets.json").write_text(json.dumps({"schema_version": 1, "files": [entry]}))
         data = self.root / "new-data"
         file = data / entry["source"]["filename"]
         file.parent.mkdir(parents=True); file.write_bytes(payload)
-        old = {"path": "tasks/task-1-1/old.txt", "size_bytes": 99, "sha256": "b" * 64, "license": "preserve"}
+        old = {"path": "tasks/reasoning-query-rewriting/old.txt", "size_bytes": 99, "sha256": "b" * 64, "license": "preserve"}
         snapshot = self.root / "official.json"
         snapshot.write_text(json.dumps({"schema_version": 1, "files": [old], "extra": "preserve"}))
         return target, data, file, snapshot, old
+
+    def test_official_staging_rejects_submissions_and_nested_formal_paths(self):
+        target, data, _, snapshot, _ = self.staging()
+        submission = self.repo / "task-submissions/example-search"
+        submission.parent.mkdir()
+        target.rename(submission)
+        args = ("--repo-root", self.repo, "--official-manifest", snapshot,
+                "--new-data", data, "--output", self.out)
+        result = self.cli("prepare_hf_upload.py", *args, "--task-path", submission.relative_to(self.repo))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires tasks/<task-name>", result.stderr)
+        nested = self.repo / "nested/tasks/example-search"
+        nested.parent.mkdir(parents=True)
+        submission.rename(nested)
+        result = self.cli("prepare_hf_upload.py", *args, "--task-path", nested.relative_to(self.repo))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(self.out.exists())
 
     def test_incremental_staging_relocated_hashes_and_manifest_preservation(self):
         target, data, file, snapshot, old = self.staging()
@@ -239,7 +256,7 @@ class MaintainerSkill(unittest.TestCase):
         self.assertEqual(merged["files"][0], old)
         self.assertEqual(merged["extra"], "preserve")
         self.assertEqual({p.relative_to(self.out).as_posix() for p in self.out.rglob("*") if p.is_file()},
-                         {"manifest.json", "tasks/task-1-6/corpus.txt"})
+                         {"manifest.json", "tasks/example-search/corpus.txt"})
         self.assertNotEqual(self.cli("prepare_hf_upload.py", *args, "--output", self.out).returncode, 0)
         snapshot.write_text(json.dumps(merged))
         self.assertNotEqual(self.cli("prepare_hf_upload.py", *args, "--output", self.root / "collision").returncode, 0)
@@ -262,10 +279,10 @@ class MaintainerSkill(unittest.TestCase):
         def legacy(name, *args):
             return subprocess.run([sys.executable, str(scripts / name), *map(str, args)],
                                   cwd=self.root, capture_output=True, text=True)
-        self.assertEqual(legacy("promote_task.py", "rename", self.source, "task-1-6").returncode, 0)
+        self.assertEqual(legacy("promote_task.py", "rename", self.source, "example-search").returncode, 0)
         self.git("commit", "-qm", "Pure rename")
-        self.assertEqual(legacy("promote_task.py", "finalize", self.source, "task-1-6").returncode, 0)
-        shutil.rmtree(self.repo / "tasks/task-1-6")
+        self.assertEqual(legacy("promote_task.py", "finalize", self.source, "example-search").returncode, 0)
+        shutil.rmtree(self.repo / "tasks/example-search")
         target, data, file, snapshot, old = self.staging()
         result = legacy("prepare_hf_upload.py", "--task-path", target, "--official-manifest", snapshot,
                         "--new-data", data, "--output", self.out)
@@ -292,7 +309,7 @@ class MaintainerSkill(unittest.TestCase):
         snapshot.write_text(json.dumps({"schema_version": 1, "files": [old]}))
         self.assertNotEqual(self.cli("prepare_hf_upload.py", *args).returncode, 0)
         snapshot.write_text(json.dumps({"schema_version": 1, "files": []}))
-        outside = self.root / "task-1-6"
+        outside = self.root / "example-search"
         shutil.copytree(target, outside)
         result = self.cli("prepare_hf_upload.py", "--repo-root", self.repo, "--task-path", outside,
                           "--official-manifest", snapshot, "--new-data", data, "--output", self.out)

@@ -30,10 +30,8 @@ write and run code, test their systems, and iterate toward an executable
 submission. Evaluation measures the behavior of the resulting system, including
 retrieval quality, functional correctness, and resource use.
 
-| Mode | Agent objective | Example problems |
-| --- | --- | --- |
-| Implementation | Build a working search capability from a task specification. | Reasoning-assisted retrieval; memory-constrained vector search. |
-| Optimization | Improve search quality or efficiency within fixed constraints. | Long-document reranking; embedding fine-tuning; query-encoder optimization. |
+Tasks cover reasoning-assisted retrieval, memory-constrained vector search,
+long-document reranking, embedding fine-tuning, and query-encoder alignment.
 
 Each task specifies its inputs, submission interface, evaluation criteria, and
 resource budget. See the [benchmark design](docs/benchmark.md) for how
@@ -42,7 +40,7 @@ models come from.
 
 ## 🚀 Quick Start
 
-This walkthrough runs `task-1-1` on CPU with the Pi coding agent and DeepSeek
+This walkthrough runs `reasoning-query-rewriting` on CPU with the Pi coding agent and DeepSeek
 Flash. Search-SWE requires Python 3.12 or newer and Docker with the CPU, memory,
 storage, and optional GPU capacity of the task you select.
 
@@ -63,8 +61,8 @@ packages are installed inside Docker.
 ### 2. Restore the task inputs
 
 ```bash
-python scripts/download_assets.py --task task-1-1
-python scripts/download_assets.py --task task-1-1 --verify-only
+python scripts/download_assets.py --task reasoning-query-rewriting
+python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
 ```
 
 The downloader checks sizes and SHA-256 checksums and reuses valid files.
@@ -92,7 +90,7 @@ VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 `DEEPSEEK_API_KEY` authenticates the Pi agent for `deepseek/deepseek-flash`.
 The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash` trajectory judge
 through OpenRouter and RewardKit 0.2.0 and is required by every task except
-`task-2-4`. Use an OpenRouter key for `VERIFIER_OPENAI_API_KEY`; the Pi agent
+`agentic-search`. Use an OpenRouter key for `VERIFIER_OPENAI_API_KEY`; the Pi agent
 uses its separate DeepSeek key. The launcher passes verifier credentials only
 to the verifier container.
 
@@ -104,8 +102,8 @@ For other runs, fill only the matching sections already present in `.env`:
   Anthropic's official API by default.
 - OpenRouter Agent mode: `AGENT_OPENROUTER_API_KEY`, `--openrouter`, and a full
   `provider/model` slug with Codex or Claude Code.
-- Task 1-3: the three `ANSWER_JUDGE_*` values are also required.
-- Optional submission APIs: use `TASK_1_1_OPENROUTER_API_KEY`,
+- `scientific-paper-qa`: the three `ANSWER_JUDGE_*` values are also required.
+- Optional submission APIs: use `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY`,
   `OPENROUTER_API_KEY`, or `JINA_API_KEY` only for the tasks identified by the
   comments in `.env.example`.
 
@@ -118,17 +116,17 @@ custom endpoints, proxies, and the complete per-task matrix.
 ### 4. Run with Pi and DeepSeek Flash
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh --dry-run
 
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh \
-  --output jobs/task-1-1-pi-deepseek
+  --output jobs/reasoning-query-rewriting-pi-deepseek
 ```
 
 The dry run only prints the Harbor command. The second command builds the task
 images, runs the agent and the separate verifier, and writes the reward and job
-records under `jobs/task-1-1-pi-deepseek`.
+records under `jobs/reasoning-query-rewriting-pi-deepseek`.
 
 <details>
 <summary><strong>Alternative agent examples</strong></summary>
@@ -147,9 +145,9 @@ ZAI_API_KEY=YOUR_ZAI_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh \
-  --output jobs/task-1-1-pi-glm
+  --output jobs/reasoning-query-rewriting-pi-glm
 ```
 
 #### Codex and a GPT model
@@ -163,8 +161,8 @@ AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent codex \
-  --reasoning-effort xhigh --output jobs/task-1-1-codex
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex \
+  --reasoning-effort xhigh --output jobs/reasoning-query-rewriting-codex
 ```
 
 Omit `--reasoning-effort` when the selected model or provider does not support
@@ -181,8 +179,8 @@ AGENT_ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent claude-code \
-  --reasoning-effort high --output jobs/task-1-1-claude
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code \
+  --reasoning-effort high --output jobs/reasoning-query-rewriting-claude
 ```
 
 #### Codex or Claude Code through OpenRouter
@@ -196,13 +194,13 @@ AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
 Choose an Agent and pass its full OpenRouter model ID:
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
   --model openai/gpt-6-astra --reasoning-effort xhigh \
-  --output jobs/task-1-1-codex-openrouter
+  --output jobs/reasoning-query-rewriting-codex-openrouter
 
-bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
   --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
-  --output jobs/task-1-1-claude-openrouter
+  --output jobs/reasoning-query-rewriting-claude-openrouter
 ```
 
 Add `--dry-run` to either command to preview it before launching. The launcher
@@ -242,20 +240,23 @@ and [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)
 PR review and promotion. See the
 [contribution entry](CONTRIBUTING.md) and [guide](docs/contributing.md) for validation and PR requirements.
 
-New tasks use
-`task-submissions/<first-name-slug>/<category>-x-<positive-ordinal>` (your ASCII
-first name, **not** username). One PR may add multiple tasks, all under exactly
-one contributor namespace; temporary ordinals are unique within category and
-are not final IDs or reusable after promotion in that PR. A different same-name
-contributor explicitly chooses `alice-2`. Maintainers assign final IDs near
-merge, then make separate pure
-`git mv` and finalization commits for every task **in that same PR**. Use
-**merge commit only**, not squash/rebase; no unfinished submission enters main.
+Task authoring includes running a configured coding model, inspecting its
+trajectory and evaluation results, and using that feedback to refine the task
+setting. Revalidate any changes that affect the task or scoring and report the
+final tested revision. If required API keys are missing, the authoring agent
+asks the contributor to configure them locally before the trial.
+
+New tasks use `task-submissions/<task-name>`. Choose a descriptive name of at
+most five lowercase, hyphen-separated words; use that same name for the formal
+package and its official data. One PR may add multiple tasks. Maintainers
+promote each reviewed package to `tasks/<task-name>` in the same PR, with a
+separate pure move and finalization. Preserve original authors with a merge
+commit; no unfinished submission enters main.
+
 Development assets may use a personal public HF dataset pinned to a commit SHA.
-After final ID assignment, official assets go through an HF community PR or
-maintainer mirror; official HF merge and SHA pinning precede the GitHub merge.
-Never share official tokens. Explicit `--task-path` supports submission downloads
-and local trials; automatic task discovery remains formal-only.
+Publish official inputs under `tasks/<task-name>/`, then pin the merged official
+HF SHA before merging the GitHub contribution. Explicit `--task-path` supports
+submission downloads and local trials; `--task <task-name>` selects a formal task.
 
 ## Citation
 

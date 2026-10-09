@@ -3,24 +3,8 @@
 Read this reference before creating or changing a task package. Paths in code
 blocks and backticks are relative to the target Search-SWE repository root,
 unless they begin with `/` (container paths). The skill may be installed
-elsewhere. No external AGENTS.md or historical workspace is required.
-
-## Guidance distilled for this repository
-
-This guide consolidates four historical authoring notes (provenance only, not
-required reading or runtime dependencies):
-
-- the top-level Harbor task contract (`harbor/tasks/AGENTS.md`);
-- the Search-SWE task template and CPU/GPU split
-  (`harbor/tasks/_template/AGENTS.md`);
-- the external retrieval/LLM resource profiles
-  (`harbor/tasks/_resources/AGENTS.md`);
-- the shared-image build notes (`harbor/tasks/_docker/AGENTS.md`).
-
-The old workspace's proxy addresses, local image names, absolute paths, and
-dated machine observations are intentionally not copied here. They are not
-portable contributor requirements. In this repository, use the published image
-tags documented in `docker/README.md`.
+elsewhere. Use the target checkout's validators and the published image tags
+documented in `docker/README.md`.
 
 ## Use current formal tasks as bounded precedents
 
@@ -29,7 +13,7 @@ read-only. Select one or two closest **formal** packages for each proposed task;
 active `task-submissions/` packages are unreviewed work, not precedent. Prefer
 similarity in this order when it affects the design:
 
-1. Implementation versus Optimization and the evaluation/baseline shape;
+1. engineering objective and the evaluation/baseline shape;
 2. deterministic verifier versus model judge, plus artifact-transfer interface;
 3. external retrieval/LLM resources and network/credential boundaries;
 4. CPU/GPU execution and input/asset layout.
@@ -37,7 +21,7 @@ similarity in this order when it affects the design:
 Use repository search to shortlist candidates rather than reading every task:
 
 ```bash
-rg -n 'task_type|gpus|environment_mode' tasks -g task.toml
+rg -n 'objective|gpus|environment_mode' tasks -g task.toml
 ```
 
 For selected candidates, inspect `task.toml`, `raw-instruction.md` (if present),
@@ -49,12 +33,10 @@ APIs. Record the exact task paths, why they match, which structural patterns are
 being reused, and intentional differences. If no close analogue exists, record
 that and follow the current scaffold and contracts directly.
 
-An existing task proves only that a pattern was used before; it is not the
-source of truth and may predate current rules. The current skill, repository
-validators, Harbor schema, `docker/README.md`, and documented task contract win
-on conflict. Reuse structure and reviewed implementation patterns, not task-
-specific facts. Independently establish the new task's ID/authors, datasets and
-HF paths, hashes/pins, thresholds/baselines, provider/model allowlists, resource
+Use the current skill, repository validators, Harbor schema, `docker/README.md`,
+and documented task contract to resolve conflicts with reference packages.
+Reuse structure and reviewed implementation patterns. Independently establish
+the new task's name/authors, datasets and HF paths, hashes/pins, thresholds/baselines, provider/model allowlists, resource
 budgets, licenses/provenance, instructions, and hidden evaluation design. Do not
 copy a value merely to make the new package resemble its precedent.
 
@@ -64,8 +46,7 @@ A task must describe one independently buildable, repeatable, and objectively
 scorable agent job. Before editing files, settle the points that affect its
 design:
 
-- task ID and engineering mode: Implementation (`task_type = "create"`) or
-  Optimization (`task_type = "optimize"`);
+- descriptive task name, engineering objective and starting system or inputs;
 - exact submission interface and artifact paths;
 - primary metric, pass gates, baseline (when applicable), and timeout behavior;
 - public inputs versus verifier-only inputs, including provenance and license;
@@ -83,21 +64,19 @@ or access to a reference solution.
 
 ## Required package contract
 
-Create each new package at
-`task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>/`, with the exactly
-matching canonical ID (for example `task-1-x-1` or `task-2-x-1`) and actual
-`task.toml` authors. A PR may contain multiple tasks, but all use one supplied
-ASCII first-name namespace, not a username. Ordinals are temporary and unique
-within category in that PR/checkout, not final IDs. A different contributor
-with the same first name explicitly chooses `alice-2` (then `alice-3`); the
-scaffolder reuses an existing namespace rather than generating task-based suffixes.
-Formal `tasks/<task-id>/` paths below describe the layout after maintainer
-promotion in the same PR (pure rename commit, then finalization, merge commit
-only). Existing-task edits stay in place. Submission checks reuse
+Create each new package at `task-submissions/<task-name>/`, with
+`task.name = "search-swe/<task-name>"` and actual `task.toml` authors. Choose a
+concise descriptive name of at most five lowercase hyphen-separated words,
+starting with a letter and otherwise using letters/digits. Omit `task-`; `all`
+is reserved. Names must be unique across submissions and formal tasks.
+A PR may contain multiple tasks; never reuse a submission path in that PR.
+Promotion keeps the name at `tasks/<task-name>/` in the same PR: a pure rename
+commit, then any necessary finalization in a separate commit, and a merge commit
+only. Existing-task edits stay in place. Submission checks reuse
 `scripts/check_release.py`, which requires these non-empty files:
 
 ```text
-tasks/<task-id>/
+tasks/<task-name>/
 ├── instruction.md
 ├── task.toml
 ├── assets.json
@@ -113,7 +92,7 @@ tasks/<task-id>/
 Also provide the repository conventions that apply to the task:
 
 ```text
-├── raw-instruction.md            # Structured source for the scenario instruction
+├── raw-instruction.md            # Structured source for the natural-language request
 ├── .gitignore                    # Ignore /data/, /models/, Python caches
 ├── README.md                     # Author-facing overview and provenance
 ├── environment/
@@ -127,15 +106,13 @@ Also provide the repository conventions that apply to the task:
 ```
 
 Use `schema_version = "1.4"`. Set `task.name` to
-`search-swe/<task-id>`, give the task a version, and keep the objective,
+`search-swe/<task-name>`, give the task a version, and keep the objective,
 keywords, metadata, artifact paths, timeouts, network modes, and resource
 budgets mutually consistent. Follow the closest existing task for fields that
 are not explained by Harbor's schema, subject to the bounded-precedent rules
 above; do not copy its task-specific values.
-Search-SWE has exactly two engineering modes: Implementation maps to
-`metadata.task_type = "create"`, and Optimization maps to
-`metadata.task_type = "optimize"`. Do not introduce a Repair mode or another
-`task_type` without an explicit project-wide taxonomy change.
+When measuring improvement against a supplied starting system/model, document
+that baseline and the comparison criterion.
 
 Search-SWE release packages use a separate verifier:
 
@@ -251,7 +228,7 @@ both versions:
 Do not hide a correctness requirement only in the grader. Conversely, do not
 mention `solution/`, reveal hidden cases/labels, or tell the agent how reward is
 implemented. Keep the structured source outside agent mounts and Docker COPY
-paths; never point the scenario instruction to it as an easier alternate task.
+paths; never point the rewritten instruction to it as an easier alternate task.
 
 Keep `environment/docs/environment.md` synchronized with the actual base image,
 task additions, paths, CPU/GPU capability, and available commands. An

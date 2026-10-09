@@ -28,12 +28,12 @@ docker info
 
 ## 2. Restore one task
 
-Start with `task-1-1`, a CPU task with a small asset bundle. Do not download
+Start with `reasoning-query-rewriting`, a CPU task with a small asset bundle. Do not download
 every task for a first run:
 
 ```bash
-python scripts/download_assets.py --task task-1-1
-python scripts/download_assets.py --task task-1-1 --verify-only
+python scripts/download_assets.py --task reasoning-query-rewriting
+python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
 ```
 
 The second command verifies file sizes and SHA-256 checksums. See the
@@ -48,7 +48,7 @@ RewardKit-verifier sections used by this walkthrough:
 cp .env.example .env
 ```
 
-For `task-1-1`, fill in these two credential pairs:
+For `reasoning-query-rewriting`, fill in these two credential pairs:
 
 - `AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY` run the coding agent.
 - `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
@@ -58,7 +58,7 @@ For `task-1-1`, fill in these two credential pairs:
 Set `AGENT_MODEL` in `.env`, or pass `--model` on the command line. The verifier
 uses an OpenRouter key. Agent and verifier credentials remain separate groups,
 and only the verifier receives the `VERIFIER_*` values.
-`task-1-1` also permits OpenRouter and Jina as submission resources;
+`reasoning-query-rewriting` also permits OpenRouter and Jina as submission resources;
 their keys are optional and are not needed for an implementation that uses only
 the provided corpus and local runtime.
 
@@ -78,7 +78,7 @@ First inspect the Harbor command without starting containers or making API
 calls:
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --dry-run
+bash scripts/run_task.sh --task reasoning-query-rewriting --dry-run
 ```
 
 The preview checks command construction only; it does not validate credentials,
@@ -87,9 +87,9 @@ after those prerequisites are ready:
 
 ```bash
 bash scripts/run_task.sh \
-  --task task-1-1 \
+  --task reasoning-query-rewriting \
   --reasoning-effort high \
-  --output jobs/task-1-1-codex
+  --output jobs/reasoning-query-rewriting-codex
 ```
 
 Omit `--reasoning-effort` when the selected model or provider does not support

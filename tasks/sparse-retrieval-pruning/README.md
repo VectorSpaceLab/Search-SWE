@@ -1,0 +1,142 @@
+# Sparse Retrieval Pruning
+
+Optimize a sparse retrieval system while preserving strict quality requirements.
+
+**Task:** `sparse-retrieval-pruning` · **Metric:** Quality-gated linear latency reward
+
+## Overview
+
+Sparse retrieval efficiency depends on how terms, document identities, and
+posting lists fit together. A compact index is not useful if remapped terms
+point to the wrong postings, and aggressive pruning is not useful if it
+removes relevant results.
+
+The task packages one million MS MARCO documents as sets of opaque,
+unweighted term IDs derived from frozen sparse representations. It evaluates
+a Python implementation against the unpruned reference starter.
+The goal is to preserve strong retrieval quality while reducing total query
+wall time relative to that reference. Quality thresholds are hard gates;
+passing submissions receive a latency reward that decreases linearly between
+25% and 35% of starter wall time.
+
+## What This Task Tests
+
+- Building a bounded-memory inverted index over a large sparse corpus.
+- Keeping dictionaries, document mappings, and posting metadata consistent.
+- Reducing retrieval work without sacrificing required ranking quality.
+- Achieving speedups through Python data structures and algorithms rather than parallelism.
+
+## Task Setup
+
+### Provided Assets
+
+| Asset | Purpose |
+| --- | --- |
+| `data/corpus.jsonl` | One million documents represented by opaque term sets |
+| `data/validation/` | 200 public queries, qrels, statistics, and reference Top-100 results |
+| `environment/starter/` | Unpruned retrieval starter |
+| `environment/docs/index_format.md` | Starter dictionary, posting, and metadata layout |
+
+The verifier has 1,000 hidden queries, relevance labels, and reference data,
+isolated from the agent environment. It runs its own unpruned reference starter
+when measuring the runtime baseline.
+
+The public assets are pinned to an immutable dataset revision in
+[assets.json](assets.json). Downloading verifies file sizes and SHA-256 checksums.
+Their Hugging Face source paths are under `tasks/sparse-retrieval-pruning/`.
+
+### Fixed Components and Allowed Changes
+
+The corpus, executable interface, and quality/runtime requirements are fixed.
+The agent may replace the starter's index format or retrieval algorithm.
+All indexing, scoring, pruning, and ranking logic must remain Python source;
+thin Bash launch wrappers and normal use of preinstalled packages such as NumPy
+are allowed.
+
+The submission must be single-process and single-threaded. Native submission
+code, compiled submission executables, and parallel query execution are outside
+the task. The input is set-valued; readers should not assume that weighted
+encoder outputs or a retrainable transformer are supplied.
+
+### Environment and Resource Limits
+
+The CPU Python 3.12 environment has one CPU, 32 GiB memory, 80 GiB storage,
+and no GPU. The agent has two hours; the Harbor verifier has 80 minutes.
+The current execution wrapper caps the candidate build at 3,600 seconds and
+query run at 900 seconds. The starter-relative latency reward is measured
+within those bounds, and all verification stages share the overall phase budget.
+
+The formal build/search path requires no external service, credentials, or
+downloads. The private integrity judge's API access is a separate concern.
+
+## Submission Contract
+
+The transferred system includes `/app/build.sh` and `/app/run.sh`. The build
+creates all persistent state under the caller's index directory; the query
+entry point returns the required ranked Top-100 corpus documents.
+The verifier runs submission commands unprivileged with the submission tree
+read-only.
+
+The exact fields and CLI are in [instruction.md](instruction.md). The
+[index format guide](environment/docs/index_format.md) explains the starter,
+but that particular storage format is not a required output artifact.
+
+## Evaluation
+
+### Search Quality
+
+Quality is measured using mean NDCG@10 and qrels-based Recall@100. The current
+minimums are **0.89** and **0.99** respectively.
+
+### Correctness and Latency Reward
+
+The verifier measures the candidate and unpruned reference starter on the same
+workload and resource allocation. A latency ratio at or below **0.25** receives reward
+`1`; a ratio at or above **0.35** receives reward `0`; values strictly between
+those boundaries receive `(0.35 - ratio) / 0.10`. Successful build/run, valid
+outputs, and implementation restrictions remain hard requirements.
+
+### Integrity Checks and Final Reward
+
+If either quality threshold, output and execution checks, or the trajectory
+audit fails, final reward is `0`. Otherwise the final reward is the latency
+reward described above. The verifier measures reference wall time afresh for each run.
+The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
+verifier-only DeepSeek endpoint and key settings.
+
+## Running This Task
+
+From the repository root, follow the [quick start](../../docs/quickstart.md)
+to install the pinned Harbor dependencies and prepare Docker. Use the
+[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+task credential profile. The
+[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+
+Configure the verifier's integrity-judge credentials independently of the coding
+agent. The submission itself does not need task-resource API keys or a model
+download. The standard asset command restores the published corpus and
+validation files directly.
+
+```bash
+python scripts/download_assets.py --task sparse-retrieval-pruning
+bash scripts/run_task.sh --task sparse-retrieval-pruning --model "YOUR_AGENT_MODEL"
+```
+
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and
+writes results under `jobs/sparse-retrieval-pruning/`.
+Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+command construction without starting an evaluation; this does not validate
+assets, credentials, or hardware.
+
+## Task Files
+
+| File or directory | What to read it for |
+| --- | --- |
+| [instruction.md](instruction.md) | Complete agent-facing specification and executable contract |
+| [task.toml](task.toml) | Task identity, artifact collection, and phase budgets |
+| [assets.json](assets.json) | Fixed asset paths, immutable revisions, and checksums |
+| [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
+| [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
+| [Verifier](tests/) | Execution, output validation, and scoring implementation |
+| [Index format guide](environment/docs/index_format.md) | Starter layout and consistency relationships |
+| [Resource policy](environment/docs/available_resources.md) | Python dependency and execution restrictions |

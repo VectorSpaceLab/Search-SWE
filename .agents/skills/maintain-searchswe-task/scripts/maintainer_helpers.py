@@ -12,9 +12,9 @@ import shutil
 import subprocess
 import tomllib
 
-SLUG = r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*"
-SUBMISSION = re.compile(rf"task-submissions/({SLUG})/([12])-x-([1-9][0-9]*)")
-FORMAL = re.compile(r"task-[12]-[1-9][0-9]*")
+TASK_NAME = r"(?!all(?:/|$))(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
+SUBMISSION = re.compile(rf"task-submissions/({TASK_NAME})")
+FORMAL = re.compile(TASK_NAME)
 
 def safe_path(root, value):
     """Accept a canonical repo-relative path, never symlinks (even internal ones)."""
@@ -78,18 +78,17 @@ def read_manifest(task):
 def git(repo, *args):
     return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True).stdout
 
-def promote(repo, source, target_id, phase, dry_run=False):
+def promote(repo, source, target_name, phase, dry_run=False):
     repo = checked_path(repo)
     if phase not in ("rename", "finalize"):
         raise ValueError("Unknown promotion phase")
     match = SUBMISSION.fullmatch(source)
-    if not match or not FORMAL.fullmatch(target_id):
-        raise ValueError("Use task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal> and task-<1|2>-<positive-number>")
-    if target_id.split("-")[1] != match[2]:
-        raise ValueError("Task category mismatch")
+    if not match or not FORMAL.fullmatch(target_name):
+        raise ValueError("Use task-submissions/<task-name> and the same task-name (at most five lowercase words)")
+    if target_name != match[1]:
+        raise ValueError("Promotion preserves the task name; rename the submission before promotion")
     src = safe_path(repo, source)
-    target = safe_path(repo, f"tasks/{target_id}")
-    old_id = f"task-{match[2]}-x-{match[3]}"
+    target = safe_path(repo, f"tasks/{target_name}")
     if git(repo, "status", "--porcelain"):
         raise ValueError("Promotion requires a clean worktree and index; commit reviewed work first")
     if phase == "rename":
@@ -97,12 +96,12 @@ def promote(repo, source, target_id, phase, dry_run=False):
             raise ValueError("Source must exist and target must not exist; refusing overwrite")
         no_symlinks(src)
         config = tomllib.loads((src / "task.toml").read_text())
-        if config.get("task", {}).get("name") != f"search-swe/{old_id}":
-            raise ValueError("Source temporary task name does not match category")
-        print(f"git mv {source} tasks/{target_id}")
+        if config.get("task", {}).get("name") != f"search-swe/{target_name}":
+            raise ValueError("Source task name does not match its directory")
+        print(f"git mv {source} tasks/{target_name}")
         if not dry_run:
             target.parent.mkdir(exist_ok=True)
-            git(repo, "mv", "--", source, f"tasks/{target_id}")
+            git(repo, "mv", "--", source, f"tasks/{target_name}")
         print("STOP: review and commit ONLY this pure rename; then run finalize with the same source and target.")
         return
     if src.exists() or not target.is_dir():
@@ -117,30 +116,28 @@ def promote(repo, source, target_id, phase, dry_run=False):
     for index in range(0, len(fields), 3):
         chunk = fields[index:index + 3]
         if (len(chunk) != 3 or chunk[0] != "R100" or not chunk[1].startswith(source + "/")
-                or chunk[2] != f"tasks/{target_id}/" + chunk[1][len(source) + 1:]):
+                or chunk[2] != f"tasks/{target_name}/" + chunk[1][len(source) + 1:]):
             raise ValueError("HEAD must contain only 100% identical source-to-target renames")
         renamed.add(chunk[2])
-    tracked = set(filter(None, git(repo, "ls-files", "-z", "--", f"tasks/{target_id}").split("\0")))
+    tracked = set(filter(None, git(repo, "ls-files", "-z", "--", f"tasks/{target_name}").split("\0")))
     if not tracked or renamed != tracked:
         raise ValueError("Pure rename commit must include every tracked package file")
     config = tomllib.loads((target / "task.toml").read_text())
-    if config.get("task", {}).get("name") != f"search-swe/{old_id}":
-        raise ValueError("Expected the unchanged temporary task name after rename")
+    if config.get("task", {}).get("name") != f"search-swe/{target_name}":
+        raise ValueError("Expected the same task name after promotion")
     changes = []
     text_suffixes = {".md", ".toml", ".json", ".yaml", ".yml", ".sh", ".py", ".txt", ".cfg", ".ini"}
     for name in sorted(tracked):
         path = repo / name
-        if old_id in path.relative_to(target).as_posix():
-            raise ValueError(f"Manual filename review required: {name}")
         raw = path.read_bytes()
-        if old_id.encode() not in raw and source.encode() not in raw:
+        if source.encode() not in raw:
             continue
         if path.suffix not in text_suffixes and path.name not in ("Dockerfile", ".gitignore", ".dockerignore"):
             raise ValueError(f"Manual review required for nonstandard text file: {name}")
         text = raw.decode("utf-8")
-        updated = text.replace(source, f"tasks/{target_id}").replace(old_id, target_id)
-        if old_id in updated or source in updated:
-            raise ValueError(f"Temporary reference remains: {name}")
+        updated = re.sub(re.escape(source) + r"(?![a-z0-9-])", f"tasks/{target_name}", text)
+        if re.search(re.escape(source) + r"(?![a-z0-9-])", updated):
+            raise ValueError(f"Submission reference remains: {name}")
         changes.append((path, updated))
         for number, (before, after) in enumerate(zip(text.splitlines(), updated.splitlines()), 1):
             if before != after:
@@ -148,7 +145,7 @@ def promote(repo, source, target_id, phase, dry_run=False):
     if not dry_run:
         for path, updated in changes:
             path.write_text(updated)
-    print("Temporary package references remaining after planned changes: 0.")
+    print("Submission package references remaining after planned changes: 0.")
     print("Review every change, external asset paths/images and repository task inventories. "
           "Publish approved assets, pin the official SHA, validate, then commit finalization in this SAME PR.")
 
@@ -167,8 +164,8 @@ def prepare(snapshot, task, data, output):
         no_symlinks(tree)
     if output.exists():
         raise ValueError("Upload output must not exist; refusing overwrite")
-    if not FORMAL.fullmatch(task.name):
-        raise ValueError("Assign the final task ID before preparing official publication")
+    if task.parent.name != "tasks" or not FORMAL.fullmatch(task.name):
+        raise ValueError("Promote to tasks/<task-name> before preparing official publication")
     config = tomllib.loads((task / "task.toml").read_text())
     if config.get("task", {}).get("name") != f"search-swe/{task.name}":
         raise ValueError("Finalize task.toml before preparing official publication")
@@ -221,13 +218,13 @@ def promotion_main(default_repo=None):
     parser = argparse.ArgumentParser(description="Two-phase offline promotion; never commits or publishes")
     parser.add_argument("phase", choices=("rename", "finalize"))
     parser.add_argument("source")
-    parser.add_argument("target_id")
+    parser.add_argument("target_name")
     parser.add_argument("--repo-root", type=Path, default=default_repo, required=default_repo is None)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     try:
         repo = checked_path(args.repo_root)
-        promote(repo, args.source, args.target_id, args.phase, args.dry_run)
+        promote(repo, args.source, args.target_name, args.phase, args.dry_run)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.error(str(error))
     return 0
@@ -249,6 +246,9 @@ def upload_main(legacy=False):
             task = checked_path(repo / task)
             if not task.is_relative_to(repo):
                 raise ValueError("Task must be inside --repo-root")
+            relative = task.relative_to(repo)
+            if len(relative.parts) != 2 or relative.parts[0] != "tasks":
+                raise ValueError("Official publication requires tasks/<task-name> under --repo-root")
         count = prepare(args.official_manifest, task, args.new_data, args.output)
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
