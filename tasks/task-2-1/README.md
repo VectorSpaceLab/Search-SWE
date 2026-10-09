@@ -129,7 +129,7 @@ assets, credentials, or hardware.
 
 ## Instruction source
 
-`raw-instruction.md` preserves the original structured instruction. The scenario
+`raw-instruction.md` preserves the original structured instruction. The request
 in `instruction.md` corrects its `/tast/model/bge-reranker-large` path typo to
 the actual read-only mount `/task/models/bge-reranker-large`; the fixed model
 and all candidate/model restrictions are unchanged.

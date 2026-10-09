@@ -28,7 +28,7 @@ for an authorized remote inspection or PR handoff, not local task authoring.
   assumptions were inherited without independent evidence.
 - Review `raw-instruction.md` against `instruction.md` using
   [instruction-rewrite.md](instruction-rewrite.md). Account for every source
-  condition in the scenario and trace graded conditions to the verifier.
+  condition in the request and trace graded conditions to the verifier.
   Confirm the running agent only receives the rewritten instruction. Public
   limits must not exist only in hidden tests.
 - Parse `task.toml` and `assets.json`; verify unique identity, correct mode,

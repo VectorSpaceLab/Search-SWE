@@ -78,7 +78,7 @@ Check all of the following, not just a directory name or reward:
   trials completed, and zero errored/running/pending trials.
 - Trial logs, agent exit, artifact collection and the separate verifier agree
   with that terminal state. The transcript actually uses the selected model,
-  effort and scenario prompt.
+  effort and reviewed instruction.
 - Required judges ultimately returned valid, parseable decisions, with no
   unresolved authentication, transport, rate-limit, parse or answer-judging
   errors. Record recovered internal retries separately from full trial attempts.

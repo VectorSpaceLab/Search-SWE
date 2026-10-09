@@ -41,10 +41,10 @@ class RelocatedSkill(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     task = self.repo / "tasks" / name
                     raw = (task / "raw-instruction.md").read_text()
-                    scenario = (task / "instruction.md").read_text()
+                    instruction = (task / "instruction.md").read_text()
                     self.assertTrue(raw.strip())
-                    self.assertTrue(scenario.strip())
-                    self.assertNotEqual(raw, scenario)
+                    self.assertTrue(instruction.strip())
+                    self.assertNotEqual(raw, instruction)
                     config = tomllib.loads((task / "task.toml").read_text())
                     self.assertEqual(config["metadata"]["task_type"], kind)
                     self.assertEqual(config["environment"]["gpus"], gpus)

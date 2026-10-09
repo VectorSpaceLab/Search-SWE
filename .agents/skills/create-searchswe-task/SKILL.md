@@ -5,7 +5,7 @@ description: Create or substantially revise Search-SWE task packages with CPU/GP
 
 # Create a Search-SWE Task
 
-Deliver a reproducible task whose structured source, scenario instruction,
+Deliver a reproducible task whose structured source, natural-language request,
 environment, submission interface, and grading agree. Validate the setting
 with an actual configured coding-model run as well as grader checks. This skill
 contains its authoring guidance and helpers; no outer AGENTS.md, other skill, or historical Harbor workspace is
@@ -112,10 +112,12 @@ Follow the detailed rules in `references/task-authoring.md`:
 1. Define the submission interface and grader behavior in `raw-instruction.md`.
    Preserve an existing structured instruction there before rewriting. Follow
    [references/instruction-rewrite.md](references/instruction-rewrite.md) to write
-   the agent-facing `instruction.md`: a named person in a concrete physical
-   setting asking their coding agent for help in long, natural prose. Preserve
-   every condition and exact interface; do not reveal hidden answers. Audit the
-   two documents for semantic equivalence before running a model.
+   the agent-facing `instruction.md`: a direct user request in connected prose
+   describing the task, current data and starting system, available resources,
+   constraints, acceptance criteria and optimization objective. Omit
+   self-introductions, invented identities and fictional scenes. Preserve every
+   condition and exact interface; do not reveal hidden answers. Audit the two
+   documents for semantic equivalence before running a model.
 2. When adding fixed data/models or external services, read
    [references/assets-and-resources.md](references/assets-and-resources.md).
    Build exact manifests and read-only phase-specific mounts. Keep hidden inputs,
@@ -137,7 +139,7 @@ diagnosis; retry after a relevant fix, not in an unbounded loop.
 
 After local package, asset and grader checks, follow
 [references/model-evaluation.md](references/model-evaluation.md). Run the final
-scenario instruction with the configured coding model and any required judges;
+rewritten instruction with the configured coding model and any required judges;
 inspect its trajectory, artifacts, grader result and judge health to validate
 the task setting. An infrastructure failure does not measure difficulty, and
 one low-scoring model run does not establish that a task is impossible.
@@ -152,7 +154,7 @@ asking again. Ordinary local checks may proceed.
 
 Report the task path, mode/hardware, commands actually executed and their
 results, formal reference tasks consulted (or that none was close), intentional
-reuse/deviations, the raw-to-scenario equivalence review, known-good/negative-case
+reuse/deviations, the source-to-request equivalence review, known-good/negative-case
 evidence, the exact evaluated revision/model/effort, observed scores and judge
 health, and every unrun validation layer.
 Never equate a scaffold, a dry-run, or a static release check with a solvable

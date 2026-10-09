@@ -28,8 +28,11 @@ root unless expressed as Markdown links.
    contributors' changes. Ask about uncertainties that affect task design or
    authorization, not information already supplied by the user.
 2. For task contributions, let the skill drive design → structured source →
-   scenario rewrite → grader checks → configured model evaluation. Preserve `raw-instruction.md` and audit all its conditions
-   in the agent-facing `instruction.md`; the skill defines both gates.
+   user-request rewrite → grader checks → configured model evaluation. Preserve
+   `raw-instruction.md` and audit all its conditions in the agent-facing
+   `instruction.md`. Describe the task, available inputs, resource constraints,
+   acceptance criteria and optimization objective directly, without invented
+   requester identities or narrative scenes; the skill defines both gates.
    Before scaffolding, inspect one or two closest reviewed packages under
    `tasks/` as read-only structural precedents, selected by mode, grading shape,
    resources and hardware. Current repository contracts and validators override

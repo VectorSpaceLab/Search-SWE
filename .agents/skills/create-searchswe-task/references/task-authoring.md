@@ -113,7 +113,7 @@ tasks/<task-id>/
 Also provide the repository conventions that apply to the task:
 
 ```text
-├── raw-instruction.md            # Structured source for the scenario instruction
+├── raw-instruction.md            # Structured source for the natural-language request
 ├── .gitignore                    # Ignore /data/, /models/, Python caches
 ├── README.md                     # Author-facing overview and provenance
 ├── environment/
@@ -251,7 +251,7 @@ both versions:
 Do not hide a correctness requirement only in the grader. Conversely, do not
 mention `solution/`, reveal hidden cases/labels, or tell the agent how reward is
 implemented. Keep the structured source outside agent mounts and Docker COPY
-paths; never point the scenario instruction to it as an easier alternate task.
+paths; never point the rewritten instruction to it as an easier alternate task.
 
 Keep `environment/docs/environment.md` synchronized with the actual base image,
 task additions, paths, CPU/GPU capability, and available commands. An
