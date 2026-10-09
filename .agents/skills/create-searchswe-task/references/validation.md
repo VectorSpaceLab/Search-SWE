@@ -26,8 +26,11 @@ for an authorized remote inspection or PR handoff, not local task authoring.
   meaningful deviations; current contracts override legacy behavior. Check that
   no task-specific IDs, data/pins, thresholds, allowlists, licenses or resource
   assumptions were inherited without independent evidence.
-- Compare each instruction requirement to an observable verifier check and a
-  public self-test. Public limits must not exist only in hidden tests.
+- Review `raw-instruction.md` against `instruction.md` using
+  [instruction-rewrite.md](instruction-rewrite.md). Account for every source
+  condition in the scenario and trace graded conditions to the verifier.
+  Confirm the running agent only receives the rewritten instruction. Public
+  limits must not exist only in hidden tests.
 - Parse `task.toml` and `assets.json`; verify unique identity, correct mode,
   separate verifier, artifact paths, and all five CPU/GPU configuration points.
 - Review all scaffold prose, budgets and empty files. An empty `files` manifest
@@ -116,27 +119,12 @@ directory without approval. Alternatively use a separately prepared correct
 submission through the same verifier interface. Optimization scores need not
 equal one: compare to the agreed baseline/gates and explain the expected result.
 
-For a coding-agent trial, first preview (no containers or API calls):
-
-```bash
-bash scripts/run_task.sh --task-path "$task_path" --agent codex \
-  --model MODEL_ID --dry-run
-```
-
-Use a real configured model ID. The Codex launcher needs
-`AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY`. A judge, if used, has its own
-`VERIFIER_OPENAI_BASE_URL`/`VERIFIER_OPENAI_API_KEY`; task APIs are additional
-resources, not those agent credentials. Pi's supported model/provider mapping
-is version-specific in `scripts/run_task.py`. Export values or use an ignored
-local `.env`; never commit them. The launcher does not support `--agent oracle`.
-
-After prerequisites and authorization are satisfied, remove `--dry-run` and
-set a fresh `--output jobs/alice-1-x-1-validation-1`. The launcher uses one attempt
-and no retries; its output directory is a jobs root, not a resume target.
-Inspect the trial's actual reward, verifier logs, artifacts and setup failures.
-After a failure, record the command and cause, make a relevant correction, then
-rerun within the agreed budget. Stop on persistent infrastructure/permission
-blockers rather than repeatedly consuming APIs or GPUs.
+The configured coding-model trial is a required validation layer, separate
+from known-good and negative-case grading. Follow
+[model-evaluation.md](model-evaluation.md) for configuration, a small judge
+probe, launch, bounded retries, completion checks and interpretation. If the
+required run cannot be executed, hand off the missing evidence explicitly;
+do not present static checks or Oracle results as that model run.
 
 ## Handoff
 

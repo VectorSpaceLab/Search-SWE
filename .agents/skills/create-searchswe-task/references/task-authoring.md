@@ -40,7 +40,8 @@ Use repository search to shortlist candidates rather than reading every task:
 rg -n 'task_type|gpus|environment_mode' tasks -g task.toml
 ```
 
-For selected candidates, inspect `task.toml`, `instruction.md`, `assets.json`,
+For selected candidates, inspect `task.toml`, `raw-instruction.md` (if present),
+`instruction.md`, `assets.json`,
 both Docker/Compose definitions, environment/resource docs, and the verifier
 entrypoint relevant to the comparison. This discovery is source inspection,
 not permission to execute an existing task, download its assets, or use its
@@ -112,6 +113,7 @@ tasks/<task-id>/
 Also provide the repository conventions that apply to the task:
 
 ```text
+├── raw-instruction.md            # Structured source for the scenario instruction
 ├── .gitignore                    # Ignore /data/, /models/, Python caches
 ├── README.md                     # Author-facing overview and provenance
 ├── environment/
@@ -230,7 +232,10 @@ other secrets there.
 
 ## Instructions and visible resources
 
-`instruction.md` is the agent's complete contract. State:
+`raw-instruction.md` is the structured authoring source; `instruction.md` is
+the complete agent-facing contract rewritten as a realistic request. Follow
+[instruction-rewrite.md](instruction-rewrite.md) and preserve these facts in
+both versions:
 
 - the goal and current starter state;
 - absolute input/output paths and file formats;
@@ -245,7 +250,8 @@ other secrets there.
 
 Do not hide a correctness requirement only in the grader. Conversely, do not
 mention `solution/`, reveal hidden cases/labels, or tell the agent how reward is
-implemented.
+implemented. Keep the structured source outside agent mounts and Docker COPY
+paths; never point the scenario instruction to it as an easier alternate task.
 
 Keep `environment/docs/environment.md` synchronized with the actual base image,
 task additions, paths, CPU/GPU capability, and available commands. An

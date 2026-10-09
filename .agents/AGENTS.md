@@ -27,7 +27,9 @@ root unless expressed as Markdown links.
 1. Inspect the worktree and agree on the requested deliverable. Preserve other
    contributors' changes. Ask about uncertainties that affect task design or
    authorization, not information already supplied by the user.
-2. For task contributions, let the skill drive design → authoring → validation.
+2. For task contributions, let the skill drive design → structured source →
+   scenario rewrite → grader checks → configured model evaluation. Preserve `raw-instruction.md` and audit all its conditions
+   in the agent-facing `instruction.md`; the skill defines both gates.
    Before scaffolding, inspect one or two closest reviewed packages under
    `tasks/` as read-only structural precedents, selected by mode, grading shape,
    resources and hardware. Current repository contracts and validators override
@@ -48,6 +50,10 @@ root unless expressed as Markdown links.
 4. Review the resulting diff and validation evidence. Hand off changed paths,
    task mode/hardware, commands actually run, observed results, and blockers.
    Static checks alone are not evidence of a working end-to-end benchmark.
+   Include the exact instruction revision, model/effort, trajectory, score and
+   judge health from the configured-model validation. Reuse session-authorized
+   runs and credentials; do not repeat successful runs just because results
+   were moved or a monitoring pane still looks active.
 
 Agents are not guaranteed to auto-load an `AGENTS.md` located under `.agents/`
 when editing `tasks/`. Open this entry point explicitly or invoke the skill;

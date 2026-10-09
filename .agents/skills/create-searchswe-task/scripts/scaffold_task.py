@@ -90,7 +90,7 @@ def files_for(task_id: str, hardware: str, mode: str) -> dict[str, str]:
             {"schema_version": 1, "files": []}, indent=2
         )
         + "\n",
-        "instruction.md": clean(
+        "raw-instruction.md": clean(
             f"""
             # Task: {task_id}
 
@@ -126,6 +126,16 @@ def files_for(task_id: str, hardware: str, mode: str) -> dict[str, str]:
             Summarize covered scenarios without revealing hidden inputs,
             labels or reference outputs. State public performance gates in
             Requirements instead of hiding them from the agent.
+            """
+        ),
+        "instruction.md": clean(
+            f"""
+            Replace this scaffold for {task_id} after completing raw-instruction.md.
+            Write a long natural-language request from a named person in a real
+            physical setting to their coding agent. Use prose paragraphs without
+            headings, lists, tables, or fenced blocks. Preserve every source
+            condition and exact interface; follow references/instruction-rewrite.md
+            in the authoring skill and remove this author-only prompt before use.
             """
         ),
         "task.toml": clean(
