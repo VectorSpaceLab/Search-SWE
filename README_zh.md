@@ -27,17 +27,15 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 智能体需要检查环境、编写并运行代码、测试系统，最终提交可执行的实现。评测关注
 系统的实际表现，包括检索质量、功能正确性和资源消耗。
 
-| 模式 | 智能体目标 | 示例问题 |
-| --- | --- | --- |
-| 实现 | 根据任务说明构建可运行的搜索能力。 | 推理辅助检索、内存受限的向量搜索。 |
-| 优化 | 在固定约束下提升搜索质量或效率。 | 长文档重排序、嵌入模型微调、查询编码器优化。 |
+任务涵盖推理辅助检索、内存受限的向量搜索、长文档重排序、嵌入模型微调和
+查询编码器对齐等问题。
 
 每个任务都明确规定输入、提交接口、评测标准和资源预算。评测方式、仓库结构和
 固定数据与模型的来源见[基准设计](docs/benchmark.md)。
 
 ## 🚀 快速开始
 
-下面的示例在 CPU 上使用 Pi 编码智能体和 DeepSeek Flash 跑通 `task-1-1`。
+下面的示例在 CPU 上使用 Pi 编码智能体和 DeepSeek Flash 跑通 `reasoning-query-rewriting`。
 Search-SWE 需要 Python 3.12 或更新版本，以及满足所选任务 CPU、内存、存储和
 可选 GPU 要求的 Docker。
 
@@ -57,8 +55,8 @@ Docker 镜像内。
 ### 2. 恢复任务资源
 
 ```bash
-python scripts/download_assets.py --task task-1-1
-python scripts/download_assets.py --task task-1-1 --verify-only
+python scripts/download_assets.py --task reasoning-query-rewriting
+python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
 ```
 
 下载器会核对文件大小和 SHA-256，并复用已通过校验的文件。
@@ -83,7 +81,7 @@ VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
 `DEEPSEEK_API_KEY` 用于 `deepseek/deepseek-flash` 的 Pi 智能体认证；`VERIFIER_*`
-通过 RewardKit 0.2.0 和 OpenRouter 运行固定为 `deepseek/deepseek-v4.1-flash` 的独立轨迹评审，除 `task-2-4`
+通过 RewardKit 0.2.0 和 OpenRouter 运行固定为 `deepseek/deepseek-v4.1-flash` 的独立轨迹评审，除 `agentic-search`
 外的所有任务都需要。`VERIFIER_OPENAI_API_KEY` 使用 OpenRouter 密钥，Pi 智能体
 使用独立的 DeepSeek 密钥；启动器只把 verifier 凭据传进 verifier 容器。
 
@@ -96,9 +94,9 @@ VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
   默认使用 Anthropic 官方 API。
 - OpenRouter Agent 模式：设置 `AGENT_OPENROUTER_API_KEY`，并为 Codex 或
   Claude Code 指定 `--openrouter` 和完整的 `provider/model` 模型 ID。
-- Task 1-3：还必须填写三个 `ANSWER_JUDGE_*` 变量。
+- `scientific-paper-qa`：还必须填写三个 `ANSWER_JUDGE_*` 变量。
 - 可选 submission API：只在 `.env.example` 注释所列任务确实使用时，填写
-  `TASK_1_1_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
+  `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
 
 需要代理时，按[网络配置](docs/network-policy.md)设置 `.env` 的 `EGRESS_CONFIG`，否则留空。
 
@@ -108,16 +106,16 @@ VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ### 4. 使用 Pi 和 DeepSeek Flash 运行
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh --dry-run
 
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh \
-  --output jobs/task-1-1-pi-deepseek
+  --output jobs/reasoning-query-rewriting-pi-deepseek
 ```
 
 dry-run 只打印 Harbor 命令、不启动容器。第二条命令会构建任务镜像、运行智能体
-和独立验证器，并把 reward 与任务记录写入 `jobs/task-1-1-pi-deepseek`。
+和独立验证器，并把 reward 与任务记录写入 `jobs/reasoning-query-rewriting-pi-deepseek`。
 
 <details>
 <summary><strong>其他智能体示例</strong></summary>
@@ -136,9 +134,9 @@ ZAI_API_KEY=YOUR_ZAI_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent pi \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
   --thinking xhigh \
-  --output jobs/task-1-1-pi-glm
+  --output jobs/reasoning-query-rewriting-pi-glm
 ```
 
 #### Codex 和 GPT 模型
@@ -152,8 +150,8 @@ AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent codex \
-  --reasoning-effort xhigh --output jobs/task-1-1-codex
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex \
+  --reasoning-effort xhigh --output jobs/reasoning-query-rewriting-codex
 ```
 
 如果所选模型或服务不支持推理强度，请省略 `--reasoning-effort`。
@@ -169,8 +167,8 @@ AGENT_ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY
 ```
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent claude-code \
-  --reasoning-effort high --output jobs/task-1-1-claude
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code \
+  --reasoning-effort high --output jobs/reasoning-query-rewriting-claude
 ```
 
 #### 通过 OpenRouter 运行 Codex 或 Claude Code
@@ -184,13 +182,13 @@ AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
 选择 Agent，并传入完整的 OpenRouter 模型 ID：
 
 ```bash
-bash scripts/run_task.sh --task task-1-1 --agent codex --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
   --model openai/gpt-6-astra --reasoning-effort xhigh \
-  --output jobs/task-1-1-codex-openrouter
+  --output jobs/reasoning-query-rewriting-codex-openrouter
 
-bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
   --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
-  --output jobs/task-1-1-claude-openrouter
+  --output jobs/reasoning-query-rewriting-claude-openrouter
 ```
 
 可以先为命令加上 `--dry-run` 预览。启动器已配置 OpenRouter 的 API 地址；
@@ -226,19 +224,18 @@ bash scripts/run_task.sh --task task-1-1 --agent claude-code --openrouter \
 [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)（PR 审查与正式化）。验证要求和
 PR 说明见[贡献入口](CONTRIBUTING.md)与[贡献指南](docs/contributing.md)。
 
-新任务放在
-`task-submissions/<first-name-slug>/<category>-x-<positive-ordinal>`：使用贡献者提供的
-ASCII 小写 first name，**不是用户名**。一个 PR 可以新增多个任务，但必须全部位于
-同一个贡献者 namespace；临时 ordinal 在该 PR/checkout 的同一 category 内唯一，
-并非正式编号，且在该 PR 内正式化后不得复用。另一位同名贡献者须显式选择
-`alice-2`。Maintainer 在即将合并时为
-每个任务分配正式编号，并在**同一 PR**内分别提交纯 `git mv` commit 和
-finalization commit；所有任务正式化后才能合并。新任务必须使用 **merge commit**，
-不使用 squash/rebase；未完成的 submission 不进入 main。
-开发资产可使用个人公开的临时 HF dataset，并固定到 commit SHA。正式编号确定后，
-通过 HF community PR 或 maintainer mirror 发布官方资产；先合并官方 HF 变更、
-固定官方 SHA，再合并 GitHub PR。禁止共享官方 token。下载器和 launcher 支持显式
-`--task-path` 验证 submission，自动任务发现仍只包含正式任务。
+任务构建还包括使用配置好的编码模型试跑，检查执行轨迹和评测结果，并根据反馈
+完善任务设定。影响任务要求或评分的修改需要重新验证，并记录最终测试的版本。
+如果缺少必需的 API key，负责构建任务的智能体应在试跑前提醒贡献者在本地配置。
+
+新任务放在 `task-submissions/<task-name>`。名称使用不超过五个词的小写连字符
+短语，正式任务与官方数据使用同一名称。一个 PR 可以包含多个任务；维护者在
+同一个 PR 中逐一晋升到 `tasks/<task-name>`，将纯目录移动和后续整理分开提交。
+使用 merge commit 保留原作者历史，未完成晋升的任务不进入 main。
+
+开发数据可以来自固定到 commit SHA 的个人公开 HF 数据集。官方输入发布到
+`tasks/<task-name>/` 后，先固定官方已合并的 HF SHA，再合并 GitHub 贡献。
+使用 `--task-path` 显式下载、试跑待审任务；正式任务通过 `--task <task-name>` 选择。
 
 ## 引用
 

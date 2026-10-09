@@ -52,7 +52,7 @@ Explicit config requires `image` and cannot be combined with image, DNS or gener
 container-proxy overrides. Do not add the proxy to task allowlists.
 
 The proxy must be reachable **from Docker**; host `127.0.0.1` is not the host
-inside a container. There is no fixed VPN product/port or automatic discovery.
+inside a container. Set the proxy URL explicitly in `upstream.url`.
 SOCKS-only and TUN-only endpoints are not supported by this configuration.
 For a hostname URL such as `https://proxy.example:8443`, also set
 `upstream.address` to its reachable IPv4 address. Certificates are validated
@@ -121,18 +121,18 @@ access.
 
 | Task | Task/runtime requirement | `[environment]` baseline | Effective agent phase | Verifier phase |
 | --- | --- | --- | --- | --- |
-| `task-1-1` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
-| `task-1-2` | Fully local vector retrieval | no network | model host only | `openrouter.ai` only |
-| `task-1-3` | OpenRouter/Jina RAG resources | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com`; OpenRouter serves the trajectory judge; the separate answer judge may use either allowed provider |
-| `task-1-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
-| `task-2-1` | Fixed local reranker only | no network | model host only | `openrouter.ai` only |
-| `task-2-2` | Explicitly offline training | no network | model host only | `openrouter.ai` only |
-| `task-2-3` |  OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
-| `task-2-4` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts only; no model judge |
-| `task-2-5` | Formal build/search is offline | no network | model host only | `openrouter.ai` only |
+| `reasoning-query-rewriting` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
+| `memory-constrained-dense-retrieval` | Fully local vector retrieval | no network | model host only | `openrouter.ai` only |
+| `scientific-paper-qa` | OpenRouter/Jina RAG resources | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts + `api.deepseek.com`; OpenRouter serves the trajectory judge; the separate answer judge may use either allowed provider |
+| `long-pdf-evidence` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
+| `long-document-reranking` | Fixed local reranker only | no network | model host only | `openrouter.ai` only |
+| `code-embedding-finetuning` | Explicitly offline training | no network | model host only | `openrouter.ai` only |
+| `query-encoder-alignment` |  OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts (OpenRouter also serves the trajectory judge) |
+| `agentic-search` | OpenRouter/Jina resources only | allowlist: `openrouter.ai`, `api.jina.ai` | task hosts + model host | task hosts only; no model judge |
+| `sparse-retrieval-pruning` | Formal build/search is offline | no network | model host only | `openrouter.ai` only |
 
 Allowing the judge endpoint does not expose verifier credentials to submitted
-commands. Task 1-3 similarly removes both judge credential groups before
+commands. `scientific-paper-qa` similarly removes both judge credential groups before
 running submission code. Submission API keys are injected only for tasks whose
 resource policy permits those APIs.
 
@@ -142,7 +142,7 @@ The repository launcher derives and supplies the coding-model host. When
 invoking Harbor directly on a non-public task, add the matching hostname:
 
 ```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_ID \
+PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
   --env scripts.harbor_environments:PhaseScopedDocker \
   --agent scripts.harbor_agents:PreinstalledCodex --model MODEL_ID \
   --ak version=0.157.1 \
@@ -153,7 +153,7 @@ For the supported official-Anthropic Claude Code mode, use the pinned wrapper,
 an environment reference rather than a literal secret, and the fixed host:
 
 ```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_ID \
+PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
   --env scripts.harbor_environments:PhaseScopedDocker \
   --agent scripts.harbor_agents:PreinstalledClaudeCode \
   --model ANTHROPIC_MODEL_ID \
@@ -170,7 +170,7 @@ the supported configuration.
 These commands use the default direct gateway image and pull it if missing locally.
 To select another matching image, add `--environment-kwarg egress_image=YOUR_IMAGE`. Manually using
 `--env docker` selects installed Harbor and does not receive this checkout's
-capability removal or old-connection revocation fixes.
+capability restrictions or connection revocation when policies change.
 
 Do not use `--allow-environment-host` for a coding-model endpoint: that changes
 the environment baseline rather than only the agent phase. Do not add package

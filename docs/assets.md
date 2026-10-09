@@ -13,7 +13,7 @@ python -m pip install -r scripts/requirements.txt
 Download all fixed inputs for one task:
 
 ```bash
-python scripts/download_assets.py --task task-2-1
+python scripts/download_assets.py --task long-document-reranking
 ```
 
 Download data or models separately:
@@ -24,7 +24,7 @@ python scripts/download_models.py --task all
 ```
 
 The model command uses the same downloader with `--kind models` by default.
-It selects model entries from each task's `assets.json`. Multiple task IDs may
+It selects model entries from each task's `assets.json`. Multiple task names may
 be passed after `--task`.
 
 Preview the selected files, sources, and total size:
@@ -38,28 +38,28 @@ Hugging Face cache; the downloader copies cached files into the task directories
 
 ## New-task submissions
 
-Contributors can validate before final numbering with an explicit package:
+Contributors can validate before promotion with an explicit package:
 
 ```bash
-python scripts/download_assets.py --task-path task-submissions/alice/1-x-1 --dry-run
-python scripts/download_assets.py --task-path task-submissions/alice/1-x-1
-python scripts/download_assets.py --task-path task-submissions/alice/1-x-1 --verify-only
-python scripts/run_task.py --task-path task-submissions/alice/1-x-1 \
+python scripts/download_assets.py --task-path task-submissions/example-search --dry-run
+python scripts/download_assets.py --task-path task-submissions/example-search
+python scripts/download_assets.py --task-path task-submissions/example-search --verify-only
+python scripts/run_task.py --task-path task-submissions/example-search \
   --agent pi --model deepseek/deepseek-flash --dry-run
 ```
 
-`--task all` stays formal-only. Paths must be canonical repository-relative
+`--task all` selects all formal tasks. Paths must be canonical repository-relative
 paths without traversal or symlinks. An alternate `--output-dir` preserves the
-submission namespace; launcher jobs default to `jobs/task-submissions/alice/1-x-1`
-to avoid collisions between contributors sharing a temporary task ID.
+submission path; launcher jobs default to `jobs/task-submissions/example-search`.
+Each submission has a unique task name.
 
 For development, use a personal public temporary dataset with a manifest,
-provenance/license and pinned immutable SHA. After final numbering, use the
+provenance/license and pinned immutable SHA. After promotion, use the
 [contribution publication workflow](contributing.md#asset-contribution-and-publication):
 `prepare_hf_upload.py` stages only new verified files plus a merged current
-manifest without downloading the full old inventory. Update HF SOURCES and
-license metadata, preserve all old assets, and submit an HF community PR
-(`create_pr=True`) or request a maintainer mirror. Never share official tokens.
+manifest. Supply the current manifest and the new data files. Update HF SOURCES
+and license metadata, preserve existing published assets, and submit an HF
+community PR (`create_pr=True`) or request a maintainer mirror. Never share official tokens.
 Official HF merge precedes final `assets.json` SHA pinning and GitHub merge.
 
 ## Directory layout
@@ -67,7 +67,7 @@ Official HF merge precedes final `assets.json` SHA pinning and GitHub merge.
 Downloads are restored relative to the task root:
 
 ```text
-tasks/<task-id>/
+tasks/<task-name>/
 ├── instruction.md
 ├── task.toml
 ├── assets.json           # Asset paths, sources, sizes, and checksums
@@ -83,7 +83,7 @@ tasks/<task-id>/
 and `tests/` keeps large assets out of Harbor's build contexts and content hashes.
 Their contents are verified separately against `assets.json`.
 
-Task 1-4 restores one shared PDF to `data/corpus/` and public queries and labels
+`long-pdf-evidence` restores one shared PDF to `data/corpus/` and public queries and labels
 to `data/validation/`. Both environments use the same PDF; only the Agent mounts
 public validation. Hidden questions and relevance labels stay in `tests/data/`.
 
@@ -115,7 +115,7 @@ If you maintain a local `hf-data` copy, you can restore task assets from it
 without network access:
 
 ```bash
-python scripts/download_assets.py --task task-1-3 task-1-4 task-2-4 \
+python scripts/download_assets.py --task scientific-paper-qa long-pdf-evidence agentic-search \
   --local-data-dir ../hf-data
 python scripts/check_release.py --hf-data ../hf-data --verify-data
 ```
@@ -150,7 +150,7 @@ python scripts/download_assets.py --task all --verify-only
 If an existing file differs, the downloader reports an error. To replace it:
 
 ```bash
-python scripts/download_assets.py --task task-2-1 --force
+python scripts/download_assets.py --task long-document-reranking --force
 ```
 
 `--cache-dir /path/to/cache` selects the Hugging Face cache. `--local-files-only`

@@ -1,10 +1,9 @@
 # Benchmark design
 
-This document holds the benchmark details that do not belong on the landing
-page: how tasks are evaluated, how the repository is organized, and where fixed
-data and model inputs come from. For setup and execution, start with the
-[quick start guide](quickstart.md) and the [evaluation guide](evaluation.md).
-The task modes and a one-paragraph summary live in the
+This document explains how tasks are evaluated, how the repository is organized,
+and where fixed data and model inputs come from. For setup and execution, start
+with the [quick start guide](quickstart.md) and the [evaluation guide](evaluation.md).
+A summary of the engineering objectives lives in the
 [project README](../README.md).
 
 ## Evaluation
@@ -37,13 +36,15 @@ Search-SWE/
 ├── assets/                       # Hero image used by the README
 ├── docker/                       # Reproducible CPU and GPU base-image contexts
 ├── tasks/
-│   ├── <task-id>/                # Task package
+│   ├── <task-name>/              # Task package
 │   │   ├── instruction.md        # Agent-facing task specification
 │   │   ├── task.toml             # Task and environment configuration
 │   │   ├── assets.json           # Fixed input file sizes and checksums
 │   │   ├── environment/          # Dockerfile, starter code, and environment docs
 │   │   └── tests/                # Verifier and grading code
 │   └── ...                       # Additional task packages
+├── task-submissions/             # New task packages before same-PR promotion
+│   └── <task-name>/              # Same name retained under tasks/ after review
 ├── scripts/
 │   ├── requirements.txt          # Host-side launcher and asset dependencies
 │   ├── download_assets.py        # Download and verify fixed data/model inputs
@@ -62,7 +63,7 @@ Pretrained weights are downloaded from their original model repositories.
 
 Each task's `assets.json` records its fixed input files, sizes, SHA-256
 checksums, and download sources. Runtime data belongs in
-`tasks/<task-id>/data/` and fixed models in `tasks/<task-id>/models/`; these
+`tasks/<task-name>/data/` and fixed models in `tasks/<task-name>/models/`; these
 directories are excluded from Git. Dataset and model revisions are pinned to
 immutable commits. See the [asset guide](assets.md) for the directory layout,
 downloads, and local restoration options.
