@@ -1,39 +1,29 @@
 # Submission, branch and PR handoff
 
-Choose `task-1-x-<positive-ordinal>` with `--mode implementation`
-(`metadata.task_type = "create"`) or `task-2-x-<positive-ordinal>` with
-`--mode optimization` (`"optimize"`). Hardware is independent. The canonical
-ID exactly matches the temporary directory with the `task-` prefix.
+Choose a descriptive task name of at most five lowercase hyphen-separated words,
+starting with a letter and otherwise using letters/digits. Omit `task-`; `all`
+is reserved. Choose GPU only when execution requires it.
 
 ## Local work first
 
-Resolve the target checkout explicitly and inspect `git status --short`, current
-branch, remotes and base before editing. Preserve dirty work and other authors'
-commits; never reset, stash or switch their branch to make your task easier.
-Agree on local branch/commit scope before changing history. New submissions use
-`task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>`, with exactly
-matching canonical IDs such as `task-1-x-1`/`task-2-x-1`, not usernames or
-guessed formal numbers. A scaffold is a deliberately failing starting point,
-not a finished task. One PR may add multiple tasks, but all must use exactly one
-contributor namespace; ordinals are temporary, category-local, and unique in
-that PR/checkout, not final IDs. Do not reuse a temporary path after promoting
-its earlier task in the same PR; the base-history CI check rejects reuse and
-new formal tasks with no submission history.
+Resolve the target checkout explicitly and inspect status, branch, remotes and
+base. Preserve other authors' work and commits; never reset, stash or switch
+their branch to simplify your task. Agree on branch/commit scope before changing
+history. New packages use `task-submissions/<task-name>` and canonical
+`task.name = "search-swe/<task-name>"`. Check formal tasks, submissions and active
+PRs for collisions. A PR may add multiple unique names, but cannot reuse a
+submission path. Direct new formal additions without submission history fail CI.
+A scaffold is a deliberately failing starting point, not a finished task.
 
-Set `task.toml` authors to the actual author(s). Keep the contributor's original
-commits and Git name/email (account-linked or GitHub noreply); do not change
-identity configuration on their behalf. Co-authored-by trailers can supplement
-this, not replace actual authors or original commits. An ASCII first-name slug
-is only a temporary namespace and is reused for all tasks in that PR. Check
-authorized read-only PR listings for another contributor with the same first
-name and explicitly choose `alice-2`, `alice-3`, etc. if needed; the scaffolder
-does not generate those suffixes from task collisions.
+Set actual `task.toml` authors. Preserve original commits and account-linked Git
+name/email; do not change identity configuration on their behalf. Co-authored-by
+trailers supplement these records.
 
-In an approved clean checkout, a local branch could be created with
-`git switch -c add-alice-implementation`. Inspect the selected base and branch
-name first; do not reuse an existing branch blindly. Local work permission does
-not imply permission to commit, fork, push, publish datasets/images, open a PR,
-post comments/reviews, change credentials or repository configuration.
+In an approved clean checkout, a local branch could use
+`git switch -c add-example-search`. Inspect the base and branch name first.
+Local work permission does not itself authorize commits, forks, pushes, dataset
+publication, PR creation/comments or remote configuration; reuse any explicit
+session authorization already supplied.
 
 ## Authorized GitHub handoff
 
@@ -77,38 +67,33 @@ A review-stage CI pass can still contain unfinished submissions. Missing,
 pending or failed checks are not acceptance. Separately authorize code execution,
 API/GPU costs and any credentialed runtime tests.
 
-Near merge, the maintainer serially assigns each task's next free category
-number from the current base and queued PRs. The contributor must not guess or
-reserve final numbers.
-Update the PR to the current base without flattening the author's history.
-Using the target checkout's offline `scripts/promote_task.py` (missing tools
-are a prerequisite blocker), from a clean worktree/index:
+Near merge, refresh the base and check name collisions with queued PRs. Preserve
+original author history. Use the target checkout's offline promotion helper
+from a clean worktree/index; missing tools are a prerequisite blocker:
 
 ```bash
-# FINAL_ID is assigned by the maintainer, never inferred from this example.
-python scripts/promote_task.py rename task-submissions/alice/1-x-1 FINAL_ID --dry-run
-python scripts/promote_task.py rename task-submissions/alice/1-x-1 FINAL_ID
+python scripts/promote_task.py rename task-submissions/example-search example-search --dry-run
+python scripts/promote_task.py rename task-submissions/example-search example-search
 # Review and, only when authorized, commit this pure git mv alone.
-python scripts/promote_task.py finalize task-submissions/alice/1-x-1 FINAL_ID --dry-run
-python scripts/promote_task.py finalize task-submissions/alice/1-x-1 FINAL_ID
+python scripts/promote_task.py finalize task-submissions/example-search example-search --dry-run
+python scripts/promote_task.py finalize task-submissions/example-search example-search
 ```
 
-Repeat this pair of commands and separate commits independently for every task.
-Finalize requires HEAD to be that task's separate, 100%-identical pure rename
-commit of the whole package. Helpers never commit or publish. Review all replacements, image
-and external paths, task inventories and authors. Complete the bundled
-[publication workflow](publication.md): personal pinned development assets →
-new official final-ID paths via HF community PR or authorized maintainer mirror
-→ official merge → pin official SHA (not the community PR SHA). Preserve model
-pins. Then validate every final package with release checks, full applicable tests
-and `python scripts/check_submission.py --merge-ready`; no submission task.toml
-may remain. HF migration is per task. Commit each finalization separately in
-**the same PR** when authorized.
+Repeat independently for each task. The name stays unchanged. Finalize requires
+HEAD to be that task's single-parent, whole-package, 100%-identical pure rename
+commit. It rewrites submission paths in tracked text; it never commits or
+publishes. Review replacements, mounts, image/external paths, inventories and
+authors. Follow [publication](publication.md): personal pinned development data
+→ official `tasks/<task-name>/...` paths through a community PR or authorized
+mirror → official merge → pin that official SHA. Preserve original model pins.
 
-Maintainers re-review each head change, recheck the base/ID and exact head before
-an authorized **merge commit**; no squash/rebase, admin bypass or unfinished
-submission on main. Keep original author commits. Verify the resulting merged
-SHA/tree and `git log --follow -- tasks/FINAL_ID/instruction.md` and
-`git blame tasks/FINAL_ID/instruction.md` for history/attribution. Report the PR,
-final ID, official asset SHA, checks and any outstanding blockers rather than
-claiming a merge that was not observed.
+Run release and applicable tests plus `python scripts/check_submission.py
+--merge-ready`; no submission task.toml may remain. Commit any reference, asset
+or integration finalization separately in this same PR. Do not create an empty
+commit if no finalization changes are needed.
+
+Re-review each changed head, recheck base/name collisions and exact head before
+an authorized **merge commit**. No squash/rebase or unfinished submissions on
+main. Verify the resulting SHA/tree and attribution using
+`git log --follow -- tasks/example-search/instruction.md` and `git blame`.
+Report observed outcomes, task names, official asset SHAs and remaining blockers.

@@ -24,6 +24,24 @@ passing literal secrets in command arguments. Do not alter a shared `.env`
 just to run one revised task: use an ignored run-specific env file or process
 overrides. Restrict it to its owner and remove temporary secret copies afterward.
 
+Check only whether required variables are configured; never display their
+values. Determine the required groups from the selected agent/provider, task
+and judges, using the target checkout's `.env.example`, `docs/evaluation.md`
+and task configuration. Optional task APIs need keys only when used. If keys
+are missing, explicitly remind the contributor to configure them and provide:
+
+- The exact missing variable names and the model, task API or judge each serves.
+- The local configuration location: the checkout's ignored `.env`, a supported
+  run-specific env file, or process environment. Give placeholders only; preserve
+  an existing `.env` instead of overwriting it with the template.
+- A request to confirm when local configuration is ready, without sharing key
+  values in chat, a PR or logs.
+
+Wait for configuration before the dependent probe/trial, then recheck presence
+and authentication without exposing secrets. Continue independent package and
+grader checks while waiting. Missing credentials are an unmet prerequisite,
+not model failure or permission to skip required validation.
+
 When changing a judge provider/model, first exercise the actual pinned judge
 backend on a small fixture or an archived trajectory in a disposable verifier.
 Check authentication, full model ID, Responses/tool support, structured result,
@@ -61,7 +79,9 @@ Keep a concurrency cap appropriate to API and hardware limits; start with one
 validation trial, and ordinarily no more than two while validating a new setup.
 A 429 calls for lower concurrency/backoff, not a wider launch wave. Honor any
 user-specified attempt cap; otherwise allow at most three infrastructure attempts
-and stop after the first valid completed trial. Do not retry a valid low score.
+per unchanged validation revision and stop after its first valid completed trial.
+Do not retry a valid low score. Revisions below remain subject to the overall
+authorized trial/cost budget; a task edit does not reset a user-specified cap.
 
 Poll the specific live process/container and logs. Long indexing, training or
 verification can produce little output. An unchanged result file or observer
@@ -101,6 +121,29 @@ Report the exact observed score and limitations of this sample. Cost fields
 that are null are unknown, not zero; token-based estimates and provider billing
 must be distinguished, including judge and failed-attempt costs when available.
 
+## Use feedback to refine the setting
+
+For each valid trial, record what the trajectory and evaluation reveal about
+the task. Distinguish solver mistakes from task-setting defects such as an
+ambiguous interface, unavailable inputs, contradictory resource limits or an
+incorrect verifier. Use concrete evidence to revise the affected instructions,
+environment, budgets or grader. Keep `raw-instruction.md`, `instruction.md`,
+resource docs and scoring consistent with the revised contract.
+
+Preserve the intended engineering objective and held-out evaluation. Do not
+lower thresholds just to turn a valid low score into a pass, tailor the task
+to one model's solution, or expose hidden answers in the prompt. If the run
+supports the current setting, record why no change is needed.
+
+After a substantive revision, rerun affected package/grader checks and then
+the configured model whenever its task or scoring changed. Use a fresh output
+directory and record the revised hashes, observations and rationale so evidence
+is tied to the final setting. Cosmetic edits or moving completed results do
+not require another model run. Stop when the setting is supported by the
+checks and a valid interpreted trial, or the agreed budget or a prerequisite
+blocks further validation. In the latter case, identify the untested changes
+and missing evidence; do not present an earlier trial as validation of them.
+
 ## Archive and hand off
 
 Read the destination's `AGENTS.md` before interpreting or moving results. Move
@@ -112,6 +155,7 @@ once they have no work; do not stop unrelated user processes.
 
 Hand off the exact command (without secrets), revision/hashes, run and trajectory
 paths, completion and judge status, scores/gate outcomes, resource observations,
-cost availability, attempt count and any task changes motivated by the run.
+cost availability, attempt count and any task changes motivated by the run
+(or why none were needed), with validation evidence for the final setting.
 Keep unperformed or invalid layers explicit. Do not claim the task validated
 until the required model run and its interpretation are supported by evidence.

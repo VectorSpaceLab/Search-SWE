@@ -1,61 +1,55 @@
 # Same-PR promotion and closed-loop merge
 
-## Assign and rename, preserving authors
+## Preserve the task name and authors
 
 Complete the audit and resolve allowed branch editing first. A PR may contain
-multiple tasks only under exactly one contributor first-name namespace. Keep all
-of them in the same PR throughout. Near merge, refresh the exact upstream
-base/head and serialize each ID assignment with other queued PRs: inspect
-`tasks/` on the current base, choose the next free positive number in the same
-category, and recheck immediately before merge. Temporary category-local
-ordinals are not final IDs. Never infer a number from examples or reserve it
-long-term. Update
-against the current base without rebasing away original contributor commits.
-If base/head moves, re-review/revalidate affected work; a collision blocks merge.
+multiple uniquely named tasks under `task-submissions/<task-name>`. Names use at
+most five lowercase hyphen-separated words, start with a letter, omit `task-`
+and cannot be `all`. Keep all tasks in the same PR. Refresh the upstream base
+and head, inspect formal task names and queued PRs for collisions, and update
+against the base without flattening contributor history. A changed base/head
+requires renewed review and validation.
 
-Use a clean disposable worktree and index at the reviewed PR head. Set `REPO` to
-that checkout (not the user's dirty checkout), `SKILL_DIR` to this installed
-folder, and `FINAL_ID` to the actually assigned ID. Bundled helpers require
-Python 3.12+, Git for promotion, and explicit `--repo-root`; no target Python
-imports or sibling skill. They never commit, push, publish or allocate an ID.
+Use a clean disposable checkout at the reviewed head. Set `REPO` to that checkout
+and `SKILL_DIR` to this installed folder. Helpers require Python 3.12+, Git and
+explicit `--repo-root`; they have no target Python imports or sibling-skill
+dependency. They never commit, push or publish. Promotion keeps the task name:
 
 ```bash
 python "$SKILL_DIR/scripts/promote_task.py" --repo-root "$REPO" \
-  rename task-submissions/alice/1-x-1 "$FINAL_ID" --dry-run
+  rename task-submissions/example-search example-search --dry-run
 python "$SKILL_DIR/scripts/promote_task.py" --repo-root "$REPO" \
-  rename task-submissions/alice/1-x-1 "$FINAL_ID"
+  rename task-submissions/example-search example-search
 git -C "$REPO" diff --cached --summary
 ```
 
-Repeat rename and finalize independently for every task, using separate commits;
-a rename for one task must not include another. Rename performs **only `git mv`**
-and refuses dirty worktrees, collisions, traversal, symlinks and category
-mismatches. Review the staged diff: every package
-file must be R100 identical, with no incidental changes. Stop for the operator's
-explicitly authorized separate pure-rename commit; never auto-commit. Retain the
-contributor's existing commits/authors; use the maintainer's real identity for
-maintainer changes, not forged author flags or global identity changes.
+Repeat independently for each task; a rename commit contains exactly one whole
+package move. Rename performs only `git mv` and refuses dirty worktrees,
+collisions, traversal, symlinks and a target name different from the submission.
+Review all staged files as R100 identical, with no incidental edits. The operator
+creates the separately authorized pure rename commit. Preserve original author
+commits and use real maintainer identity for maintainer changes.
 
 ```bash
-# Only after the operator creates that separate pure-rename HEAD commit:
+# After the operator creates that separate pure-rename HEAD commit:
 python "$SKILL_DIR/scripts/promote_task.py" --repo-root "$REPO" \
-  finalize task-submissions/alice/1-x-1 "$FINAL_ID" --dry-run
+  finalize task-submissions/example-search example-search --dry-run
 python "$SKILL_DIR/scripts/promote_task.py" --repo-root "$REPO" \
-  finalize task-submissions/alice/1-x-1 "$FINAL_ID"
+  finalize task-submissions/example-search example-search
 ```
 
-Finalize requires the entire package to have moved in a single-parent pure-rename
-HEAD commit. It changes temporary IDs/submission paths in tracked text only;
-it refuses nonstandard binary/filename rewrites. Review all replacements,
-relative mounts, image/URL paths and author fields manually. Update task lists,
-docs and explicit GPU test inventories only as needed. It does not edit downloaded
-data or assign source licenses. Collision/unsupported reference means stop and
-coordinate another reviewed rename/finalization, not overwrite or flatten history.
+Finalize requires a single-parent, whole-package, pure rename HEAD commit.
+It changes submission paths in tracked text only, preserving the task name and
+canonical identity. It refuses unsupported binary rewrites. Review replacements,
+relative mounts, image/URL paths and authors. Update task lists, docs and GPU
+test inventories as needed. It does not edit downloaded data or assign licenses.
+Resolve collisions before promotion; never overwrite another task or flatten
+history. Keep all finalization edits separate from the pure rename commit.
 
 ## Assets and finalization commit
 
 Read [publication.md](publication.md). Prepare only the new official files under
-`tasks/<final-id>/...` using the bundled HF helper; preserve old manifest entries,
+`tasks/<task-name>/...` using the bundled HF helper; preserve existing manifest entries,
 model pins, provenance/license metadata. Its hash checks are offline and do not
 prove remote freshness or grant upload permission. Official publication and HF
 PR merge each require authorization. Merge official HF changes **first**, then
@@ -65,9 +59,9 @@ PR SHA or mutable `main`. Verify clean downloads at that pin.
 Run the audited target tools and relevant runtime layers, with approvals:
 `check_release.py`, `check_submission.py --merge-ready`, full scripts/tests,
 scaffold regression tests if changed, task-specific cases and `git diff --check`.
-HF migration is per task. Confirm no submission `task.toml` or temporary
+HF migration is per task. Confirm no submission `task.toml` or submission-path
 references remain for any task. Review and let the authorized operator create
-each separate finalization commit in **the same PR**. Helpers do not commit. Before an authorized push, verify remote head still
+each needed finalization commit in **the same PR**; no empty commit is required. Helpers do not commit. Before an authorized push, verify remote head still
 matches the reviewed starting head, branch/permissions and intended commits;
 use a normal push, not force. Any new head requires fresh review/check evidence.
 
@@ -91,7 +85,7 @@ resolved conversations, `review-stage`, `merge-ready` and other configured check
 must pass for that exact head and current base. Missing/pending checks block.
 If protections/merge queue prevent the specified method, stop, do not bypass.
 
-After explicit merge authorization and fresh head/base/ID checks:
+After explicit merge authorization and fresh head/base/name checks:
 
 ```bash
 gh pr merge PR --repo OWNER/REPO --merge --match-head-commit FULL_REVIEWED_HEAD_SHA
@@ -111,11 +105,11 @@ Close the loop after the command, rather than treating exit zero as proof:
    object has two parents, the accepted PR head is its second parent, the reviewed
    base is its first parent, and original author commits are ancestors. Unexpected
    parent/base/tree changes require investigation, not a success claim.
-3. Inspect the merged tree for `tasks/<final-id>/task.toml`, actual authors, final
-   official pins, no submission package/temporary references and intended files.
+3. Inspect the merged tree for `tasks/<task-name>/task.toml`, actual authors, final
+   official pins, no submission package/submission-path references and intended files.
    Compare it with the reviewed final tree (account for reviewed base integration).
-4. Check `git log --follow -- tasks/<final-id>/instruction.md` and
-   `git blame tasks/<final-id>/instruction.md` at the merge SHA. Original unmodified
+4. Check `git log --follow -- tasks/<task-name>/instruction.md` and
+   `git blame tasks/<task-name>/instruction.md` at the merge SHA. Original unmodified
    lines should retain contributor attribution. GitHub's latest file author and
    contributor statistics are not substitutes; stats also depend on linked email.
 5. Report repo/PR, reviewed head/base, merge SHA, final path, official HF SHA,

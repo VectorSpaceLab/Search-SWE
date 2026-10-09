@@ -6,18 +6,20 @@ the task root. Harbor receives `instruction.md`.
 
 ## Preserve the source
 
-For an existing task, first copy the original instruction byte for byte to
-`raw-instruction.md`; record its Git revision or hash. For a new task, write the
-structured specification there first. Keep the source organized enough to
-review paths, interfaces, outputs, limits, scoring and restrictions precisely.
-For later task changes, update the source deliberately and regenerate the
-request; never silently change a requirement during a stylistic rewrite.
+Use `raw-instruction.md` as the structured authoring source. For a new task,
+write that specification first. For an existing task, preserve its structured
+source and record the Git revision or hash before editing. If the structured
+source is missing, save the existing instruction byte for byte there before
+organizing the specification. Keep the source organized enough to review paths,
+interfaces, outputs, limits, scoring and restrictions precisely. For task
+changes, update the source deliberately and regenerate the request; never
+silently change a requirement during a stylistic rewrite.
 
 Read the actual environment, resource documents and verifier before rewriting.
 If the source conflicts with them, record the discrepancy and resolve the
 contract explicitly. A typo correction is a semantic change to disclose, not
-an opportunity to hide a new requirement in narrative. Keep an original source
-snapshot when migrating existing tasks.
+an opportunity to hide a new requirement in narrative. Retain the source revision
+used for the rewrite so changes can be reviewed.
 
 ## Write the request
 

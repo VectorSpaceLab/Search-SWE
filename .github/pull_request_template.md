@@ -1,30 +1,31 @@
 ## Summary
 
-Submission paths (new tasks): `task-submissions/<first-name-slug>/<1|2>-x-<positive-ordinal>`
-Category / Implementation or Optimization / CPU or GPU:
+Task name(s) and submission path(s): `task-submissions/<task-name>`
+Goal, starting system, and CPU/GPU requirements:
 Authors and coauthors:
 
 ## Validation evidence
 
-List commands, actual results, and links to task-specific known-good/negative-case
+List commands, actual results, and task-specific known-good/negative-case
 results. List unrun checks and why (data, GPU, credentials, paid APIs).
+For task contributions, include the coding-model trial's model/effort, trajectory,
+scores and judge health; explain task-setting changes motivated by that feedback
+(or why none were needed) and identify the final evaluated revision.
 
 ## Contributor checklist
 
-- [ ] All new tasks use exactly one contributor first-name namespace; temporary ordinals are category-unique and never reused after promotion; no direct formal additions or guessed final IDs.
-- [ ] Actual authors in `task.toml`; commit email associated with my GitHub account.
-- [ ] Allow edits from maintainers; promotion stays in this same PR.
+- [ ] New tasks use unique descriptive names of at most five lowercase hyphen-separated words and follow `task-submissions/<task-name>`; each path identifies one task throughout this PR.
+- [ ] Actual authors in `task.toml`; original author commits preserved.
+- [ ] Allow edits from maintainers, or agree on contributor-performed promotion in this PR.
 - [ ] No secrets, downloaded inputs/models, job outputs, or author-only solutions.
-- [ ] Static package/submission checks and applicable runtime checks recorded.
-- [ ] Asset provenance, redistribution rights, licenses and pinned development SHA documented.
+- [ ] Static checks and applicable runtime evidence recorded.
+- [ ] Provenance, redistribution rights, licenses and immutable development asset SHA documented.
 
-## Maintainer merge checklist (new tasks)
+## Maintainer merge checklist
 
-- [ ] Design, verifier isolation and runtime evidence reviewed; exceptions explicitly approved.
-- [ ] Updated to latest main; every final number assigned serially without collision.
-- [ ] Separate pure `git mv` and reviewed finalization commits per task, in this PR.
-- [ ] Per-task HF community PR or maintainer mirror merged into official dataset; manifest,
-      SOURCES and license updated, all old assets preserved; official SHA pinned in `assets.json`.
-- [ ] Repository inventories/docs updated; full checks and merge-ready gate pass;
-      every task is promoted and no submission `task.toml` remains.
-- [ ] **Merge commit only** (no squash/rebase); contributor history retained.
+- [ ] Design, verifier isolation, runtime evidence and any validation exceptions reviewed.
+- [ ] Names checked against the current base and queued PRs; each task keeps its name through promotion.
+- [ ] Every new task has a separate pure move from submissions in this PR, followed by reviewed finalization.
+- [ ] New official assets published under `tasks/<task-name>/`; previous assets preserved; merged official SHA pinned.
+- [ ] Repository docs and inventories updated; checks and merge-ready pass; no submission package remains.
+- [ ] Merge commit only; original contributor history retained.
