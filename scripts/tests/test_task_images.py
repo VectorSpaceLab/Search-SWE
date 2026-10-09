@@ -6,12 +6,12 @@ import unittest
 REPO = Path(__file__).resolve().parents[2]
 CPU_IMAGE = "docker.io/hanhainebula/search-swe-base:cpu-py3.12-1.0.0"
 GPU_IMAGE = "docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0"
-GPU_TASKS = {"task-2-2", "task-2-3"}
+GPU_TASKS = {"code-embedding-finetuning", "query-encoder-alignment"}
 
 
 class TaskImages(unittest.TestCase):
     def test_base_images_and_gpu_resources_match(self):
-        tasks = sorted(path for path in (REPO / "tasks").glob("task-*") if path.is_dir())
+        tasks = sorted(path for path in (REPO / "tasks").glob("*") if path.is_dir())
         self.assertTrue(tasks)
         configured_gpu_tasks = set()
 

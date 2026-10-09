@@ -24,15 +24,15 @@ class EgressLauncherTests(unittest.TestCase):
                          "dns": {"doh_url": "https://resolver.example/dns-query"}}
         self.config.write_text(json.dumps(self.document))
 
-    def launch(self, *arguments, task="task-1-1", env=None, public=False):
+    def launch(self, *arguments, task="reasoning-query-rewriting", env=None, public=False):
         repo = ROOT
         if public:
             # Public-policy coverage must not depend on a benchmark task's
-            # evolving network requirements (for example, task-2-3).
+            # evolving network requirements (for example, query-encoder-alignment).
             repo = self.root / "repo"
             shutil.copytree(ROOT / "scripts", repo / "scripts",
                             ignore=shutil.ignore_patterns("__pycache__", "tests"))
-            task = "task-fixture"
+            task = "fixture-search"
             fixture = repo / "tasks" / task
             fixture.mkdir(parents=True)
             (fixture / "task.toml").write_text(
@@ -102,7 +102,7 @@ class EgressLauncherTests(unittest.TestCase):
         self.assertNotEqual(response.returncode, 0, response.stdout + response.stderr)
         self.assertIn("any public phase", response.stderr)
         self.assertIn('network_mode = "public"',
-                      (self.root / "repo/tasks/task-fixture/task.toml").read_text())
+                      (self.root / "repo/tasks/fixture-search/task.toml").read_text())
 
     def test_rejected_url_does_not_echo_embedded_secret(self):
         self.document["upstream"]["url"] = "https://user:do-not-leak-this@proxy.example"

@@ -12,14 +12,14 @@ from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
 REWARDKIT_TASKS = {
-    "task-1-1",
-    "task-1-2",
-    "task-1-3",
-    "task-1-4",
-    "task-2-1",
-    "task-2-2",
-    "task-2-3",
-    "task-2-5",
+    "reasoning-query-rewriting",
+    "memory-constrained-dense-retrieval",
+    "scientific-paper-qa",
+    "long-pdf-evidence",
+    "long-document-reranking",
+    "code-embedding-finetuning",
+    "query-encoder-alignment",
+    "sparse-retrieval-pruning",
 }
 
 
@@ -87,16 +87,16 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                 )
 
         # Every verifier that executes candidate code starts it from an empty
-        # environment, then adds only task-approved variables. Task 2-2 loads a
+        # environment, then adds only task-approved variables. Task code-embedding-finetuning loads a
         # constrained local checkpoint and does not execute a submission script.
         credential_boundaries = (
-            "tasks/task-1-1/tests/grader.py",
-            "tasks/task-1-2/tests/grader.py",
-            "tasks/task-1-3/tests/test.sh",
-            "tasks/task-1-4/tests/test.sh",
-            "tasks/task-2-1/tests/grader.py",
-            "tasks/task-2-3/tests/run_evaluation.sh",
-            "tasks/task-2-5/tests/test.sh",
+            "tasks/reasoning-query-rewriting/tests/grader.py",
+            "tasks/memory-constrained-dense-retrieval/tests/grader.py",
+            "tasks/scientific-paper-qa/tests/test.sh",
+            "tasks/long-pdf-evidence/tests/test.sh",
+            "tasks/long-document-reranking/tests/grader.py",
+            "tasks/query-encoder-alignment/tests/run_evaluation.sh",
+            "tasks/sparse-retrieval-pruning/tests/test.sh",
         )
         for relative in credential_boundaries:
             with self.subTest(credential_boundary=relative):
@@ -105,12 +105,12 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                 self.assertIn("-i", text)
                 self.assertNotIn("DEEPSEEK_API_KEY", text)
 
-        query_runner = (REPO / "tasks/task-1-3/tests/run_queries.py").read_text()
+        query_runner = (REPO / "tasks/scientific-paper-qa/tests/run_queries.py").read_text()
         self.assertIn("env=submission_env()", query_runner)
         self.assertNotIn("DEEPSEEK_API_KEY", query_runner)
 
     def test_task_without_agent_judge_has_no_rewardkit_integration(self):
-        tests = REPO / "tasks/task-2-4/tests"
+        tests = REPO / "tasks/agentic-search/tests"
         self.assertFalse((tests / "jailbreak_judge/codex.toml").exists())
         self.assertFalse((tests / "rewardkit_deepseek.py").exists())
         self.assertNotIn("rewardkit", (tests / "Dockerfile").read_text().lower())
@@ -142,7 +142,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
             "AGENT_OPENROUTER_API_KEY",
             "VERIFIER_OPENAI_API_KEY",
             "ANSWER_JUDGE_API_KEY",
-            "TASK_1_1_OPENROUTER_API_KEY",
+            "REASONING_QUERY_REWRITING_OPENROUTER_API_KEY",
             "OPENROUTER_API_KEY",
             "JINA_API_KEY",
         }
@@ -174,7 +174,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
     )
     def test_generated_codex_config_is_valid_and_contains_no_key(self):
         os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "true"
-        path = REPO / "tasks/task-1-1/tests/rewardkit_deepseek.py"
+        path = REPO / "tasks/reasoning-query-rewriting/tests/rewardkit_deepseek.py"
         spec = importlib.util.spec_from_file_location("rewardkit_deepseek_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -226,7 +226,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
     )
     def test_backend_maps_key_and_cleans_temporary_home_on_failure(self):
         os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "true"
-        path = REPO / "tasks/task-1-1/tests/rewardkit_deepseek.py"
+        path = REPO / "tasks/reasoning-query-rewriting/tests/rewardkit_deepseek.py"
         spec = importlib.util.spec_from_file_location(
             "rewardkit_deepseek_lifecycle_test", path
         )

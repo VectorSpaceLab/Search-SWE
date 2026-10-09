@@ -1,7 +1,7 @@
 """Full Harbor Trial.run gate: two simultaneous trials of one four-step task.
 
 Formal adapter/Oracle extension points only. No patched Harbor methods, API calls,
-task-1-1 edits, proxy forwarding, or changes to the operator Docker daemon.
+reasoning-query-rewriting edits, proxy forwarding, or changes to the operator Docker daemon.
 """
 import argparse
 import asyncio

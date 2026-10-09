@@ -43,20 +43,20 @@ class SubmissionWorkflow(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "-qm", "base")
         self.base = self.git("rev-parse", "HEAD").strip()
-        self.source = "task-submissions/alice/1-x-1"
+        self.source = "task-submissions/example-search"
         self.task = self.repo / self.source
         result = self.scaffold("Alice")
         self.assertEqual(result.returncode, 0, result.stderr)
+        readme = self.task / "README.md"
+        readme.write_text(readme.read_text() + f"\nPackage: {self.source}\n")
 
     def git(self, *args, **kwargs):
         return subprocess.run(["git", *args], cwd=self.repo, check=True,
                               capture_output=True, text=True, **kwargs).stdout
 
-    def scaffold(self, name, task_id="task-1-x-1"):
-        mode = "optimization" if task_id.startswith("task-2-") else "implementation"
-        return subprocess.run([sys.executable, str(SCAFFOLD), task_id, "--repo-root", str(self.repo),
-                               "--submission-first-name", name, "--author", f"{name} Example",
-                               "--mode", mode], capture_output=True, text=True)
+    def scaffold(self, name, task_name="example-search"):
+        return subprocess.run([sys.executable, str(SCAFFOLD), task_name, "--repo-root", str(self.repo),
+                               "--author", f"{name} Example"], capture_output=True, text=True)
 
     def cli(self, script, *args):
         env = {k: v for k, v in os.environ.items() if not k.startswith(("AGENT_", "CONTAINER_", "VERIFIER_"))}
@@ -66,12 +66,12 @@ class SubmissionWorkflow(unittest.TestCase):
     def asset(self, task=None):
         task = task or self.task
         if task != self.task:
-            (task / "task.toml").write_text((task / "task.toml").read_text().replace("task-1-x-1", task.name))
+            (task / "task.toml").write_text((task / "task.toml").read_text().replace("example-search", task.name))
         content = b"fixture corpus\n"
         entry = {"path": "data/corpus.txt", "size_bytes": len(content),
                  "sha256": hashlib.sha256(content).hexdigest(),
                  "source": {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": "a" * 40,
-                            "filename": f"tasks/{'task-1-x-1' if task == self.task else task.name}/corpus.txt"}}
+                            "filename": f"tasks/{'example-search' if task == self.task else task.name}/corpus.txt"}}
         (task / "assets.json").write_text(json.dumps({"schema_version": 1, "files": [entry]}))
         data = self.root / "new-data"
         path = data / entry["source"]["filename"]
@@ -84,19 +84,18 @@ class SubmissionWorkflow(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "-qm", "Alice writes task", "--author", "Alice Example <alice@example.test>")
 
-    def test_namespace_reuse_explicit_name_suffix_and_path_boundaries(self):
-        self.assertEqual(self.scaffold("Alice", "task-1-x-2").returncode, 0)
-        self.assertEqual(self.scaffold("Alice", "task-2-x-1").returncode, 0)
-        self.assertTrue((self.repo / "task-submissions/alice/1-x-2/task.toml").is_file())
-        self.assertTrue((self.repo / "task-submissions/alice/2-x-1/task.toml").is_file())
-        self.assertEqual(self.scaffold("Alice-2").returncode, 0)
-        self.assertTrue((self.repo / "task-submissions/alice-2/1-x-1/task.toml").is_file())
+    def test_flat_names_collisions_and_path_boundaries(self):
+        for name in ("hybrid-search", "vector-search"):
+            self.assertEqual(self.scaffold("Alice", name).returncode, 0)
+            self.assertTrue((self.repo / "task-submissions" / name / "task.toml").is_file())
+        self.assertNotEqual(self.scaffold("Bob").returncode, 0)
+        self.assertEqual(self.scaffold("Bob", "other-search").returncode, 0)
         current = self.cli("check_submission.py")
-        self.assertNotEqual(current.returncode, 0)
-        self.assertIn("exactly one contributor namespace", current.stdout)
-        for name in ("../alice", "/absolute", "Élodie", "123"):
-            self.assertNotEqual(self.scaffold(name).returncode, 0)
-        for name in ("../repo/" + self.source, "/" + self.source, self.source + "/../1-x-1"):
+        self.assertEqual(current.returncode, 0, current.stdout + current.stderr)
+        for name in ("../escape", "/absolute", "Élodie", "123", "all", "task-1-1", "one-two-three-four-five-six"):
+            self.assertNotEqual(self.scaffold("Alice", name).returncode, 0)
+        for name in ("../repo/" + self.source, "/" + self.source, self.source + "/../example-search",
+                     "task-submissions/alice/example-search"):
             with self.assertRaises(ValueError):
                 select_task(self.repo, name)
         (self.task / "escape").symlink_to(self.root)
@@ -133,10 +132,14 @@ class SubmissionWorkflow(unittest.TestCase):
         self.assertEqual(check_submission(self.repo, self.task), [])
         self.assertFalse(sentinel.exists())
 
-    def test_submission_rejects_category_mode_mismatch(self):
+    def test_submission_rejects_obsolete_type_and_formal_name_collision(self):
         config = self.task / "task.toml"
-        config.write_text(config.read_text().replace('task_type = "create"', 'task_type = "optimize"'))
-        self.assertTrue(any("Category 1 requires" in error for error in check_submission(self.repo, self.task)))
+        original = config.read_text()
+        config.write_text(original.replace("[metadata]", '[metadata]\ntask_type = "create"'))
+        self.assertTrue(any("remove metadata.task_type" in error for error in check_submission(self.repo, self.task)))
+        config.write_text(original)
+        shutil.copytree(self.task, self.repo / "tasks/example-search")
+        self.assertTrue(any("collides" in error for error in check_submission(self.repo, self.task)))
 
     def test_validator_scans_payload_secret_forced_asset_author_id_and_ignore_rules(self):
         entry, _ = self.asset()
@@ -154,7 +157,7 @@ class SubmissionWorkflow(unittest.TestCase):
         (self.task / "task.toml").write_text((self.task / "task.toml").read_text().replace("Alice Example", "Search-SWE"))
         (self.task / "README.md").write_text("task-1-999\n")
         errors = check_submission(self.repo, self.task)
-        for expected in ("credential", "authors", "unexpected task IDs"):
+        for expected in ("credential", "authors", "obsolete numbered task reference"):
             self.assertTrue(any(expected in e for e in errors), errors)
 
     def test_discovery_incomplete_and_review_versus_merge_ready(self):
@@ -163,7 +166,7 @@ class SubmissionWorkflow(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("NOT mean merge-ready", result.stdout)
         self.assertNotEqual(self.cli("check_submission.py", "--merge-ready").returncode, 0)
-        incomplete = self.repo / "task-submissions/bob/2-x-1"
+        incomplete = self.repo / "task-submissions/incomplete-search"
         incomplete.mkdir(parents=True)
         self.assertIn(incomplete, discover(self.repo))
         self.assertNotEqual(self.cli("check_submission.py").returncode, 0)
@@ -175,15 +178,15 @@ class SubmissionWorkflow(unittest.TestCase):
         self.assertIn("Selected 0 files", result.stdout)
         result = self.cli("download_assets.py", "--task-path", self.source, "--dry-run")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("task-submissions/alice/1-x-1/data/corpus.txt", result.stdout)
-        for name in ("alice", "alice-2"):
-            if name != "alice":
-                self.scaffold("Alice-2")
-            result = self.cli("run_task.py", "--task-path", f"task-submissions/{name}/1-x-1",
+        self.assertIn("task-submissions/example-search/data/corpus.txt", result.stdout)
+        for name in ("example-search", "other-search"):
+            if name != "example-search":
+                self.scaffold("Bob", name)
+            result = self.cli("run_task.py", "--task-path", f"task-submissions/{name}",
                               "--agent", "pi", "--model", "deepseek/deepseek-flash", "--dry-run")
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn(f"jobs/task-submissions/{name}/1-x-1", result.stdout)
-        self.assertNotEqual(self.cli("run_task.py", "--task", "task-1-x-1", "--dry-run").returncode, 0)
+            self.assertIn(f"jobs/task-submissions/{name}", result.stdout)
+        self.assertNotEqual(self.cli("run_task.py", "--task", "example-search", "--dry-run").returncode, 0)
 
     def test_submission_launch_reaches_mock_harbor_without_formal_registration(self):
         binary = self.root / "bin"
@@ -232,61 +235,61 @@ class SubmissionWorkflow(unittest.TestCase):
 
     def test_two_phase_promotion_preserves_follow_blame_and_merge_history(self):
         self.commit_submission()
-        promote(self.repo, self.source, "task-1-6", "rename", dry_run=True)
+        promote(self.repo, self.source, "example-search", "rename", dry_run=True)
         self.assertTrue(self.task.exists())
         self.assertFalse(self.git("status", "--porcelain"))
-        promote(self.repo, self.source, "task-1-6", "rename")
+        promote(self.repo, self.source, "example-search", "rename")
         with self.assertRaises(ValueError):
-            promote(self.repo, self.source, "task-1-6", "finalize")
+            promote(self.repo, self.source, "example-search", "finalize")
         self.git("commit", "-qm", "Pure rename by maintainer")
-        target = self.repo / "tasks/task-1-6"
-        promote(self.repo, self.source, "task-1-6", "finalize", dry_run=True)
-        self.assertIn("task-1-x-1", (target / "task.toml").read_text())
-        promote(self.repo, self.source, "task-1-6", "finalize")
+        target = self.repo / "tasks/example-search"
+        promote(self.repo, self.source, "example-search", "finalize", dry_run=True)
+        self.assertIn("example-search", (target / "task.toml").read_text())
+        promote(self.repo, self.source, "example-search", "finalize")
         self.git("add", ".")
-        self.git("commit", "-qm", "Finalize by maintainer")
+        self.git("commit", "-qm", "Finalize by maintainer", "--allow-empty")
         self.git("checkout", "-q", "main")
         self.git("merge", "--no-ff", "-qm", "Merge task PR", "contribution")
         self.assertEqual(len(self.git("rev-list", "--parents", "-n", "1", "HEAD").split()), 3)
-        history = self.git("log", "--follow", "--format=%an %s", "--", "tasks/task-1-6/instruction.md")
+        history = self.git("log", "--follow", "--format=%an %s", "--", "tasks/example-search/instruction.md")
         self.assertIn("Alice Example Alice writes task", history)
-        blame = self.git("blame", "--line-porcelain", "tasks/task-1-6/instruction.md")
+        blame = self.git("blame", "--line-porcelain", "tasks/example-search/instruction.md")
         self.assertIn("author Alice Example", blame)
-        self.assertIn("author Maintainer", blame)
+        self.assertNotIn("author Maintainer", blame)
         self.assertFalse(list((self.repo / "task-submissions").rglob("task.toml")))
         self.assertEqual(self.cli("check_submission.py", "--merge-ready").returncode, 0)
         self.assertEqual(self.cli("check_release.py").returncode, 0)
 
-    def test_promotion_refuses_collision_category_traversal_and_nonpure_commit(self):
+    def test_promotion_refuses_collision_rename_traversal_and_nonpure_commit(self):
         self.commit_submission()
-        for source, target in ((self.source, "task-2-6"), (self.source, "../task-1-6"),
-                               ("../" + self.source, "task-1-6")):
+        for source, target in ((self.source, "vector-search"), (self.source, "../example-search"),
+                               ("../" + self.source, "example-search")):
             with self.assertRaises(ValueError):
                 promote(self.repo, source, target, "rename")
-        collision = self.repo / "tasks/task-1-6"
+        collision = self.repo / "tasks/example-search"
         collision.mkdir()
         with self.assertRaises(ValueError):
-            promote(self.repo, self.source, "task-1-6", "rename")
+            promote(self.repo, self.source, "example-search", "rename")
         collision.rmdir()
-        promote(self.repo, self.source, "task-1-6", "rename")
+        promote(self.repo, self.source, "example-search", "rename")
         (self.repo / "docker/README.md").write_text("unrelated edit")
         self.git("add", ".")
         self.git("commit", "-qm", "Not a pure rename")
         with self.assertRaises(ValueError):
-            promote(self.repo, self.source, "task-1-6", "finalize")
+            promote(self.repo, self.source, "example-search", "finalize")
 
     def test_merge_ready_rechecks_promoted_syntax_paths_and_new_authors(self):
         self.commit_submission()
-        promote(self.repo, self.source, "task-1-6", "rename")
+        promote(self.repo, self.source, "example-search", "rename")
         self.git("commit", "-qm", "Pure rename")
-        promote(self.repo, self.source, "task-1-6", "finalize")
-        target = self.repo / "tasks/task-1-6"
+        promote(self.repo, self.source, "example-search", "finalize")
+        target = self.repo / "tasks/example-search"
         self.git("add", ".")
-        self.git("commit", "-qm", "Finalize")
+        self.git("commit", "-qm", "Finalize", "--allow-empty")
         self.assertEqual(self.cli("check_submission.py", "--merge-ready").returncode, 0)
         readme = target / "README.md"
         original = readme.read_text()
-        readme.write_text(original + "\ntask-submissions/alice/1-x-1\n")
+        readme.write_text(original + "\ntask-submissions/example-search\n")
         self.assertNotEqual(self.cli("check_submission.py", "--merge-ready").returncode, 0)
         readme.write_text(original)
         broken = target / "tests/broken.py"
@@ -297,114 +300,100 @@ class SubmissionWorkflow(unittest.TestCase):
         config.write_text(config.read_text().replace("Alice Example", "Search-SWE"))
         self.assertNotEqual(self.cli("check_submission.py", "--base", self.base).returncode, 0)
 
-    def test_base_allows_multiple_tasks_in_one_namespace_and_rejects_two(self):
-        self.scaffold("Alice", "task-1-x-2")
-        self.scaffold("Alice", "task-2-x-1")
+    def test_base_allows_multiple_tasks_and_authors(self):
+        self.scaffold("Alice", "hybrid-search")
+        self.scaffold("Bob", "vector-search")
         self.git("add", ".")
-        self.git("commit", "-qm", "three Alice submissions")
+        self.git("commit", "-qm", "Multiple submissions")
         result = self.cli("check_submission.py", "--base", self.base)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.scaffold("Bob")
-        self.git("add", ".")
-        self.git("commit", "-qm", "Bob submission")
-        result = self.cli("check_submission.py", "--base", self.base)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("exactly one contributor namespace", result.stdout)
 
     def test_base_rejects_direct_formal_task_without_submission_history(self):
         shutil.rmtree(self.repo / "task-submissions")
         result = subprocess.run(
-            [sys.executable, str(SCAFFOLD), "task-1-6", "--repo-root", str(self.repo),
-             "--author", "Alice Example"], capture_output=True, text=True,
+            [sys.executable, str(SCAFFOLD), "example-search", "--repo-root", str(self.repo),
+             "--author", "Alice Example", "--formal"], capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.git("add", ".")
         self.git("commit", "-qm", "Bypass submission buffer")
         result = self.cli("check_submission.py", "--merge-ready", "--base", self.base)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("require exactly one contributor submission namespace", result.stdout)
+        self.assertIn("require same-PR pure promotion", result.stdout)
 
-    def test_base_rejects_temporary_ordinal_reuse_after_promotion(self):
+    def test_base_rejects_submission_path_reuse(self):
         self.git("add", ".")
-        self.git("commit", "-qm", "First use of ordinal")
-        for target_id in ("task-1-6", "task-1-7"):
-            promote(self.repo, self.source, target_id, "rename")
-            self.git("commit", "-qm", f"Pure rename {target_id}")
-            promote(self.repo, self.source, target_id, "finalize")
-            self.git("add", ".")
-            self.git("commit", "-qm", f"Finalize {target_id}")
-            if target_id == "task-1-6":
-                result = self.scaffold("Alice")
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.git("add", ".")
-                self.git("commit", "-qm", "Reuse ordinal for another task")
-        result = self.cli("check_submission.py", "--merge-ready", "--base", self.base)
+        self.git("commit", "-qm", "First submission")
+        self.git("rm", "-r", self.source)
+        self.git("commit", "-qm", "Remove submission")
+        self.assertEqual(self.scaffold("Bob").returncode, 0)
+        self.git("add", ".")
+        self.git("commit", "-qm", "Reuse submission path")
+        result = self.cli("check_submission.py", "--base", self.base)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Temporary task ordinals must not be reused", result.stdout)
+        self.assertIn("Submission paths must not be reused", result.stdout)
 
-    def test_multiple_tasks_promote_independently_and_history_keeps_namespace(self):
-        self.scaffold("Alice", "task-2-x-1")
+    def test_multiple_tasks_promote_independently_with_multiple_authors(self):
+        self.scaffold("Alice", "vector-search")
         self.git("checkout", "-qb", "multi-promotion")
         self.git("add", ".")
         self.git("commit", "-qm", "Alice submits two tasks", "--author", "Alice Example <alice@example.test>")
-        for source, target_id in ((self.source, "task-1-6"),
-                                  ("task-submissions/alice/2-x-1", "task-2-6")):
+        for source, target_id in ((self.source, "example-search"),
+                                  ("task-submissions/vector-search", "vector-search")):
             promote(self.repo, source, target_id, "rename")
             self.git("commit", "-qm", f"Pure rename {target_id}")
             promote(self.repo, source, target_id, "finalize")
             self.git("add", ".")
-            self.git("commit", "-qm", f"Finalize {target_id}")
+            self.git("commit", "-qm", f"Finalize {target_id}", "--allow-empty")
         self.assertEqual(self.cli("check_submission.py", "--merge-ready", "--base", self.base).returncode, 0)
         self.assertIn("Alice Example", self.git("log", "--follow", "--format=%an", "--",
-                                                "tasks/task-1-6/instruction.md"))
+                                                "tasks/example-search/instruction.md"))
         self.assertIn("Alice Example", self.git("log", "--follow", "--format=%an", "--",
-                                                "tasks/task-2-6/instruction.md"))
+                                                "tasks/vector-search/instruction.md"))
 
-        self.scaffold("Bob")
+        self.scaffold("Bob", "other-search")
         self.git("add", ".")
         self.git("commit", "-qm", "Bob submission", "--author", "Bob Example <bob@example.test>")
-        bob_source = "task-submissions/bob/1-x-1"
-        promote(self.repo, bob_source, "task-1-7", "rename")
-        self.git("commit", "-qm", "Pure rename task-1-7")
-        promote(self.repo, bob_source, "task-1-7", "finalize")
+        bob_source = "task-submissions/other-search"
+        promote(self.repo, bob_source, "other-search", "rename")
+        self.git("commit", "-qm", "Pure rename other-search")
+        promote(self.repo, bob_source, "other-search", "finalize")
         self.git("add", ".")
-        self.git("commit", "-qm", "Finalize task-1-7")
+        self.git("commit", "-qm", "Finalize other-search", "--allow-empty")
         result = self.cli("check_submission.py", "--merge-ready", "--base", self.base)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("exactly one contributor namespace", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_base_history_checks_every_side_of_fully_promoted_merge(self):
         self.git("checkout", "-qb", "alice-history")
         self.git("add", ".")
         self.git("commit", "-qm", "Alice submission")
-        promote(self.repo, self.source, "task-1-6", "rename")
+        promote(self.repo, self.source, "example-search", "rename")
         self.git("commit", "-qm", "Pure rename Alice")
-        promote(self.repo, self.source, "task-1-6", "finalize")
+        promote(self.repo, self.source, "example-search", "finalize")
         self.git("add", ".")
-        self.git("commit", "-qm", "Finalize Alice")
+        self.git("commit", "-qm", "Finalize Alice", "--allow-empty")
 
         self.git("checkout", "-qb", "bob-history", self.base)
         (self.repo / "tasks").mkdir(exist_ok=True)
-        result = self.scaffold("Bob")
+        result = self.scaffold("Bob", "other-search")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.git("add", ".")
         self.git("commit", "-qm", "Bob submission")
-        bob_source = "task-submissions/bob/1-x-1"
-        promote(self.repo, bob_source, "task-1-7", "rename")
+        bob_source = "task-submissions/other-search"
+        promote(self.repo, bob_source, "other-search", "rename")
         self.git("commit", "-qm", "Pure rename Bob")
-        promote(self.repo, bob_source, "task-1-7", "finalize")
+        promote(self.repo, bob_source, "other-search", "finalize")
         self.git("add", ".")
-        self.git("commit", "-qm", "Finalize Bob")
+        self.git("commit", "-qm", "Finalize Bob", "--allow-empty")
 
         self.git("checkout", "alice-history")
         self.git("merge", "--no-ff", "bob-history", "-m", "Merge Bob history")
         result = self.cli("check_submission.py", "--merge-ready", "--base", self.base)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("exactly one contributor namespace", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_base_history_rejects_unsafe_submission_paths(self):
         self.git("checkout", "-qb", "unsafe-history")
-        unsafe = self.repo / "task-submissions/not-a-package/file.txt"
+        unsafe = self.repo / "task-submissions/alice/nested-search/task.toml"
         unsafe.parent.mkdir(parents=True)
         unsafe.write_text("unsafe historical path")
         self.git("add", ".")
@@ -413,11 +402,67 @@ class SubmissionWorkflow(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Malformed task submission path", result.stdout)
 
+    def test_base_recognizes_existing_formal_rename_without_changing_legacy_authors(self):
+        # A repository-wide name migration is an edit to an existing package.
+        legacy = self.repo / "tasks/task-1-1"
+        self.task.rename(legacy)
+        readme = legacy / "README.md"
+        readme.write_text("Existing formal task\n")
+        config = legacy / "task.toml"
+        config.write_text(config.read_text().replace("example-search", "task-1-1")
+                          .replace("Alice Example", "Search-SWE"))
+        self.git("add", ".")
+        self.git("commit", "-qm", "Existing legacy formal task")
+        base = self.git("rev-parse", "HEAD").strip()
+        self.git("mv", "tasks/task-1-1", "tasks/example-search")
+        config = self.repo / "tasks/example-search/task.toml"
+        config.write_text(config.read_text().replace("task-1-1", "example-search"))
+        self.git("add", ".")
+        self.git("commit", "-qm", "Rename existing formal task")
+        result = self.cli("check_submission.py", "--merge-ready", "--base", base)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_history_rejects_deleted_nested_submission(self):
+        unsafe = self.repo / "task-submissions/alice/nested-search/task.toml"
+        unsafe.parent.mkdir(parents=True)
+        unsafe.write_text("invalid old nested layout")
+        self.git("add", ".")
+        self.git("commit", "-qm", "Nested submission")
+        shutil.rmtree(unsafe.parent.parent)
+        self.git("add", "-u")
+        self.git("commit", "-qm", "Remove nested submission")
+        result = self.cli("check_submission.py", "--base", self.base)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Malformed task submission path", result.stdout)
+
+    def test_history_rejects_renamed_or_nonpure_submission_promotion(self):
+        self.commit_submission()
+        self.git("mv", self.source, "tasks/other-search")
+        target = self.repo / "tasks/other-search"
+        for name in ("README.md", "task.toml", "instruction.md"):
+            path = target / name
+            path.write_text(path.read_text().replace(self.source, "tasks/other-search")
+                            .replace("example-search", "other-search"))
+        self.git("add", ".")
+        self.git("commit", "-qm", "Rename and modify submission")
+        result = self.cli("check_submission.py", "--merge-ready", "--base", self.base)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("require same-PR pure promotion", result.stdout)
+
+    def test_official_staging_requires_promotion_even_when_name_is_final(self):
+        _, data = self.asset()
+        snapshot = self.root / "official.json"
+        snapshot.write_text(json.dumps({"schema_version": 1, "files": []}))
+        output = self.root / "premature-upload"
+        with self.assertRaisesRegex(ValueError, "Promote to tasks/<task-name>"):
+            prepare(snapshot, self.task, data, output)
+        self.assertFalse(output.exists())
+
     def test_incremental_manifest_preserves_old_entries_without_old_data(self):
-        target = self.repo / "tasks/task-1-6"
+        target = self.repo / "tasks/example-search"
         shutil.copytree(self.task, target)
         entry, data = self.asset(target)
-        old = {"path": "tasks/task-1-1/old.bin", "size_bytes": 500, "sha256": "b" * 64, "license": "fixture"}
+        old = {"path": "tasks/reasoning-query-rewriting/old.bin", "size_bytes": 500, "sha256": "b" * 64, "license": "fixture"}
         snapshot = self.root / "official.json"
         snapshot.write_text(json.dumps({"schema_version": 1, "files": [old], "extra": "preserve"}))
         output = self.root / "upload"
@@ -440,7 +485,7 @@ class SubmissionWorkflow(unittest.TestCase):
         self.assertFalse((self.root / "corrupt").exists())
 
     def test_incremental_rejects_traversal_and_symlinks(self):
-        target = self.repo / "tasks/task-1-6"
+        target = self.repo / "tasks/example-search"
         shutil.copytree(self.task, target)
         entry, data = self.asset(target)
         snapshot = self.root / "official.json"

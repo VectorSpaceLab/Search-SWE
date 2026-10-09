@@ -31,15 +31,15 @@ REPO = Path(__file__).resolve().parents[2]
 TASK_HOSTS = ["openrouter.ai", "api.jina.ai"]
 DEEPSEEK_HOST = "api.deepseek.com"
 EXPECTED = {
-    "task-1-1": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-1-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
-    "task-1-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
-    "task-1-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-2-1": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
-    "task-2-2": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
-    "task-2-3": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-2-4": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
-    "task-2-5": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "reasoning-query-rewriting": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "memory-constrained-dense-retrieval": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "scientific-paper-qa": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", [*TASK_HOSTS, DEEPSEEK_HOST]),
+    "long-pdf-evidence": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "long-document-reranking": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "code-embedding-finetuning": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
+    "query-encoder-alignment": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "agentic-search": ("allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS, "allowlist", TASK_HOSTS),
+    "sparse-retrieval-pruning": ("no-network", [], "no-network", [], "allowlist", ["openrouter.ai"]),
 }
 
 
@@ -103,7 +103,7 @@ class TaskNetworkPolicies(unittest.TestCase):
             )
             self.assertTrue(resource_doc.is_file(), task_name)
 
-        for task_name in ("task-1-2", "task-2-1", "task-2-2", "task-2-5"):
+        for task_name in ("memory-constrained-dense-retrieval", "long-document-reranking", "code-embedding-finetuning", "sparse-retrieval-pruning"):
             text = (
                 REPO / "tasks" / task_name / "environment/docs/available_resources.md"
             ).read_text().lower()
@@ -306,7 +306,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
         )
         for agent, model, values, expected_host in cases:
             with self.subTest(agent=agent, model=model):
-                result = self.run_preview("task-1-2", agent, model, values)
+                result = self.run_preview("memory-constrained-dense-retrieval", agent, model, values)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 argv = self.argv(result)
                 index = argv.index("--allow-agent-host")
@@ -318,14 +318,14 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 }[agent]
                 self.assertEqual(argv[argv.index("--agent") + 1], expected_import)
 
-        restricted = self.run_preview("task-2-3", "pi", "deepseek/deepseek-flash", {})
+        restricted = self.run_preview("query-encoder-alignment", "pi", "deepseek/deepseek-flash", {})
         self.assertEqual(restricted.returncode, 0, restricted.stderr)
         self.assertEqual(
             self.flag_values(self.argv(restricted), "--allow-agent-host"),
             ["api.deepseek.com"],
         )
         restricted = self.run_preview(
-            "task-2-3", "claude-code", "claude-sonnet-4-6", {}
+            "query-encoder-alignment", "claude-code", "claude-sonnet-4-6", {}
         )
         self.assertEqual(restricted.returncode, 0, restricted.stderr)
         self.assertEqual(
@@ -336,7 +336,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
     def test_claude_code_preview_uses_pinned_cli_and_namespaced_key(self):
         secret = "fixture-anthropic-secret"
         result = self.run_preview(
-            "task-1-2",
+            "memory-constrained-dense-retrieval",
             "claude-code",
             "claude-sonnet-4-6",
             {
@@ -372,7 +372,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
               "ANTHROPIC_BASE_URL=https://openrouter.ai/api"]),
         ):
             with self.subTest(agent=agent):
-                result = self.run_preview("task-1-2", agent, model, values, ("--openrouter",))
+                result = self.run_preview("memory-constrained-dense-retrieval", agent, model, values, ("--openrouter",))
                 self.assertEqual(result.returncode, 0, result.stderr)
                 for secret in values.values():
                     self.assertNotIn(secret, result.stdout + result.stderr)
@@ -399,11 +399,11 @@ class LauncherNetworkPolicy(unittest.TestCase):
         )
         for agent, model, message in cases:
             with self.subTest(agent=agent, model=model):
-                result = self.run_preview("task-1-2", agent, model, {}, ("--openrouter",))
+                result = self.run_preview("memory-constrained-dense-retrieval", agent, model, {}, ("--openrouter",))
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(message, result.stderr)
         conflict = self.run_preview(
-            "task-1-2", "codex", "openai/gpt-6-astra", {},
+            "memory-constrained-dense-retrieval", "codex", "openai/gpt-6-astra", {},
             ("--openrouter", "--codex-config", "missing.toml"),
         )
         self.assertIn("omit --codex-config", conflict.stderr)
@@ -435,7 +435,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
                         sys.executable,
                         str(REPO / "scripts/run_task.py"),
                         "--task",
-                        "task-1-2",
+                        "memory-constrained-dense-retrieval",
                         "--agent",
                         "claude-code",
                         "--model",
@@ -454,7 +454,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 self.assertIn(message, result.stderr)
 
         result = self.run_preview(
-            "task-1-2",
+            "memory-constrained-dense-retrieval",
             "claude-code",
             "claude-sonnet-4-6",
             {"AGENT_REASONING_EFFORT": "ultracode"},
@@ -469,17 +469,17 @@ class LauncherNetworkPolicy(unittest.TestCase):
         }
         cases = (
             (
-                "task-1-2",
+                "memory-constrained-dense-retrieval",
                 {**common, "VERIFIER_OPENAI_BASE_URL": "https://relay.example/v1"},
                 "not permitted",
             ),
             (
-                "task-1-3",
+                "scientific-paper-qa",
                 {**common, "ANSWER_JUDGE_BASE_URL": "https://answer.example/v1"},
                 "not permitted",
             ),
             (
-                "task-1-2",
+                "memory-constrained-dense-retrieval",
                 {**common, "CONTAINER_PROXY": "http://proxy.example:8080"},
                 "incompatible",
             ),
@@ -490,9 +490,9 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(message, result.stderr)
 
-    def test_task_1_3_accepts_only_its_fixed_judge_hosts(self):
+    def test_scientific_paper_qa_accepts_only_its_fixed_judge_hosts(self):
         result = self.run_preview(
-            "task-1-3",
+            "scientific-paper-qa",
             "codex",
             "fixture-model",
             {
