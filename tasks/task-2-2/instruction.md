@@ -1,42 +1,9 @@
-# Task: Task-2-2
+I'm Nora Singh, sitting at a workstation in our software engineering lab where we are trying to make code easier to find. We already have an embedder and a corpus to work from, and I'd like you to improve that supplied code-retrieval embedder using the corpus and training data provided here. The handover I need is a checkpoint, because the evaluation will use exact Top-1 retrieval on held-out queries to see whether your changes help.
 
-## Task Description
+Please read /task/docs/environment.md and /task/docs/available_resources.md first. The supplied backbone is mounted read-only under /task/models, and your starting point must be /task/models/bge-base-en-v1.5. Preserve its architecture, parameter names, parameter shapes and parameter count. I am asking for an improved checkpoint within that same backbone, so keep those properties intact while you work on retrieval quality. All of /task is read-only.
 
-Improve the supplied code-retrieval embedder using the provided corpus and training data. The submitted checkpoint is evaluated with exact Top-1 retrieval on held-out queries.
+The corpus and training data are under /task/data. There is also a fixed public validation split of 10 queries with labels under /task/data/validation for development. Hidden code-retrieval queries and their private relevance labels are disjoint from that public split and unavailable during your work. Do not use hidden data, hard-coded query-to-document mappings, precomputed answers or external resources. Network access is unavailable, so this work and the final handover must rely on what is supplied locally.
 
-## Requirements
+Write the final model to /app/submission/model as a complete, self-contained offline checkpoint. Both AutoTokenizer.from_pretrained and AutoModel.from_pretrained must be able to load it with local_files_only=True. Anything you expect the verifier to use has to be in the submission it collects: it ignores files outside /app/submission. Please do not leave a checkpoint that requires some uncollected file elsewhere on the workstation in order to load.
 
-- Treat /task as read-only and write the final checkpoint to /app/submission/model.
-- The Agent phase has a 12-hour time limit. Task-specific submission verification has a 1-hour time limit, excluding the separate integrity judge. If the Agent phase, task-specific verification, or integrity judge times out, the score is 0.
-- Start from the backbone at /task/models/bge-base-en-v1.5.
-- Preserve the backbone architecture, parameter names, parameter shapes, and parameter count.
-- Produce a self-contained checkpoint that AutoTokenizer.from_pretrained and AutoModel.from_pretrained can load with local_files_only=True.
-- Do not use hidden data, hard-coded query-to-document mappings, precomputed answers, or external resources.
-- Network access is unavailable.
-
-## Available Validation Data
-
-The corpus and training data are under /task/data. A fixed 10-query public validation split and its labels are under /task/data/validation.
-
-## Environment and Available Resources
-
-Read /task/docs/environment.md and /task/docs/available_resources.md. The supplied backbone is mounted read-only under /task/models.
-
-## Expected Artifacts
-
-Submit a complete offline checkpoint:
-
-~~~text
-/app/submission/
-└── model/
-~~~
-
-The verifier ignores files outside /app/submission.
-
-## Verification
-
-The verifier copies the checkpoint into a separate environment, confirms that it preserves the supplied backbone architecture, and evaluates the original and submitted checkpoints with the same fixed embedding and exact-search implementation. Larger held-out Accuracy@1 improvement is better.
-
-## Hidden Test Overview
-
-The hidden split contains code-retrieval queries and private relevance labels disjoint from the public validation split. Hidden data is unavailable during the Agent phase.
+You have a 12-hour agent phase. Task-specific submission verification has a 1-hour limit, which excludes the separate integrity judge. A timeout of the agent phase, the task-specific verification, or the integrity judge results in score 0. Once you finish, the checkpoint is copied into a separate verifier environment, where its architecture is checked against the supplied backbone. The verifier evaluates the original and submitted checkpoints with the same fixed embedding implementation and exact-search implementation. Larger improvement in held-out Accuracy@1 is better. That comparison, within the unchanged backbone contract, is the improvement I need you to deliver.

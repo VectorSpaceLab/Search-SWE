@@ -126,3 +126,10 @@ assets, credentials, or hardware.
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Starter notes](environment/starter/README.md) | Initial pipeline and local validation guidance |
 | [Verifier notes](tests/README.md) | Additional verification details |
+
+## Instruction source
+
+`raw-instruction.md` preserves the original structured instruction. The scenario
+in `instruction.md` corrects its `/tast/model/bge-reranker-large` path typo to
+the actual read-only mount `/task/models/bge-reranker-large`; the fixed model
+and all candidate/model restrictions are unchanged.
