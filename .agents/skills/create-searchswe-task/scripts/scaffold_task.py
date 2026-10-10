@@ -126,10 +126,12 @@ def files_for(task_name: str, hardware: str) -> dict[str, str]:
         "instruction.md": clean(
             f"""
             Replace this scaffold for {task_name} after completing raw-instruction.md.
-            Write a direct natural-language request describing the task, current
-            data and starting system, resources, constraints, acceptance criteria,
-            and optimization objective. Omit self-introductions, invented people,
-            roles, and fictional scenes. Use connected prose paragraphs without
+            Begin with a concrete work need and how the result will be used.
+            Carry that practical context through the current data and starting
+            system, resources, constraints, acceptance criteria, and optimization
+            objective. Omit self-introductions and invented identities; preserve
+            the sense of a real task without adding requirements for the setting.
+            Use connected prose paragraphs without
             headings, lists, tables, or fenced blocks. Preserve every source
             condition and exact interface; follow references/instruction-rewrite.md
             in the authoring skill and remove this author-only prompt before use.
