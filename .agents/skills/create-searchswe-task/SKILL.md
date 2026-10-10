@@ -92,12 +92,14 @@ Follow the detailed rules in `references/task-authoring.md`:
 1. Define the submission interface and grader behavior in `raw-instruction.md`.
    Preserve an existing structured instruction there before rewriting. Follow
    [references/instruction-rewrite.md](references/instruction-rewrite.md) to write
-   the agent-facing `instruction.md`: a direct user request in connected prose
-   describing the task, current data and starting system, available resources,
-   constraints, acceptance criteria and optimization objective. Omit
-   self-introductions, invented identities and fictional scenes. Preserve every
-   condition and exact interface; do not reveal hidden answers. Audit the two
-   documents for semantic equivalence before running a model.
+   the agent-facing `instruction.md`: a natural user request beginning with a
+   concrete work need and how the result will be used. Carry that practical
+   context through the supplied data, starting system, resources, constraints,
+   acceptance criteria and optimization objective. Omit self-introductions and
+   invented identities; retain the sense of a real task in progress. Preserve
+   every condition and exact interface without adding obligations for the
+   setting; do not reveal hidden answers. Audit the two documents for semantic
+   equivalence before running a model.
 2. When adding fixed data/models or external services, read
    [references/assets-and-resources.md](references/assets-and-resources.md).
    Build exact manifests and read-only phase-specific mounts. Keep hidden inputs,

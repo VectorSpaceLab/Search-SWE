@@ -23,20 +23,36 @@ used for the rewrite so changes can be reviewed.
 
 ## Write the request
 
-Write the request a user would give their coding agent to get the work done.
-Start with what needs to be built or improved, then connect the current data
-and supplied starting system, available resources, restrictions, required
-deliverables, acceptance criteria and optimization objective in natural prose.
-Explain what counts as better using the actual metric, baseline, quality gates
-and resource tradeoffs in the source. Include enough detail to preserve the
-whole contract; length should come from those requirements, not filler.
+Write the request a user would give their coding agent while working on a
+concrete problem. Begin with the work they need to do, the material or system
+already available, and how they will use the result. The opening should make
+the practical need clear, such as finding a passage to check its original
+context, choosing which retrieved documents to read, or reducing the wait for
+a complete search workload.
 
-Do not introduce a named requester, a self-introduction such as "I'm Alex", an
-invented role, physical workplace, personal history or fictional motivation.
-A direct request such as "I need a system that..." is fine. Use context grounded
-in the supplied task, such as vectors that are already computed or a starter
-whose retrieval quality needs improvement. Do not invent dataset provenance,
-usage claims or a story around the work.
+Keep this sense of use throughout the request. Connect the current data and
+starting system, available resources, restrictions, deliverables and acceptance
+criteria to the work as it progresses. Explain what counts as better using
+the source's metric, baseline, quality gates and resource tradeoffs. Technical
+interfaces and scoring details must remain exact, and the whole request should
+read as one coherent commission. Adding a contextual opening alone is not
+enough if the rest reads as a disconnected specification.
+
+Use ordinary first-person task language when it fits, without a named requester
+or a self-introduction such as "I'm Alex". For example, a PDF-localization task
+could begin: "I need to look up passages in a long PDF repeatedly. Often I have
+a description of the material I want to find and need to locate the original
+pages so I can check the surrounding text." Choose context appropriate to each
+task; there is no fixed opening template. A plain task description with "I need"
+prepended is not sufficient to establish the work situation.
+
+Ground the context in the actual task and resources. Do not invent identities,
+organizations, biographies or decorative scenes. Do not claim an unsupported
+dataset provenance, production deployment, measured defect or usage history.
+Practical motivation must not add functionality or acceptance criteria: a
+desire to check original pages, for example, does not require a PDF viewer or
+a graphical interface unless the source specifies one. Include enough detail
+to preserve the whole contract without padding it with a backstory.
 
 Use no headings, enumerated requirements, bullet lists, tables, directory
 trees or fenced code blocks in the final instruction. Exact commands, paths,
@@ -73,9 +89,11 @@ Make a small author-only correspondence record: source condition or line range,
 the request paragraph containing it, and any discrepancy. Review both ways:
 every raw condition must appear in the prose, and every prose obligation must
 come from the source or an explicitly resolved contract correction. Read the
-whole request for natural flow after this check. Confirm it focuses on the
-work, inputs, resources, constraints and measurable outcome, without an
-invented persona or setting.
+whole request for natural flow after this check. Confirm that a concrete work
+need and the intended use of the results are apparent, and remain connected
+to the data, resources, constraints and measurable outcome through the body.
+Check that there is no self-introduction, invented identity or extra obligation
+introduced by the context. Removing a persona must not erase the work situation.
 
 Literal comparisons of paths, flags, IDs and numbers catch omissions but cannot
 prove semantic equivalence. Inspect negations, exceptions, time accounting,

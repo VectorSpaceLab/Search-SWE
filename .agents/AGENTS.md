@@ -32,9 +32,11 @@ Markdown links.
    user-request rewrite → grader checks → configured model evaluation → feedback
    and task refinement → revalidation of substantive changes. Preserve
    `raw-instruction.md` and audit all its conditions in the agent-facing
-   `instruction.md`. Describe the task, available inputs, resource constraints,
-   acceptance criteria and optimization objective directly, without invented
-   requester identities or narrative scenes; the skill defines both gates.
+   `instruction.md`. Start from a concrete work need and explain how the
+   requested result will be used, then connect the available inputs, constraints,
+   acceptance criteria and optimization objective in natural prose. Preserve
+   practical context without self-introductions or invented identities; the
+   skill defines the rewrite and validation gates.
    Before scaffolding, inspect one or two closest reviewed packages under
    `tasks/` as read-only structural precedents, selected by engineering objective,
    grading shape, resources and hardware. Apply current repository contracts
