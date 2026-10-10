@@ -235,9 +235,9 @@ For task descriptions and results, visit the
 
 Contributions are welcome. For new or substantially revised tasks, start with
 the workflow and skills in [`.agents/`](.agents/AGENTS.md), including
-[`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md) for submissions
+[`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md) for task authoring
 and [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md) for
-PR review and promotion. See the
+PR review and publication. See the
 [contribution entry](CONTRIBUTING.md) and [guide](docs/contributing.md) for validation and PR requirements.
 
 Task authoring includes running a configured coding model, inspecting its
@@ -246,17 +246,16 @@ setting. Revalidate any changes that affect the task or scoring and report the
 final tested revision. If required API keys are missing, the authoring agent
 asks the contributor to configure them locally before the trial.
 
-New tasks use `task-submissions/<task-name>`. Choose a descriptive name of at
-most five lowercase, hyphen-separated words; use that same name for the formal
-package and its official data. One PR may add multiple tasks. Maintainers
-promote each reviewed package to `tasks/<task-name>` in the same PR, with a
-separate pure move and finalization. Preserve original authors with a merge
-commit; no unfinished submission enters main.
+Create tasks directly at `tasks/<task-name>` in your contribution branch. Choose
+a descriptive name of at most five lowercase, hyphen-separated words, and use
+it for the package and its official data. One PR may add multiple tasks. Review
+and validate each package, then merge with a merge commit to preserve original
+authors.
 
 Development assets may use a personal public HF dataset pinned to a commit SHA.
 Publish official inputs under `tasks/<task-name>/`, then pin the merged official
-HF SHA before merging the GitHub contribution. Explicit `--task-path` supports
-submission downloads and local trials; `--task <task-name>` selects a formal task.
+HF SHA before merging the GitHub contribution. Use `--task <task-name>` for
+downloads and local trials.
 
 ## Citation
 

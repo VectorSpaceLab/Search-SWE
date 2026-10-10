@@ -221,21 +221,20 @@ bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --
 欢迎参与贡献。创建新任务或大幅修改已有任务时，请先使用 [`.agents/`](.agents/AGENTS.md)
 中的工作流和 skills，包括
 [`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md)（任务投稿）和
-[`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)（PR 审查与正式化）。验证要求和
+[`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)（PR 审查与发布）。验证要求和
 PR 说明见[贡献入口](CONTRIBUTING.md)与[贡献指南](docs/contributing.md)。
 
 任务构建还包括使用配置好的编码模型试跑，检查执行轨迹和评测结果，并根据反馈
 完善任务设定。影响任务要求或评分的修改需要重新验证，并记录最终测试的版本。
 如果缺少必需的 API key，负责构建任务的智能体应在试跑前提醒贡献者在本地配置。
 
-新任务放在 `task-submissions/<task-name>`。名称使用不超过五个词的小写连字符
-短语，正式任务与官方数据使用同一名称。一个 PR 可以包含多个任务；维护者在
-同一个 PR 中逐一晋升到 `tasks/<task-name>`，将纯目录移动和后续整理分开提交。
-使用 merge commit 保留原作者历史，未完成晋升的任务不进入 main。
+在贡献分支中直接将新任务放在 `tasks/<task-name>`。名称使用不超过五个词的
+小写连字符短语，任务包与官方数据使用同一名称。一个 PR 可以包含多个任务；
+逐一完成审查与验证后，使用 merge commit 保留原作者历史。
 
 开发数据可以来自固定到 commit SHA 的个人公开 HF 数据集。官方输入发布到
 `tasks/<task-name>/` 后，先固定官方已合并的 HF SHA，再合并 GitHub 贡献。
-使用 `--task-path` 显式下载、试跑待审任务；正式任务通过 `--task <task-name>` 选择。
+使用 `--task <task-name>` 下载数据和进行本地试跑。
 
 ## 引用
 

@@ -1,6 +1,6 @@
 ## Summary
 
-Task name(s) and submission path(s): `task-submissions/<task-name>`
+Task name(s) and package path(s): `tasks/<task-name>`
 Goal, starting system, and CPU/GPU requirements:
 Authors and coauthors:
 
@@ -14,9 +14,9 @@ scores and judge health; explain task-setting changes motivated by that feedback
 
 ## Contributor checklist
 
-- [ ] New tasks use unique descriptive names of at most five lowercase hyphen-separated words and follow `task-submissions/<task-name>`; each path identifies one task throughout this PR.
+- [ ] New tasks use unique descriptive names of at most five lowercase hyphen-separated words and live at `tasks/<task-name>`.
 - [ ] Actual authors in `task.toml`; original author commits preserved.
-- [ ] Allow edits from maintainers, or agree on contributor-performed promotion in this PR.
+- [ ] Allow edits from maintainers, or agree on contributor-applied review fixes in this PR.
 - [ ] No secrets, downloaded inputs/models, job outputs, or author-only solutions.
 - [ ] Static checks and applicable runtime evidence recorded.
 - [ ] Provenance, redistribution rights, licenses and immutable development asset SHA documented.
@@ -24,8 +24,7 @@ scores and judge health; explain task-setting changes motivated by that feedback
 ## Maintainer merge checklist
 
 - [ ] Design, verifier isolation, runtime evidence and any validation exceptions reviewed.
-- [ ] Names checked against the current base and queued PRs; each task keeps its name through promotion.
-- [ ] Every new task has a separate pure move from submissions in this PR, followed by reviewed finalization.
+- [ ] Names checked against the current base and queued PRs.
 - [ ] New official assets published under `tasks/<task-name>/`; previous assets preserved; merged official SHA pinned.
-- [ ] Repository docs and inventories updated; checks and merge-ready pass; no submission package remains.
-- [ ] Merge commit only; original contributor history retained.
+- [ ] Repository docs and inventories updated; checks and merge-ready pass.
+- [ ] Merge commit; original contributor history retained.

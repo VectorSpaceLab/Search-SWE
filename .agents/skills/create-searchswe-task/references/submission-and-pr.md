@@ -1,4 +1,4 @@
-# Submission, branch and PR handoff
+# Contribution branch and PR handoff
 
 Choose a descriptive task name of at most five lowercase hyphen-separated words,
 starting with a letter and otherwise using letters/digits. Omit `task-`; `all`
@@ -9,11 +9,10 @@ is reserved. Choose GPU only when execution requires it.
 Resolve the target checkout explicitly and inspect status, branch, remotes and
 base. Preserve other authors' work and commits; never reset, stash or switch
 their branch to simplify your task. Agree on branch/commit scope before changing
-history. New packages use `task-submissions/<task-name>` and canonical
-`task.name = "search-swe/<task-name>"`. Check formal tasks, submissions and active
-PRs for collisions. A PR may add multiple unique names, but cannot reuse a
-submission path. Direct new formal additions without submission history fail CI.
-A scaffold is a deliberately failing starting point, not a finished task.
+history. New packages use `tasks/<task-name>` in the contribution branch, with
+`task.name = "search-swe/<task-name>"`. Check names against the current base and
+active PRs. A PR may add multiple uniquely named tasks. Complete the scaffold's
+instructions, assets, environment and grader before runtime validation.
 
 Set actual `task.toml` authors. Preserve original commits and account-linked Git
 name/email; do not change identity configuration on their behalf. Co-authored-by
@@ -42,12 +41,12 @@ all uppercase values with verified values):
 ```bash
 git push FORK_REMOTE CONTRIBUTION_BRANCH
 gh pr create --repo OWNER/REPO --base BASE_BRANCH \
-  --head FORK_OWNER:CONTRIBUTION_BRANCH --title 'Add task submission' \
+  --head FORK_OWNER:CONTRIBUTION_BRANCH --title 'Add example-search task' \
   --body-file /path/to/reviewed-pr-body.md
 ```
 
 Use a trusted body file, not shell interpolation of task/PR text. Report actual
-validation commands/results and unrun layers. For each task, name the formal
+validation commands/results and unrun layers. For each task, name the reviewed
 reference packages consulted (or state that none was close), the structural
 patterns reused, and intentional differences; do not claim precedent as proof
 that a task-specific value is correct. Link any authorized personal HF repo at
@@ -56,44 +55,28 @@ the **PR author** enables **Allow edits from maintainers** on the PR. Verify the
 setting (`maintainerCanModify` in `gh pr view --json maintainerCanModify`), rather
 than assuming PR creation enabled it. Same-repository branches may not need it;
 organization-owned forks/policies may make it unavailable. In that case agree
-that the contributor performs the promotion commits in the same PR. Never
+that the contributor applies review fixes in the same PR. Never
 request broad credentials or silently replace the PR.
 
-## Review and finalization in that same PR
+## Review and finalization in the same PR
 
 The maintainer audits instructions/resources, heldout split, known-good and
-negative cases, grader isolation, networking/credentials, sources and licenses.
-A review-stage CI pass can still contain unfinished submissions. Missing,
-pending or failed checks are not acceptance. Separately authorize code execution,
-API/GPU costs and any credentialed runtime tests.
+negative cases, model-trial feedback, grader isolation, networking/credentials,
+sources and licenses. Separately authorize code execution, API/GPU costs and
+credentialed runtime tests. Track each required check for the reviewed head.
 
-Near merge, refresh the base and check name collisions with queued PRs. Preserve
-original author history. Use the target checkout's offline promotion helper
-from a clean worktree/index; missing tools are a prerequisite blocker:
+Refresh the base and check names against queued PRs. Apply review fixes and
+necessary inventory or documentation changes in the contribution branch,
+preserving original author commits. Follow [publication](publication.md):
+publish approved dataset inputs under official `tasks/<task-name>/...` paths,
+merge the HF change, then pin its official SHA in `assets.json` and verify clean
+downloads. Preserve original model pins.
 
-```bash
-python scripts/promote_task.py rename task-submissions/example-search example-search --dry-run
-python scripts/promote_task.py rename task-submissions/example-search example-search
-# Review and, only when authorized, commit this pure git mv alone.
-python scripts/promote_task.py finalize task-submissions/example-search example-search --dry-run
-python scripts/promote_task.py finalize task-submissions/example-search example-search
-```
+Run release checks, applicable tests and `python scripts/check_tasks.py
+--merge-ready --base FULL_PR_BASE_SHA`. Commit the reviewed changes in the same
+PR. Re-review each changed head and verify required checks against the current
+base before an authorized **merge commit**.
 
-Repeat independently for each task. The name stays unchanged. Finalize requires
-HEAD to be that task's single-parent, whole-package, 100%-identical pure rename
-commit. It rewrites submission paths in tracked text; it never commits or
-publishes. Review replacements, mounts, image/external paths, inventories and
-authors. Follow [publication](publication.md): personal pinned development data
-→ official `tasks/<task-name>/...` paths through a community PR or authorized
-mirror → official merge → pin that official SHA. Preserve original model pins.
-
-Run release and applicable tests plus `python scripts/check_submission.py
---merge-ready`; no submission task.toml may remain. Commit any reference, asset
-or integration finalization separately in this same PR. Do not create an empty
-commit if no finalization changes are needed.
-
-Re-review each changed head, recheck base/name collisions and exact head before
-an authorized **merge commit**. No squash/rebase or unfinished submissions on
-main. Verify the resulting SHA/tree and attribution using
+Verify the resulting SHA/tree and attribution using
 `git log --follow -- tasks/example-search/instruction.md` and `git blame`.
 Report observed outcomes, task names, official asset SHAs and remaining blockers.

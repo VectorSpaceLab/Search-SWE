@@ -260,7 +260,6 @@ def parse_args() -> argparse.Namespace:
         default=Path.cwd(),
         help="Search-SWE repository root; defaults to the current directory",
     )
-    parser.add_argument("--formal", action="store_true", help="Maintainer-only scaffold under tasks/; default is task-submissions/")
     parser.add_argument("--author", action="append", required=True, help="Actual author name; repeat for coauthors")
     return parser.parse_args()
 
@@ -279,21 +278,17 @@ def main() -> int:
         print(f"error: not a Search-SWE repository root: {root}", file=sys.stderr)
         return 2
 
-    if (root / "tasks").is_symlink() or (root / "task-submissions").is_symlink():
+    if (root / "tasks").is_symlink():
         print("error: task roots must not be symlinks", file=sys.stderr)
         return 2
     if any(not name.strip() or name.strip().lower() in
            ("search-swe", "your name", "author") for name in args.author):
         print("error: actual --author names are required", file=sys.stderr)
         return 2
-    for directory in ("tasks", "task-submissions"):
-        existing = root / directory / args.task_name
-        if existing.exists() or existing.is_symlink():
-            print(f"error: task name already exists; refusing overwrite: {existing}", file=sys.stderr)
-            return 1
-    parent = root / ("tasks" if args.formal else "task-submissions")
-    parent.mkdir(exist_ok=True)
-    destination = parent / args.task_name
+    destination = root / "tasks" / args.task_name
+    if destination.exists() or destination.is_symlink():
+        print(f"error: task name already exists; refusing overwrite: {destination}", file=sys.stderr)
+        return 1
 
     generated = files_for(args.task_name, args.hardware)
     if args.author:

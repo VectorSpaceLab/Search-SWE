@@ -204,10 +204,10 @@ def restore(task, task_output, entry, directory_modes, args):
 def main(default_kind="all"):
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
-    selection.add_argument("--task", nargs="+", choices=("all", *TASKS), help="Formal task names, or all formal tasks")
-    selection.add_argument("--task-path", help="Repository-relative tasks/<task-name> or task-submissions/<task-name>")
+    selection.add_argument("--task", nargs="+", choices=("all", *TASKS), help="Task names, or all tasks in this checkout")
+    selection.add_argument("--task-path", help="Repository-relative tasks/<task-name>")
     parser.add_argument("--kind", choices=("all", "data", "models"), default=default_kind)
-    parser.add_argument("--output-dir", type=Path, help="Alternate parent; task-submissions/<task-name> is preserved")
+    parser.add_argument("--output-dir", type=Path, help="Alternate parent for <task-name> directories")
     parser.add_argument("--cache-dir", type=Path, help="Hugging Face cache directory")
     parser.add_argument("--local-data-dir", type=Path, help="Restore Search-SWE dataset files from a local hf-data directory, with size/SHA-256 checks")
     parser.add_argument("--force", action="store_true", help="Replace files whose checksums differ")

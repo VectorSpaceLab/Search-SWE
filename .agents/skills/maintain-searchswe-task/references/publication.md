@@ -25,18 +25,18 @@ repo = 'YOUR_ACCOUNT/search-swe-development'
 api.create_repo(repo_id=repo, repo_type='dataset', private=False, exist_ok=True)
 commit = api.upload_folder(repo_id=repo, repo_type='dataset', folder_path='/path/to/dev-data',
                            commit_message='Add temporary task development inputs')
-print(commit.oid)  # Pin this full SHA in submission assets.json.
+print(commit.oid)  # Pin this full SHA in task assets.json.
 PY
 ```
 
 Use this personal repo, its dataset-relative filenames, size/hash, and printed
-immutable SHA in `assets.json`. The explicit submission downloader/launcher then
-support real pre-promotion validation. Keep the temporary repo accessible through
-review and migration; only retire it after official pinned downloads are verified.
+immutable SHA in `assets.json`. Select the task by name with the downloader and
+launcher for development validation. Keep the temporary repo accessible through
+review and publication; retire it after official pinned downloads are verified.
 
-### Task name: additive official publication, then GitHub merge
+### Official publication, then GitHub merge
 
-After task-name approval and promotion, change only the new task's dataset source
+After task and asset review, change only the new task's dataset source
 repo/filename to `search-swe/Search-SWE` and `tasks/<task-name>/...`. Preserve
 original model repo pins and bundled metadata. Prepare **only new data files**
 in `/path/to/new-data/tasks/<task-name>/...`, at the exact asset sizes/hashes.
@@ -64,7 +64,8 @@ python "$SKILL_DIR/scripts/prepare_hf_upload.py" --repo-root "$REPO" \
   --output /path/to/upload-staging
 ```
 
-Official asset staging requires a promoted package at `tasks/<task-name>`.
+Set `SKILL_DIR` to this installed skill and `REPO` to the trusted checkout.
+Stage assets from its reviewed package at `tasks/<task-name>`.
 
 The offline helper verifies hashes and safe paths for new files, rejects
 collisions and symlinks, and stages those files with a merged manifest that
@@ -106,6 +107,6 @@ replace a newer manifest with a stale one.
 **Merge the official HF change first.** Only then pin the resulting official
 40-hex commit SHA (not the community PR/head SHA or `main`) in the finalized
 GitHub task's `assets.json`. Verify downloads using a fresh output directory or
-cache and run release checks. Commit finalization and merge the GitHub PR last.
-No new task with unpublished/unpinned assets or an unfinished submission enters
-main. Preserve existing tasks' pinned revisions and published assets.
+cache and run release and merge-ready checks. Commit the verified asset pins
+in the task PR, then merge the GitHub contribution. Preserve existing tasks'
+pinned revisions and published assets.

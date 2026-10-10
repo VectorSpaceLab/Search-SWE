@@ -10,7 +10,7 @@ import sys
 import tomllib
 
 from download_assets import REPO, matches, read_manifest, relative_path
-from task_paths import FORMAL, no_symlinks, safe_path
+from task_paths import TASK_NAME_RE, no_symlinks, safe_path
 
 
 def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False, *, packages=None):
@@ -45,12 +45,12 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
                 errors.append(f"{task.name}: missing or empty {name}")
         try:
             config = tomllib.loads((task / "task.toml").read_text())
-            if not FORMAL.fullmatch(task.name):
+            if not TASK_NAME_RE.fullmatch(task.name):
                 errors.append(f"Invalid task name: {task.name}; use at most five lowercase hyphen-separated words without a task- prefix")
             if config.get("task", {}).get("name") != f"search-swe/{task.name}":
                 errors.append(f"{task.name}: expected task name search-swe/{task.name}")
             if "task_type" in config.get("metadata", {}):
-                errors.append(f"{task.name}: remove metadata.task_type; describe the task through its objective and keywords")
+                errors.append(f"{task.name}: unsupported metadata field: task_type; describe the task through its objective and keywords")
             if not config.get("task", {}).get("version"):
                 errors.append(f"{task.name}: missing task version")
             manifest = read_manifest(task)
@@ -94,7 +94,7 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
             if not path.is_file():
                 continue  # A tracked deletion is absent from the next commit.
             parts = Path(name).parts
-            task_payload = (len(parts) > 3 and parts[0] in ("tasks", "task-submissions")
+            task_payload = (len(parts) > 3 and parts[0] == "tasks"
                             and parts[2] in ("data", "models", "jobs", "solution"))
             if name in runtime_paths or task_payload:
                 errors.append(f"Downloaded runtime asset would enter Git: {name}")
@@ -107,8 +107,6 @@ def check_release(repo, hf_data=None, verify_data=False, allow_unpublished=False
                 text = path.read_text()
             except UnicodeError:
                 continue
-            if name.startswith("tasks/") and re.search(r"task-submissions/[a-z0-9-]+", text):
-                errors.append(f"Unfinalized submission path in formal package: {name}")
             if secret.search(text):
                 errors.append(f"Possible credential in Git file: {name} (value omitted)")
         if runtime_paths:

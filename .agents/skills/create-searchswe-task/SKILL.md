@@ -20,9 +20,10 @@ Read [references/task-authoring.md](references/task-authoring.md). Inspect the
 target checkout's status and preserve unrelated changes. Resolve its root
 explicitly; do not infer it from where this skill was installed.
 
-Before scaffolding, inspect one or two closest **formal** packages under the
-target checkout's `tasks/`. Choose them by engineering objective, evaluation/judge
-shape, resources/APIs, hardware and input/artifact layout. Record their exact paths and why they are relevant. Treat them as
+Before scaffolding, inspect one or two closest reviewed packages already merged
+into the base branch under `tasks/`. Choose them by engineering objective,
+evaluation/judge shape, resources/APIs, hardware and input/artifact layout.
+Record their exact paths and why they are relevant. Treat them as
 read-only structural precedents: the current skill, repository validators,
 schema and shared-image documentation take priority. Do not copy task-specific
 IDs, authors, datasets, thresholds, pins, licenses or access policy without
@@ -40,7 +41,7 @@ Record a short design summary before writing the package:
 | Evaluation | Metric, public gates, baseline if needed, failure/timeout behavior |
 | Inputs | Public/hidden split, actual files, provenance, redistribution rights |
 | Resources | CPU/GPU, memory/storage/time, network, permitted APIs/models |
-| Precedent | Formal task path(s), matching dimensions, structural patterns reused, intentional differences |
+| Precedent | Reviewed task path(s), matching dimensions, structural patterns reused, intentional differences |
 
 CPU is the default; choose GPU when the agent or verifier executes GPU work. Ask for
 missing facts that change the design; do not invent labels, licenses, service
@@ -59,24 +60,19 @@ python "$SKILL_DIR/scripts/scaffold_task.py" example-search \
   --repo-root "$REPO" --author 'Alice Example' --hardware cpu
 ```
 
-Use `--hardware gpu` only for GPU execution. New tasks belong at
-`task-submissions/<task-name>`, with `task.name = "search-swe/<task-name>"`.
-Names start with an ASCII lowercase letter, contain lowercase letters/digits
-and single hyphens, and have at most five words. Use a concise description of
-the task; omit the `task-` prefix. `all` is reserved. Check both package roots
-and active PRs for collisions. Repeat `--author` for actual coauthors.
-The helper refuses overwrites and symlink roots. Its explicit `--formal` option
-is for maintainer tooling, not a bypass for new task contributions. Edit an
-existing task in place instead of deleting it to make the helper succeed.
+Use `--hardware gpu` only for GPU execution. Create new tasks directly at
+`tasks/<task-name>` in the contribution branch, with
+`task.name = "search-swe/<task-name>"`. Names start with an ASCII lowercase letter,
+contain lowercase letters/digits and single hyphens, and have at most five words.
+Choose a concise description; the `task-` prefix and `all` are reserved. Check
+names against `tasks/` on the base branch and active PRs. Repeat `--author` for
+actual coauthors. The helper protects existing files and rejects symlink roots.
+Revise existing packages in place.
 
-One PR may add multiple uniquely named tasks. Read the bundled
-[submission and PR workflow](references/submission-and-pr.md). Promotion keeps
-the same name: `task-submissions/<task-name>` → `tasks/<task-name>`. Each task
-gets its own pure rename commit in **the same PR**, followed by a separate
-finalization commit when references, assets or integration need changes. Do not
-reuse a submission path in that PR. Preserve original author and promotion
-commits: **merge commit only**, never squash/rebase. All tasks must be promoted
-before merge; no submission package enters final main.
+One PR may add multiple uniquely named tasks. Follow the
+[branch and PR workflow](references/submission-and-pr.md): review and validate
+each package, publish official inputs and pin their merged SHA, then merge the
+PR with a **merge commit** to preserve original author history.
 
 The scaffold is **not a finished task**: its verifier always fails, its asset
 manifest is empty, data/model mounts are absent, and instructions are writing
@@ -144,7 +140,7 @@ authorizes that scoped run; reuse already-authorized local credentials without
 asking again. Ordinary local checks may proceed.
 
 Report the task path, objective/hardware, commands actually executed and their
-results, formal reference tasks consulted (or that none was close), intentional
+results, reviewed reference tasks consulted (or that none was close), intentional
 reuse/deviations, the source-to-request equivalence review, known-good/negative-case
 evidence, the exact evaluated revision/model/effort, observed scores and judge
 health, feedback-driven task changes (or why none were needed), and every unrun

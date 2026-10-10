@@ -1,4 +1,4 @@
-"""Load the portable skill's single-source offline helpers for legacy CLIs."""
+"""Load the portable skill's single-source offline helpers for the repository CLI."""
 import importlib.util
 from pathlib import Path
 

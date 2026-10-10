@@ -7,8 +7,7 @@ task. Nothing in this reference grants permission to publish or use paid APIs.
 ## Manifest construction
 
 Keep downloadable fixed files outside the build contexts, under
-`data/` or `models/` in the selected package (initially
-`task-submissions/<task-name>`, later `tasks/<task-name>`).
+`data/` or `models/` in the package at `tasks/<task-name>`.
 Ignore both directories in Git. Hidden
 queries/labels and grading code go in `tests/`, not the public asset bundle.
 For a verifier-only corpus stored in `data/verifier/`, mount only public
@@ -48,16 +47,16 @@ Do not attempt `chmod` on read-only mounted files during verification.
 
 ## Development and incremental publication
 
-For pre-promotion development, use an authorized **personal public temporary HF
+During development, use an authorized **personal public temporary HF
 dataset** with manifest, provenance and license; pin its immutable 40-hex SHA in
-submission `assets.json`. The downloader accepts arbitrary HF repositories:
+the task's `assets.json`. The downloader accepts arbitrary HF repositories:
 
 ```bash
-python scripts/download_assets.py --task-path task-submissions/example-search
-python scripts/download_assets.py --task-path task-submissions/example-search --verify-only
+python scripts/download_assets.py --task example-search
+python scripts/download_assets.py --task example-search --verify-only
 ```
 
-After the maintainer approves promotion in the same PR, prepare new official
+After task and asset review, prepare new official
 files at `tasks/<task-name>/...`. The target checkout's
 `scripts/prepare_hf_upload.py` accepts a current official manifest snapshot,
 the final task package and **only new data**. It verifies hashes, preserves existing

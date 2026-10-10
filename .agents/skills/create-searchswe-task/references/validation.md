@@ -1,12 +1,12 @@
 # Validation and completion evidence
 
 Run commands from the target repository root, using Python 3.12+. For a new
-task set `task_path=task-submissions/example-search` (use your actual task name); after promotion set `task_path=tasks/<task-name>`. These checks use
+task set `task_path=tasks/example-search`, using your actual task name. These checks use
 the checkout's tools; the skill does not bundle a second checker or runtime.
 
 ## Target prerequisites (stop if missing)
 
-Verify the explicit checkout contains `scripts/check_submission.py`,
+Verify the explicit checkout contains `scripts/check_tasks.py`,
 `check_release.py`, `download_assets.py`, `run_task.py`/`run_task.sh`, and their
 imports. Use Python 3.12+, host dependencies from `scripts/requirements.txt`
 (Harbor 0.22.0 and huggingface_hub 1.x), PyYAML for static Compose parsing, and
@@ -22,7 +22,7 @@ for an authorized remote inspection or PR handoff, not local task authoring.
 
 ## 1. Inspect the package before execution
 
-- Revisit the recorded formal reference task(s), or the recorded absence of a
+- Revisit the recorded reviewed reference task(s), or the recorded absence of a
   close precedent. Compare only the intended structural patterns and explain
   meaningful deviations against the current contracts. Check that
   no task-specific IDs, data/pins, thresholds, allowlists, licenses or resource
@@ -41,11 +41,11 @@ for an authorized remote inspection or PR handoff, not local task authoring.
   without actually using that UID when launching code is insufficient.
 
 ```bash
-task_path=task-submissions/example-search
-python scripts/check_submission.py "$task_path" # Before promotion; requires PyYAML
+task_path=tasks/example-search
+python scripts/check_tasks.py "$task_path" # Requires PyYAML
 python scripts/check_release.py
 python -m unittest discover -s scripts/tests -p 'test_*.py'
-python scripts/download_assets.py --task-path "$task_path" --dry-run
+python scripts/download_assets.py --task "${task_path#tasks/}" --dry-run
 bash -n "$task_path/tests/test.sh"
 git diff --check
 ```
@@ -58,12 +58,11 @@ The current `scripts/tests/test_task_images.py` includes an explicit `GPU_TASKS`
 inventory. Adding a GPU task may require updating that expected inventory as a
 direct integration change, while retaining image/resource consistency checks.
 Do not lower assertions to make a wrongly configured task pass. Download and
-launch commands discover formal task names from `tasks/*/task.toml` automatically;
-submissions require explicit `--task-path`. CI review-stage success is not
-merge readiness: after same-PR pure rename/finalization, run
-`python scripts/check_submission.py --merge-ready` (no submission `task.toml`
-may remain). Do not run unreviewed contributor code with secrets; credentialed
-runtime testing is separate from unprivileged PR CI.
+launch commands discover task names from `tasks/*/task.toml` automatically.
+Use `--task <task-name>` for each trial. Before merge, run
+`python scripts/check_tasks.py --merge-ready --base FULL_PR_BASE_SHA` to check
+package syntax, new-task authors and pinned official dataset sources. Review
+and authorize credentialed runtime testing separately from unprivileged PR CI.
 
 ## 2. Assets, Compose, and images
 
@@ -76,7 +75,7 @@ Compose files are Harbor overlays. Direct `docker compose config` needs a
 temporary base service with an image (this check does not pull that image):
 
 ```bash
-task_path=task-submissions/example-search
+task_path=tasks/example-search
 (
   set -eu
   base=$(mktemp)
@@ -132,7 +131,7 @@ do not present static checks or Oracle results as that model run.
 ## Handoff
 
 Report changed paths, objective, hardware/image selection, input provenance,
-formal reference task paths (or no close precedent), structural reuse and
+reviewed reference task paths (or no close precedent), structural reuse and
 intentional deviations, commands/results for each completed layer, expected
 versus observed scores, task changes motivated by model feedback (or why none
 were needed), the final evaluated revision, and unrun layers with their blockers.

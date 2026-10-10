@@ -6,12 +6,11 @@ unless they begin with `/` (container paths). The skill may be installed
 elsewhere. Use the target checkout's validators and the published image tags
 documented in `docker/README.md`.
 
-## Use current formal tasks as bounded precedents
+## Use reviewed tasks as bounded precedents
 
-Before scaffolding, inspect the target checkout's current `tasks/` tree
-read-only. Select one or two closest **formal** packages for each proposed task;
-active `task-submissions/` packages are unreviewed work, not precedent. Prefer
-similarity in this order when it affects the design:
+Before scaffolding, inspect one or two closest reviewed packages already merged
+into the base branch under `tasks/`. Record that base revision alongside the
+selected paths. Prefer similarity in this order when it affects the design:
 
 1. engineering objective and the evaluation/baseline shape;
 2. deterministic verifier versus model judge, plus artifact-transfer interface;
@@ -64,15 +63,14 @@ or access to a reference solution.
 
 ## Required package contract
 
-Create each new package at `task-submissions/<task-name>/`, with
+Create each new package at `tasks/<task-name>/` in the contribution branch, with
 `task.name = "search-swe/<task-name>"` and actual `task.toml` authors. Choose a
 concise descriptive name of at most five lowercase hyphen-separated words,
-starting with a letter and otherwise using letters/digits. Omit `task-`; `all`
-is reserved. Names must be unique across submissions and formal tasks.
-A PR may contain multiple tasks; never reuse a submission path in that PR.
-Promotion keeps the name at `tasks/<task-name>/` in the same PR: a pure rename
-commit, then any necessary finalization in a separate commit, and a merge commit
-only. Existing-task edits stay in place. Submission checks reuse
+starting with a letter and otherwise using letters/digits. The `task-` prefix
+and `all` are reserved. Check uniqueness against the current base and active PRs.
+A PR may contain multiple tasks. Review each package, complete validation and
+official asset publication, then merge with a merge commit to preserve authors.
+Revise existing tasks in place. `scripts/check_tasks.py` reuses
 `scripts/check_release.py`, which requires these non-empty files:
 
 ```text
@@ -248,7 +246,7 @@ task uses a less restricted profile.
 
 Prefer deterministic programmatic checks for facts that code can measure.
 Use a model judge only for a clearly subjective dimension, and pin its tooling
-and configuration following a selected formal precedent with the same judging
+and configuration following a selected reviewed precedent with the same judging
 mode, while independently verifying that its judge and access policy apply.
 
 The separate verifier must be self-contained. Its Dockerfile copies `tests/`

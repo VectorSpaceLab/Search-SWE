@@ -105,8 +105,8 @@ def host_is_allowed(host, allowed_hosts):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
-    selection.add_argument("--task", choices=TASKS, help="Formal task name (for example reasoning-query-rewriting)")
-    selection.add_argument("--task-path", help="Repository-relative tasks/<task-name> or task-submissions/<task-name>")
+    selection.add_argument("--task", choices=TASKS, help="Task name (for example reasoning-query-rewriting)")
+    selection.add_argument("--task-path", help="Repository-relative tasks/<task-name>")
     parser.add_argument("--agent", default="codex", choices=tuple(AGENT_IMPORTS))
     parser.add_argument(
         "--openrouter", action="store_true",

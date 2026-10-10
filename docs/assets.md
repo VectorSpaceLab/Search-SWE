@@ -36,31 +36,30 @@ python scripts/download_assets.py --task all --dry-run
 Use the preview to estimate disk requirements. Allow additional space for the
 Hugging Face cache; the downloader copies cached files into the task directories.
 
-## New-task submissions
+## Developing a task
 
-Contributors can validate before promotion with an explicit package:
+Create the package at `tasks/<task-name>`, then select it by name:
 
 ```bash
-python scripts/download_assets.py --task-path task-submissions/example-search --dry-run
-python scripts/download_assets.py --task-path task-submissions/example-search
-python scripts/download_assets.py --task-path task-submissions/example-search --verify-only
-python scripts/run_task.py --task-path task-submissions/example-search \
+python scripts/download_assets.py --task example-search --dry-run
+python scripts/download_assets.py --task example-search
+python scripts/download_assets.py --task example-search --verify-only
+python scripts/run_task.py --task example-search \
   --agent pi --model deepseek/deepseek-flash --dry-run
 ```
 
-`--task all` selects all formal tasks. Paths must be canonical repository-relative
-paths without traversal or symlinks. An alternate `--output-dir` preserves the
-submission path; launcher jobs default to `jobs/task-submissions/example-search`.
-Each submission has a unique task name.
+`--task all` selects every package under `tasks/` in the current checkout.
+`--task-path tasks/<task-name>` accepts a canonical repository-relative path.
+An alternate `--output-dir` contains `<task-name>/`; launcher jobs default to
+`jobs/<task-name>`.
 
 For development, use a personal public temporary dataset with a manifest,
-provenance/license and pinned immutable SHA. After promotion, use the
-[contribution publication workflow](contributing.md#asset-contribution-and-publication):
-`prepare_hf_upload.py` stages only new verified files plus a merged current
-manifest. Supply the current manifest and the new data files. Update HF SOURCES
-and license metadata, preserve existing published assets, and submit an HF
-community PR (`create_pr=True`) or request a maintainer mirror. Never share official tokens.
-Official HF merge precedes final `assets.json` SHA pinning and GitHub merge.
+provenance/license and pinned immutable SHA. After task and asset review, follow
+the [publication workflow](contributing.md#asset-contribution-and-publication):
+`prepare_hf_upload.py` stages new verified files with a merged current manifest.
+Update HF SOURCES and license metadata, preserve published assets, and submit
+an authorized HF community PR or request a maintainer mirror. Pin the merged
+official HF SHA in `assets.json`, verify downloads, then merge the GitHub task PR.
 
 ## Directory layout
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Contribute Search-SWE Task"
-  short_description: "Author and validate a temporary task submission"
-  default_prompt: "Use $create-searchswe-task to build and locally validate a task submission with a descriptive name, then prepare an authorized PR handoff."
+  short_description: "Create and validate tasks directly under tasks/"
+  default_prompt: "Use $create-searchswe-task to build and locally validate a task at tasks/<task-name>, then prepare an authorized PR handoff."

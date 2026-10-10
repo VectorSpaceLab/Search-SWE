@@ -11,10 +11,10 @@ Markdown links.
   workflow, references, and validation gates. If no native skill loader is
   available, open that `SKILL.md` directly. It can also be invoked independently
   as `$create-searchswe-task`.
-- **Review, promote or finalize a task PR as maintainer:** load
+- **Review or finalize a task PR as maintainer:** load
   [maintain-searchswe-task](skills/maintain-searchswe-task/SKILL.md), independently
   invocable as `$maintain-searchswe-task`. Default to read-only gh evidence review;
-  use its bundled offline promotion/HF staging helpers only at approved stages.
+  use its bundled offline HF staging helper only at approved stages.
 - **Run an existing task:** use `docs/quickstart.md`; do not scaffold a task.
 - **Restore fixed inputs:** use `docs/assets.md` and the existing download tools.
 - **Edit project documentation:** keep `README.md` and `README_zh.md` aligned.
@@ -37,20 +37,19 @@ Markdown links.
    acceptance criteria and optimization objective in natural prose. Preserve
    practical context without self-introductions or invented identities; the
    skill defines the rewrite and validation gates.
-   Before scaffolding, inspect one or two closest reviewed packages under
-   `tasks/` as read-only structural precedents, selected by engineering objective,
+   Before scaffolding, inspect one or two closest reviewed packages already merged
+   into the base branch under `tasks/` as read-only structural precedents, selected
+   by engineering objective,
    grading shape, resources and hardware. Apply current repository contracts
    and validators, and independently establish the new task's data, thresholds,
    licenses and access policy.
-   A PR may add multiple tasks at `task-submissions/<task-name>`. Choose a
-   descriptive lowercase name with at most five hyphen-separated words, without
-   a `task-` prefix; `all` is reserved. Keep that name when promoting to
-   `tasks/<task-name>`. Do not reuse a submission path within the same PR. Follow
-   `CONTRIBUTING.md` and `docs/contributing.md`: require actual authors and
-   explicit `--task-path` for local trials, then promote every task with its own
-   same-PR pure rename and any necessary finalization commits before a merge
-   commit (no squash/rebase). Track which stage is complete and which inputs or approvals
-   are missing.
+   A PR may add multiple tasks at `tasks/<task-name>` in its contribution branch.
+   Choose a descriptive lowercase name with at most five hyphen-separated words;
+   the `task-` prefix and `all` are reserved. Check names against the base and
+   active PRs. Follow `CONTRIBUTING.md` and `docs/contributing.md`: record actual
+   authors, use `--task <task-name>` for local trials, and finish task review and
+   official asset publication before merging with a merge commit. Track completed
+   stages, validation evidence and missing inputs or approvals.
    Do not duplicate the skill's specifications in this file.
 3. Keep changes within the selected task plus directly necessary integration
    changes. Updating a website, publishing a dataset, pushing images, and opening
