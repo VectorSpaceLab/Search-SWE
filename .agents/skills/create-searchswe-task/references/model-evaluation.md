@@ -54,16 +54,17 @@ host Codex settings. The answer-equivalence judge, if present, remains separate.
 
 ## Launch and observe
 
-Use `--task-path` for a contribution and `--task` for a formal package. Preview
+Use `--task <task-name>` to select the task from `tasks/`. Preview
 first, then run in a new output directory once inputs, credentials, hardware
 and scoped API/GPU authorization are available. An explicit model-evaluation
 request supplies authorization for that evaluation; do not ask for it again.
 For example, replacing placeholders with the actual agreed task and effort:
 
 ```bash
-bash scripts/run_task.sh --task-path "$task_path" --agent codex \
+task_name=example-search  # Use the task being evaluated.
+bash scripts/run_task.sh --task "$task_name" --agent codex \
   --openrouter --model "$model_id" --reasoning-effort "$effort" --dry-run
-bash scripts/run_task.sh --task-path "$task_path" --agent codex \
+bash scripts/run_task.sh --task "$task_name" --agent codex \
   --openrouter --model "$model_id" --reasoning-effort "$effort" \
   --output "$fresh_output"
 ```

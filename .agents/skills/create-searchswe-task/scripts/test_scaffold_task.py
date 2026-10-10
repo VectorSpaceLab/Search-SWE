@@ -39,7 +39,7 @@ class RelocatedSkill(unittest.TestCase):
                 name = f"example-{hardware}-search"
                 result = self.scaffold(name, "--hardware", hardware, "--author", "Coauthor Example")
                 self.assertEqual(result.returncode, 0, result.stderr)
-                task = self.repo / "task-submissions" / name
+                task = self.repo / "tasks" / name
                 self.assertNotEqual((task / "raw-instruction.md").read_text(),
                                     (task / "instruction.md").read_text())
                 config = tomllib.loads((task / "task.toml").read_text())
@@ -75,29 +75,20 @@ class RelocatedSkill(unittest.TestCase):
         for name in ("retrieval", "one-two-three-four-five", "bm25-search"):
             self.assertEqual(self.scaffold(name).returncode, 0)
 
-    def test_names_cannot_collide_across_submission_and_formal_roots(self):
+    def test_existing_task_files_are_preserved(self):
         self.assertEqual(self.scaffold("example-search").returncode, 0)
-        marker = self.repo / "task-submissions/example-search/keep.txt"
+        marker = self.repo / "tasks/example-search/keep.txt"
         marker.write_text("keep")
         self.assertNotEqual(self.scaffold("example-search").returncode, 0)
-        self.assertNotEqual(self.scaffold("example-search", "--formal").returncode, 0)
         self.assertEqual(marker.read_text(), "keep")
-        self.assertEqual(self.scaffold("formal-search", "--formal").returncode, 0)
-        self.assertTrue((self.repo / "tasks/formal-search/task.toml").is_file())
-        self.assertNotEqual(self.scaffold("formal-search").returncode, 0)
 
     def test_symlink_roots_and_destinations_are_rejected(self):
-        submissions = self.repo / "task-submissions"
-        submissions.mkdir()
-        (submissions / "linked-search").symlink_to(self.root / "absent")
+        tasks = self.repo / "tasks"
+        (tasks / "linked-search").symlink_to(self.root / "absent")
         self.assertNotEqual(self.scaffold("linked-search").returncode, 0)
         self.assertFalse((self.root / "absent").exists())
-        shutil.rmtree(submissions)
-        submissions.symlink_to(self.root)
-        self.assertNotEqual(self.scaffold("example-search").returncode, 0)
-        submissions.unlink()
-        shutil.rmtree(self.repo / "tasks")
-        (self.repo / "tasks").symlink_to(self.root)
+        shutil.rmtree(tasks)
+        tasks.symlink_to(self.root)
         self.assertNotEqual(self.scaffold("example-search").returncode, 0)
 
     def test_instruction_links_stay_inside_relocated_skill(self):

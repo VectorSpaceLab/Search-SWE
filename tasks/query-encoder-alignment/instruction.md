@@ -1,11 +1,21 @@
 The document collection has already been converted into vectors. I now need to take a query and find the corpus document that best addresses it, using those existing representations. Please build the query-side retrieval system around the supplied 0.6B query-encoder backbone, with the document vectors kept fixed throughout the work. The goal is to maximize held-out Accuracy@1 while meeting the fixed runtime gate, so improvements need to make the first result more useful while keeping the complete query run within the allowed runtime.
 
-Before deciding how to improve the query side, read /task/docs/environment.md and /task/docs/available_resources.md. The fixed vectors, corpus mapping and public validation split are under /task/data, and the supplied query backbone and reference starter model are under /task/models. Use /task/models/Qwen3-Embedding-0.6B as the basis of your query-side system. Treat all of /task as read-only and put the complete submission under /app/submission. The vectors supplied through --doc-vectors must remain unchanged: do not modify, replace, re-encode or reorder them. Preserve the row correspondence between /task/data/doc.npy and /task/data/corpus.jsonl so a retrieved vector continues to identify the same document.
+Before deciding how to improve the query side, read `/task/docs/environment.md` and `/task/docs/available_resources.md`. The fixed vectors, corpus mapping and public validation split are under `/task/data`, and the supplied query backbone and reference starter model are under `/task/models`. Use `/task/models/Qwen3-Embedding-0.6B` as the basis of your query-side system. Treat all of `/task` as read-only and put the complete submission under `/app/submission`. The vectors supplied through `--doc-vectors` must remain unchanged: do not modify, replace, re-encode or reorder them. Preserve the row correspondence between `/task/data/doc.npy` and `/task/data/corpus.jsonl` so a retrieved vector continues to identify the same document.
 
 Agent-stage network access is available, but the system you submit must be self-contained and run without network access. Do not use hidden data, hard-coded query-to-document mappings, precomputed answers, or external retrieval, reranking, generation or answer services. The hidden retrieval queries and their private relevance labels are held out, disjoint from the public validation split and unavailable during the agent phase.
 
 You have 12 hours for the agent phase. Task-specific submission verification has a 70-minute limit, excluding the separate integrity judge. If the agent phase, task-specific verification or integrity judge times out, the score is 0.
 
-The verifier's call is /app/submission/run.sh --doc-vectors /task/data/doc.npy --queries /path/to/queries.jsonl --output /path/to/results.jsonl --top-k 1. Please make run.sh executable, process every query exactly once in input order, write deterministic results, exit successfully and leave no background processes. The output is JSONL with each line shaped like {"query_id":"query-id","results":[{"doc_id":"document-id","score":0.123}]}. With --top-k 1, return exactly one corpus document and a finite numeric score. Ranking is by descending score, with corpus order breaking ties. Include the executable entry point and every required local file under /app/submission, since that directory alone is copied into the verifier.
+The verifier's call is:
+
+```bash
+/app/submission/run.sh \
+  --doc-vectors /task/data/doc.npy \
+  --queries /path/to/queries.jsonl \
+  --output /path/to/results.jsonl \
+  --top-k 1
+```
+
+Please make `run.sh` executable, process every query exactly once in input order, write deterministic results, exit successfully and leave no background processes. The output is JSONL with each line shaped like `{"query_id":"query-id","results":[{"doc_id":"document-id","score":0.123}]}`. With `--top-k 1`, return exactly one corpus document and a finite numeric score. Ranking is by descending score, with corpus order breaking ties. Include the executable entry point and every required local file under `/app/submission`, since that directory alone is copied into the verifier.
 
 To check whether the query-side work makes the first match more useful, the verifier runs both the fixed reference starter and your submission on the same private queries and the same document vectors. It checks vector integrity, output format, determinism and background processes. Submissions that meet the fixed runtime gate are evaluated on held-out Accuracy@1.

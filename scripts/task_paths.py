@@ -5,8 +5,7 @@ import re
 
 # Keep this contract in sync with the two independently installable skill helpers.
 TASK_NAME = r"(?!all(?:/|$))(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
-FORMAL = re.compile(TASK_NAME)
-SUBMISSION = re.compile(rf"task-submissions/({TASK_NAME})")
+TASK_NAME_RE = re.compile(TASK_NAME)
 
 
 def safe_path(root, value):
@@ -33,8 +32,8 @@ def no_symlinks(path):
 def select_task(root, value):
     task = safe_path(root, value)
     rel = task.relative_to(root.resolve()).as_posix()
-    if not SUBMISSION.fullmatch(rel) and not re.fullmatch(rf"tasks/({TASK_NAME})", rel):
-        raise ValueError("--task-path must name tasks/<task-name> or task-submissions/<task-name>; "
+    if not re.fullmatch(rf"tasks/({TASK_NAME})", rel):
+        raise ValueError("--task-path must name tasks/<task-name>; "
                          "use at most five lowercase hyphen-separated words, without a task- prefix")
     if not (task / "task.toml").is_file():
         raise ValueError(f"Missing task.toml: {rel}")
@@ -43,6 +42,5 @@ def select_task(root, value):
 
 
 def task_key(root, task):
-    """Keep submission outputs separate from formal task outputs."""
-    rel = task.relative_to(root.resolve())
-    return Path(*rel.parts[1:]) if rel.parts[0] == "tasks" else rel
+    """Use the task name for local output directories."""
+    return Path(task.relative_to(root.resolve()).name)

@@ -21,18 +21,18 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r scripts/requirements.txt PyYAML python-dotenv
       - run: python scripts/check_release.py
-      - run: python scripts/check_submission.py
-      - name: Submission history and same-PR promotion
+      - run: python scripts/check_tasks.py
+      - name: Check authors of new tasks
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python scripts/check_submission.py --base "$BASE_SHA"
+        run: python scripts/check_tasks.py --base "$BASE_SHA"
       - run: python -m unittest discover -s scripts/tests -p 'test_*.py'
       - run: python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
       - run: python .agents/skills/maintain-searchswe-task/scripts/test_maintainer_skill.py
       - run: git diff --check
   merge-ready:
-    # Intentionally fails during submission review. Require this before merging;
+    # Requires pinned official dataset sources before merging;
     # repository branch-protection settings are configured separately by owners.
     runs-on: ubuntu-latest
     steps:
@@ -43,4 +43,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install PyYAML
-      - run: python scripts/check_submission.py --merge-ready
+      - run: python scripts/check_tasks.py --merge-ready

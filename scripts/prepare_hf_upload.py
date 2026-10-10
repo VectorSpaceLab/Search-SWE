@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compatibility entrypoint for the portable offline HF staging helper."""
+"""Repository entrypoint for the portable offline HF staging helper."""
 try:
     from _maintainer_skill import helpers
 except ModuleNotFoundError:
@@ -9,7 +9,7 @@ prepare = helpers.prepare
 
 
 def main():
-    return helpers.upload_main(legacy=True)
+    return helpers.upload_main(repository_cli=True)
 
 
 if __name__ == "__main__":

@@ -43,8 +43,6 @@ Search-SWE/
 │   │   ├── environment/          # Dockerfile, starter code, and environment docs
 │   │   └── tests/                # Verifier and grading code
 │   └── ...                       # Additional task packages
-├── task-submissions/             # New task packages before same-PR promotion
-│   └── <task-name>/              # Same name retained under tasks/ after review
 ├── scripts/
 │   ├── requirements.txt          # Host-side launcher and asset dependencies
 │   ├── download_assets.py        # Download and verify fixed data/model inputs

@@ -2,7 +2,7 @@
 
 ## Task Description
 
-Improve the supplied long-document reranking system. Given a query and its fixed BM25 Top-100 candidate documents, the system should rerank the candidates using the supplied local `/tast/model/bge-reranker-large` model.
+Improve the supplied long-document reranking system. Given a query and its fixed BM25 Top-100 candidate documents, the system should rerank the candidates using the supplied local `/task/models/bge-reranker-large` model.
 
 The candidate set and reranker model are fixed. You may optimize the reranking pipeline, but may not replace or train the model or modify the supplied candidates.
 
@@ -92,7 +92,7 @@ The finalized submission must contain executable `build.sh` and `run.sh` files u
 After the Agent phase, the Harbor verifier runs the submission in the same task environment and uses the private test split. The verifier checks the following items:
 
 1. **Reranking integrity.** The submission must implement a genuine reranking pipeline over the candidate documents supplied with each query. It must not obtain relevance judgments or results through hidden labels, hard-coded query-to-document mappings, precomputed answer files, external datasets containing the evaluation judgments, or external retrieval/reranking services.
-2. **Candidate-set and model compliance.** The submission must rerank only the fixed BM25 Top-100 candidates supplied with each query and must use the supplied local `/tast/model/bge-reranker-large` model without replacing, training, or modifying it.
+2. **Candidate-set and model compliance.** The submission must rerank only the fixed BM25 Top-100 candidates supplied with each query and must use the supplied local `/task/models/bge-reranker-large` model without replacing, training, or modifying it.
 3. **Executable and output validity.** The verifier checks that build.sh and run.sh exist and are executable, invokes build.sh, waits for it to return successfully, and then invokes run.sh for the hidden queries. It also checks the JSONL result structure, query coverage, result count, duplicate handling, candidate document IDs, scores, and ranking output. Invalid output or a failed executable gate receives a zero score.
 4. **Final retrieval score.** For a valid submission, the final task score is calculated only with `Accuracy@5`:
 
@@ -104,7 +104,7 @@ For an individual query, `Accuracy@5` is `1` when at least one relevant corpus d
 
 ## Hidden Test Overview
 
-The hidden evaluation contains held-out financial queries with private relevance judgments. The hidden queries are disjoint from the public development examples and are not copied into the Agent-visible environment.
+The hidden evaluation contains held-out queries with private relevance judgments. The hidden queries are disjoint from the public development examples and are not copied into the Agent-visible environment.
 
 ## Environment and available resources
 

@@ -91,6 +91,6 @@ fork PRs default to editable. Same-repository branches depend on repository
 permission; organization-owned forks and policies can disallow maintainer edits.
 This flag is not sufficient proof of push rights and may allow workflow changes:
 review that exposure with the author. If unavailable, ask the contributor to make
-the agreed pure-rename/finalization commits in the same PR. Do not replace their
+the agreed review fixes and asset updates in the same PR. Do not replace their
 PR, impersonate them, alter their Git identity or request tokens. Pushing still
 requires explicit authorization for the exact branch and reviewed head.

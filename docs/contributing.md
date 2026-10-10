@@ -21,13 +21,12 @@ python .agents/skills/create-searchswe-task/scripts/scaffold_task.py example-sea
   --author 'Alice Example' --hardware cpu
 ```
 
-New packages use `task-submissions/<task-name>/`. Choose a concise description
-with at most five lowercase hyphen-separated words, starting with an ASCII
-letter and otherwise using letters/digits. Omit the `task-` prefix; `all` is
-reserved. Check both `tasks/` and `task-submissions/`, plus active PRs, for name
-collisions. The canonical `task.name` is `search-swe/<task-name>` from the start,
-and promotion preserves it. A PR may contain multiple uniquely named tasks;
-do not reuse a submission path later in that PR.
+Create each package directly at `tasks/<task-name>/` in your contribution branch.
+Choose a concise description with at most five lowercase hyphen-separated words,
+starting with an ASCII letter and otherwise using letters/digits. The `task-`
+prefix and `all` are reserved. Check `tasks/` on the current base and active PRs
+for name collisions. Set `task.name` to `search-swe/<task-name>`. A PR may contain
+multiple uniquely named tasks.
 
 Describe the task's goal, starting state and measured outcomes.
 CPU is the default; choose `--hardware gpu` for actual GPU execution. Repeat
@@ -35,13 +34,13 @@ CPU is the default; choose `--hardware gpu` for actual GPU execution. Repeat
 and a Git email associated with your GitHub account (or its noreply address).
 Co-authored-by trailers supplement original commits and task authors.
 
-The scaffold is deliberately incomplete and its verifier fails closed. Existing
-task revisions stay in their formal directory. The explicit `--formal` scaffold
-option supports maintainer tooling; new contributions still follow this workflow.
-Do not commit credentials, downloaded inputs/models, private evaluation assets,
-job outputs or author-only solutions. Keep verifier inputs isolated from agents.
+The scaffold provides the package structure, writing prompts and a verifier that
+fails closed. Complete the instructions, assets, environment and grader before
+runtime validation. Revise existing tasks in place. Keep credentials, downloaded
+inputs/models, job outputs and author-only solutions outside Git, and isolate
+verifier inputs from agents.
 
-## 2. Develop and validate before promotion
+## 2. Develop, evaluate and refine
 
 Development assets may live in a personal public temporary HF dataset with
 redistribution permission, manifest, provenance and license. Pin its immutable
@@ -50,25 +49,24 @@ redistribution permission, manifest, provenance and license. Pin its immutable
 See [asset contribution and publication](#asset-contribution-and-publication).
 
 ```bash
-python scripts/check_submission.py task-submissions/example-search
+python scripts/check_tasks.py tasks/example-search
 python scripts/check_release.py
 python -m unittest discover -s scripts/tests -p 'test_*.py'
 python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
 git diff --check
-python scripts/download_assets.py --task-path task-submissions/example-search --dry-run
+python scripts/download_assets.py --task example-search --dry-run
 # After approving the download budget:
-python scripts/download_assets.py --task-path task-submissions/example-search
-python scripts/download_assets.py --task-path task-submissions/example-search --verify-only
-python scripts/run_task.py --task-path task-submissions/example-search \
+python scripts/download_assets.py --task example-search
+python scripts/download_assets.py --task example-search --verify-only
+python scripts/run_task.py --task example-search \
   --agent pi --model deepseek/deepseek-flash --dry-run
 ```
 
-Downloader and launcher require canonical repository-relative paths without
-traversal or symlinks. `--task <task-name>` selects a formal package; downloader
-`--task all` selects only formal packages. Submissions require `--task-path`.
-Submission jobs default to `jobs/task-submissions/<task-name>` and alternate
-asset output roots retain `task-submissions/<task-name>`. The launcher reads the
-original package's local assets, not an alternate download directory.
+Use `--task <task-name>` for downloads and local trials. The downloader's
+`--task all` selects every package under `tasks/` in the current checkout.
+`--task-path tasks/<task-name>` also accepts a canonical repository-relative
+path. Jobs default to `jobs/<task-name>`; alternate asset output roots contain
+`<task-name>/`. The launcher reads the package's local assets.
 
 Follow the skill's [validation layers](../.agents/skills/create-searchswe-task/references/validation.md):
 Compose rendering, builds, verifier known-good and negative cases, and an
@@ -91,89 +89,63 @@ Reuse existing authorized credentials; never ask for key values in chat or a
 PR. Wait for configuration before starting the dependent run, while continuing
 independent checks. Report unavailable runtime evidence explicitly.
 
-Static checks alone do not prove solvability or safe grading. Report actual
-commands, results, resource requirements and unrun layers. Enable **Allow edits
-from maintainers** on the PR; if unavailable, the contributor makes the agreed
-promotion commits in the same PR.
+Static checks cover package structure and source syntax. Record runtime
+commands, results, resource requirements and any unrun validation layers. Enable
+**Allow edits from maintainers** on the PR where available; otherwise agree on
+contributor-applied review fixes in the same PR.
 
 ### CI and trust boundaries
 
-The unprivileged `pull_request` and `push` workflow checks formal packages and
-all submissions, including malformed or incomplete paths. With `--base`, it
-also inspects every commit and both sides of merge history: submission paths
-must be flat, paths cannot be reused, and each newly added formal task needs a
-same-name, whole-package pure rename from its submission in this PR. Reviewed
-renames of packages already formal on the base are recognized as existing-task
-changes. New formal tasks require actual authors; existing author records remain.
+The unprivileged `pull_request` and `push` workflow checks every package under
+`tasks/`, including incomplete or malformed directories. `check_tasks.py` reuses
+release structure, asset pin/hash, secret, file-size and Git-ignore checks, and
+parses Python, shell and Compose YAML without running task code. With `--base`,
+it additionally requires actual authors for newly added tasks while preserving
+existing author records, including reviewed package renames.
 
-Submission checks reuse release structure, asset pin/hash, secret, file-size
-and Git-ignore checks, and parse Python, shell and Compose YAML without running
-task code. Install PyYAML for the YAML check; Docker Compose rendering is separate.
-`review-stage` may pass while submissions exist. Before merging, run
-`python scripts/check_submission.py --merge-ready`: it rejects remaining
-submissions and checks formal package syntax and obsolete references.
+`review-stage` accepts pinned personal development datasets. Before merging,
+`python scripts/check_tasks.py --merge-ready` requires dataset sources in
+`search-swe/Search-SWE`, under `tasks/<task-name>/`, at immutable commit SHAs.
+Model files retain their original repository pins. Maintainers also verify that
+the official HF changes have merged and that runtime evidence covers the final
+revision. Install PyYAML for static Compose parsing; render Compose separately.
 
-CI executes no GPU/API/container task trials. Repository tests are PR-controlled
-code: use read-only permissions, no secrets and no persisted checkout credentials.
-Never execute unreviewed PR code via `pull_request_target` with secrets or share
-an official HF token. Review and separately authorize credentialed/runtime tests
-in a disposable trusted environment.
+CI runs static checks and repository tests with read-only permissions and no
+secrets or persisted checkout credentials. Repository tests are PR-controlled
+code. Review and separately authorize credentialed runtime tests in a disposable
+trusted environment; run GPU/API/container trials there.
 
-## 3. Maintainer promotion in the same PR
+## 3. Review, publish and merge
 
 Use [maintain-searchswe-task](../.agents/skills/maintain-searchswe-task/SKILL.md)
-for gh review, audit and merge checks. Repository `scripts/promote_task.py` and
-`scripts/prepare_hf_upload.py` delegate to that portable skill; a separately
-installed skill uses its own scripts with `--repo-root /path/to/checkout`.
+for gh review, task audit and merge checks. Finish design, provenance/license,
+environment, verifier-isolation and runtime review. Update against current main
+while preserving author history, and check task names against the base and queued
+PRs. Apply review fixes, asset pins and directly necessary documentation or
+inventory changes to the task package in the same PR.
 
-Finish design, provenance/license, environment, verifier-isolation and runtime
-review. Update against current main while preserving author history. Recheck
-task-name collisions with the base and queued PRs before promotion and merge.
-Promotion keeps the task name unchanged.
-
-Start from a clean worktree/index. The helper never commits, pushes or publishes:
-
-```bash
-python scripts/promote_task.py rename task-submissions/example-search example-search --dry-run
-python scripts/promote_task.py rename task-submissions/example-search example-search
-git diff --cached --summary
-# Operator creates the separate pure-rename commit:
-git commit -m 'Promote example-search'
-python scripts/promote_task.py finalize task-submissions/example-search example-search --dry-run
-python scripts/promote_task.py finalize task-submissions/example-search example-search
-```
-
-Repeat independently for each task. Rename does only `git mv`. Finalize requires
-HEAD to be that task's single-parent, 100%-identical whole-package rename commit.
-It updates the submission path in tracked text and prints changed lines;
-the task name and canonical identity stay unchanged. It refuses unsupported
-binary rewrites and does not edit downloaded data. Review replacements, mounts,
-images and external URLs; update task inventories/docs and GPU test inventories
-as needed. A name collision must be resolved through review before promotion,
-never by overwriting a package.
-
-Publish approved new official assets, pin their merged SHA, then validate. Make
-any reference, asset or integration changes in a separate finalization commit
-in this same PR; an empty finalization commit is unnecessary. Every submission
-must be promoted before merge. Use a **merge commit only**, preserving original
-author and pure-rename commits; no squash/rebase merge.
+Publish approved official inputs using the
+[asset workflow](#asset-contribution-and-publication), then pin the merged HF SHA
+and verify downloads. `scripts/prepare_hf_upload.py` delegates to the portable
+maintainer skill; a separately installed skill uses its own helper with
+`--repo-root /path/to/checkout`.
 
 ```bash
 python scripts/check_release.py
-python scripts/check_submission.py --merge-ready
+python scripts/check_tasks.py --merge-ready --base FULL_PR_BASE_SHA
 python -m unittest discover -s scripts/tests -p 'test_*.py'
 git diff --check
 git log --follow -- tasks/example-search/instruction.md
 git blame tasks/example-search/instruction.md
 ```
 
-Original commits and unmodified lines' blame survive this workflow. GitHub file
-lists/history may display renames differently; contributor statistics also
-depend on account-linked email and reachability from the default branch.
-Repository owners separately configure required review, resolved conversations,
-current-base/queue checks and `review-stage`/`merge-ready` statuses. This workflow
-does not configure remote protections or CODEOWNERS. Re-review each changed head;
-resolve unavailable branch editing with the contributor, keeping the same PR.
+Use a **merge commit** to preserve original author commits and unmodified lines'
+attribution. Re-review each changed head and verify required checks for the
+current head and base. Repository owners configure required reviews, resolved
+conversations, current-base/queue checks and `review-stage`/`merge-ready` statuses.
+After the merge, verify the resulting tree, official asset pins and author
+history. GitHub contributor statistics also depend on account-linked email and
+reachability from the default branch.
 
 ## Asset contribution and publication
 
@@ -198,18 +170,18 @@ repo = 'YOUR_ACCOUNT/search-swe-development'
 api.create_repo(repo_id=repo, repo_type='dataset', private=False, exist_ok=True)
 commit = api.upload_folder(repo_id=repo, repo_type='dataset', folder_path='/path/to/dev-data',
                            commit_message='Add temporary task development inputs')
-print(commit.oid)  # Pin this full SHA in submission assets.json.
+print(commit.oid)  # Pin this full SHA in task assets.json.
 PY
 ```
 
 Use this personal repo, its dataset-relative filenames, size/hash, and printed
-immutable SHA in `assets.json`. The explicit submission downloader/launcher then
-support real pre-promotion validation. Keep the temporary repo accessible through
-review and migration; only retire it after official pinned downloads are verified.
+immutable SHA in `assets.json`. Select the task by name with the downloader and
+launcher for development validation. Keep the temporary repo accessible through
+review and publication; retire it after official pinned downloads are verified.
 
-### Task name: additive official publication, then GitHub merge
+### Official publication, then GitHub merge
 
-After task-name approval and promotion, change only the new task's dataset source
+After task and asset review, change only the new task's dataset source
 repo/filename to `search-swe/Search-SWE` and `tasks/<task-name>/...`. Preserve
 original model repo pins and bundled metadata. Prepare **only new data files**
 in `/path/to/new-data/tasks/<task-name>/...`, at the exact asset sizes/hashes.
@@ -237,7 +209,7 @@ python scripts/prepare_hf_upload.py \
   --output /path/to/upload-staging
 ```
 
-Official asset staging requires a promoted package at `tasks/<task-name>`.
+Stage assets from the reviewed package at `tasks/<task-name>`.
 
 The offline helper verifies hashes and safe paths for new files, rejects
 collisions and symlinks, and stages those files with a merged manifest that
@@ -279,6 +251,6 @@ replace a newer manifest with a stale one.
 **Merge the official HF change first.** Only then pin the resulting official
 40-hex commit SHA (not the community PR/head SHA or `main`) in the finalized
 GitHub task's `assets.json`. Verify downloads using a fresh output directory or
-cache and run release checks. Commit finalization and merge the GitHub PR last.
-No new task with unpublished/unpinned assets or an unfinished submission enters
-main. Preserve existing tasks' pinned revisions and published assets.
+cache and run release and merge-ready checks. Commit the verified asset pins
+in the task PR, then merge the GitHub contribution. Preserve existing tasks'
+pinned revisions and published assets.

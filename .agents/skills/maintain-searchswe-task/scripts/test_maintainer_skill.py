@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline relocation, fake-gh, history and staging acceptance tests."""
+"""Offline skill relocation, PR capture and asset staging acceptance tests."""
 
 import hashlib
 import json
@@ -92,31 +92,6 @@ class MaintainerSkill(unittest.TestCase):
                         "--repo-root", self.repo, "--output", output or self.out,
                         env=dict(self.env, FIXTURE=mode))
 
-    def git(self, *args):
-        return subprocess.run(["git", *args], cwd=self.repo, check=True,
-                              capture_output=True, text=True).stdout
-
-    def task(self):
-        self.git("init", "-q", "-b", "main")
-        self.git("config", "user.name", "Maintainer")
-        self.git("config", "user.email", "maintainer@example.test")
-        (self.repo / "tasks").mkdir()
-        (self.repo / ".gitignore").write_text("__pycache__/\n*.py[cod]\n")
-        (self.repo / "base.txt").write_text("base\n")
-        self.git("add", "."); self.git("commit", "-qm", "base")
-        self.source = "task-submissions/example-search"
-        task = self.repo / self.source
-        task.mkdir(parents=True)
-        (task / "task.toml").write_text('[task]\nname = "search-swe/example-search"\nauthors = ["Alice Example", "Bob Example"]\n')
-        (task / "instruction.md").write_text("# example-search\n\ntask-submissions/example-search\nOriginal contributor content\n")
-        (task / "assets.json").write_text('{"schema_version":1,"files":[]}\n')
-        self.git("add", ".")
-        self.git("commit", "-qm", "Write submission", "--author", "Alice Example <alice@example.test>")
-        return task
-
-    def promote(self, phase, *extra):
-        return self.cli("promote_task.py", "--repo-root", self.repo, phase, self.source, "example-search", *extra)
-
     def test_capture_relocated_paginated_untrusted_and_read_only(self):
         # Dirty local content is untouched; dangerous PR text remains inert.
         dirty = self.repo / "dirty.py"
@@ -189,29 +164,6 @@ class MaintainerSkill(unittest.TestCase):
         self.assertIn("raw command collection only", snapshot["completeness_scope"])
         self.assertIn("unverified", result.stdout)
 
-    def test_promotion_relocation_collision_history_and_authors(self):
-        task = self.task()
-        target = self.repo / "tasks/example-search"
-        target.mkdir()
-        self.assertNotEqual(self.promote("rename").returncode, 0)
-        target.rmdir()
-        self.assertEqual(self.promote("rename", "--dry-run").returncode, 0)
-        self.assertTrue(task.exists())
-        original = self.git("rev-parse", "HEAD")
-        self.assertEqual(self.promote("rename").returncode, 0)
-        self.assertEqual(self.git("rev-parse", "HEAD"), original)  # never commits
-        self.assertNotEqual(self.promote("finalize").returncode, 0)
-        self.git("commit", "-qm", "Pure rename")
-        result = self.promote("finalize")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('authors = ["Alice Example", "Bob Example"]', (target / "task.toml").read_text())
-        self.assertIn("search-swe/example-search", (target / "task.toml").read_text())
-        self.git("add", "."); self.git("commit", "-qm", "Finalize")
-        self.assertIn("Alice Example", self.git("log", "--follow", "--format=%an", "--", "tasks/example-search/instruction.md"))
-        self.assertIn("author Alice Example", self.git("blame", "--line-porcelain", "tasks/example-search/instruction.md"))
-        # Explicit target is mandatory even when cwd is a Search-SWE checkout.
-        self.assertNotEqual(self.cli("promote_task.py", "rename", self.source, "task-1-9").returncode, 0)
-
     def staging(self):
         target = self.repo / "tasks/example-search"
         target.mkdir(parents=True)
@@ -229,19 +181,19 @@ class MaintainerSkill(unittest.TestCase):
         snapshot.write_text(json.dumps({"schema_version": 1, "files": [old], "extra": "preserve"}))
         return target, data, file, snapshot, old
 
-    def test_official_staging_rejects_submissions_and_nested_formal_paths(self):
+    def test_official_staging_requires_canonical_task_paths(self):
         target, data, _, snapshot, _ = self.staging()
-        submission = self.repo / "task-submissions/example-search"
-        submission.parent.mkdir()
-        target.rename(submission)
+        misplaced = self.repo / "drafts/example-search"
+        misplaced.parent.mkdir()
+        target.rename(misplaced)
         args = ("--repo-root", self.repo, "--official-manifest", snapshot,
                 "--new-data", data, "--output", self.out)
-        result = self.cli("prepare_hf_upload.py", *args, "--task-path", submission.relative_to(self.repo))
+        result = self.cli("prepare_hf_upload.py", *args, "--task-path", misplaced.relative_to(self.repo))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("requires tasks/<task-name>", result.stderr)
         nested = self.repo / "nested/tasks/example-search"
         nested.parent.mkdir(parents=True)
-        submission.rename(nested)
+        misplaced.rename(nested)
         result = self.cli("prepare_hf_upload.py", *args, "--task-path", nested.relative_to(self.repo))
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(self.out.exists())
@@ -265,33 +217,28 @@ class MaintainerSkill(unittest.TestCase):
         self.assertNotEqual(self.cli("prepare_hf_upload.py", *args, "--output", self.root / "corrupt").returncode, 0)
         self.assertFalse((self.root / "corrupt").exists())
 
-    def test_legacy_wrapper_cli_compatibility(self):
-        # In the source repository also exercise the old CLI syntax, no --repo-root.
+    def test_repository_wrapper_paths(self):
+        # Exercise the repository CLI with absolute and cwd-relative paths.
         repository = SKILL.parents[2]
         if not (repository / "scripts/_maintainer_skill.py").is_file():
-            self.skipTest("Compatibility wrappers are repository inputs, absent in standalone skill copy")
+            self.skipTest("Repository wrappers are inputs, absent in standalone skill copy")
         scripts = self.repo / "scripts"
         scripts.mkdir()
-        for name in ("_maintainer_skill.py", "promote_task.py", "prepare_hf_upload.py"):
+        for name in ("_maintainer_skill.py", "prepare_hf_upload.py"):
             shutil.copyfile(repository / "scripts" / name, scripts / name)
         shutil.copytree(self.skill, self.repo / ".agents/skills/maintain-searchswe-task")
-        self.task()
-        def legacy(name, *args):
+        def repository_cli(name, *args):
             return subprocess.run([sys.executable, str(scripts / name), *map(str, args)],
                                   cwd=self.root, capture_output=True, text=True)
-        self.assertEqual(legacy("promote_task.py", "rename", self.source, "example-search").returncode, 0)
-        self.git("commit", "-qm", "Pure rename")
-        self.assertEqual(legacy("promote_task.py", "finalize", self.source, "example-search").returncode, 0)
-        shutil.rmtree(self.repo / "tasks/example-search")
         target, data, file, snapshot, old = self.staging()
-        result = legacy("prepare_hf_upload.py", "--task-path", target, "--official-manifest", snapshot,
+        result = repository_cli("prepare_hf_upload.py", "--task-path", target, "--official-manifest", snapshot,
                         "--new-data", data, "--output", self.out)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads((self.out / "manifest.json").read_text())["files"][0], old)
-        # Original HF CLI resolves relative paths from cwd, not wrapper location.
-        result = legacy("prepare_hf_upload.py", "--task-path", target.relative_to(self.root),
+        # Repository HF CLI resolves relative paths from cwd, not wrapper location.
+        result = repository_cli("prepare_hf_upload.py", "--task-path", target.relative_to(self.root),
                         "--official-manifest", snapshot, "--new-data", data,
-                        "--output", self.root / "legacy-relative")
+                        "--output", self.root / "relative-output")
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_staging_rejects_symlinks_traversal_extra_files_and_external_target(self):

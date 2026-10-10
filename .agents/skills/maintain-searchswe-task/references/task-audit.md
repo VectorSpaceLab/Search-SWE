@@ -6,8 +6,8 @@ workflow/tool modifications need independent scrutiny, not implicit acceptance.
 
 | Area | Evidence required |
 | --- | --- |
-| Identity/scope | Each new task starts at `task-submissions/<task-name>/`, with `task.name = "search-swe/<task-name>"`. Names use at most five lowercase hyphen-separated words, start with a letter, omit `task-`, and cannot be `all`. A PR may add multiple unique names; reject reused submission paths and direct new formal additions. Promotion preserves the same name under `tasks/`. Require actual authors and original author commits. Existing-task revisions stay in place; reviewed renames of existing formal packages are not new contributions. |
-| Repository precedent | For each new task, the contributor names one or two closest formal `tasks/` packages or states that none is close, and explains matching dimensions, structural reuse and intentional differences. Independently inspect the closest analogue by objective, grading/judge shape, resources, hardware and data/artifact layout. Current contracts and validators override legacy examples. Reject unexplained copying of task-specific IDs/authors, datasets or HF pins, thresholds/baselines, allowlists, budgets, licenses/provenance or hidden evaluation design. Merely existing on main is not proof that a pattern remains valid. |
+| Identity/scope | Each new task lives at `tasks/<task-name>/` in the contribution branch, with `task.name = "search-swe/<task-name>"`. Names use at most five lowercase hyphen-separated words, start with a letter, and are unique against the base and active PRs; `task-` and `all` are reserved. A PR may add multiple tasks. Require actual authors and preserve original author commits. Revise existing tasks in place. |
+| Repository precedent | For each new task, the contributor names one or two closest reviewed `tasks/` packages already merged into the base branch or states that none is close, and explains matching dimensions, structural reuse and intentional differences. Independently inspect the closest analogue by objective, grading/judge shape, resources, hardware and data/artifact layout. Current contracts and validators override legacy examples. Reject unexplained copying of task-specific IDs/authors, datasets or HF pins, thresholds/baselines, allowlists, budgets, licenses/provenance or hidden evaluation design. Merely existing on main is not proof that a pattern remains valid. |
 | Instructions | Goal, starting state, input/output schema and absolute paths, submission command/interface, artifacts, public gates/thresholds and constraints match every graded requirement. No secret-only correctness requirement or hidden solution hints. |
 | Objective/resources | Clear goal, starting state and measured outcomes. Supply a meaningful baseline when grading improvement. CPU default, GPU only for execution. Both Dockerfiles, both Compose reservations and `gpus` agree. Visible tools/API/model docs match injected resources and budgets. Pin dependencies/images; inspect build contexts. |
 | Solvability | Real known-good submission through the same separate verifier/artifact-transfer interface, expected vs observed reward and an authorized coding-agent trial. A scaffold's always-zero test, empty manifest, dry-run or static pass is not a working benchmark. No public author-only solution without approval. |
@@ -23,7 +23,7 @@ workflow/tool modifications need independent scrutiny, not implicit acceptance.
 
 The portable skill deliberately does not bundle Search-SWE's universal validator,
 launcher or Harbor runtime. Inspect an explicitly selected **trusted** target
-checkout/version providing `scripts/check_submission.py`, `check_release.py`,
+checkout/version providing `scripts/check_tasks.py`, `check_release.py`,
 `download_assets.py`, `run_task.py` and their dependencies. Missing tools or an
 older workflow version stop that layer; do not improvise acceptance commands.
 Python 3.12+, PyYAML, python-dotenv and host `scripts/requirements.txt` (Harbor
@@ -33,18 +33,18 @@ image access and appropriate GPU driver/Container Toolkit are needed for runtime
 After code-execution authorization, from the isolated checkout with trusted tools:
 
 ```bash
-task_path=task-submissions/example-search  # Actual reviewed path; final tasks/<task-name> later
-python scripts/check_submission.py "$task_path"
+task_path=tasks/example-search  # Actual package under review
+python scripts/check_tasks.py "$task_path"
 python scripts/check_release.py
 python -m unittest discover -s scripts/tests -p 'test_*.py'
-python scripts/download_assets.py --task-path "$task_path" --dry-run
+python scripts/download_assets.py --task "${task_path#tasks/}" --dry-run
 bash -n "$task_path/tests/test.sh"
 git diff --check
 # After separate input-download authorization:
-python scripts/download_assets.py --task-path "$task_path"
-python scripts/download_assets.py --task-path "$task_path" --verify-only
+python scripts/download_assets.py --task "${task_path#tasks/}"
+python scripts/download_assets.py --task "${task_path#tasks/}" --verify-only
 # Preview a configured trial, not evidence of successful runtime:
-python scripts/run_task.py --task-path "$task_path" --agent codex --model MODEL_ID --dry-run
+python scripts/run_task.py --task "${task_path#tasks/}" --agent codex --model MODEL_ID --dry-run
 ```
 
 These commands are target contracts, not permission to execute PR-modified tools.
@@ -64,7 +64,7 @@ verifier logs and artifacts; record exact commands, head SHA and outcomes. Stop
 on missing hardware/auth/data or budget exhaustion; retry only after a relevant
 fix. Explicitly report unrun layers, not a blanket 'validated'.
 
-Final readiness additionally requires `python scripts/check_submission.py
---merge-ready` (no submission task.toml), updated inventories including GPU tests,
+Final readiness additionally requires `python scripts/check_tasks.py
+--merge-ready --base FULL_PR_BASE_SHA`, updated inventories including GPU tests,
 immutable official asset pins and head-specific required checks. Static CI alone
 cannot establish solvability, fair heldout evaluation, licensing or isolation.

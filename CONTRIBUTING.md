@@ -1,10 +1,10 @@
 # Contributing to Search-SWE
 
 Start with the [contribution guide](docs/contributing.md) for task design,
-validation, asset publication, and maintainer promotion. For agent-assisted
+validation, asset publication, and maintainer review. For agent-assisted
 authoring, use the [create-searchswe-task skill](.agents/skills/create-searchswe-task/SKILL.md).
 
-New tasks belong at `task-submissions/<task-name>`. Choose a descriptive name of
+New tasks belong at `tasks/<task-name>`. Choose a descriptive name of
 at most five lowercase, hyphen-separated words, such as `example-search`.
 The `task-` prefix and `all` are reserved. One PR may add multiple tasks; record
 actual authors in each package.
@@ -15,7 +15,6 @@ issues, then validate the revised setting and record the final tested version.
 If required API keys are missing, the authoring agent should ask the contributor
 to configure them locally before running the trial; see the guide for details.
 
-Maintainers promote each reviewed package to `tasks/<task-name>` in the same PR,
-preserving its name and original authors. Commit the pure directory move
-separately from finalization changes. Use a merge commit for task contributions,
-not squash or rebase merge; every submission must be promoted before merging.
+Maintainers review task quality, validation evidence and asset provenance in the
+PR. Publish official inputs and pin their merged HF commit before merging the
+GitHub contribution. Use a merge commit to preserve original author history.

@@ -1,4 +1,4 @@
-"""Offline promotion and additive HF staging; no network or automatic commits.
+"""Offline additive HF staging; no network or automatic commits.
 
 This is the implementation shared by the portable skill and repository CLIs.
 """
@@ -9,27 +9,10 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
-import subprocess
 import tomllib
 
 TASK_NAME = r"(?!all(?:/|$))(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
-SUBMISSION = re.compile(rf"task-submissions/({TASK_NAME})")
-FORMAL = re.compile(TASK_NAME)
-
-def safe_path(root, value):
-    """Accept a canonical repo-relative path, never symlinks (even internal ones)."""
-    root = root.resolve()
-    value = str(value)
-    path = Path(value)
-    if (not value or path.is_absolute() or "\\" in value
-            or any(part in ("", ".", "..") for part in value.split("/"))):
-        raise ValueError(f"Expected canonical repository-relative path: {value}")
-    current = root
-    for part in path.parts:
-        current /= part
-        if current.is_symlink():
-            raise ValueError(f"Symlink is not allowed: {current}")
-    return current
+TASK_NAME_RE = re.compile(TASK_NAME)
 
 def no_symlinks(path):
     if path.is_symlink() or any(item.is_symlink() for item in path.rglob("*")):
@@ -75,81 +58,6 @@ def read_manifest(task):
     return manifest
 
 
-def git(repo, *args):
-    return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True).stdout
-
-def promote(repo, source, target_name, phase, dry_run=False):
-    repo = checked_path(repo)
-    if phase not in ("rename", "finalize"):
-        raise ValueError("Unknown promotion phase")
-    match = SUBMISSION.fullmatch(source)
-    if not match or not FORMAL.fullmatch(target_name):
-        raise ValueError("Use task-submissions/<task-name> and the same task-name (at most five lowercase words)")
-    if target_name != match[1]:
-        raise ValueError("Promotion preserves the task name; rename the submission before promotion")
-    src = safe_path(repo, source)
-    target = safe_path(repo, f"tasks/{target_name}")
-    if git(repo, "status", "--porcelain"):
-        raise ValueError("Promotion requires a clean worktree and index; commit reviewed work first")
-    if phase == "rename":
-        if not src.is_dir() or target.exists():
-            raise ValueError("Source must exist and target must not exist; refusing overwrite")
-        no_symlinks(src)
-        config = tomllib.loads((src / "task.toml").read_text())
-        if config.get("task", {}).get("name") != f"search-swe/{target_name}":
-            raise ValueError("Source task name does not match its directory")
-        print(f"git mv {source} tasks/{target_name}")
-        if not dry_run:
-            target.parent.mkdir(exist_ok=True)
-            git(repo, "mv", "--", source, f"tasks/{target_name}")
-        print("STOP: review and commit ONLY this pure rename; then run finalize with the same source and target.")
-        return
-    if src.exists() or not target.is_dir():
-        raise ValueError("Finalize requires the source to have been renamed")
-    no_symlinks(target)
-    # HEAD itself must be the operator's separate pure rename commit. No state file.
-    parents = git(repo, "rev-list", "--parents", "-n", "1", "HEAD").split()
-    if len(parents) != 2:
-        raise ValueError("Finalize requires a single-parent pure rename HEAD commit")
-    fields = git(repo, "diff", "--name-status", "-z", "-M100%", "HEAD^", "HEAD").strip("\0").split("\0")
-    renamed = set()
-    for index in range(0, len(fields), 3):
-        chunk = fields[index:index + 3]
-        if (len(chunk) != 3 or chunk[0] != "R100" or not chunk[1].startswith(source + "/")
-                or chunk[2] != f"tasks/{target_name}/" + chunk[1][len(source) + 1:]):
-            raise ValueError("HEAD must contain only 100% identical source-to-target renames")
-        renamed.add(chunk[2])
-    tracked = set(filter(None, git(repo, "ls-files", "-z", "--", f"tasks/{target_name}").split("\0")))
-    if not tracked or renamed != tracked:
-        raise ValueError("Pure rename commit must include every tracked package file")
-    config = tomllib.loads((target / "task.toml").read_text())
-    if config.get("task", {}).get("name") != f"search-swe/{target_name}":
-        raise ValueError("Expected the same task name after promotion")
-    changes = []
-    text_suffixes = {".md", ".toml", ".json", ".yaml", ".yml", ".sh", ".py", ".txt", ".cfg", ".ini"}
-    for name in sorted(tracked):
-        path = repo / name
-        raw = path.read_bytes()
-        if source.encode() not in raw:
-            continue
-        if path.suffix not in text_suffixes and path.name not in ("Dockerfile", ".gitignore", ".dockerignore"):
-            raise ValueError(f"Manual review required for nonstandard text file: {name}")
-        text = raw.decode("utf-8")
-        updated = re.sub(re.escape(source) + r"(?![a-z0-9-])", f"tasks/{target_name}", text)
-        if re.search(re.escape(source) + r"(?![a-z0-9-])", updated):
-            raise ValueError(f"Submission reference remains: {name}")
-        changes.append((path, updated))
-        for number, (before, after) in enumerate(zip(text.splitlines(), updated.splitlines()), 1):
-            if before != after:
-                print(f"{name}:{number}: {before} -> {after}")
-    if not dry_run:
-        for path, updated in changes:
-            path.write_text(updated)
-    print("Submission package references remaining after planned changes: 0.")
-    print("Review every change, external asset paths/images and repository task inventories. "
-          "Publish approved assets, pin the official SHA, validate, then commit finalization in this SAME PR.")
-
-
 def checked_path(path):
     path = Path(path).absolute()
     if ".." in path.parts:
@@ -164,11 +72,11 @@ def prepare(snapshot, task, data, output):
         no_symlinks(tree)
     if output.exists():
         raise ValueError("Upload output must not exist; refusing overwrite")
-    if task.parent.name != "tasks" or not FORMAL.fullmatch(task.name):
-        raise ValueError("Promote to tasks/<task-name> before preparing official publication")
+    if task.parent.name != "tasks" or not TASK_NAME_RE.fullmatch(task.name):
+        raise ValueError("Task package must be at tasks/<task-name>")
     config = tomllib.loads((task / "task.toml").read_text())
     if config.get("task", {}).get("name") != f"search-swe/{task.name}":
-        raise ValueError("Finalize task.toml before preparing official publication")
+        raise ValueError("task.toml name must match the task directory")
     if not data.is_dir() or output.is_relative_to(data) or output.is_relative_to(task):
         raise ValueError("Use a separate output directory and an existing new-data directory")
     manifest = json.loads(snapshot.read_text())
@@ -214,31 +122,16 @@ def prepare(snapshot, task, data, output):
     return len(additions)
 
 
-def promotion_main(default_repo=None):
-    parser = argparse.ArgumentParser(description="Two-phase offline promotion; never commits or publishes")
-    parser.add_argument("phase", choices=("rename", "finalize"))
-    parser.add_argument("source")
-    parser.add_argument("target_name")
-    parser.add_argument("--repo-root", type=Path, default=default_repo, required=default_repo is None)
-    parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
-    try:
-        repo = checked_path(args.repo_root)
-        promote(repo, args.source, args.target_name, args.phase, args.dry_run)
-    except (OSError, ValueError, subprocess.CalledProcessError) as error:
-        parser.error(str(error))
-    return 0
-
-def upload_main(legacy=False):
+def upload_main(repository_cli=False):
     parser = argparse.ArgumentParser(description="Offline incremental HF staging; never uploads")
-    parser.add_argument("--repo-root", type=Path, required=not legacy)
+    parser.add_argument("--repo-root", type=Path, required=not repository_cli)
     parser.add_argument("--official-manifest", required=True, type=Path)
     parser.add_argument("--task-path", required=True, type=Path)
     parser.add_argument("--new-data", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
-        # Legacy repository CLI accepted paths relative to cwd, or any absolute task.
+        # The repository CLI accepts paths relative to cwd, or absolute task paths.
         # Portable CLI always requires an explicit target root.
         task = args.task_path
         if args.repo_root is not None:
@@ -252,6 +145,6 @@ def upload_main(legacy=False):
         count = prepare(args.official_manifest, task, args.new_data, args.output)
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
-    print(f"Prepared {count} new files and merged manifest; preserved old entries without downloading old data.")
-    print("No upload performed. Review SOURCES.md, dataset card/license and .gitattributes; never delete old assets.")
+    print(f"Prepared {count} new files and merged manifest; preserved existing manifest entries.")
+    print("Review SOURCES.md, dataset card/license and .gitattributes before the authorized upload.")
     return 0
