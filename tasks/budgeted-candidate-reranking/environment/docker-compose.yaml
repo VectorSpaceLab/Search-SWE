@@ -35,4 +35,3 @@ services:
         read_only: true
         bind:
           create_host_path: false
-

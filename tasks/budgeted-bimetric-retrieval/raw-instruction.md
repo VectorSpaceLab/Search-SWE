@@ -56,6 +56,8 @@ corpus.
 
 B=0.8460412084949013 and U=0.9117533972383719.
 
+The coding trajectory is transferred separately and protected before submitted code runs. An independent integrity review checks the trajectory and submitted files for forbidden test-answer mappings, hidden-label use and other stated violations. The numeric score is published only after that review passes; missing, failed or malformed review evidence cannot yield a positive reward and is reported separately from an ordinary low score. Zero expensive-distance or model calls are allowed. General indexes, caches and parameters derived from permitted inputs remain allowed.
+
 ### Timing and resource protocol
 
 - Final grading: 16 CPU cores, no GPU, 32 GiB total cgroup memory including scoring service, descendants and page cache; 64 GiB total storage including all public/private fixed inputs, submitted code, indexes, caches, temporary files and diagnostic reserve. Immutable preinstalled system software is excluded from storage. Swap is disabled. The bounded workspace has the remainder after fixed assets and a 512 MiB diagnostic reserve; its exact capacity is prepared from actual asset bytes.

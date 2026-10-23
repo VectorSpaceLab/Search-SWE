@@ -1,12 +1,13 @@
 schema_version = "1.4"
 
 artifacts = [
+    "/logs/agent/trajectory.json",
     "/app/submission",
 ]
 
 [task]
 name = "search-swe/large-scale-formula-retrieval"
-version = "0.4.1"
+version = "0.4.2"
 description = "Retrieve relevant formulas from the complete ARQMath v3 corpus with 34 MiB prepared artifacts in a 40 MiB serving filesystem and 50 ms CPU queries."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "formula", "latex", "arqmath", "cpu"]
@@ -33,11 +34,16 @@ allowed_hosts = ["huggingface.co", "cdn-lfs.huggingface.co", "cdn-lfs-us-1.hf.co
 
 [verifier]
 # 3600 build + 76 * (120 load + 30 warmup + 0.05 query) < 15004 s,
-# plus trusted cleanup/reporting. Query failures retain the full denominator.
-timeout_sec = 18000.0
+# plus trusted cleanup/reporting and the separate 1200-second integrity audit. Query failures retain the full denominator.
+timeout_sec = 19800.0
 user = "root"
 environment_mode = "separate"
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
 
 [[verifier.collect]]
 command = "/opt/conda/bin/python /task/budget_evidence.py collect"

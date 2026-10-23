@@ -13,6 +13,30 @@ from runtime import Worker, Violation
 FIXTURE = '''import ctypes,json,os,socket,sys,time
 for line in sys.stdin:
  r=json.loads(line); op=r['op']
+ if op=='ipc_transfer':
+  c=ctypes.CDLL(None,use_errno=True)
+  objects=[]
+  for kind in ['shm','msg','sem']:
+   if kind=='shm': ident=c.shmget(0,4096,0o1600)
+   elif kind=='msg': ident=c.msgget(0,0o1600)
+   else: ident=c.semget(0,1,0o1600)
+   assert ident>=0,ctypes.get_errno()
+   buf=ctypes.create_string_buffer(512)
+   def control(command):
+    if kind=='sem': return c.semctl(ident,0,command,ctypes.byref(buf))
+    return getattr(c,kind+'ctl')(ident,command,ctypes.byref(buf))
+   assert control(2)==0,ctypes.get_errno()
+   perm=(ctypes.c_uint*5).from_buffer(buf)
+   assert perm[1]==perm[3]==os.getuid()
+   perm[1]=perm[2]=65534
+   assert control(1)==0,ctypes.get_errno()
+   objects.append([kind,ident])
+  print(json.dumps({'objects':objects}),flush=True);continue
+ if op=='save_index':
+  open('saved-index','w').write('legitimate index')
+  print(json.dumps({'ok':True}),flush=True);continue
+ if op=='load_index':
+  print(json.dumps({'index':open('saved-index').read()}),flush=True);continue
  if op in ['ipc_write','ipc_read']:
   c=ctypes.CDLL(None,use_errno=True)
   c.shmget.argtypes=[ctypes.c_int,ctypes.c_size_t,ctypes.c_int]
@@ -180,6 +204,31 @@ class RuntimeTests(unittest.TestCase):
                              '/logs/verifier/ipc-reload.stderr', self.cpus)
         self.worker.begin(5)
         self.assertEqual(self.worker.request({'op': 'ipc_read'}), {'exists': False})
+        self.worker.finish()
+
+    def test_transferred_owners_are_removed_and_normal_index_reloads(self):
+        self.worker.begin(5)
+        objects = self.worker.request({'op': 'ipc_transfer'})['objects']
+        self.assertEqual(self.worker.request({'op': 'save_index'}), {'ok': True})
+        self.worker.finish()
+        for kind, identifier in objects:
+            rows = Path('/proc/sysvipc', kind).read_text().splitlines()
+            name = {'shm': 'shmid', 'msg': 'msqid', 'sem': 'semid'}[kind]
+            row = next(dict(zip(rows[0].split(), line.split())) for line in rows[1:]
+                       if int(dict(zip(rows[0].split(), line.split()))[name]) == identifier)
+            self.assertEqual((int(row['uid']), int(row['cuid'])), (65534, 10001))
+        self.worker.close()
+        self.assertEqual(runtime.worker_ipc(), [])
+        for kind, identifier in objects:
+            rows = Path('/proc/sysvipc', kind).read_text().splitlines()
+            name = {'shm': 'shmid', 'msg': 'msqid', 'sem': 'semid'}[kind]
+            column = rows[0].split().index(name)
+            self.assertNotIn(identifier, {int(line.split()[column]) for line in rows[1:]})
+        self.worker = Worker([sys.executable, '/fixture/worker.py'], '/work/test-worker',
+                             '/logs/verifier/transferred-ipc-reload.stderr', self.cpus)
+        self.worker.begin(5)
+        self.assertEqual(self.worker.request({'op': 'load_index'}),
+                         {'index': 'legitimate index'})
         self.worker.finish()
 
 

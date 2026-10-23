@@ -12,3 +12,9 @@ Run `/opt/conda/bin/python /task/tools/check_submission.py --command /app/run.sh
 # Harness logs
 
 Write task data and diagnostics under `/app` or the supplied temporary directories. `/logs` is reserved for the coding harness: new entries there are not permitted, and the harness's own writable log targets share your bounded filesystem. At the end of development, trusted collection stops remaining submission processes and records memory-limit events. Native development timeout or OOM makes the score zero even if a prepared index exists.
+
+The verifier additionally runs an independent trajectory/submission integrity review
+using `deepseek/deepseek-v4.1-flash` through OpenRouter. Final reward requires a
+successful accepting review. Its credentials and allowlisted API access belong
+only to the trusted judge; submitted code retains its existing network restrictions.
+The verifier protects a separate trajectory snapshot before running submitted code.

@@ -49,6 +49,14 @@ install -d -m 0700 "$FORMULA_JOB_ROOT"
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
+Also configure `VERIFIER_OPENAI_API_KEY` and
+`VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` for the independent
+`deepseek/deepseek-v4.1-flash` integrity judge. These credentials are injected only
+into the verifier. Its service timeout includes a separate 1200-second audit
+allowance; submission phase limits remain unchanged. A positive final reward
+requires a successful accepting audit of the protected trajectory and submission.
+Inspect `audit-status.json`, `audit.json` and `reward-details.json` alongside the
+deterministic report; missing or unhealthy audits cannot produce a positive reward.
 
 Invoke the standard entrypoint directly:
 

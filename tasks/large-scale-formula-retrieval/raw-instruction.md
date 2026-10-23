@@ -98,6 +98,10 @@ set.
 
 ## Verification
 
+### Integrity review
+
+The coding trajectory is also transferred to the separate verifier and protected before submission execution. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. Only the verifier's judge has its separate API credentials and network access; these are unavailable to submitted programs.
+
 ### Metrics and failure handling
 
 For each valid query, sort returned instances, map to visual IDs, deduplicate visuals, remove
@@ -109,7 +113,7 @@ compact serving capacity, or memory/overall-storage violation makes the whole sc
 serving cache writes and other query exceptions follow the query-zero/reload policy; the physical
 serving cap cannot be exceeded. Faster execution within deadlines gives no additional points. Also
 report MAP prime, P prime at 10 (relevance >=2), build/query time, peak memory and index size.
-Deterministic grading; no model judge.
+Deterministic relevance metrics; final reward also requires a successful integrity review.
 
 ### Timing and resource protocol
 
@@ -139,6 +143,8 @@ physical serving filesystem also holds its metadata, reserved submission bytes, 
 caches and serving-time temporary files; leave room for startup and query writes. The artifact limit
 reserves headroom rather than assuming the gross filesystem size is usable artifact space. Exceeding
 either limit gives overall zero.
+
+After construction, all build processes must exit and all System V shared-memory, message-queue and semaphore objects owned or created by the submission UID are removed and checked for residual state. Changing an IPC owner does not exempt that state. Only the permitted prepared files carry construction results into serving; cleanup or inspection failures prevent scoring.
 
 ## Hidden Test Overview
 

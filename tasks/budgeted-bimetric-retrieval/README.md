@@ -44,6 +44,14 @@ export BIMETRIC_STORAGE_ROOT="$PWD/jobs/.task-storage/budgeted-bimetric-retrieva
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
 
+The independent verifier audit also requires `VERIFIER_OPENAI_API_KEY` and
+`VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in that local configuration.
+It uses `deepseek/deepseek-v4.1-flash`; only verifier egress to `openrouter.ai`
+is allowed. These credentials are never passed to submitted commands.
+The verifier protects the transferred trajectory, records the raw numerical
+score, terminates candidate processes, and publishes reward only after a
+healthy passing integrity audit. See `audit-status.json` for audit health.
+
 Invoke the standard entrypoint directly:
 
 ```bash

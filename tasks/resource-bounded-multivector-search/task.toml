@@ -1,12 +1,13 @@
 schema_version = "1.4"
 
 artifacts = [
+    "/logs/agent/trajectory.json",
     "/app",
 ]
 
 [task]
 name = "search-swe/resource-bounded-multivector-search"
-version = "0.3.1"
+version = "0.3.2"
 description = "Reduce complete-workload query latency while retaining at least 99% exact MaxSim Recall@100."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "multi-vector", "colbert", "maxsim", "cpu", "quora"]
@@ -25,10 +26,15 @@ user = "submission"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 1800.0
+timeout_sec = 3300.0
 user = "root"
 environment_mode = "separate"
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
 
 [[verifier.collect]]
 command = "/opt/conda/bin/python /task/budget_evidence.py collect"

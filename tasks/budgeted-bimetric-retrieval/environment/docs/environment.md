@@ -25,3 +25,5 @@ asset sizes with a 512 MiB diagnostic reserve. Final `/app` is read-only; write
 only under the supplied index directory or its parent `/work/runtime`.
 The verifier drops to UID 10001, retains local Unix IPC, denies Internet sockets
 and privilege escalation, and terminates the complete process family on failure.
+
+The independent verifier integrity audit uses `deepseek/deepseek-v4.1-flash` through OpenRouter. Only the trusted verifier has access to `openrouter.ai` and its audit credentials; submitted code retains its existing network and credential restrictions. The protected coding trajectory and submitted files are reviewed before final reward publication. Audit failures leave reward zero and produce `audit-status.json`.

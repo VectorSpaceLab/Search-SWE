@@ -64,3 +64,5 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+The verifier Compose service grants `SYS_PTRACE` and `CHECKPOINT_RESTORE` so the trusted supervisor can account for open-unlinked and memory-mapped task files. The host kernel/runtime must support these capabilities. Candidate commands drop all capability sets. Storage inspection errors fail closed; unit and real descriptor/mapping regressions are in `tests/test_storage_accounting.py` and can run in a disposable verifier without a GPU.

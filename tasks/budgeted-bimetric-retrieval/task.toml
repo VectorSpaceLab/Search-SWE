@@ -3,7 +3,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/budgeted-bimetric-retrieval"
-version = "0.2.1"
+version = "0.2.2"
 description = "Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query."
 authors = [{name = "jianlyu"}]
 keywords = ["retrieval", "bimetric", "nq", "query-budget", "cpu"]
@@ -32,10 +32,11 @@ user = "submission"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 14400.0
+timeout_sec = 16200.0
 user = "root"
 environment_mode = "separate"
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
 
 [environment]
 build_timeout_sec = 1800.0
@@ -46,3 +47,7 @@ cpus = 16
 memory_mb = 32768
 storage_mb = 65536
 gpus = 0
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

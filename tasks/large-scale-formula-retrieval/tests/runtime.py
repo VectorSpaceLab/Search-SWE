@@ -29,30 +29,42 @@ class Violation(RuntimeError):
     pass
 
 
-def clear_worker_ipc():
-    """Remove submitted kernel IPC state from the verifier's private namespace."""
+def worker_ipc():
+    """Find worker-owned or worker-created state, including transferred owners."""
     objects = []
-    for table, identifier, command in [('shm', 'shmid', 'shmctl'),
-                                       ('msg', 'msqid', 'msgctl'),
-                                       ('sem', 'semid', 'semctl')]:
-        path = Path('/proc/sysvipc', table)
-        if not path.exists():
-            continue
-        rows = path.read_text().splitlines()
-        for line in rows[1:]:
-            row = dict(zip(rows[0].split(), line.split()))
-            if int(row['uid']) == UID:
-                objects.append((int(row[identifier]), command))
-    libc = ctypes.CDLL(None, use_errno=True)
-    try:
-        os.seteuid(UID)
-        for identifier, command in objects:
-            result = (libc.semctl(identifier, 0, 0) if command == 'semctl'
-                      else getattr(libc, command)(identifier, 0, None))
-            if result != 0 and ctypes.get_errno() not in [errno.EINVAL, errno.EIDRM]:
-                raise Violation('cannot clear submitted kernel IPC state')
-    finally:
-        os.seteuid(0)
+    for table, identifier, flag in [('shm', 'shmid', '-m'),
+                                    ('msg', 'msqid', '-q'),
+                                    ('sem', 'semid', '-s')]:
+        try:
+            rows = Path('/proc/sysvipc', table).read_text().splitlines()
+            columns = rows[0].split()
+            if not {'uid', 'cuid', identifier} <= set(columns):
+                raise ValueError('missing IPC columns')
+            for line in rows[1:]:
+                row = dict(zip(columns, line.split(), strict=True))
+                if UID in (int(row['uid']), int(row['cuid'])):
+                    objects.append((flag, int(row[identifier])))
+        except (OSError, ValueError, IndexError, KeyError) as error:
+            raise Violation('cannot inspect submitted kernel IPC state') from error
+    return objects
+
+
+def clear_worker_ipc():
+    """Remove IPC as its owner/creator, then require an empty worker inventory."""
+    for flag, identifier in worker_ipc():
+        try:
+            result = subprocess.run(
+                ['/usr/bin/setpriv', f'--reuid={UID}', f'--regid={UID}',
+                 '--clear-groups', '--no-new-privs', '--inh-caps=-all',
+                 '--ambient-caps=-all', '/usr/bin/ipcrm', flag, str(identifier)],
+                cwd='/', env={'PATH': '/usr/bin:/bin'}, capture_output=True,
+                timeout=5, check=False)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise Violation('cannot clear submitted kernel IPC state') from error
+        if result.returncode:
+            raise Violation('cannot clear submitted kernel IPC state')
+    if worker_ipc():
+        raise Violation('submitted kernel IPC state survived cleanup')
 
 
 def sandbox(cpu_ids, work):
@@ -277,12 +289,22 @@ class Worker:
         return {'seconds': elapsed, 'rss_bytes': self.peak, 'storage_bytes': self.disk_peak}
 
     def close(self):
-        for p in self.members():
-            try:
-                p.kill()
-            except psutil.NoSuchProcess:
-                pass
-        self.process.wait(timeout=10)
+        deadline = time.monotonic() + 10
+        while True:
+            live = []
+            for p in self.members():
+                try:
+                    if p.status() != psutil.STATUS_ZOMBIE:
+                        live.append(p)
+                        p.kill()
+                except psutil.NoSuchProcess:
+                    pass
+            if not live:
+                break
+            if time.monotonic() >= deadline:
+                raise Violation('submitted processes survived cleanup')
+            time.sleep(.005)
+        self.process.wait(timeout=1)
         clear_worker_ipc()
         self.selector.close()
         self.process.stdin.close()

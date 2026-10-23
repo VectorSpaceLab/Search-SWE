@@ -63,3 +63,9 @@ Public development uses only the retained original 1M validation pool, with its
 own library IDs and candidate_ids.npy. Final evaluation uses the complete 12M
 pool. Complete constraint configurations are disjoint across these sides for
 all five targets. The task instruction describes the workload.
+
+The verifier additionally runs an independent trajectory/submission integrity review
+using `deepseek/deepseek-v4.1-flash` through OpenRouter. Final reward requires a
+successful accepting review. Its credentials and allowlisted API access belong
+only to the trusted judge; submitted code retains its existing network restrictions.
+The verifier protects a separate trajectory snapshot before running submitted code.

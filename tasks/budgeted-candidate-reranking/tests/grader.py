@@ -35,7 +35,7 @@ def main():
     OUTPUT.chmod(0o700)
     (OUTPUT/'reward.txt').write_text('0\n')
     dump(OUTPUT/'reward.json', {'reward': 0.0})
-    report = {'reward': 0.0, 'score': 0.0, 'status': 'error', 'judge': 'not-used'}
+    report = {'raw_reward': 0.0, 'score': 0.0, 'status': 'error', 'judge': 'pending_integrity_audit'}
     status = 1
     try:
         if Path(ARCHIVE).exists() or Path(ARCHIVE).is_symlink():
@@ -48,7 +48,7 @@ def main():
         q, b, u = result['quality'], fixed['baseline'], fixed['upper']
         reward = max(0.0, min(1.0, (q-b)/(u-b)))
         report.update(result)
-        report.update(reward=reward, score=100*reward, baseline=b, upper=u,
+        report.update(raw_reward=reward, score=100*reward, baseline=b, upper=u,
                       initial_recall_at_100=fixed['initial_recall_at_100'],
                       status='complete', failed_queries=sum(r['status'] != 'ok' for r in result['queries']))
         status = 0
@@ -59,12 +59,10 @@ def main():
         try:
             cleanup()
         except Exception as error:
-            report.update(reward=0.0, score=0.0, status='error', error=str(error))
+            report.update(raw_reward=0.0, score=0.0, status='error', error=str(error))
             status = 1
         dump(OUTPUT/'report.json', report)
-        dump(OUTPUT/'reward.json', {'reward': report['reward']})
-        (OUTPUT/'reward.txt').write_text(str(report['reward'])+'\n')
-    print(json.dumps({k: report[k] for k in ('status', 'reward', 'score')}), flush=True)
+    print(json.dumps({k: report[k] for k in ('status', 'raw_reward', 'score')}), flush=True)
     return status
 
 

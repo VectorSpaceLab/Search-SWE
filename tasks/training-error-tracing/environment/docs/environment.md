@@ -70,3 +70,5 @@ Keep `retriever_service.py` with the supplied `prepare.sh`. The helper's
 training-only offset/source caches and token-NLL tie-break are already part
 of the paired control. When altering inference or ranking, compare outputs
 against the starting implementation as well as checking development quality.
+
+The verifier requires Linux support for `SYS_PTRACE` and `CHECKPOINT_RESTORE`, granted only to its trusted supervisor for inspecting candidate file descriptors and file-backed mappings. Submitted commands run without any effective, inherited, ambient or bounding capabilities. Open-unlinked files and mappings held by preparation services count toward the same 64 GiB logical-storage limit; repeated references count once per inode.

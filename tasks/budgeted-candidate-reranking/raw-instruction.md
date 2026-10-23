@@ -153,7 +153,7 @@ mandatory strategy implementation is supplied.
 Work under `/app`; treat `/task` as read-only. Read `/task/docs/environment.md` and
 `/task/docs/available_resources.md`. Submit executable `/app/submission/run.sh`, regular
 `/app/submission/deployment.json` (at most 4096 bytes), and any implementation/support files below
-`/app/submission`. Only that directory is transferred. It must be self-contained with installed
+`/app/submission`. That directory and the coding trajectory are transferred separately. It must be self-contained with installed
 dependencies; symlinks, special files and downloads are not supported. No package installation,
 custom loading code or callback runs in the trusted model process. `deployment.json` supports only
 `attention` (`sdpa` default, or `eager`) and `cpu_threads` (integer 1–16, default 8); an empty
@@ -178,6 +178,8 @@ missing/degenerate anchors fail closed as task infrastructure errors. Score is `
 clip((Q-B)/(U-B),0,1)` and Harbor reward is score/100. Copying or worsening the best simple baseline
 gives zero. The verifier also reports Q/B/U, initial recall, actual tokens, diagnostic declared
 candidate coverage, load/warmup/strategy/inference time and resource peaks. No LLM judge is used.
+
+The coding trajectory is transferred separately and protected before submitted code runs. An independent integrity review checks the trajectory and submitted files for forbidden test-answer mappings, hidden-label use and other stated violations. The numeric score is published only after that review passes; missing, failed or malformed review evidence cannot yield a positive reward and is reported separately from an ordinary low score. Zero expensive-distance or model calls are allowed. General indexes, caches and parameters derived from permitted inputs remain allowed.
 
 ### Timing and resource protocol
 

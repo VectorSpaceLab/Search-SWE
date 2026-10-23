@@ -109,18 +109,16 @@ def main():
     if len(cpus) != 8:
         raise RuntimeError('This calibration requires exactly eight assigned CPU cores')
     responses = []
-    report = {'reward': 0.0, 'score': 0.0, 'test_query_count': len(queries), 'completed_queries': 0,
+    report = {'raw_reward': 0.0, 'raw_score': 0.0, 'test_query_count': len(queries), 'completed_queries': 0,
               'baseline_query_seconds': baseline_seconds, 'reference_query_seconds': reference_seconds,
               'minimum_recall': ref['minimum_recall'], 'query_budget_seconds': ref['query_hard_timeout_seconds'],
               'submission_bytes': file_bytes('/app'), 'index_bytes': file_bytes('/app/index'),
-              'judge': 'not_applicable_deterministic', 'valid_measurement': True, 'resources_ok': True}
+              'judge': 'pending_integrity_audit', 'valid_measurement': True, 'resources_ok': True}
     report['development'], development_failure = check_development()
     if development_failure:
         report['failure'] = {'phase': 'development', 'error': development_failure}
         report['resources_ok'] = False
         write('evaluation.json', report)
-        write('reward.json', {'reward': 0.0})
-        (LOG / 'reward.txt').write_text('0\n')
         print(json.dumps(report), flush=True)
         return
     # Sparse/oversized transferred files must be a submission resource failure,
@@ -131,8 +129,6 @@ def main():
         report['failure'] = {'phase': 'artifacts', 'error': 'storage limit'}
         report['resources_ok'] = False
         write('evaluation.json', report)
-        write('reward.json', {'reward': 0.0})
-        (LOG / 'reward.txt').write_text('0\n')
         print(json.dumps(report), flush=True)
         return
     worker = None
@@ -183,22 +179,20 @@ def main():
         current_seconds = report['current_baseline']['query']['seconds']
         report['normalized_query_seconds'] = normalized_query_seconds(
             seconds, baseline_seconds, current_seconds)
-        report['reward'] = round(gated_reward(recall_sum, len(queries), report['normalized_query_seconds'],
+        report['raw_reward'] = round(gated_reward(recall_sum, len(queries), report['normalized_query_seconds'],
             baseline_seconds, reference_seconds,
             report['resources_ok'] and report['workload_complete'], ref['minimum_recall']), 12)
         report['speedup_over_baseline'] = current_seconds / seconds if seconds > 0 else None
         report['queries_per_second'] = len(responses) / seconds if seconds > 0 else None
     if not report['quality_ok'] and 'failure' not in report:
         report['failure'] = {'phase': 'quality', 'error': 'Mean Recall@100 is below 0.99'}
-    report['score'] = 100 * report['reward']
+    report['raw_score'] = 100 * report['raw_reward']
     report['cgroup_memory_peak_bytes'] = int(Path('/sys/fs/cgroup/memory.peak').read_text())
     events = Path('/sys/fs/cgroup/memory.events').read_text()
     report['cgroup_memory_events'] = events
     if any(int(line.split()[1]) for line in events.splitlines() if line.split()[0] in ['oom', 'oom_kill']):
-        report.update(reward=0.0, score=0.0, resources_ok=False)
+        report.update(raw_reward=0.0, raw_score=0.0, resources_ok=False)
     write('evaluation.json', report)
-    write('reward.json', {'reward': report['reward']})
-    (LOG / 'reward.txt').write_text(f"{report['reward']:.12f}\n")
     print(json.dumps(report, allow_nan=False), flush=True)
 
 

@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/constrained-molecular-search"
-version = "0.3.2"
+version = "0.3.3"
 description = "Recover the truly feasible top 10,000 compounds from a complete molecular library under a two-second query deadline."
 authors = [{ name = "jianlyu" }]
 keywords = ["molecular-search", "constraints", "combinatorial-library", "gpu", "top-k"]
@@ -25,10 +25,15 @@ user = "root"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 4800.0
+timeout_sec = 6300.0
 user = "root"
 environment_mode = "separate"
-network_mode = "no-network"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
 
 [[verifier.collect]]
 command = "/opt/conda/bin/python /task/runtime/transfer.py --collect"

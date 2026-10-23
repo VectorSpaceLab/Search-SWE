@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 from metrics import macro_precision, normalized_score, query_precision
+from storage_accounting import inventory, total_bytes, require_inspection_capabilities
 
 UID = GID = 10001
 MAX_OUTPUT_BYTES = 65536
@@ -60,21 +61,7 @@ def write_json(path, value):
 
 
 def tree_size(roots):
-    seen, total = set(), 0
-    for root in roots:
-        paths = [root]
-        if root.is_dir() and not root.is_symlink():
-            paths.extend(root.rglob("*"))
-        for path in paths:
-            try:
-                value = path.lstat()
-            except FileNotFoundError:
-                continue
-            inode = (value.st_dev, value.st_ino)
-            if inode not in seen and (stat.S_ISREG(value.st_mode) or stat.S_ISLNK(value.st_mode)):
-                seen.add(inode)
-                total += value.st_size
-    return total
+    return sum(inventory(roots).values())
 
 
 def user_processes():
@@ -249,13 +236,14 @@ def memory_oom_count():
     return int(dict(line.split() for line in path.read_text().splitlines()).get("oom_kill", 0))
 
 
-def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_bytes, budget):
+def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_files, budget):
+    started = time.monotonic()
     before = user_processes()
     initial_oom = memory_oom_count()
-    started = time.monotonic()
+    fixed_bytes = sum(fixed_files.values())
     environment = candidate_environment(index)
     argv = ["/usr/bin/setpriv", f"--reuid={UID}", f"--regid={GID}", "--clear-groups",
-            "--no-new-privs", "--inh-caps=-all", "--ambient-caps=-all",
+            "--no-new-privs", "--inh-caps=-all", "--ambient-caps=-all", "--bounding-set=-all",
             "/usr/bin/env", "-i", *[f"{k}={v}" for k, v in environment.items()], *command]
     process = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                start_new_session=True)
@@ -266,6 +254,8 @@ def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_bytes
     def reap():
         nonlocal finished_at
         process.wait()
+        # Persistent preparation services must not compute during final audits.
+        signal_services(user_processes(), signal.SIGSTOP)
         # Resource audits can outlast a short request. Record command completion
         # in its waiter so the verifier's audit work is not query computation.
         finished_at = time.monotonic()
@@ -278,7 +268,7 @@ def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_bytes
     while not finished.is_set():
         now = time.monotonic()
         if now >= next_storage_check:
-            peak_storage = max(peak_storage, fixed_bytes + tree_size(storage_roots))
+            peak_storage = max(peak_storage, total_bytes(storage_roots, fixed_files))
             next_storage_check = now + .5
         if peak_storage > budget or memory_oom_count() > initial_oom:
             resource_violation = True
@@ -298,7 +288,7 @@ def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_bytes
         process.wait(timeout=5)
     waiter.join(timeout=.02)
     logger.join(timeout=.02)
-    peak_storage = max(peak_storage, fixed_bytes + tree_size(storage_roots))
+    peak_storage = max(peak_storage, total_bytes(storage_roots, fixed_files))
     resource_violation |= peak_storage > budget or memory_oom_count() > initial_oom
     return {"returncode": process.returncode, "elapsed_sec": ended-started,
             "timed_out": timed_out, "resource_violation": resource_violation,
@@ -343,6 +333,7 @@ def main(phase_args=None, phase_config=None):
               "infrastructure_error": False, "queries": []}
     memory_tracker = None
     try:
+        require_inspection_capabilities()
         config = phase_config if phase_config is not None else json.loads((args.private / "evaluation-config.json").read_text())
         if not config.get("raw_efficiency_phase"):
             normalized_score(0, config["B"], config["U"])
@@ -391,7 +382,8 @@ def main(phase_args=None, phase_config=None):
         verify_public_readability(public_roots)
         lock_submission(args.submission)
         validate_submission_metadata(args.submission)
-        fixed_bytes = tree_size([args.data, args.models, args.submission])
+        fixed_files = inventory([args.data, args.models, args.submission])
+        fixed_bytes = sum(fixed_files.values())
         if fixed_bytes > config["storage_bytes"]:
             raise InvalidSubmission("Fixed inputs and submission exceed total storage budget")
         args.work.mkdir(parents=True, mode=0o711)
@@ -419,7 +411,7 @@ def main(phase_args=None, phase_config=None):
                                "--model-dir", str(args.models), "--index-dir", str(index)],
                               cwd=args.submission, index=index, timeout=config["prepare_timeout_sec"],
                               log=args.logs / "prepare.log", storage_roots=storage_roots,
-                              fixed_bytes=fixed_bytes, budget=config["storage_bytes"])
+                              fixed_files=fixed_files, budget=config["storage_bytes"])
         report["prepare"] = {k: v for k, v in prepare.items() if k != "processes_before"}
         if prepare["returncode"] != 0 or prepare["timed_out"] or prepare["resource_violation"]:
             raise InvalidSubmission("Preparation failed, timed out or exceeded total resources")
@@ -444,12 +436,13 @@ def main(phase_args=None, phase_config=None):
                 query_path.chmod(0o440)
                 output = outputs / f"result-{repetition:02d}-{number:04d}.json"
                 signal_services(before, signal.SIGCONT)
+                command_start = time.monotonic()
                 run = run_command([str(args.submission / "run.sh"), "--index-dir", str(index),
                                    "--query", str(query_path), "--output", str(output), "--top-k", "10"],
                                   cwd=args.submission, index=index,
                                   timeout=max(.001, config["query_timeout_sec"]-(time.monotonic()-query_start)),
                                   log=args.logs / f"query-{repetition:02d}-{number:04d}.log", storage_roots=storage_roots,
-                                  fixed_bytes=fixed_bytes, budget=config["storage_bytes"])
+                                  fixed_files=fixed_files, budget=config["storage_bytes"])
                 ids, reason = [], None
                 if run["returncode"] == 0 and not run["timed_out"]:
                     try:
@@ -458,7 +451,9 @@ def main(phase_args=None, phase_config=None):
                         reason = "missing-or-malformed-output"
                 else:
                     reason = "timeout" if run["timed_out"] else "command-failed"
-                elapsed = time.monotonic()-query_start
+                # Delivery/startup and command execution count; a post-completion
+                # resource scan does not add synthetic query latency.
+                elapsed = command_start-query_start+run["elapsed_sec"]
                 signal_services(before, signal.SIGSTOP)
                 if reason is not None:
                     ids = []

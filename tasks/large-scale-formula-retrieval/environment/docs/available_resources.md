@@ -29,3 +29,9 @@ query has 50 ms, including I/O. There are still 76 hidden official test queries.
 
 Prepared submission/model/index artifacts must fit 34 MiB; the separate serving
 filesystem is 40 MiB. See environment.md for exact accounting and failure rules.
+
+The verifier additionally runs an independent trajectory/submission integrity review
+using `deepseek/deepseek-v4.1-flash` through OpenRouter. Final reward requires a
+successful accepting review. Its credentials and allowlisted API access belong
+only to the trusted judge; submitted code retains its existing network restrictions.
+The verifier protects a separate trajectory snapshot before running submitted code.

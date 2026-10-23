@@ -173,6 +173,8 @@ accounting, change filesystem permissions to reach restricted data, access crede
 manipulate the grader/reward. The verifier's independent audit credentials are unavailable to
 candidate programs. An ordinary bug, timeout or low precision is not itself an integrity violation.
 
+Logical storage accounting includes files that remain open after unlink, anonymous temporary files, and file-backed mappings after descriptors are closed, including those held by persistent preparation services. Device/inode identity prevents double-counting hard links and multiple references. If the verifier cannot inspect this state reliably, it fails closed. Completed-command storage inspection is excluded from measured query execution time.
+
 ## Hidden Test Overview
 
 The verifier holds 100 actual errors in ten complete entity-pair groups, ten per group. Entity

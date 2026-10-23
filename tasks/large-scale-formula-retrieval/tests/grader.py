@@ -27,11 +27,9 @@ def finish_report(report):
     if any(int(r.split()[1]) for r in events.splitlines() if r.split()[0] in ['oom', 'oom_kill']):
         report['failure'] = 'memory limit'
     if report.get('failure'):
-        report['reward'] = 0.0
-    report['score'] = 100 * report['reward']
+        report['raw_reward'] = 0.0
+    report['raw_score'] = 100 * report['raw_reward']
     write('evaluation.json', report)
-    write('reward.json', {'reward': report['reward']})
-    (LOG / 'reward.txt').write_text(f"{report['reward']:.12f}\n")
 
 
 def main():
@@ -45,8 +43,8 @@ def main():
     cpus = sorted(os.sched_getaffinity(0))
     if len(cpus) != 2:
         raise RuntimeError('Expected exactly 2 assigned CPUs')
-    report = {'reward': 0.0, 'score': 0.0, 'queries': [], 'query_count': 76,
-              'judge': 'not_applicable_deterministic', 'valid_measurement': True,
+    report = {'raw_reward': 0.0, 'raw_score': 0.0, 'queries': [], 'query_count': 76,
+              'judge': 'pending_integrity_audit', 'valid_measurement': True,
               'submission_bytes': file_bytes('/app'), 'public_bytes': file_bytes(PUBLIC)}
     report['development'], failure = check_development()
     if failure:
@@ -158,7 +156,7 @@ def main():
     for metric in ['ndcg_prime', 'map_prime', 'p_prime_10']:
         report[metric] = sum(q[metric] for q in report['queries']) / 76
     write('responses.json', report.pop('responses', []))
-    report.update(reward=report['ndcg_prime'], lifetime_peak_rss_bytes=peak,
+    report.update(raw_reward=report['ndcg_prime'], lifetime_peak_rss_bytes=peak,
                   total_seconds=time.monotonic() - started)
     finish_report(report)
 

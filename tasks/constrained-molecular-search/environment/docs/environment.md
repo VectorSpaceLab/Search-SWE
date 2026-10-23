@@ -160,3 +160,9 @@ require the target 12M library; full-surrogate families also support the public
 1M development library and enforce its candidate membership. Fragment
 normalization is a heuristic, not an exact reconstruction of official forms.
 No cached predictions or creator reference model are supplied.
+
+The verifier additionally runs an independent trajectory/submission integrity review
+using `deepseek/deepseek-v4.1-flash` through OpenRouter. Final reward requires a
+successful accepting review. Its credentials and allowlisted API access belong
+only to the trusted judge; submitted code retains its existing network restrictions.
+The verifier protects a separate trajectory snapshot before running submitted code.

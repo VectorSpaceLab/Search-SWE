@@ -68,8 +68,8 @@ def main():
     LOGS.chmod(0o700)
     (LOGS/'reward.txt').write_text('0\n')
     write(LOGS/'reward.json', {'reward':0.0})
-    report = {'status': 'initializing', 'reward': 0.0, 'score': 0.0,
-              'judge': 'not_required_deterministic', 'queries': []}
+    report = {'status': 'initializing', 'raw_reward': 0.0, 'score': 0.0,
+              'judge': 'pending_integrity_audit', 'queries': []}
     worker = None
     try:
         config = json.loads((PUBLIC/'config.json').read_text())
@@ -181,12 +181,10 @@ def main():
         quality = sum(q['ndcg10'] for q in report['queries'])/3452
         if oom_count() != initial_oom: raise Violation('aggregate memory exceeded')
         result = reward(quality, refs['B'], refs['U'])
-        report.update(status='complete', Q=quality, B=refs['B'], U=refs['U'], reward=result, score=100*result,
+        report.update(status='complete', Q=quality, B=refs['B'], U=refs['U'], raw_reward=result, score=100*result,
                       build_load_seconds=startup_total, peak_aggregate_rss_bytes=peak_rss,
                       peak_total_storage_bytes=peak_storage, index_bytes=writable_size(work/'index'))
         report['peak_cgroup_memory_bytes'] = int((cg/'memory.peak').read_text())
-        write(LOGS/'reward.json', {'reward':result})
-        (LOGS/'reward.txt').write_text(f'{result:.12g}\n')
     except Violation as exc:
         report.update(status='submission_failure', error=str(exc))
     except Exception as exc:

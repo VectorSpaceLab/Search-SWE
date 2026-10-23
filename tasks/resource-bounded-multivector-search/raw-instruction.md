@@ -57,6 +57,10 @@ transfer. Submit regular files/directories only, without symlinks, sockets or sp
 
 ## Verification
 
+### Integrity review
+
+The coding trajectory is also transferred to the separate verifier and protected before submission execution. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. Only the verifier's judge has its separate API credentials and network access; these are unavailable to submitted programs.
+
 ### Metrics and failure handling
 
 MaxSim is `sum_i max_j dot(q_i,d_j)` on original supplied FP32 vectors, using fixed exhaustive

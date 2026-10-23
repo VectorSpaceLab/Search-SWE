@@ -41,3 +41,9 @@ regular file, counting shared hardlinks once. The physical serving filesystem
 also needs its own metadata; both accounting and actual capacity apply.
 
 The allocated submission/model files and completed index together must be at most **34 MiB (35,651,584 bytes)**, counting max(logical size, allocated blocks) per regular file and shared hardlinks once within each directory tree. This prepared-artifact limit applies before copying and is checked by both the public helper and final verifier. The separate **40 MiB (41,943,040 bytes)** physical serving filesystem also holds its metadata, reserved submission bytes, the index, all caches and serving-time temporary files; leave room for startup and query writes. The artifact limit reserves headroom rather than assuming the gross filesystem size is usable artifact space. Exceeding either limit gives overall zero.
+
+The verifier additionally runs an independent trajectory/submission integrity review
+using `deepseek/deepseek-v4.1-flash` through OpenRouter. Final reward requires a
+successful accepting review. Its credentials and allowlisted API access belong
+only to the trusted judge; submitted code retains its existing network restrictions.
+The verifier protects a separate trajectory snapshot before running submitted code.

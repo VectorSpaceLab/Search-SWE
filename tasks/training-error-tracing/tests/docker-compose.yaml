@@ -1,5 +1,8 @@
 services:
   main:
+    cap_add:
+      - SYS_PTRACE
+      - CHECKPOINT_RESTORE
     cpus: 16
     mem_limit: "64g"
     deploy:
