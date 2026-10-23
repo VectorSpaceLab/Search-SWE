@@ -10,7 +10,7 @@ artifacts = [
 
 [task]
 name = "search-swe/icsi-meeting-memory"
-version = "0.6.0"
+version = "1.0.0"
 description = "Build a compact conversational memory, a retriever, and a grounded answerer over long meeting transcripts."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["memory", "retrieval", "conversation", "coreference", "question-answering"]

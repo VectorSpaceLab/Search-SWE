@@ -3,7 +3,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/legal-stance-retrieval"
-version = "0.1.2"
+version = "1.0.0"
 description = "Build stance-conditioned legal precedent retrieval over a supplied corpus, with examples and a local model."
 authors = [{ name = "Cooki-e" }]
 keywords = ["information-retrieval", "legal", "stance", "embedding", "gpu"]

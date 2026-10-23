@@ -1,12 +1,22 @@
 # Code context retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: **Bingyu**. Version: **0.1.0**.
+| Field | Value |
+| --- | --- |
+| Task | `code-context-retrieval` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Mean core-line F1 |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 7800 s |
+| Dataset | SWE-Explore, original reading-context labels |
+| Public queries | 10 |
+| Hidden queries | 20 |
 
 Build a reusable search engine that returns the source regions needed to understand and address an issue in a fixed repository snapshot. The target is the original SWE-Explore reading context, including relevant implementation, helpers and tests. It is not exact bug-line localization and does not require generating a patch.
 
-## Data and interface
+### Data and interface
 
 The shared `data/repos/` directory contains 51,920 complete eligible text files from 30 pinned snapshots across 22 repositories, totaling 324,317,309 bytes. Each snapshot has an anonymous `repo_<id>` root directory; internal relative paths, file bytes and line breaks are preserved. Each query specifies exactly one snapshot to search. Repository names and source-commit mappings are not supplied as runtime metadata; source text and issue content are unchanged and may still identify their projects.
 
@@ -16,15 +26,15 @@ Corpus eligibility matches the screening experiment: regular nonsymlink UTF-8 fi
 
 The solver supplies executable `/app/build.sh` and `/app/run.sh` with the commands in `instruction.md`. Its `/app` artifacts transfer to a fresh verifier. Public corpus and validation data are separate read-only mounts; only the corpus is mounted in the verifier. Private queries and labels are copied into the verifier image under root-only `/tests`.
 
-## Metric and limits
+## Change Log
 
-A result contains up to five source regions and 500 distinct physical lines. Per-query line F1 is `2 * intersection / (predicted_lines + gold_lines)`, matching `(path, line)` in the requested snapshot. Overlaps are deduplicated; ordering has no effect. Every selected original gold fits the budget and has an attainable oracle score of 1. The reward is the mean over all 20 hidden questions, with no baseline rescaling. Precision and recall are diagnostics.
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
 
-Invalid or failed query outputs and timeouts score zero for that query. Build failure scores zero overall. A confirmed integrity violation invalidates the submission. Scoring is deterministic; no subjective answer judge is used. The API model allowlist is a task policy; the line scorer alone does not certify model/provider compliance.
+## Difficulty Explanation
 
-The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour development budget. Index construction and service readiness have 3,600 seconds. Each query invocation has 180 seconds including API waits and output writing, concurrency one. Both images use the standard CPU image. The resource documents match `agentic-search`; only its documented OpenRouter/Jina retrieval APIs and four Qwen generation models are allowed. Corpus or answer lookup on external sites is not permitted.
-
-## Difficulty evidence
+### Difficulty evidence
 
 One packaged CPU/API Codex/OpenRouter `openai/gpt-6-luna`, `max` trial produced
 mean line F1 and reward **0.17146875932337885**. The coding agent reached its
@@ -52,7 +62,30 @@ Author-side screening evaluated the same selected issues with a common five-regi
 
 This is a deliberately selected challenge subset, not a benchmark-wide estimate. Multi-turn exploration did not reliably beat reranking. The validation split is easier, especially for whole-file expansion. Original reading-context labels do not enumerate every useful alternative solution context. Difficulty is supported against the tested local implementations, not every coding agent. The per-question maximum over fixed methods was used only for screening and is not reported as an executable baseline.
 
-## Sources and reproduction
+## Verification Explanation
+
+### Metric and limits
+
+A result contains up to five source regions and 500 distinct physical lines. Per-query line F1 is `2 * intersection / (predicted_lines + gold_lines)`, matching `(path, line)` in the requested snapshot. Overlaps are deduplicated; ordering has no effect. Every selected original gold fits the budget and has an attainable oracle score of 1. The reward is the mean over all 20 hidden questions, with no baseline rescaling. Precision and recall are diagnostics.
+
+Invalid or failed query outputs and timeouts score zero for that query. Build failure scores zero overall. A confirmed integrity violation invalidates the submission. Scoring is deterministic; no subjective answer judge is used. The API model allowlist is a task policy; the line scorer alone does not certify model/provider compliance.
+
+The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour development budget. Index construction and service readiness have 3,600 seconds. Each query invocation has 180 seconds including API waits and output writing, concurrency one. Both images use the standard CPU image. The resource documents match `agentic-search`; only its documented OpenRouter/Jina retrieval APIs and four Qwen generation models are allowed. Corpus or answer lookup on external sites is not permitted.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task code-context-retrieval
+bash scripts/run_task.sh --task code-context-retrieval --model YOUR_AGENT_MODEL
+```
+
+## References
+
+### Sources and reproduction
 
 [SWE-Explore paper](https://arxiv.org/abs/2606.07297), [official dataset](https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench), and [official implementation](https://github.com/Qiushao-E/SWE-Explore-Bench).
 

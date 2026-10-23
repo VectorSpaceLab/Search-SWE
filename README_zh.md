@@ -157,7 +157,7 @@ bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex \
 
 #### Claude Code 和 Anthropic 官方 API
 
-所有任务镜像都预装 Claude Code 2.1.283。填写 API 账户可用的 Anthropic 模型
+所有任务镜像都预装 Claude Code 2.1.309。填写 API 账户可用的 Anthropic 模型
 和独立的编码智能体密钥：
 
 ```dotenv
@@ -200,6 +200,15 @@ bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --
 网络权限和自定义模型服务配置见[评测指南](docs/evaluation.md)。
 
 </details>
+
+GPU 任务可以增加 `--gpu-device 0`，使用宿主机编号或完整 GPU UUID，让 agent
+和 verifier 使用同一设备。例如，准备好该任务的数据和凭证后运行：
+
+```bash
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --gpu-device 0
+```
+
+省略该参数时使用默认单卡分配。详见[GPU 设备选择](docs/evaluation.md#gpu-device-selection)。
 
 ## 📚 文档索引
 

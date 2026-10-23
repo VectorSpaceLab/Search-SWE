@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/agentic-search"
-version = "0.6.0"
+version = "1.0.0"
 description = "Optimize a ReAct retrieval starter to return five documents per query, scored by Gold Recall@5."
 authors = [{ name = "Search-SWE" }]
 keywords = ["BrowseComp-Plus", "information-retrieval", "multi-constraint-retrieval"]

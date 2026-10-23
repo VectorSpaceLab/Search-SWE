@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/negative-constraint-retrieval"
-version = "0.3.0"
+version = "1.0.0"
 description = "Build a Top-1 search engine that satisfies positive and negative semantic constraints over a fixed passage corpus."
 authors = [{ name = "Cooki-e" }]
 keywords = ["information-retrieval", "negation", "constraints", "semantic-retrieval"]

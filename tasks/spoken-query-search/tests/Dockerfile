@@ -8,7 +8,7 @@ RUN /opt/conda/bin/python -m pip install --no-cache-dir \
     "harbor-rewardkit==0.2.0" \
     "litellm==1.97.0"
 
-ARG REWARDKIT_CODEX_VERSION=0.147.0
+ARG REWARDKIT_CODEX_VERSION=0.164.0
 ARG REWARDKIT_CODEX_NPM_REGISTRY=https://registry.npmmirror.com
 RUN set -eux; \
     root="/root/.cache/harbor-rewardkit/codex/${REWARDKIT_CODEX_VERSION}"; \
@@ -30,5 +30,5 @@ RUN install -d -m 0755 /opt/audit \
     && install -m 0755 /tests/rewardkit_deepseek.py /opt/audit/runner.py \
     && install -m 0755 /tests/readonly_audit.py /opt/audit/readonly_audit.py \
     && install -m 0644 /tests/landlock_audit.py /opt/audit/landlock_audit.py \
-    && install -d -o audit -g audit -m 0700 /home/audit/.cache/harbor-rewardkit/codex/0.147.0/bin \
-    && ln -s /usr/local/bin/codex /home/audit/.cache/harbor-rewardkit/codex/0.147.0/bin/codex
+    && install -d -o audit -g audit -m 0700 /home/audit/.cache/harbor-rewardkit/codex/0.164.0/bin \
+    && ln -s /usr/local/bin/codex /home/audit/.cache/harbor-rewardkit/codex/0.164.0/bin/codex

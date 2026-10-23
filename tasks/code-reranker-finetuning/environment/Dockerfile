@@ -2,9 +2,9 @@ FROM docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0
 
 ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 
-ARG SEARCH_SWE_CODEX_VERSION=0.157.1
-ARG SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.283
-ARG SEARCH_SWE_PI_VERSION=0.87.1
+ARG SEARCH_SWE_CODEX_VERSION=0.164.0
+ARG SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.309
+ARG SEARCH_SWE_PI_VERSION=1.4.0
 RUN npm install --global --ignore-scripts \
         --registry=https://registry.npmmirror.com \
         "@openai/codex@${SEARCH_SWE_CODEX_VERSION}" \

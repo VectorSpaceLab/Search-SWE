@@ -353,7 +353,7 @@ class ReleasePackage(unittest.TestCase):
                     "scripts.harbor_agents:PreinstalledPi",
                 )
                 self.assertEqual(argv[argv.index("-m") + 1], model)
-                self.assertIn("version=0.87.1", self.flag_values(argv, "--ak"))
+                self.assertIn("version=1.4.0", self.flag_values(argv, "--ak"))
                 self.assertIn("thinking=xhigh", self.flag_values(argv, "--ak"))
                 self.assertFalse(any(value.startswith(("reasoning_effort=", "config="))
                                      for value in self.flag_values(argv, "--ak")))
@@ -392,7 +392,7 @@ class ReleasePackage(unittest.TestCase):
             "scripts.harbor_agents:PreinstalledClaudeCode",
         )
         self.assertEqual(argv[argv.index("-m") + 1], "claude-sonnet-4-6")
-        self.assertIn("version=2.1.283", self.flag_values(argv, "--ak"))
+        self.assertIn("version=2.1.309", self.flag_values(argv, "--ak"))
         self.assertIn("reasoning_effort=max", self.flag_values(argv, "--ak"))
         self.assertEqual(
             self.flag_values(argv, "--ae"),
@@ -440,7 +440,7 @@ class ReleasePackage(unittest.TestCase):
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         argv = shlex.split(result.stdout.splitlines()[-1])
-        self.assertIn("version=0.87.1", self.flag_values(argv, "--ak"))
+        self.assertIn("version=1.4.0", self.flag_values(argv, "--ak"))
         self.assertFalse(any(value.startswith("thinking=") for value in self.flag_values(argv, "--ak")))
 
         env = self.launcher_env()

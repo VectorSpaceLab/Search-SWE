@@ -3,7 +3,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/financial-report-qa"
-version = "1.1.0"
+version = "1.0.0"
 description = "Retrieve supporting evidence and its original positions across a shared library of complete financial reports."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["financial-reports", "retrieval", "evidence-localization"]

@@ -171,7 +171,7 @@ it.
 
 #### Claude Code and the official Anthropic API
 
-Claude Code 2.1.283 is preinstalled in every task image. Set an Anthropic model
+Claude Code 2.1.309 is preinstalled in every task image. Set an Anthropic model
 available to your API account and the dedicated coding-agent key:
 
 ```dotenv
@@ -216,6 +216,17 @@ the [evaluation guide](docs/evaluation.md) covers credential configuration,
 GPU, network-policy, and custom-provider options.
 
 </details>
+
+For a GPU task, add `--gpu-device 0` (host index or full GPU UUID) to select the
+same device for the agent and verifier. For example, after preparing its inputs
+and credentials:
+
+```bash
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --gpu-device 0
+```
+
+Omit the option to use the default single-GPU allocation. See
+[GPU device selection](docs/evaluation.md#gpu-device-selection) for details.
 
 ## 📚 Documentation
 

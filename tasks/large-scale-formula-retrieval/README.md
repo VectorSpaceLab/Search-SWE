@@ -1,4 +1,17 @@
-# large-scale-formula-retrieval
+# Large Scale Formula Retrieval
+
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `large-scale-formula-retrieval` |
+| Version | 1.0.0 |
+| Authors | jianlyu |
+| Primary metric | nDCG_prime |
+| Compute | 2 CPUs; 4 GiB RAM; 64 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 19800 s |
+| Public queries | 5 |
+| Hidden queries | 76 |
 
 Retrieve relevant formulas from the complete ARQMath v3 corpus with 34 MiB prepared artifacts in a 40 MiB serving filesystem and 50 ms CPU queries.
 
@@ -9,7 +22,21 @@ The coding agent receives [instruction.md](instruction.md),
 Those documents specify the submission interface, allowed inputs, scoring,
 failure behavior and public self-check commands.
 
-## Restore inputs
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+The complete formula corpus must be searchable with only 34 MiB of prepared artifacts, a 40 MiB serving filesystem and 50 ms CPU queries. Representation, indexing and ranking must balance mathematical relevance with these limits.
+
+## Verification Explanation
+
+The verifier maps returned formula instances to visual IDs, deduplicates them and computes nDCG prime using the official judgments. It averages across all 76 hidden questions, including failures, with compact-serving storage and runtime limits enforced. Final reward also requires the integrity audit to pass. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
 
@@ -23,7 +50,7 @@ restoration paths. Keep verifier inputs outside agent mounts. Model cards,
 licenses and data-use restrictions are described in the resource document and
 [SOURCES.md](SOURCES.md).
 
-## Run
+### Run
 
 The task allocates 2 CPU cores, 4 GiB RAM and
 64 GiB storage. Agent development has
@@ -76,7 +103,7 @@ After every container/process for this run has exited, unmount its storage:
 python tasks/large-scale-formula-retrieval/tools/prepare_storage.py --run-id RUN_ID --unmount
 ```
 
-## Validate the package
+### Validate the package
 
 ```bash
 python scripts/check_tasks.py tasks/large-scale-formula-retrieval
@@ -87,3 +114,9 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+## References
+
+- [Task reference](https://aclanthology.org/2026.findings-acl.1277/).
+
+- [Data, model and method provenance](SOURCES.md).

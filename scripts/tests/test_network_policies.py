@@ -101,9 +101,9 @@ class TaskNetworkPolicies(unittest.TestCase):
                 text,
             )
             self.assertIn("@earendil-works/pi-coding-agent@${SEARCH_SWE_PI_VERSION}", text)
-            self.assertIn("SEARCH_SWE_CODEX_VERSION=0.157.1", text)
-            self.assertIn("SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.283", text)
-            self.assertIn("SEARCH_SWE_PI_VERSION=0.87.1", text)
+            self.assertIn("SEARCH_SWE_CODEX_VERSION=0.164.0", text)
+            self.assertIn("SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.309", text)
+            self.assertIn("SEARCH_SWE_PI_VERSION=1.4.0", text)
             claude_install = text.split("&& npm install --global", 1)[1].split(
                 "&& codex --version", 1
             )[0]
@@ -133,7 +133,7 @@ class TaskNetworkPolicies(unittest.TestCase):
                     agent = PreinstalledClaudeCode(
                         logs_dir=Path(directory),
                         model_name="fixture",
-                        version="2.1.283",
+                        version="2.1.309",
                         reasoning_effort=effort,
                     )
                     self.assertIn(f"--effort {effort}", agent.build_cli_flags())
@@ -149,14 +149,14 @@ class TaskNetworkPolicies(unittest.TestCase):
                 return SimpleNamespace(return_code=0, stdout=self.output)
 
         cases = (
-            (PreinstalledCodex, "0.157.1", "codex-cli 0.157.1\n", "codex --version"),
+            (PreinstalledCodex, "0.164.0", "codex-cli 0.164.0\n", "codex --version"),
             (
                 PreinstalledClaudeCode,
-                "2.1.283",
-                "2.1.283 (Claude Code)\n",
+                "2.1.309",
+                "2.1.309 (Claude Code)\n",
                 "claude --version",
             ),
-            (PreinstalledPi, "0.87.1", "0.87.1\n", "pi --version"),
+            (PreinstalledPi, "1.4.0", "1.4.0\n", "pi --version"),
         )
         for agent_class, version, output, version_command in cases:
             with self.subTest(agent=agent_class.__name__):
@@ -197,20 +197,20 @@ class TaskNetworkPolicies(unittest.TestCase):
                 version="2.1.282",
             )
             with self.assertRaisesRegex(
-                RuntimeError, "Search-SWE requires Claude Code 2.1.283"
+                RuntimeError, "Search-SWE requires Claude Code 2.1.309"
             ):
                 asyncio.run(
-                    wrong_request.install(FakeEnvironment(0, "2.1.283 (Claude Code)"))
+                    wrong_request.install(FakeEnvironment(0, "2.1.309 (Claude Code)"))
                 )
 
             wrong_installed_cli = PreinstalledClaudeCode(
                 logs_dir=Path(directory),
                 model_name="fixture",
-                version="2.1.283",
+                version="2.1.309",
             )
             with self.assertRaisesRegex(
                 RuntimeError,
-                "must provide Claude Code 2.1.283; found 2.1.282",
+                "must provide Claude Code 2.1.309; found 2.1.282",
             ):
                 asyncio.run(
                     wrong_installed_cli.install(
@@ -221,7 +221,7 @@ class TaskNetworkPolicies(unittest.TestCase):
             missing_cli = PreinstalledClaudeCode(
                 logs_dir=Path(directory),
                 model_name="fixture",
-                version="2.1.283",
+                version="2.1.309",
             )
             with self.assertRaisesRegex(RuntimeError, "no usable CLI"):
                 asyncio.run(missing_cli.install(FakeEnvironment(127, "")))
@@ -322,7 +322,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn(secret, result.stdout + result.stderr)
         argv = self.argv(result)
-        self.assertIn("version=2.1.283", self.flag_values(argv, "--ak"))
+        self.assertIn("version=2.1.309", self.flag_values(argv, "--ak"))
         self.assertIn("reasoning_effort=xhigh", self.flag_values(argv, "--ak"))
         self.assertEqual(
             self.flag_values(argv, "--ae"),

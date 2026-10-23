@@ -31,7 +31,7 @@ RUN /opt/conda/bin/python -m pip install --no-cache-dir \
     "harbor-rewardkit==0.2.0" \
     "litellm==1.97.0"
 
-ARG REWARDKIT_CODEX_VERSION=0.147.0
+ARG REWARDKIT_CODEX_VERSION=0.164.0
 ARG REWARDKIT_CODEX_NPM_REGISTRY=https://registry.npmmirror.com
 RUN set -eux; \
     root="/root/.cache/harbor-rewardkit/codex/${REWARDKIT_CODEX_VERSION}"; \

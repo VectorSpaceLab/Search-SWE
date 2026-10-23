@@ -4,7 +4,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/quantity-aware-retrieval"
-version = "0.1.1"
+version = "1.0.0"
 description = "Build a retrieval system that ranks clinical passages by relevance to natural-language numerical conditions."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "numerical-reasoning", "units", "gpu"]

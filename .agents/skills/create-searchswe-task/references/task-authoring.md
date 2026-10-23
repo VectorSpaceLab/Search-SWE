@@ -113,6 +113,17 @@ above; do not copy its task-specific values.
 When measuring improvement against a supplied starting system/model, document
 that baseline and the comparison criterion.
 
+Use the task title as the README's level-one heading, followed by these
+level-two headings in order: `Task Metadata`, `Change Log`,
+`Difficulty Explanation`, `Verification Explanation`, and `References`.
+Metadata covers identity, authors, inputs, metric and resource budgets.
+Explain engineering difficulty with any measured evidence, and document scoring,
+limits, setup and validation under verification; use level-three headings as needed.
+List the papers, datasets or methods actually referenced by the task, or `None`.
+New tasks start at `1.0.0` with a dated `Added initial task` changelog entry.
+Keep the README and `task.version` aligned as the task evolves; retain original
+versions and fingerprints in historical validation reports.
+
 Search-SWE release packages use a separate verifier:
 
 ```toml
@@ -159,6 +170,13 @@ CPU Compose files must not contain an NVIDIA reservation. Keep the image,
 `gpus` value, and both Compose files aligned. If a task cannot use the matching
 shared image, stop and ask the maintainer before introducing a third base image.
 Treat `docker/README.md` as the source of truth if published versions change.
+
+For a local GPU trial, use the shared launcher's optional
+`--gpu-device <host-index-or-UUID>`. It carries one resolved UUID into both
+phases using per-run Compose copies. Keep the package's default `count: 1`
+requests and document any task-specific GPU capacity requirement in its README.
+Install the target checkout's pinned coding-agent CLIs in the agent Dockerfile;
+the current versions are defined in `scripts/harness_versions.py`.
 
 Pin task-specific package and system dependencies. Do not use `latest`, clone a
 moving branch during a build, copy a host virtual environment, or depend on a

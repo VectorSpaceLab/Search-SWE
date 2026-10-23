@@ -4,7 +4,7 @@ artifacts = ["/app/submission", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/training-error-tracing"
-version = "0.6.2"
+version = "1.0.0"
 description = "Improve a working training-record retriever beyond training-text routing and layer-streamed fixed-base fallback."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "training-data-attribution", "gradient-retrieval", "gpu"]

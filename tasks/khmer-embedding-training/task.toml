@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/khmer-embedding-training"
-version = "0.8.0"
+version = "1.0.0"
 description = "Train a Khmer-to-English embedding model and build a reusable document retrieval system."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["information-retrieval", "cross-lingual", "khmer", "embedding", "training", "gpu"]

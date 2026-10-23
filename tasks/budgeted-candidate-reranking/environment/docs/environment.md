@@ -1,6 +1,6 @@
 # Runtime
 
-Shared image: `docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0` (Linux amd64, CUDA 13.0). Python `/opt/conda/bin/python`, PyTorch 2.9.0+cu130, Transformers 5.15.1, Accelerate 1.15.0, psutil 7.2.2, compilers and standard retrieval packages are installed; task addition is `nvidia-ml-py==13.580.82`. The coding CLI is Codex 0.157.1. No strategy is installed under `/app`; optional replaceable baselines are under `/task/baselines`, described in `available_resources.md`.
+Shared image: `docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0` (Linux amd64, CUDA 13.0). Python `/opt/conda/bin/python`, PyTorch 2.9.0+cu130, Transformers 5.15.1, Accelerate 1.15.0, psutil 7.2.2, compilers and standard retrieval packages are installed; task addition is `nvidia-ml-py==13.580.82`. The coding CLI is Codex 0.164.0. No strategy is installed under `/app`; optional replaceable baselines are under `/task/baselines`, described in `available_resources.md`.
 
 Resources: 16 CPUs, 32 GiB aggregate RAM, 40 GiB task storage including 4,079,434,577 fixed model bytes, one A100-SXM4-40GB with a 24 GiB total memory allowance and 22 GiB trusted allocator cap. The agent has 7200 seconds; final verification has 9000 seconds including the independent audit. Network is disabled for task code. The coding agent's own provider connection is managed by the harness separately. No submission APIs or judge credentials are supplied.
 

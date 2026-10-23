@@ -1,10 +1,22 @@
 # Financial-Report Evidence Retrieval
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `financial-report-qa` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | EvidenceRecall@5 |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 12000 s |
+| Dataset | DocFinQA full reports aligned with original FinQA gold_inds |
+| Public queries | 5 |
+| Hidden queries | 4236 |
+
 Find the original report passages supporting financial questions over a shared annual-report collection.
 
-**Task:** `financial-report-qa` · **Metric:** EvidenceRecall@5
-
-## Overview
+### Overview
 
 An analyst knows what figures need checking but may not know which report
 contains them. The system must search a fixed collection and return the exact
@@ -13,15 +25,9 @@ original passages needed to verify each financial question.
 The task evaluates evidence retrieval. It does not ask the submitted system
 to calculate or generate a final financial answer.
 
-## What This Task Tests
+### Task Setup
 
-- Searching across complete reports without a target document ID.
-- Preserving original report identities and character positions.
-- Covering all required evidence within a short passage budget.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -43,7 +49,7 @@ All 885 reports remain public, including reports without retained evidence.
 The 6,610 aligned support facts comprise seven public and 6,603 private units.
 Equivalent repeated passages are alternative locations for the same fact.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The reports, question/evidence split, passage interface and execution limits
 are fixed. Document processing, index structure, retrieval and evidence
@@ -51,13 +57,27 @@ selection are implementation choices. No starter is supplied. Optional
 OpenRouter and Jina services follow the
 [resource policy](environment/docs/available_resources.md).
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and
 no GPU. Development has two hours. Index construction has 1,800 seconds;
 each of two query calls has 3,600 seconds.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Searching across complete reports without a target document ID.
+- Preserving original report identities and character positions.
+- Covering all required evidence within a short passage budget.
+
+## Verification Explanation
+
+### Submission Contract
 
 Submit executable `/app/build.sh` and `/app/run.sh` plus their supporting
 files under `/app`. Queries contain only a query ID and question. Each output
@@ -71,9 +91,9 @@ writable. Generated data use the supplied index, output and temporary paths.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 For each question, EvidenceRecall@5 is the number of covered reference
 evidence units divided by the number of required units. Average these recalls
@@ -88,7 +108,7 @@ Evidence locations are aligned to complete FinQA support text and table
 context, with checks on numeric values and formatting. They are not inferred
 by searching for the expected final answer number.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.6831800740440966` and integer score anchor `a = 20` on the 0–100 scale:
@@ -103,7 +123,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks successful index construction, executable behavior,
 query IDs, span count, report IDs, Unicode offsets and the 512-character limit.
@@ -112,7 +132,7 @@ increase recall. Completed valid JSONL rows remain usable after a query timeout;
 missing or invalid query results score zero. A non-timeout query-command failure
 invalidates that call.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory audit checks task compliance and gates the quality
 reward. A confirmed violation sets reward to zero; unavailable or incomplete
@@ -122,7 +142,7 @@ RewardKit 0.2.0 with verifier-only OpenRouter settings.
 Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
@@ -146,7 +166,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/financial-report-qa/`.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -159,3 +179,7 @@ credentials or hardware. Results are written under `jobs/financial-report-qa/`.
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

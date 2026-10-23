@@ -1,8 +1,19 @@
 # Long-PDF Sentence Evidence Retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Retrieve up to five original sentence units that fully support a short interpretive question about *War and Peace*. Version 0.4.3 uses **SentenceEvidenceAccuracy** with the DeepSeek evidence judge and a 30-second limit per query. The old 0.95 page-retrieval result is not a measurement of this revised task.
+| Field | Value |
+| --- | --- |
+| Task | `long-pdf-evidence` |
+| Version | 1.0.0 |
+| Authors | Search-SWE, Bingyu |
+| Primary metric | SentenceEvidenceAccuracy |
+| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 10800 s |
+| Dataset | single long PDF |
+| Hidden queries | 12 |
+
+Retrieve up to five original sentence units that fully support a short interpretive question about *War and Peace*. The task uses **SentenceEvidenceAccuracy** with the DeepSeek evidence judge and a 30-second limit per query.
 
 The unchanged PDF has 2,043 physical pages. Its question-independent inventory contains 28,798 units, preserving source-page provenance and normalizing PDF typography and whitespace. Unit boundaries are fixed for consistent evaluation, including dialogue and sentences crossing pages. The ten public and twelve hidden questions use disjoint reference units and opaque shuffled IDs. Questions ask about motives, tensions, reversals, or relationships without restating the relevant passage.
 
@@ -13,6 +24,20 @@ The unchanged PDF has 2,043 physical pages. Its question-independent inventory c
 | `data/validation/queries.jsonl` | Ten public questions |
 | `data/validation/golden_answers.jsonl` | Public support requirements and sufficient original evidence |
 | `tests/data/` | Twelve private queries and references, excluded from agent mounts |
+
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Interpretive questions about a long novel may refer to motives, relationships or reversals without repeating the relevant wording. The system must select at most five original sentence units that jointly provide complete support.
+
+## Verification Explanation
+
+### Contract, scoring and runtime
 
 Deliver executable `/app/build.sh` and `/app/run.sh` following [instruction.md](instruction.md). Return `{query_id, results: [{sentence_id, sentence}]}`, with zero to five distinct units and no generated answer. Evidence order is irrelevant. The verifier checks corpus checksums, source membership, and output validity before judging sufficiency. Alternative correct evidence is accepted; reference IDs are not a scoring gate.
 
@@ -28,8 +53,23 @@ Public inputs are published and pinned to immutable revisions in `assets.json`, 
 
 Author development and calibration records live outside the package in `task_development/long-pdf-evidence` in the surrounding build workspace. [raw-instruction.md](raw-instruction.md) retains the structured specification and evaluator details; [instruction.md](instruction.md) presents the task, available inputs, executable interface, output requirements, limits and scoring criteria without data-construction explanations or judge implementation details. The prior task supplies the corpus, executable lifecycle and isolation pattern; `scientific-paper-qa` was consulted for separate semantic-judge credentials. The requested `agentic-search` reference currently uses deterministic GoldRecall@5, so its grader is not a semantic-judge implementation.
 
-## Evidence-judge revision
+### Evidence-judge revision
 
-Version 0.4.3 pins DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. The twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature are unchanged. The completed v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
+The task pins DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. The twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature are unchanged. The completed v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
 
 The earlier DeepSeek rejudgment of a Luna-generated submission returned 8/20 on the old twenty-question version. It is historical reference evidence, not a score for this twelve-question revision. The current trial's result and judge-health records are summarized in RUN_RESULTS.md.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task long-pdf-evidence
+bash scripts/run_task.sh --task long-pdf-evidence --model YOUR_AGENT_MODEL
+```
+
+## References
+
+None.

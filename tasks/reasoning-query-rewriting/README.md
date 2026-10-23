@@ -1,10 +1,22 @@
 # Reasoning-intensive Query Rewriting
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `reasoning-query-rewriting` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | Accuracy@3 |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 5400 s |
+| Dataset | Bright biology short-document |
+| Public queries | 10 |
+| Hidden queries | 10 |
+
 Build a retrieval system that connects difficult biology questions to supporting documents.
 
-**Task:** `reasoning-query-rewriting` · **Metric:** Accuracy@3 with per-query partial credit
-
-## Overview
+### Overview
 
 A question can describe a biological mechanism without using the terminology
 of the document that explains it. This task tests whether a coding agent can
@@ -16,16 +28,9 @@ retrieval and ranking. A useful rewrite must improve access to evidence without
 losing the original information need. The benchmark evaluates the executable
 system on held-out questions, rather than judging the wording of its rewrites.
 
-## What This Task Tests
+### Task Setup
 
-- Translating reasoning-intensive queries into effective retrieval representations.
-- Combining retrieval stages while keeping their evidence tied to the supplied corpus.
-- Using a very small public validation set without specializing to known answers.
-- Packaging indexing and query execution for a fresh verifier environment.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -47,7 +52,7 @@ content-only BM25, BM25 Top-100 + Qwen3-Reranker-8B, and Qwen3-Embedding-8B
 baselines. After shuffling, BM25 was recomputed and the neural scores were
 rechecked with the new tie-break order; all selected cases still missed.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The corpus and submission interface are fixed. Query rewriting, indexing,
 candidate selection, and ranking are implementation choices. Selected
@@ -56,7 +61,7 @@ OpenRouter and Jina resources are permitted under the
 not authorize arbitrary external search, answer services, or evaluation data.
 The resource document lists exact providers and model IDs.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 16 CPUs, 32 GiB memory, and 100 GiB
 storage. The agent has 120 minutes; the Harbor verifier phase has 90 minutes.
@@ -64,7 +69,22 @@ Within verification, the current grader allows 1,800 seconds for the submitted
 build and 900 seconds for the query run. These submission deadlines are
 distinct from Docker image construction.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Translating reasoning-intensive queries into effective retrieval representations.
+- Combining retrieval stages while keeping their evidence tied to the supplied corpus.
+- Using a very small public validation set without specializing to known answers.
+- Packaging indexing and query execution for a fresh verifier environment.
+
+## Verification Explanation
+
+### Submission Contract
 
 The deliverable is an executable system under `/app`, with `build.sh` preparing
 an index and `run.sh` returning three ranked corpus documents per question.
@@ -75,9 +95,9 @@ See [instruction.md](instruction.md) for arguments, result schema, and tie-break
 Transferred files must recreate the required runtime: a development-time
 background process is not itself a submission.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 A question is a hit when at least one relevant document appears in its top three.
 The verifier reports Accuracy@3 as the number of hits divided by the ten hidden
@@ -85,12 +105,12 @@ questions. For example, seven hits produce `0.7`; each missed query contributes
 zero for that query. The instruction expresses the same accuracy on a 0–100
 scale; the stored metric and reward use the 0–1 scale.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 Build/run success, complete query coverage, valid corpus IDs, ranking format,
 and the execution budgets must all pass.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory judge checks task and resource compliance. Final reward
 equals Accuracy@3 when the execution, output, and integrity checks pass;
@@ -99,7 +119,7 @@ The judge assesses the agent's trajectory, not answer quality.
 It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0; configure its
 verifier-only DeepSeek endpoint and key as described in the evaluation guide.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -122,7 +142,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -133,3 +153,7 @@ assets, credentials, or hardware.
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Resource policy](environment/docs/available_resources.md) | Permitted models, endpoints, and task-resource credentials |
+
+## References
+
+None.

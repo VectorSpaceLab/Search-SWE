@@ -1,6 +1,18 @@
 # Negative-constraint retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `negative-constraint-retrieval` |
+| Version | 1.0.0 |
+| Authors | Cooki-e |
+| Primary metric | Accuracy@1 |
+| Compute | 4 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 5400 s |
+| Dataset | NegConstraint original passages plus broad local Qwen3.5-9B augmentation; authored natural-language queries |
+| Public queries | 10 |
+| Hidden queries | 10 |
 
 Build a Top-1 search engine over 8,011 fixed passages. The 20 authored queries
 require a named subject and semantic exclusions such as roles, events, named
@@ -15,13 +27,13 @@ execution/output still gives zero for the submission. A required RewardKit traje
 resource and integrity policy; an unavailable or failed audit gives zero final
 reward and is an infrastructure failure, not evidence of poor retrieval.
 
-## Fixed inputs and provenance
+### Fixed inputs and provenance
 
 The original text comes from `xgl-git/NS-IR-main` at historical commit
 `ebdfa4f62b3c2af01d43cf30560910fba3003c73`, archive `NegConstraint.zip` with SHA-256
 `a10dc25f13b816b4cd7c17c221b2916a97c981b0b8f086dbf3826a1c6e47cbfe`.
 Its 3,946 raw document IDs become 3,907 documents after exact-text deduplication.
-All original passage texts and IDs remain unchanged. Version 0.3.0 adds 4,104
+All original passage texts and IDs remain unchanged. The corpus includes 4,104
 source-conditioned passages generated locally with Qwen3.5-9B across 365 topic
 cohorts: 3,889 background passages and 215 evaluated-subject negatives. The same
 generation, fact-preservation and automatic filtering policy covers both groups.
@@ -51,9 +63,17 @@ or exhaustive certification of every generated factual detail.
 
 The upstream dataset redistribution-license question remains unresolved. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
-## Difficulty evidence
+## Change Log
 
-Version 0.3.0 expands the corpus while retaining the 20 conversational queries,
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+### Difficulty evidence
+
+The expanded corpus uses the 20 conversational queries,
 labels, unique-positive texts, 8-second deadline and 4-CPU verifier. Evaluated
 subjects now have 6–20 matching passages, and 346 additional background cohorts
 also receive generated passages. No query, label, split, source map or generation
@@ -117,16 +137,18 @@ scored raw 1/10 on hidden queries, with no query timeouts and 3.318–5.032 seco
 per query. Public self-tests scored 10/10. Final Harbor reward was zero because
 RewardKit retried an already completed audit after a recovered stream event and
 exhausted its audit deadline. v0.2.3 fixes that transport handling, with unchanged
-queries, retrieval scoring and budgets. A verifier-only regrade is prepared but
-awaits explicit approval after an automatic approval rejection; it has not run.
-See `VALIDATION.md` for evidence and the limits of this single trial.
+queries, retrieval scoring and budgets. These are historical trial records.
+The reconciled v0.3.0 verifier-only run scored 1/10 with a passing audit;
+see [RUN_RESULTS.md](RUN_RESULTS.md) for that saved-submission measurement.
 
 The Agent implements the search engine under `/app` from the documented interfaces.
 Author construction evidence lives outside this task package at
 `task_development/negative-constraint-retrieval/construction/final-20/` in the
 surrounding author workspace, including `review.md` and `evidence.jsonl`.
 
-## Interface, runtime and isolation
+## Verification Explanation
+
+### Interface, runtime and isolation
 
 `instruction.md` is the complete Agent request; `raw-instruction.md` is its
 structured authoring source. Corpus records use `doc_id,text`, queries use
@@ -154,7 +176,7 @@ only index/cache/temp and output locations are writable. `/tests`, labels,
 trajectory and reward logs are root-private. Judge credentials are not passed
 to submitted programs. Both phases use the pinned repository CPU base image.
 
-## Validation and local configuration
+### Validation and local configuration
 
 From the Search-SWE root:
 
@@ -166,12 +188,9 @@ docker build -t search-swe-local:nc-agent tasks/negative-constraint-retrieval/en
 docker build -t search-swe-local:nc-verifier tasks/negative-constraint-retrieval/tests
 ```
 
-The strict task/release check reports the three unpublished revisions until
-publication; it must not be made green using fabricated SHAs. Author staging
-checks use `check_release(..., packages=[task], allow_unpublished=True)` with the
-local task-only staging manifest. See `VALIDATION.md` for actual executed checks
-and remaining prerequisites. Static checks and deterministic fixtures are not
-an end-to-end coding-model trial.
+Public inputs use the immutable revisions, exact sizes and hashes in
+`assets.json`. [VALIDATION.md](VALIDATION.md) retains the original development
+checks; [RUN_RESULTS.md](RUN_RESULTS.md) records the reconciled verifier result.
 
 For a future configured trial, preserve any existing ignored checkout `.env`
 and set the chosen coding model/provider and its credential, for example
@@ -179,11 +198,11 @@ and set the chosen coding model/provider and its credential, for example
 `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
 `VERIFIER_OPENAI_API_KEY`. Optional submission resources need
 the shared `OPENROUTER_API_KEY` and/or `JINA_API_KEY`, as in `agentic-search`.
-Do not share secret values in chat or write them into artifacts. The archived v0.1.1 luna trial achieved 8/10 with about 59 seconds for the whole batch; it does not validate the revised setting. The v0.2.2 trial and pending v0.2.3 audit regrade are recorded above. For a separately authorized fresh trial, launch with
+Do not share secret values in chat or write them into artifacts. The archived v0.1.1 luna trial achieved 8/10 with about 59 seconds for the whole batch; it does not validate the revised setting. The historical trial and completed saved-submission regrade are recorded above. For a separately authorized fresh trial, launch with
 `bash scripts/run_task.sh --task negative-constraint-retrieval` and the chosen
 model/provider flags, previewing with `--dry-run` first.
 
-## Structural precedent
+### Structural precedent
 
 Reviewed base: `46197a43f8cbb364e72b6d63d5db873ae7d2cac8`.
 `tasks/reasoning-query-rewriting` supplied the full-corpus search CLI,
@@ -196,3 +215,9 @@ remote PR collision checking was not performed. The two existing repository test
 inventories and the network-policy table were extended with this task's network
 profile and RewardKit use.
 Existing unrelated network-policy and join-aware task changes were preserved.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+## References
+
+None.

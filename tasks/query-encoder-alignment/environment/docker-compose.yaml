@@ -6,7 +6,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ["${QUERY_ALIGNMENT_GPU_DEVICE:?Set the reserved GPU UUID or index}"]
+              count: 1
               capabilities: [gpu]
     volumes:
       - type: bind

@@ -6,7 +6,7 @@ artifacts = [
 
 [task]
 name = "search-swe/code-reranker-finetuning"
-version = "0.3.2"
+version = "1.0.0"
 authors = [{ name = "Jianlyu" }]
 description = "Fine-tune a fixed BGE reranker against frozen BM25 and local BGE candidates fused by RRF."
 keywords = ["information-retrieval", "code-retrieval", "reranking", "fine-tuning", "gpu"]

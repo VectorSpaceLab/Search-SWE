@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/methodology-inspiration-retrieval"
-version = "0.1.1"
+version = "1.0.0"
 description = "Retrieve papers that provide methodological inspiration for scientific research problems."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "scientific-literature", "methodology", "gpu"]

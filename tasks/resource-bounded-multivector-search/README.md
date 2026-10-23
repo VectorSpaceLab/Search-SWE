@@ -1,4 +1,17 @@
-# resource-bounded-multivector-search
+# Resource Bounded Multivector Search
+
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `resource-bounded-multivector-search` |
+| Version | 1.0.0 |
+| Authors | jianlyu |
+| Primary metric | Normalized relative query-time improvement at Recall@100 >= 0.99 |
+| Compute | 8 CPUs; 16 GiB RAM; 32 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 3300 s |
+| Public queries | 5000 |
+| Hidden queries | 10000 |
 
 Reduce complete-workload query latency while retaining at least 99% exact MaxSim Recall@100.
 
@@ -9,7 +22,21 @@ The coding agent receives [instruction.md](instruction.md),
 Those documents specify the submission interface, allowed inputs, scoring,
 failure behavior and public self-check commands.
 
-## Restore inputs
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+MaxSim scoring compares multiple vectors per document and query. The implementation must reduce total query latency while keeping at least 99% exact Recall@100 within the memory and storage limits.
+
+## Verification Explanation
+
+The verifier measures Recall@100 against exhaustive MaxSim neighbors from the supplied vectors and requires at least 0.99 mean recall over all 10,000 queries. Reward then measures normalized complete-workload query-time improvement. Invalid outputs, resource limits and the required integrity audit are checked separately. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
 
@@ -22,7 +49,7 @@ python scripts/download_assets.py --task resource-bounded-multivector-search --v
 restoration paths. Keep verifier inputs outside agent mounts. Model cards,
 licenses and data-use restrictions are described in the resource document.
 
-## Run
+### Run
 
 The task allocates 8 CPU cores, 16 GiB RAM and
 32 GiB storage. Agent development has
@@ -75,7 +102,7 @@ After every container/process for this run has exited, unmount its storage:
 python tasks/resource-bounded-multivector-search/tools/prepare_storage.py --run-id RUN_ID --unmount
 ```
 
-## Validate the package
+### Validate the package
 
 ```bash
 python scripts/check_tasks.py tasks/resource-bounded-multivector-search
@@ -86,3 +113,7 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+## References
+
+None.

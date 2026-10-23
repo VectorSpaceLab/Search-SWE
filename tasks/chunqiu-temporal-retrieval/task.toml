@@ -4,7 +4,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/chunqiu-temporal-retrieval"
-version = "0.1.0"
+version = "1.0.0"
 description = "Retrieve original event records for reign-based dates and time windows in Classical Chinese annals."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "temporal-reasoning", "classical-chinese", "gpu"]

@@ -6,7 +6,7 @@ artifacts = [
 
 [task]
 name = "search-swe/join-aware-table-retrieval"
-version = "0.6.0"
+version = "1.0.0"
 description = "Build a catalog search engine that retrieves all tables and column-level joins needed to answer an unseen question."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "table-retrieval", "join-search"]

@@ -15,16 +15,18 @@ if __package__:
     from .docker_dns import parse_servers
     from .task_paths import select_task, task_key
     from .download_assets import destination_path, read_manifest, relative_path
+    from .gpu_device import resolve_gpu_device, validate_gpu_device
+    from .harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
 else:
     from docker_dns import parse_servers
     from task_paths import select_task, task_key
     from download_assets import destination_path, read_manifest, relative_path
+    from gpu_device import resolve_gpu_device, validate_gpu_device
+    from harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
 
 
 REPO = Path(__file__).resolve().parents[1]
 TASKS = tuple(sorted(path.parent.name for path in (REPO / "tasks").glob("*/task.toml")))
-CODEX_VERSION = "0.157.1"
-CLAUDE_CODE_VERSION = "2.1.283"
 CLAUDE_CODE_EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 ANTHROPIC_HOST = "api.anthropic.com"
 OPENROUTER_HOST = "openrouter.ai"
@@ -42,8 +44,6 @@ CLAUDE_HOST_ENV_VARS = (
     "CLAUDE_CODE_USE_VERTEX",
     "AWS_BEARER_TOKEN_BEDROCK",
 )
-PI_VERSION = "0.87.1"
-PI_THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh")
 PI_MODEL_KEYS = {
     "deepseek/deepseek-flash": "DEEPSEEK_API_KEY",
     "zai/glm-5.3-flash": "ZAI_API_KEY",
@@ -124,6 +124,7 @@ def main():
     parser.add_argument("--egress-config", type=Path, help="Direct/proxy gateway JSON; overrides EGRESS_CONFIG. Without it, restricted tasks use the direct gateway.")
     parser.add_argument("--egress-image", help="Direct gateway image (pulled if missing); overrides EGRESS_IMAGE. Cannot be combined with EGRESS_CONFIG.")
     parser.add_argument("--output", type=Path, help="Job output directory; relative to the current directory")
+    parser.add_argument("--gpu-device", help="Host GPU index or full GPU UUID, shared by the agent and verifier")
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     args = parser.parse_args()
 
@@ -188,6 +189,13 @@ def main():
     except ValueError as error:
         parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
+    if args.gpu_device is not None:
+        if task_config.get("environment", {}).get("gpus", 0) != 1:
+            parser.error("--gpu-device requires a single-GPU task")
+        try:
+            validate_gpu_device(args.gpu_device)
+        except ValueError as error:
+            parser.error(str(error))
     verifier_env = task_config.get("verifier", {}).get("env", {})
     output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
@@ -353,6 +361,11 @@ def main():
             if dns_servers:
                 command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
 
+    if args.gpu_device is not None:
+        if not use_gateway:
+            command[command.index("--env") + 1] = "scripts.harbor_environments:GpuDocker"
+        command.extend(["--environment-kwarg", f"gpu_device={args.gpu_device}"])
+
     # This launcher uses explicit API keys, without consulting a host auth.json.
     env.pop("CODEX_AUTH_JSON_PATH", None)
     env.pop("CODEX_FORCE_AUTH_JSON", None)
@@ -389,6 +402,14 @@ def main():
         parser.error("harbor was not found; activate the supported Harbor environment")
     if dns_servers and not use_gateway:
         parser.error("CONTAINER_DNS requires a restricted task or an explicit direct EGRESS_CONFIG")
+
+    if args.gpu_device is not None:
+        try:
+            identity = resolve_gpu_device(args.gpu_device)
+        except ValueError as error:
+            parser.error(str(error))
+        command[command.index(f"gpu_device={args.gpu_device}")] = f"gpu_device={identity}"
+        print(f"GPU for agent and verifier: {identity}", flush=True)
 
     # Harbor is a console script: changing cwd alone does not put this checkout
     # on its interpreter's search path for scripts.harbor_agents.

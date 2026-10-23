@@ -3,7 +3,7 @@ ENV LITELLM_LOCAL_MODEL_COST_MAP=true
 RUN /opt/conda/bin/python -m pip install --no-cache-dir \
     --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     "harbor-rewardkit==0.2.0" "litellm==1.97.0" "nvidia-ml-py==13.580.82" "peft==0.20.0"
-ARG REWARDKIT_CODEX_VERSION=0.147.0
+ARG REWARDKIT_CODEX_VERSION=0.164.0
 ARG REWARDKIT_CODEX_NPM_REGISTRY=https://registry.npmmirror.com
 RUN set -eux; \
     root="/root/.cache/harbor-rewardkit/codex/${REWARDKIT_CODEX_VERSION}"; \

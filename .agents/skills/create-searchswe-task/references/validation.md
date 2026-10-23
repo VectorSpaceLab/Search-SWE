@@ -101,7 +101,10 @@ GPU images target linux/amd64 with CUDA 13.0 userspace. GPU execution requires
 a compatible NVIDIA host driver and Container Toolkit. With the documented
 Harbor 0.22.0 Docker backend, `gpus = 1` alone fails preflight. The repository
 launcher passes `--override-gpus 0`, while **both Compose overlays still request
-the real GPU**. For direct Harbor runs on that backend use the same override;
+the real GPU**. Add `--gpu-device <host-index-or-UUID>` to the shared launcher
+for explicit selection in both phases. Check the resulting container device
+requests and the per-phase configuration under the trial's `gpu/` directory.
+For direct Harbor runs on that backend use the same override;
 do not falsify task metadata to work around it. Recheck this behavior if Harbor
 changes. CPU tasks do not need the override or NVIDIA reservation.
 

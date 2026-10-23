@@ -1,10 +1,21 @@
 # Agentic Search
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `agentic-search` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | GoldRecall@5 |
+| Compute | 32 CPUs; 128 GiB RAM; 200 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 17100 s |
+| Dataset | BrowseComp-Plus |
+| Hidden queries | 20 |
+
 Improve a ReAct search system's document coverage on BrowseComp-Plus questions.
 
-**Task:** `agentic-search` · **Metric:** Gold Recall@5
-
-## Overview
+### Overview
 
 BrowseComp-Plus questions often require combining several constraints.
 A search system may need to decompose a question, inspect intermediate results,
@@ -16,16 +27,9 @@ working within a bounded number of searches. Evaluation measures the documents
 ultimately retrieved, not the fluency of an answer or the appearance of a trace.
 The current repository identifier is `agentic-search`.
 
-## What This Task Tests
+### Task Setup
 
-- Turning compound information needs into effective search actions.
-- Using observations to improve later retrieval and final document selection.
-- Balancing document coverage with a finite retrieval-round budget.
-- Serving concurrent questions through a shared index and search service.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -44,7 +48,7 @@ This stratified subset has a theoretical Gold Recall@5 ceiling of 1.0.
 It is not an estimate over the full dataset's natural question distribution.
 Answer labels are not used.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The corpus, five-document output, and resource limits are fixed. Indexing,
 document coverage, query planning, retrieval, observations, and selection may
@@ -57,7 +61,7 @@ Each question may use at most **20 retrieval rounds**; independent searches in
 a batch count separately. A submission-generated trace is diagnostic, not
 trusted proof of compliance.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 32 CPUs, 128 GiB memory, 200 GiB storage,
 and no GPU. The agent has two hours; the Harbor verifier has 17,100 seconds.
@@ -68,7 +72,22 @@ there is **no individual query timeout**.
 A recorded local run of the offline lexical baseline completed a full-corpus
 build in about 38 seconds and achieved public Gold Recall@5 of `0.1741666667`.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Turning compound information needs into effective search actions.
+- Using observations to improve later retrieval and final document selection.
+- Balancing document coverage with a finite retrieval-round budget.
+- Serving concurrent questions through a shared index and search service.
+
+## Verification Explanation
+
+### Submission Contract
 
 The deliverable contains `/app/build.sh`, `/app/run.sh`, and the implementation.
 The verifier rebuilds once and launches one query process per question with up
@@ -79,23 +98,23 @@ Each result contains a query ID and exactly five distinct corpus IDs in `doc_ids
 This differs from the scored `results` objects used by several other tasks.
 See [instruction.md](instruction.md) for the exact contract.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 For each query, Gold Recall@5 is the number of retrieved gold documents divided
 by its gold count. Reward is the arithmetic mean across 20 queries, in `[0, 1]`.
 All five positions are weighted equally; this is neither answer accuracy nor
 a rank-discounted metric. The evaluation report also gives a 0–100 score.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 Failed execution, missing or extra query outputs, unknown or duplicate document
 IDs, or a result count other than five invalidate the whole submission.
 The build, shared execution budget, concurrency contract, and search-round
 limit remain task requirements.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 Gold Recall@5 remains the deterministic quality metric. Every run also applies
 `tests/jailbreak_judge/codex.toml` to the transferred agent trajectory and
@@ -110,7 +129,7 @@ The evaluator writes `task-score.txt` and `task-score.json` with raw recall.
 includes the original 15,300-second execution budget and judge overhead.
 Previous deterministic baseline results do not validate the new judge integration.
 
-## Running This Task
+### Running This Task
 
 Run task-local regression tests without API calls:
 
@@ -159,7 +178,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -171,3 +190,7 @@ assets, credentials, or hardware.
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Starter notes](environment/starter/README.md) | ReAct loop, lexical fallback, and service design |
 | [Resource policy](environment/docs/available_resources.md) | Allowed models and API operations |
+
+## References
+
+None.

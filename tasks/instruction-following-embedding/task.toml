@@ -3,7 +3,7 @@ artifacts = ["/var/tmp/search-swe-submission.tar", "/logs/agent/trajectory.json"
 
 [task]
 name = "search-swe/instruction-following-embedding"
-version = "0.7.1"
+version = "1.0.0"
 description = "Adapt a compact E5-large-v2 query adapter within a 512KiB deployment budget while retaining the fixed base document space."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "instruction-following", "embedding", "fine-tuning", "gpu"]

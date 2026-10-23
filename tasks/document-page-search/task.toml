@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/document-page-search"
-version = "0.5.0"
+version = "1.0.0"
 description = "Build a multilingual page index over complete visual document collections."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["visual-documents", "page-retrieval", "multilingual"]

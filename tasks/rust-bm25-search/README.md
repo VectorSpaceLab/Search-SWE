@@ -1,12 +1,37 @@
 # Rust BM25 search
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `rust-bm25-search` |
+| Version | 1.0.0 |
+| Authors | MXueguang |
+| Primary metric | quality-gated BM25 quality/time/disk tradeoff |
+| Compute | 4 CPUs; 16 GiB RAM; 64 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 10800 s / 18000 s |
+
 This CPU task asks an agent to implement a complete Rust inverted index and
 BM25 searcher from the 8,841,823 raw MS MARCO Passage v1 passages. Generic crates
 are allowed; existing search engines and prebuilt indexes are not. A separate
 verifier recompiles the source, rebuilds an empty index, and evaluates all
 6,980 standard dev queries.
 
-**Contribution status: submitted for review; official asset pins pending.** The exact Pyserini
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+The system must build an inverted index from millions of raw passages and match a fixed retrieval-quality floor. Query latency and index size also affect the score, requiring coordinated choices in parsing, compression and ranking.
+
+## Verification Explanation
+
+### Scoring and recorded validation
+
+The exact Pyserini
 quality floor has been measured, and an independently built author Rust
 implementation passed it on all dev queries (MRR@10 0.1872948219). A Harbor
 Oracle trial also passed the actual source-artifact transfer and independent
@@ -17,7 +42,7 @@ review fixes; full outputs match their previous runs. Current timings and
 regression evidence are in [review-fixes-observation.json](authoring/review-fixes-observation.json).
 The coding trial used a context-free hosted agent with an isolated task container; Harbor's Codex API
 route remains untested because the API preflight found exhausted credits.
-Official asset publication and terms review remain necessary before merge. See
+See
 [validation.md](authoring/validation.md) for the evidence and limitations.
 Author: MXueguang (`x93ma@edu.uwaterloo.ca`).
 
@@ -55,7 +80,7 @@ access, including through io_uring. Index files, directories and the root must
 have no extended attributes. These checks prevent IPC and xattr payloads from
 bypassing the measured index-file bytes.
 
-## Restore and check
+### Restore and check
 
 From the repository root, with the host dependencies documented by the repo:
 
@@ -72,15 +97,13 @@ docker run --rm --network none --cpus 4 --memory 16g --memory-swap 16g --pids-li
   search-swe-local:rust-bm25-verifier python /check.py
 ```
 
-The data manifest currently pins existing Tevatron repositories. No upload
-has been made. Hidden queries/qrels are small files in `tests/data`, with
+The data manifest pins existing Tevatron repositories. Hidden queries/qrels are small files in `tests/data`, with
 immutable source URLs and fingerprints. Restore them if necessary using
 `python tasks/rust-bm25-search/authoring/prepare_queries.py`. Input terms and
-toolchain provenance are in [SOURCES.md](authoring/SOURCES.md). Official
-publication must preserve applicable MS MARCO/TREC terms and use the reviewed
-`search-swe/Search-SWE` task path before merge.
+toolchain provenance are in [SOURCES.md](authoring/SOURCES.md); the original
+MS MARCO/TREC terms apply to the data.
 
-## Reproduce the reference
+### Reproduce the reference
 
 The author wrappers invoke the same trusted converter and reference code used
 by the verifier. Create fresh output paths; these commands refuse to overwrite
@@ -116,7 +139,7 @@ sentinel solely to satisfy that constructor. BM25 makes no API request and
 runs with networking disabled. Startup measurements include Python/JVM/module
 startup as well as index opening, as required by the process-cold definition.
 
-## Reviewed precedent and instruction audit
+### Reviewed precedent and instruction audit
 
 The structural precedent is `tasks/sparse-retrieval-pruning`, reviewed on base
 commit `46197a43f8cbb364e72b6d63d5db873ae7d2cac8`. Reused patterns: CPU runtime,
@@ -132,3 +155,16 @@ agent-facing [instruction.md](instruction.md) is a prose rewrite; the mapping
 and review boundaries are in [instruction-equivalence.md](authoring/instruction-equivalence.md).
 Author candidates, full indexes and trial logs live in ignored local paths;
 they are not included in the agent image or a public solution directory.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task rust-bm25-search
+bash scripts/run_task.sh --task rust-bm25-search --model YOUR_AGENT_MODEL
+```
+
+## References
+
+- [Data, reference implementation and toolchain sources](authoring/SOURCES.md).

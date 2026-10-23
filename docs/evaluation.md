@@ -141,7 +141,7 @@ native provider configuration and ignores the direct mode's `AGENT_CODEX_CONFIG`
 
 ### Claude Code with the official Anthropic API
 
-Claude Code is pinned to version 2.1.283 and preinstalled in every task image.
+Claude Code is pinned to version 2.1.309 and preinstalled in every task image.
 Set a model available to your Anthropic API account and its dedicated
 coding-agent key:
 
@@ -160,7 +160,7 @@ bash scripts/run_task.sh \
   --dry-run
 ```
 
-Claude Code 2.1.283 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
+Claude Code 2.1.309 accepts `low`, `medium`, `high`, `xhigh`, and `max` effort.
 Use `AGENT_REASONING_EFFORT` as a local default or `--reasoning-effort` for an
 explicit run. The launcher maps `AGENT_ANTHROPIC_API_KEY` to the agent-only
 `ANTHROPIC_API_KEY`, permits only `api.anthropic.com` during restricted Agent
@@ -174,7 +174,7 @@ enabled by adding host environment variables.
 
 ### Pi native providers
 
-Pi is pinned to version 0.87.1 by the launcher. It currently accepts these
+Pi is pinned to version 1.4.0 by the launcher. It currently accepts these
 verified provider/model combinations:
 
 | Model | Required variable |
@@ -198,7 +198,7 @@ bash scripts/run_task.sh \
 ```
 
 For Z.AI, set `ZAI_API_KEY` and use `zai/glm-5.3-flash`. The accepted thinking
-levels are `off`, `minimal`, `low`, `medium`, `high`, and `xhigh`. Use
+levels are `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`. Use
 `PI_THINKING` as a local default or `--thinking` for an explicit run. Pi's
 native provider key does not replace verifier or task-resource credentials.
 
@@ -221,12 +221,17 @@ VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
 VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
-The verifier images pin `harbor-rewardkit==0.2.0` with its Codex CLI 0.147.0
+The verifier images pin `harbor-rewardkit==0.2.0` with Codex CLI 0.164.0
 preloaded, and every RewardKit judge is fixed to `deepseek/deepseek-v4.1-flash`. `--model`
 changes the coding-agent model; it does not change this judge model. The
 trajectory-judge endpoint is `https://openrouter.ai/api/v1`, checked by
 the backend and permitted by the verifier allowlists. A relay on another hostname is rejected rather than
 silently broadening verifier egress.
+
+The task-local backend selects Codex `0.164.0` through RewardKit 0.2.0's
+versioned runtime/cache pin. The verifier image preinstalls that exact version
+for both root and task-specific audit users. This integration is checked against
+RewardKit 0.2.0; a RewardKit upgrade requires a fresh compatibility check.
 
 RewardKit 0.2.0 creates a fresh temporary `CODEX_HOME` for each agent judge, so
 setting only a host `CODEX_HOME` or `OPENAI_BASE_URL` does not configure that
@@ -280,12 +285,42 @@ Tasks with `environment.gpus = 1` require one NVIDIA GPU. Their images use CUDA 
 a compatible NVIDIA driver and Container Toolkit. Both task and verifier
 Compose overlays request the real GPU.
 
+### GPU device selection
+
+Add `--gpu-device` to the usual launcher command to select one host GPU by index
+or full UUID. The launcher resolves the device once and uses the same UUID for
+the agent and separate verifier:
+
+```bash
+nvidia-smi --query-gpu=index,uuid,name,memory.used --format=csv
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex \
+  --gpu-device 2 --output jobs/code-embedding-finetuning-gpu2
+```
+
+Choose an available device that meets the task's hardware requirements. Selection
+is explicit; coordinate concurrent users of the host. For simultaneous runs,
+select different GPUs and distinct output directories. Omit the option for the
+default single-GPU allocation. CPU tasks accept their usual commands.
+
+Each explicitly selected run stores its generated phase configurations under
+`gpu/` in the trial directory. The task files keep their default `count: 1`
+reservation; the generated copies replace it with one `device_ids` entry and
+retain the original mounts. Run from the local NVIDIA Docker host. Container
+CUDA device 0 refers to the single exposed device, regardless of its host index.
+`--dry-run` previews the selection without checking GPU availability.
+
+### Harbor integration
+
 Harbor 0.22.0's Docker backend rejects `gpus = 1` during its own preflight and
 does not translate that field into the Compose GPU request. The shared launcher
 therefore supplies `--override-gpus 0` automatically while leaving the truthful
 task metadata and Compose reservations intact. Direct Harbor invocations using
 `--env scripts.harbor_environments:PhaseScopedDocker` need the same override
 with that Harbor version. Recheck this workaround when upgrading Harbor.
+Direct Harbor calls can pass `--environment-kwarg gpu_device=GPU-<full-UUID>` to
+`scripts.harbor_environments:PhaseScopedDocker`. Its environment kwargs are
+retained when Harbor creates the separate verifier; extra agent-only Compose
+overlays are not a replacement for this shared selection.
 
 ## Runtime network enforcement
 

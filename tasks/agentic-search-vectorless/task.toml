@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/agentic-search-vectorless"
-version = "0.2.2"
+version = "1.0.0"
 description = "Implement an agentic retrieval system without embeddings or BM25."
 authors = [{ name = "Jianlyu" }]
 keywords = ["BrowseComp-Plus", "information-retrieval", "multi-constraint-retrieval"]

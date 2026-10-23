@@ -1,4 +1,5 @@
 import asyncio
+import ast
 import importlib.metadata
 import importlib.util
 import json
@@ -37,7 +38,7 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                 dockerfile = (tests / "Dockerfile").read_text()
                 self.assertIn('"harbor-rewardkit==0.2.0"', dockerfile)
                 self.assertIn('"litellm==1.97.0"', dockerfile)
-                self.assertIn("REWARDKIT_CODEX_VERSION=0.147.0", dockerfile)
+                self.assertIn("REWARDKIT_CODEX_VERSION=0.164.0", dockerfile)
                 self.assertIn("@openai/codex@${REWARDKIT_CODEX_VERSION}", dockerfile)
                 self.assertIn("registry.npmmirror.com", dockerfile)
                 self.assertNotIn("harbor-rewardkit==0.1", dockerfile)
@@ -57,6 +58,12 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
                 self.assertNotIn("CODEX_HOME=", script)
 
                 wrapper = (tests / "rewardkit_deepseek.py").read_bytes()
+                tree = ast.parse(wrapper)
+                codex_version = next(node.value.value for node in tree.body
+                                     if isinstance(node, ast.Assign)
+                                     and any(isinstance(target, ast.Name) and target.id == "CODEX_VERSION"
+                                             for target in node.targets))
+                self.assertIn(f"REWARDKIT_CODEX_VERSION={codex_version}", dockerfile)
                 if wrapper_bytes is None:
                     wrapper_bytes = wrapper
                 self.assertEqual(wrapper, wrapper_bytes)
@@ -164,6 +171,10 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("rewardkit_deepseek_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+
+        from rewardkit import agents
+        self.assertEqual(agents._CODEX_VERSION, module.CODEX_VERSION)
+        self.assertEqual(agents._codex_cache_dir().name, module.CODEX_VERSION)
 
         with mock.patch.dict(
             os.environ,

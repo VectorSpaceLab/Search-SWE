@@ -1,10 +1,22 @@
 # Video-Moment Search
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `video-moment-search` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | SourceMacroGridUtility |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 12000 s |
+| Dataset | Charades-STA and ActivityNet Captions, pinned Lighthouse feature release |
+| Public queries | 5 |
+| Hidden queries | 450 |
+
 Locate the time interval matching a natural-language description within a specified video.
 
-**Task:** `video-moment-search` · **Metric:** SourceMacroGridUtility
-
-## Overview
+### Overview
 
 Searching within a video requires finding both the right event and its time
 boundaries. Each request names a video and an original description. The system
@@ -13,15 +25,9 @@ returns one interval on the video's supplied time grid.
 The task uses released frame features and local encoder weights, rather than
 raw videos or precomputed query representations.
 
-## What This Task Tests
+### Task Setup
 
-- Matching descriptions to temporal evidence in fixed video features.
-- Choosing accurate start and end boundaries.
-- Using labeled intervals within a bounded adaptation budget.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -50,7 +56,7 @@ This supervised adaptation differs from the weak-supervision setting of the
 seed paper. Raw videos, generated query vectors and tokenized descriptions
 are not supplied.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 Video features, time grids and local encoders are fixed. An optional
 temporal/scoring component may have at most five million trainable parameters
@@ -61,13 +67,27 @@ and boundary proposals remain allowed.
 Indexing and interval selection are implementation choices. No starter or
 external API resource is supplied.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and one
 40 GiB GPU. Development has six hours, including the optional training allowance.
 Build has 3,600 seconds; each of two query calls has 2,700 seconds.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Matching descriptions to temporal evidence in fixed video features.
+- Choosing accurate start and end boundaries.
+- Using labeled intervals within a bounded adaptation budget.
+
+## Verification Explanation
+
+### Submission Contract
 
 Submit executable `/app/build.sh` and `/app/run.sh` with supporting files
 under `/app`. Each request produces one nonempty start/end interval whose
@@ -79,9 +99,9 @@ sees the completed index read-only and uses fresh output and temporary paths.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 Let x be the best IoU between the predicted interval and the original
 acceptable intervals. Its utility is:
@@ -99,7 +119,7 @@ nonfinite or non-grid intervals score zero. The grid correction accounts for
 boundary precision limits; a long interval still loses IoU when it includes
 unrelated time.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.14696558206208937` and integer score anchor `a = 15` on the 0–100 scale:
@@ -114,7 +134,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks successful index construction, executable behavior,
 query IDs, finite start/end values, interval order, grid endpoints and stage
@@ -122,7 +142,7 @@ limits. Completed valid JSONL rows remain usable after a query timeout;
 missing or invalid query results score zero. A non-timeout query-command failure
 invalidates that call.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory audit checks task compliance and gates the quality
 reward. A confirmed violation sets reward to zero; unavailable or incomplete
@@ -132,7 +152,7 @@ RewardKit 0.2.0 with verifier-only OpenRouter settings.
 Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
@@ -147,7 +167,7 @@ The commands below apply in a checkout with this package installed at
 
 ```bash
 python scripts/download_assets.py --task video-moment-search
-bash scripts/run_task.sh --task video-moment-search --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task video-moment-search --gpu-device 0 --model "YOUR_AGENT_MODEL"
 ```
 
 The shared launcher defaults to Codex and also supports Pi and Claude Code.
@@ -155,7 +175,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/video-moment-search/`.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -168,3 +188,9 @@ credentials or hardware. Results are written under `jobs/video-moment-search/`.
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

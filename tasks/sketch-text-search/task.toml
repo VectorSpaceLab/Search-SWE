@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/sketch-text-search"
-version = "0.6.0"
+version = "1.0.0"
 description = "Build a sketch-and-text image search system over original gallery images."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["information-retrieval", "sketch", "image", "composition", "gpu"]

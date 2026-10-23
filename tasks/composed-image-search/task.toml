@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/composed-image-search"
-version = "0.5.0"
+version = "1.0.0"
 description = "Build image search from a reference photo and a requested modification."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["image-retrieval", "composition", "multimodal"]
