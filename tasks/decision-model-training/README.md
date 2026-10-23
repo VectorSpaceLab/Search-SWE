@@ -1,8 +1,19 @@
 # Decision Model Training
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: Bingyu. Version: 0.1.0. Published task package; the saved coding-agent result is recorded in RUN_RESULTS.md.
+| Field | Value |
+| --- | --- |
+| Task | `decision-model-training` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Mean exact accuracy across seven equally sized datasets |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 480 s |
+| Dataset | OpenJev mixture and held-out suite |
+| Hidden queries | 4200 |
+
+Author: Bingyu. Published task package; the saved coding-agent result is recorded in RUN_RESULTS.md.
 
 Build an offline Qwen3-0.6B-based system for categorical choices, Boolean
 judgments, and ordinal ratings. This task follows the user's revised OpenJev
@@ -27,7 +38,54 @@ seven dataset accuracies, equal to overall accuracy because each has 600 rows.
 The verifier runs submitted code under UID 10001, protects labels and reward
 files, and stops all submission-owned processes before reading results.
 
-## Sources and preparation
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+The model must generalize across categorical, Boolean and ordinal decision tasks using a fixed example mixture. The held-out suite measures exact decisions across seven equally weighted datasets under offline execution limits.
+
+## Verification Explanation
+
+### Local validation and author records
+
+Author scripts, original downloads, sampling lineage, GPU experiments and all
+known-answer fixtures are in
+`../../../task_development/decision-model-training`, outside the task package.
+The accepted GPU reference structures are `code-embedding-finetuning` and
+`query-encoder-alignment` at base `73f1d8b8cac6e0e74669de481bd5c814a975e1a3`.
+This task uses deterministic accuracy and entirely offline verification rather
+than copying their API or model-judge configuration.
+
+Run from the repository root:
+
+```bash
+python -m unittest discover -s tasks/decision-model-training/tests -p 'test_*.py'
+python scripts/download_assets.py --task decision-model-training --verify-only
+bash -n tasks/decision-model-training/tests/test.sh
+```
+
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task decision-model-training
+bash scripts/run_task.sh --task decision-model-training --gpu-device 0 --model YOUR_AGENT_MODEL
+```
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+### Sources and preparation
 
 - [OpenJev training mixture](https://huggingface.co/datasets/s1lv3rj1nx/openjev-mixture/tree/e540d97fc37e92b493ceeb536bdb7a01e366bdc3): 323,466 original rows.
 - [OpenJev held-out suite](https://huggingface.co/datasets/s1lv3rj1nx/openjev-heldout/tree/fc5fe530405de8de02e983adbc5b10795618979c): AG News, Banking77, Civil Comments toxicity, CLINC OOS, HelpSteer helpfulness, MASSIVE intent, SST5.
@@ -49,23 +107,3 @@ Its held-out card explicitly flags unclear redistribution rights for AG News
 and SST5. The training mixture also does not supply a complete license audit of
 all underlying datasets. This package makes no claim that every row is cleared for republication.
 Unresolved constituent terms remain recorded for maintainer review.
-
-## Local validation and author records
-
-Author scripts, original downloads, sampling lineage, GPU experiments and all
-known-answer fixtures are in
-`../../../task_development/decision-model-training`, outside the task package.
-The accepted GPU reference structures are `code-embedding-finetuning` and
-`query-encoder-alignment` at base `73f1d8b8cac6e0e74669de481bd5c814a975e1a3`.
-This task uses deterministic accuracy and entirely offline verification rather
-than copying their API or model-judge configuration.
-
-Run from the repository root:
-
-```bash
-python -m unittest discover -s tasks/decision-model-training/tests -p 'test_*.py'
-python scripts/download_assets.py --task decision-model-training --verify-only
-bash -n tasks/decision-model-training/tests/test.sh
-```
-
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.

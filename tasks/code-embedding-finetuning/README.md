@@ -1,10 +1,22 @@
 # Code Embedding Fine-tuning
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `code-embedding-finetuning` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | held-out Accuracy@1 improvement |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 43200 s / 5100 s |
+| Dataset | code-retrieval |
+| Public queries | 10 |
+| Hidden queries | 200 |
+
 Adapt a fixed embedding backbone to code retrieval and measure the resulting quality gain.
 
-**Task:** `code-embedding-finetuning` · **Metric:** Held-out Accuracy@1 improvement
-
-## Overview
+### Overview
 
 A general embedding model may not organize natural-language requests and code
 documents in the way a code-search application needs. This task asks a coding
@@ -15,16 +27,9 @@ The verifier applies the same embedding and exact-search procedure to the
 original backbone and the submission. This isolates improvement in the learned
 representation from changes to indexing, candidate selection, or serving code.
 
-## What This Task Tests
+### Task Setup
 
-- Designing a useful domain adaptation process from limited supervised data.
-- Choosing training objectives and sampling strategies that generalize.
-- Preserving model compatibility while updating its parameters.
-- Producing a reproducible, self-contained offline checkpoint.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -38,7 +43,7 @@ The hidden evaluation contains 200 queries. Public data and the backbone are
 mounted read-only under `/task/data` and `/task/models`; hidden questions and
 labels are excluded from the agent environment.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 Training choices and model weights may change. The backbone architecture,
 model class, structural configuration, parameter names, shapes, and count must
@@ -48,7 +53,7 @@ Development uses the supplied offline data and packages. External checkpoints,
 datasets, labels, and answer mappings are not permitted; see the
 [resource policy](environment/docs/available_resources.md).
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The runtime uses Python 3.12 with CUDA-enabled PyTorch. It is configured for
 8 CPUs, 32 GiB memory, and 100 GiB storage. The environment and verifier
@@ -62,7 +67,22 @@ followed by a separately bounded integrity check, within an 85-minute Harbor
 verifier phase. The submission training environment is offline; the coding
 agent and private judge have their own API configuration.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Designing a useful domain adaptation process from limited supervised data.
+- Choosing training objectives and sampling strategies that generalize.
+- Preserving model compatibility while updating its parameters.
+- Producing a reproducible, self-contained offline checkpoint.
+
+## Verification Explanation
+
+### Submission Contract
 
 The artifact is a complete checkpoint at `/app/submission/model`, including
 the files needed by standard Transformers tokenizer and model loaders with
@@ -72,9 +92,9 @@ There is no submitted retrieval CLI to optimize here: the verifier loads the
 checkpoint and executes its own fixed search procedure. Full compatibility
 requirements are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 Accuracy@1 measures whether the highest-ranked code document is relevant.
 The grader evaluates both checkpoints on identical hidden queries, using
@@ -88,20 +108,20 @@ max(0, submitted Accuracy@1 - original-backbone Accuracy@1)
 This is an absolute gain on the 0–1 accuracy scale, not a percentage-relative
 improvement and not the submitted accuracy by itself.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The checkpoint must load offline and match the backbone's structural signature.
 Invalid models, failed evaluation, and timeouts receive zero. Training-side
 validation results do not replace the verifier's independent comparison.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A trajectory audit gates the nonnegative quality gain. A failed audit or
 invalid evaluation produces zero, regardless of the apparent training result.
 The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -115,7 +135,7 @@ The asset downloader restores both training data and the fixed backbone.
 
 ```bash
 python scripts/download_assets.py --task code-embedding-finetuning
-bash scripts/run_task.sh --task code-embedding-finetuning --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task code-embedding-finetuning --gpu-device 0 --model "YOUR_AGENT_MODEL"
 ```
 
 The shared launcher defaults to Codex, also supports Pi and Claude Code, and
@@ -124,7 +144,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -136,3 +156,9 @@ assets, credentials, or hardware.
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Training starter](environment/starter/train.sh) | Initial training entry point |
 | [Resource policy](environment/docs/available_resources.md) | Offline development restrictions |
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+None.

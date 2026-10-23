@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import json
 from pathlib import Path
 import re
@@ -74,11 +75,35 @@ def files_for(task_name: str, hardware: str) -> dict[str, str]:
             f"""
             # {task_name}
 
-            **Task:** `{task_name}`
+            ## Task Metadata
 
-            Replace this scaffold text with an author-facing overview of the
-            objective, dataset/model provenance and license, metric, resource
-            needs, and local validation procedure.
+            | Field | Value |
+            | --- | --- |
+            | Task | `{task_name}` |
+            | Version | 1.0.0 |
+            | Hardware | {hardware.upper()} |
+
+            Describe the objective, authors, inputs, metric and resource budgets
+            consistently with task.toml. Link dataset/model provenance and licenses.
+
+            ## Change Log
+
+            | Date | Version | Description |
+            | --- | --- | --- |
+            | {date.today().isoformat()} | 1.0.0 | Added initial task |
+
+            ## Difficulty Explanation
+
+            Explain the engineering challenges and any measured difficulty evidence.
+
+            ## Verification Explanation
+
+            Describe the submission interface, scoring, limits, credential setup
+            and local validation commands. Record actual model-trial feedback.
+
+            ## References
+
+            None.
             """
         ),
         "assets.json": json.dumps(
@@ -147,7 +172,7 @@ def files_for(task_name: str, hardware: str) -> dict[str, str]:
 
             [task]
             name = "search-swe/{task_name}"
-            version = "0.1.0"
+            version = "1.0.0"
             description = "Replace with the task's observable objective."
             authors = [{{ name = "Search-SWE" }}]
             keywords = ["information-retrieval", "search"]

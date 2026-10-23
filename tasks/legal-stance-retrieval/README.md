@@ -1,6 +1,16 @@
 # Legal stance retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `legal-stance-retrieval` |
+| Version | 1.0.0 |
+| Authors | Cooki-e |
+| Primary metric | Baseline-normalized mean NDCG@10 |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 5100 s |
+| Hidden queries | 311 |
 
 Given a legal claim and `supported`, `refuted` or `all`, retrieve ten ranked
 court-summary document IDs. `all` is the union of both evidence directions;
@@ -8,7 +18,7 @@ either direction can be absent. This is retrieval over recorded majority
 holdings in a fixed snapshot, not a current-law validity check or verdict
 classification. The supplied Qwen3-Embedding-0.6B and public examples are available to the search system. Designated preparation/retrieval APIs remain permitted.
 
-## Frozen data and metric
+### Frozen data and metric
 
 | Item | Count |
 | --- | ---: |
@@ -59,7 +69,19 @@ of every corpus pair. Added positives have explicit author-agent decisions.
 Machine-neutral and out-of-pool pairs are not exhaustively adjudicated. Original
 training labels remain noisy. The task retains these documented limitations.
 
-## Execution and resources
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+A precedent can be topically relevant while expressing the wrong stance. The system must interpret stance conditions and improve legal retrieval over the fixed baseline within the query budget.
+
+## Verification Explanation
+
+### Execution and resources
 
 The agent receives 16 CPUs, 32 GiB RAM, 100 GiB storage, one NVIDIA GPU and a
 6-hour development phase. Both images use the standard GPU base.
@@ -83,7 +105,7 @@ threshold is imposed by the audit; an honest baseline is a valid zero-improvemen
 submission. Optional task API credentials are shared `OPENROUTER_API_KEY` and
 `JINA_API_KEY`; judge keys are never passed to submission commands.
 
-## Provenance and local assets
+### Provenance and local assets
 
 The source is [IDIRLab/CaseFacts](https://github.com/idirlab/CaseFacts), downloaded
 at repository snapshot `16a4072067c39daa463495e10e3bb029c29beb5b`.
@@ -103,7 +125,7 @@ verifier image.
 
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
-## Structural precedents and validation
+### Structural precedents and validation
 
 The reviewed `tasks/query-encoder-alignment` and
 `tasks/reasoning-query-rewriting` packages at checkout
@@ -123,12 +145,29 @@ this overrides the skill's generic prose-only convention. All source obligations
 were checked against the request and grader; see
 [instruction-audit.md](instruction-audit.md).
 
-## Instruction revision 0.1.1
+### Instruction revision 0.1.1
 
 The user requested a shorter agent-facing prompt. It now states the provided inputs and model, executable interfaces, whole-batch deadline and mean NDCG@10 objective. Detailed annotation guidance, training-label quality commentary, implementation suggestions and the reward anchor/formula remain author-side. The grader, frozen qrels and reward normalization did not change. General resource and integrity restrictions remain in the linked resource document.
 
 The redundant `model-metadata` directory and its two asset entries were removed. Its files were a model-card copy and a ModelScope `configuration.json`, neither used by the supplied Transformers loader. The actual `config.json`, model weights, tokenizer and SentenceTransformers configuration remain supplied and pinned. The packaging script excludes the removed files so they will not be recreated.
 
-## Public examples — v0.1.2
+### Public examples — v0.1.2
 
 Public examples are now under `/task/data/examples`, with `queries.jsonl` and `ground_truth.jsonl`. The host directory, Compose mount, asset manifest and packaging output use this name. Public query IDs replace the source `train_` prefix with `example_` in both files; the claim text, stance and relevance maps are unchanged. The agent-facing instruction, resource docs and task description provide the examples and model without suggesting a training method. Original source-split names remain in author provenance and audit records.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task legal-stance-retrieval
+bash scripts/run_task.sh --task legal-stance-retrieval --gpu-device 0 --model YOUR_AGENT_MODEL
+```
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

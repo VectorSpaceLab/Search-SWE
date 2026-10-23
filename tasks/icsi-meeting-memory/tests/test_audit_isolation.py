@@ -57,7 +57,7 @@ import fnmatch, json, os, subprocess, sys, tomllib
 from pathlib import Path
 
 if "--version" in sys.argv:
-    print("codex-cli 0.147.0")
+    print("codex-cli 0.164.0")
     raise SystemExit(0)
 
 assert os.geteuid() == 10002
@@ -180,7 +180,7 @@ class ProductionAuditIsolationTests(unittest.TestCase):
             tmp.mkdir(mode=0o700, exist_ok=True)
             os.chown(tmp, 10002, 10002)
 
-            binary = Path("/home/audit/.cache/harbor-rewardkit/codex/0.147.0/bin/codex")
+            binary = Path("/home/audit/.cache/harbor-rewardkit/codex/0.164.0/bin/codex")
             self.assertTrue(binary.is_symlink(), "requires the verifier's pinned Codex link")
             link_target = os.readlink(binary)
             binary.unlink()

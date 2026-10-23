@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/reasoning-query-rewriting"
-version = "0.3.1"
+version = "1.0.0"
 description = "Build a reasoning-assisted semantic retrieval system over Bright biology short documents."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "biology", "BM25", "query-rewriting", "semantic-retrieval"]

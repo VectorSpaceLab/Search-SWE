@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/narrative-clue-search"
-version = "0.5.0"
+version = "1.0.0"
 description = "Build a document search system for long, uncertain recollections."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["information-retrieval", "semantic-retrieval", "query-rewriting", "narrative"]

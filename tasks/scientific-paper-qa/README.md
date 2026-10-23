@@ -1,10 +1,21 @@
 # Scientific-Paper Question Answering
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `scientific-paper-qa` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | LLMJudgeAccuracy |
+| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 14400 s |
+| Dataset | research-paper PDFs |
+| Hidden queries | 10 |
+
 Build a RAG system that answers scientific questions and identifies the supporting paper.
 
-**Task:** `scientific-paper-qa` · **Metric:** LLMJudgeAccuracy
-
-## Overview
+### Overview
 
 Finding a related paper is only one part of scientific question answering.
 The system must recover relevant evidence from PDFs, interpret it, and
@@ -15,16 +26,9 @@ It evaluates the complete pipeline: an otherwise plausible answer receives no
 credit when the submitted evidence document is wrong. It also tests whether
 the system can share its index and services reliably across concurrent questions.
 
-## What This Task Tests
+### Task Setup
 
-- Turning scientific PDFs into searchable representations with document provenance.
-- Connecting retrieved evidence to concise answers.
-- Maintaining attribution across parsing, retrieval, and generation.
-- Sharing a retrieval service safely across concurrent query processes.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -37,7 +41,7 @@ the same PDF corpus, but their questions and labels are separated from the
 agent environment. [Long-PDF evidence](../long-pdf-evidence/README.md) instead evaluates page
 localization within a single long PDF.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The corpus and output interface are fixed. PDF processing, index design,
 retrieval, evidence selection, and answer synthesis are implementation choices.
@@ -45,7 +49,7 @@ Optional OpenRouter and Jina services are subject to the
 [resource policy](environment/docs/available_resources.md); they do not permit
 replacing corpus-grounded work with external answers.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 16 CPUs, 64 GiB memory, 100 GiB storage,
 and no GPU. The agent has two hours and the Harbor verifier four hours.
@@ -56,7 +60,22 @@ is excluded and workers share the same resources.
 The verifier also bounds query execution, answer scoring, and trajectory review
 as stages inside its overall budget. Stage limits do not extend that budget.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Turning scientific PDFs into searchable representations with document provenance.
+- Connecting retrieved evidence to concise answers.
+- Maintaining attribution across parsing, retrieval, and generation.
+- Sharing a retrieval service safely across concurrent query processes.
+
+## Verification Explanation
+
+### Submission Contract
 
 The deliverable is `/app/build.sh` plus `/app/run.sh` and the implementation
 they need. Each query produces a concise `answer` and one evidence document ID
@@ -66,9 +85,9 @@ concurrent invocations.
 
 The full schema and invocation details live in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 A question scores one only when **both** conditions hold: the evidence document
 matches the reference, and an answer judge accepts the answer as semantically
@@ -76,13 +95,13 @@ equivalent to the reference. LLMJudgeAccuracy is the mean of these binary
 outcomes over 10 hidden questions. The report's 0–100 score is 100 times the
 normalized reward.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 Execution, complete query coverage, non-empty answers, valid document IDs, and
 runtime limits must pass. A failed query process or structurally invalid output
 invalidates the submission, rather than merely counting as an incorrect answer.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 The answer judge and trajectory audit are separate. The first evaluates answer
 equivalence; the second checks task compliance and can set the whole reward
@@ -97,7 +116,7 @@ and experimental details. The splits have disjoint query IDs, questions, and
 reference papers; the hidden split uses ten distinct reference papers.
 Current task identity and execution settings are recorded in `task.toml`.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -121,7 +140,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -132,3 +151,7 @@ assets, credentials, or hardware.
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Resource policy](environment/docs/available_resources.md) | Allowed submission APIs and model restrictions |
+
+## References
+
+None.

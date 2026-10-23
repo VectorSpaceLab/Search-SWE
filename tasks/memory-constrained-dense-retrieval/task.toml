@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/memory-constrained-dense-retrieval"
-version = "0.7.1"
+version = "1.0.0"
 description = "Build a memory-constrained dense-vector retrieval system over 1.5 million precomputed NQ corpus vectors."
 authors = [{ name = "Search-SWE" }]
 keywords = ["search", "retrieval", "dense-retrieval", "vector-search", "nq", "memory-constrained", "cpu", "indexing"]

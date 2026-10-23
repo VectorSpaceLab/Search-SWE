@@ -1,10 +1,21 @@
 # Personal-History Search and Answering
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `evolving-personal-memory` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | FAMA |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 21600 s |
+| Dataset | Memora |
+| Hidden queries | 595 |
+
 Retrieve original conversation records and answer questions about a person's history at a specified cutoff.
 
-**Task:** `evolving-personal-memory` · **Metric:** FAMA
-
-## Overview
+### Overview
 
 Personal facts can change across conversations. A reusable search system
 must identify records relevant to a question and its session cutoff, then
@@ -14,16 +25,9 @@ Retrieval and answering are separate stages. The verifier loads complete
 original records for the IDs returned by search; the answer process has no
 access to the full history or index.
 
-## What This Task Tests
+### Task Setup
 
-- Retrieving useful records from long personal histories.
-- Respecting the requested person and session cutoff.
-- Organizing an answer from a bounded set of complete records.
-- Separating retrieval resources from per-request answer execution.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -44,7 +48,7 @@ Source criteria were deduplicated within each question by criterion text,
 expected decision and type. No new questions or criteria were generated.
 All original task types and time horizons remain in the combined data.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 Conversation records, question cutoffs and the search/answer interfaces are
 fixed. Indexing, retrieval and answer organization are implementation choices;
@@ -54,7 +58,7 @@ for the requested person, with session IDs no later than the cutoff.
 Only records selected by search become answer-stage inputs. Optional APIs and
 stage-specific access follow the [resource policy](environment/docs/available_resources.md).
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and
 no GPU. Development has two hours; the verifier has six hours.
@@ -65,7 +69,22 @@ concurrently and a shared 7,200-second answer-stage budget.
 Records are passed in full. A 350-record request can be approximately 1.08 MB,
 and may require more than one permitted model call.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Retrieving useful records from long personal histories.
+- Respecting the requested person and session cutoff.
+- Organizing an answer from a bounded set of complete records.
+- Separating retrieval resources from per-request answer execution.
+
+## Verification Explanation
+
+### Submission Contract
 
 Submit executable `/app/build.sh`, `/app/search.sh` and `/app/answer.sh`
 with their supporting files. Answer-side code and configuration live under
@@ -82,9 +101,9 @@ hidden criteria and judge credentials are inaccessible.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 Three independent judge configurations vote on each deduplicated criterion.
 MPA measures passed memory criteria, FAA measures passed forgetting criteria,
@@ -98,7 +117,7 @@ Final quality is mean FAMA over 595 held-out questions. Retrieval IDs assemble t
 separate retrieval-quality metric. Record IDs are not appended to judged answer
 text.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.3712215103709065` and integer score anchor `a = 20` on the 0–100 scale:
@@ -113,7 +132,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 Executable behavior, eligible record IDs, answer format, query coverage and
 stage limits are checked. Build and search stop before answer execution.
@@ -121,7 +140,7 @@ Each answer process tree and workspace are removed before its role is reused.
 Transport or malformed-response failures in trusted judging invalidate the
 measurement and must not be interpreted as model quality.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory audit checks task compliance and gates the quality
 reward. A confirmed violation sets reward to zero; unavailable or incomplete
@@ -132,7 +151,7 @@ Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs. Answer judges,
 where used, are distinct from trajectory auditing.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
@@ -160,7 +179,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/evolving-personal-memory/`.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -173,3 +192,7 @@ credentials or hardware. Results are written under `jobs/evolving-personal-memor
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

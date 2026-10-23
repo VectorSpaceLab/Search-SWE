@@ -1,15 +1,26 @@
 # Lightweight query retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: Bingyu. Task version 0.4.0. Built with Llama.
+| Field | Value |
+| --- | --- |
+| Task | `lightweight-query-retrieval` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Retrieval runtime after a macro nDCG@10 quality gate |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 3900 s |
+| Dataset | BEIR SciFact, NFCorpus and FiQA; author-released LightRetriever examples |
+| Hidden queries | 1271 |
+
+Author: Bingyu. Built with Llama.
 
 Build a fast batch retrieval service, subject to a required search-quality
 threshold. The agent receives the original Llama-3.2-1B base model and 80,000
 original labeled examples. The task does not supply a trained retrieval model,
 reference implementation, prebuilt index, or test answers.
 
-## Data and provenance
+### Data and provenance
 
 | Original BEIR collection | Corpus documents | Hidden test queries |
 | --- | ---: | ---: |
@@ -50,7 +61,19 @@ Source checksums, row-level sampling provenance, audit records and reproducible
 preparation scripts are retained in
 `../../../task_development/lightretriever`, outside this task package.
 
-## Runtime and scoring
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+The objective covers complete query processing, including representation and search, across three collections. Faster execution earns credit only after meeting the macro retrieval-quality gate.
+
+## Verification Explanation
+
+### Runtime and scoring
 
 One NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM, 100 GiB storage, six hours of
 development, and no task network/API access. The shared GPU image supplies
@@ -114,17 +137,18 @@ configuration. The overall verifier budget is 3,900 seconds to include the
 audit; the existing 2,300-second retrieval supervisor and all candidate limits
 are unchanged.
 
-## Validation and release state
+### Validation and release state
 
 Before the 0.4.0 audit integration, local assets, images, GPU forward/backward, scoring and isolation checks were
 executed. A legal implementation trained from the supplied original base and
 only supplied examples passed the complete separate verifier with minimum
 quality **0.454410**, median **0.860873 seconds**
 and reward **0.000000**. See `VALIDATION.md` for the evidence and limits.
-Version 0.4.0 adds local reward-gate, subprocess-isolation and shell-orchestration
-checks. No new GPU retrieval, coding-agent or live judge run has been performed;
-the earlier witness does not establish the new judge's acceptance or rejection
-behavior. See `VALIDATION.md` for the separate validation layers.
+The later v0.4.0 verifier run completed its live integrity audit. Macro nDCG@10
+was 0.4303102260205993, below the 0.45 gate, and median query-batch time was
+0.41057249531149864 seconds. See [RUN_RESULTS.md](RUN_RESULTS.md) for that
+measurement and its remaining validation limits, and [VALIDATION.md](VALIDATION.md)
+for the separate local checks.
 
 The two derived data assets are published in
 [`search-swe/Search-SWE`](https://huggingface.co/datasets/search-swe/Search-SWE/tree/ff16485accd6d258610c158fce45e36b50a47c3f/tasks/lightweight-query-retrieval)
@@ -134,3 +158,20 @@ Their official manifest sizes and SHA-256 hashes match the local inputs.
 access to Meta's gated model must also be configured.
 Authoring scripts, baselines and trained witness checkpoints are not included
 in the agent mounts.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task lightweight-query-retrieval
+bash scripts/run_task.sh --task lightweight-query-retrieval --gpu-device 0 --model YOUR_AGENT_MODEL
+```
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+None.

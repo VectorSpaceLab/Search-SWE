@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/constrained-molecular-search"
-version = "0.3.3"
+version = "1.0.0"
 description = "Recover the truly feasible top 10,000 compounds from a complete molecular library under a two-second query deadline."
 authors = [{ name = "jianlyu" }]
 keywords = ["molecular-search", "constraints", "combinatorial-library", "gpu", "top-k"]

@@ -1,14 +1,26 @@
 # Filtered ANN retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: **bingyu**. Version: **0.11.1**. Migrated from
+| Field | Value |
+| --- | --- |
+| Task | `filtered-ann-retrieval` |
+| Version | 1.0.0 |
+| Authors | bingyu |
+| Primary metric | Mean per-query exact filtered Top-10 correctness and latency |
+| Compute | 8 CPUs; 16 GiB RAM; 64 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 5400 s |
+| Dataset | NeurIPS 2023 Big-ANN Filter Track / YFCC-10M |
+| Public queries | 10 |
+| Hidden queries | 25 |
+
+Author: **bingyu**. version: **1.0.0**. Migrated from
 `search_swe_bingyu/task-submissions/bingyu/1-x-1` version 0.8.1.
 
 Build a persistent Faiss ANN backend returning exact nearest neighbors subject
 to conjunctions of metadata tags. CPU only; no embedding model or retrieval API.
 
-## Data and provenance
+### Data and provenance
 
 The corpus has 10,000,000 192-dimensional uint8 vectors and CSR metadata with
 200,386 tag columns. The public split has ten queries (five retained and five
@@ -30,7 +42,19 @@ Runtime `data/` is ignored by Git. The agent receives corpus, public examples an
 docs. Hidden queries, labels and the grader are copied into the separate verifier
 image. Reference implementations remain outside the task package.
 
-## Interface and scoring
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Filtering changes the eligible neighbor set for each query. Exact filtered Top-10 results must be returned within 15 ms, requiring an index and execution strategy that handle both filter selectivity and vector similarity.
+
+## Verification Explanation
+
+### Interface and scoring
 
 See [instruction.md](instruction.md) and its structured source
 [raw-instruction.md](raw-instruction.md).
@@ -54,7 +78,7 @@ Timing includes request transmission and response JSON decoding. Service startup
 is outside this timer with no independent timeout; the entire retrieval phase
 has a 3,900-second supervisor deadline.
 
-## Runtime and migration
+### Runtime and migration
 
 8 CPUs, 16 GiB RAM, 64 GiB storage, no GPU; implementation time 120 minutes.
 Both images use `search-swe-base:cpu-py3.12-1.0.0`. Agent and submitted search code
@@ -88,14 +112,14 @@ boundaries above. Version 0.11.0 changes the query split to ten public and 25
 hidden cases and updates the scoring denominator. It selects five relatively
 easier public and twenty harder hidden cases from 27 repeatedly measured broad
 filter candidates, using reference-runtime medians as a difficulty proxy.
-Version 0.11.1 also clears and verifies System V IPC at each execution boundary,
+The verifier clears and verifies System V IPC at each execution boundary,
 using the owner-or-creator cleanup pattern in the reviewed
 `memory-constrained-dense-retrieval/tests/grader.py` as a structural precedent.
 The instruction, submission interfaces, corpus and time/resource limits are unchanged.
 Structural precedents are `memory-constrained-dense-retrieval`
 and `sparse-retrieval-pruning` for offline CPU retrieval and protected evaluation.
 
-## Validation
+### Validation
 
 See [VALIDATION.md](VALIDATION.md) for executed checks and unrun layers. Detailed
 migration reports live outside the package in
@@ -105,5 +129,20 @@ The 0.11.0 split has local dataset, grader and saved-program replay checks;
 it has not received a fresh coding-model run or live judge call. Reference runs
 measure raw retrieval; without the required audit, final reward remains zero.
 The public assets are published at the immutable revision recorded above.
-Version 0.11.1 has 22 passing grader regression tests and real subprocess IPC
+The recorded v0.11.1 validation has 22 passing grader regression tests and real subprocess IPC
 recovery checks; no fresh coding-model trial or live judge call was run for it.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task filtered-ann-retrieval
+bash scripts/run_task.sh --task filtered-ann-retrieval --model YOUR_AGENT_MODEL
+```
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

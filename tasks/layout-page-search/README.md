@@ -1,10 +1,22 @@
 # Visual-Document Evidence Page Retrieval
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `layout-page-search` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | EvidencePageSetF1 |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 12000 s |
+| Dataset | MMLongBench-Doc original chart/figure/layout evidence annotations |
+| Public queries | 5 |
+| Hidden queries | 515 |
+
 Find the complete set of supporting pages within a specified visual document.
 
-**Task:** `layout-page-search` · **Metric:** EvidencePageSetF1
-
-## Overview
+### Overview
 
 A question about a chart, figure or page layout may require more than one
 page of evidence. The system must return a compact set of pages that together
@@ -14,15 +26,9 @@ The task evaluates page selection rather than answer generation. The document
 is supplied in the query; it is not a collection-wide document-identification
 task.
 
-## What This Task Tests
+### Task Setup
 
-- Combining page text and visual evidence.
-- Selecting a complete evidence set without adding unrelated pages.
-- Managing page-level representations and query-dependent comparisons.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -46,7 +52,7 @@ identify visual evidence, but do not certify that text-only retrieval must fail.
 This task overlaps the document source used by
 `visual-document-qa`; the output and metric differ.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The corpus, specified document, evidence labels and output interface are fixed.
 Supplied encoder weights remain fixed. An optional scoring or adaptation
@@ -57,13 +63,27 @@ token, region or learned pairwise comparisons.
 Representations, index structure and page selection are implementation choices.
 No precomputed vectors, starter or external API resource is supplied.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and one
 40 GiB GPU. Development has six hours, including the optional adaptation
 allowance. Build has 3,600 seconds; each of two query calls has 2,700 seconds.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Combining page text and visual evidence.
+- Selecting a complete evidence set without adding unrelated pages.
+- Managing page-level representations and query-dependent comparisons.
+
+## Verification Explanation
+
+### Submission Contract
 
 Submit executable `/app/build.sh` and `/app/run.sh` with supporting files
 under `/app`. Return up to ten distinct page IDs from the specified document,
@@ -75,9 +95,9 @@ Use the supplied index, output, cache and temporary paths for generated files.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 For each question, compute set F1 between the returned pages and the complete
 original evidence-page set. Quality is mean F1 over 515 held-out questions.
@@ -87,7 +107,7 @@ The set metric penalizes both missing evidence and extra pages. Returning the
 complete annotated evidence set achieves full per-query credit. It does not
 measure answer accuracy or bounding-box localization.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.5734305608092015` and integer score anchor `a = 20` on the 0–100 scale:
@@ -102,7 +122,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks successful index construction, executable behavior,
 query coverage, IDs, duplicate handling, finite scores and stage limits.
@@ -111,7 +131,7 @@ invalid rows score zero. A non-timeout query-command failure invalidates
 that call. See [instruction.md](instruction.md) and the verifier for the exact
 task-specific validity checks.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory audit checks task compliance and gates the quality
 reward. A confirmed violation sets reward to zero; unavailable or incomplete
@@ -121,7 +141,7 @@ RewardKit 0.2.0 with verifier-only OpenRouter settings.
 Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
@@ -136,7 +156,7 @@ The commands below apply in a checkout with this package installed at
 
 ```bash
 python scripts/download_assets.py --task layout-page-search
-bash scripts/run_task.sh --task layout-page-search --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task layout-page-search --gpu-device 0 --model "YOUR_AGENT_MODEL"
 ```
 
 The shared launcher defaults to Codex and also supports Pi and Claude Code.
@@ -144,7 +164,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/layout-page-search/`.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -157,3 +177,9 @@ credentials or hardware. Results are written under `jobs/layout-page-search/`.
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

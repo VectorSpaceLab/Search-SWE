@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/sparse-retrieval-pruning"
-version = "0.5.2"
+version = "1.0.0"
 description = "Optimize Python learned-sparse retrieval under quality gates and a continuous 4x-to-16x starter-relative speedup reward."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "ms-marco", "splade", "sparse-retrieval", "postings"]

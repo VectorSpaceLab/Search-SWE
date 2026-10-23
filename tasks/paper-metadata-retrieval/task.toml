@@ -4,7 +4,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/paper-metadata-retrieval"
-version = "0.1.1"
+version = "1.0.0"
 description = "Build a search system that identifies a paper satisfying a research need and its stated source conditions."
 authors = [{ name = "Cooki-e" }]
 keywords = ["information-retrieval", "scientific-literature", "metadata", "constraints"]

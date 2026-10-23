@@ -20,6 +20,7 @@ from scripts.egress.compose import SERVICE, declared_services, validate_final
 from scripts.egress.config import DEFAULT_IMAGE, direct_config, exact_hosts, load_config, require_supported_harbor
 from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
 from environments.egress.gateway import LEASE_SECONDS
+from scripts.gpu_device import GPU_UUID, select_compose_gpu
 
 
 # Containerd creation/removal can exceed a minute on busy hosts. These bounded
@@ -53,7 +54,36 @@ def gateway_image_info(reference):
     return docker_json("image", "inspect", reference)[0]
 
 
-class PhaseScopedDocker(DockerEnvironment):
+class GpuDocker(DockerEnvironment):
+    """Use a per-phase copy of the task Compose file for explicit GPU selection."""
+
+    def __init__(self, *args, gpu_device=None, **kwargs):
+        if gpu_device is not None and not GPU_UUID.fullmatch(gpu_device):
+            raise ValueError("gpu_device must be a resolved UUID; use scripts/run_task.sh --gpu-device")
+        self.gpu_device = gpu_device
+        super().__init__(*args, **kwargs)
+
+    @property
+    def _docker_compose_paths(self):
+        paths = super()._docker_compose_paths
+        if not getattr(self, "gpu_device", None):
+            return paths
+        source = self._environment_docker_compose_path
+        if source not in paths:
+            raise ValueError("The GPU task must supply environment/tests docker-compose.yaml")
+        document = select_compose_gpu(yaml.safe_load(source.read_text()), self.gpu_device)
+        # Harbor keeps --project-directory at the original environment directory,
+        # so relative bind mounts/build paths retain their original meaning.
+        directory = self.trial_paths.trial_dir / "gpu"
+        directory.mkdir(parents=True, exist_ok=True)
+        destination = directory / f"{_sanitize_docker_compose_project_name(self.session_id)}.json"
+        content = json.dumps(document, indent=2) + "\n"
+        if not destination.exists() or destination.read_text() != content:
+            destination.write_text(content)
+        return [destination if path == source else path for path in paths]
+
+
+class PhaseScopedDocker(GpuDocker):
     """Linux/rootful/local, exact-host, phase-scoped direct or proxy egress."""
 
     def __init__(self, *args, egress_config: str | None = None, egress_image: str = DEFAULT_IMAGE,

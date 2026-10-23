@@ -1,10 +1,21 @@
 # Compact Conversational Memory Question Answering
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `icsi-meeting-memory` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | EvidenceGroundedAnswerAccuracy |
+| Compute | 8 CPUs; 8 GiB RAM; 8 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 5400 s |
+| Dataset | ICSI Meeting Corpus |
+| Hidden queries | 143 |
+
 Build a compact memory and a retrieval-augmented system that answers questions about meeting transcripts.
 
-**Task:** `icsi-meeting-memory` · **Metric:** EvidenceGroundedAnswerAccuracy
-
-## Overview
+### Overview
 
 The complete meeting history is available during development, but the submitted
 system must answer from a finished memory occupying at most five percent of the
@@ -16,16 +27,9 @@ It contains 53,600 utterances and 719,788 whitespace-delimited words.
 The task evaluates both the evidence preserved in memory and the answers
 supported by that evidence.
 
-## What This Task Tests
+### Task Setup
 
-- Preserving useful conversational information within a fixed memory budget.
-- Retrieving relevant evidence from the prepared memory.
-- Answering from the retrieved notes without consulting the original history.
-- Rebuilding and running the pipeline under separate stage permissions.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -51,7 +55,7 @@ received independent human certification.
 The history is pinned in [assets.json](assets.json). The public examples are restored from bundled
 `asset-metadata/validation/` files.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The history, submission interfaces, memory budget and execution limits are
 fixed. Memory structure, information selection, indexing, retrieval and
@@ -61,7 +65,7 @@ Local computation and Jina embedding and reranking APIs are available for memory
 preparation and retrieval. Only the answerer may use the four allowed OpenRouter
 generation models, subject to the [resource policy](environment/docs/available_resources.md).
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides eight CPU cores, 8 GiB RAM,
 8 GiB storage and no GPU. The agent has two hours; the verifier has 90 minutes.
@@ -78,7 +82,22 @@ count toward this limit. The three scripts contain corpus-independent code and
 are outside the memory-file budget; the index is built from that memory during
 evaluation.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Preserving useful conversational information within a fixed memory budget.
+- Retrieving relevant evidence from the prepared memory.
+- Answering from the retrieved notes without consulting the original history.
+- Rebuilding and running the pipeline under separate stage permissions.
+
+## Verification Explanation
+
+### Submission Contract
 
 Deliver exactly `/app/memory.json` and executable `/app/build.sh`,
 `/app/run.sh` and `/app/answer.sh`. Each script is self-contained.
@@ -97,9 +116,9 @@ See [instruction.md](instruction.md) for the full interface and
 Only the rewritten instruction and the mounted data and resource documentation
 are exposed to the agent.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 For each question, credit requires both an evidence hit and a correct answer.
 A hit means that the retrieved notes faithfully preserve at least one relevant
@@ -113,7 +132,7 @@ EvidenceGroundedAnswerAccuracy is the mean of these joint binary outcomes over
 Evidence and answer accuracy are also reported separately. Semantic grading
 remains subject to model variability.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.06293706293706294` and integer score anchor `a = 20` on the 0–100 scale:
@@ -128,7 +147,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The four files, executable permissions, JSON syntax and size, index build,
 script completion and output formats must satisfy the contract. A failed
@@ -136,7 +155,7 @@ submitted process or invalid output invalidates the submission. Empty retrieval
 is an evidence miss. A malformed judge response or model-service failure
 invalidates the measurement rather than establishing model quality.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 The evidence and answer judges are separate from the trajectory audit.
 The audit checks task compliance and can set the entire reward to zero.
@@ -151,7 +170,7 @@ environment filters credential variables, and an inherited Landlock policy
 limits filesystem access to read-only audit inputs and runtime files, with
 writes confined to audit state and output directories.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for model
@@ -176,7 +195,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 command construction without starting an evaluation; it does not validate
 assets, credentials or API access. Use a fresh output directory for each run.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -190,3 +209,7 @@ assets, credentials or API access. Use a fresh output directory for each run.
 | [Resource policy](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [Corpus license](ICSI_LICENSE.html) | Original terms and attribution |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

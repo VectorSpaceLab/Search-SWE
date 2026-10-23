@@ -1,10 +1,22 @@
 # Long-document Reranking
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `long-document-reranking` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | Accuracy@5 |
+| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 4800 s |
+| Dataset | MTEB NarrativeQARetrieval |
+| Public queries | 100 |
+| Hidden queries | 100 |
+
 Improve long-document ranking without changing the candidate pool or the relevance model.
 
-**Task:** `long-document-reranking` · **Metric:** Accuracy@5
-
-## Overview
+### Overview
 
 A relevant passage in a long document may lie far beyond the first 512 model
 tokens. Simply truncating every candidate can therefore discard the evidence
@@ -16,16 +28,9 @@ BGE reranker. The engineering opportunity is in how documents are prepared,
 which windows are scored, and how local scores inform a document-level decision.
 Finding more evidence must remain practical within the runtime budget.
 
-## What This Task Tests
+### Task Setup
 
-- Handling long documents with a short-input cross-encoder.
-- Selecting useful document windows and aggregating their evidence.
-- Improving preprocessing and inference without altering learned model behavior.
-- Preserving candidate-set identity across a multi-stage ranking pipeline.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -38,7 +43,7 @@ Downloaded data and models are mounted read-only under `/task/data` and
 `/task/models`. The hidden evaluation contains 100 disjoint queries.
 [Starter notes](environment/starter/README.md) describe the initial implementation.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The candidate documents and reranker model, tokenizer, and configuration are
 fixed. The agent may optimize preprocessing, window selection, score aggregation,
@@ -49,7 +54,7 @@ The Docker mounts place the model at `/task/models/bge-reranker-large`.
 The introductory model path in `instruction.md` currently contains a typo;
 the mounted path and runtime configuration are the operational reference.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 16 CPUs, 64 GiB memory, 100 GiB storage,
 and no GPU. The agent has two hours and the Harbor verifier 80 minutes.
@@ -57,7 +62,22 @@ The grader's build and run caps are 1,800 and 3,600 seconds respectively,
 but these stages and the integrity check must still fit inside the overall
 verifier phase; their individual maxima are not additive allowances.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Handling long documents with a short-input cross-encoder.
+- Selecting useful document windows and aggregating their evidence.
+- Improving preprocessing and inference without altering learned model behavior.
+- Preserving candidate-set identity across a multi-stage ranking pipeline.
+
+## Verification Explanation
+
+### Submission Contract
 
 The deliverable is `/app/build.sh` and `/app/run.sh` with the implementation
 needed to rebuild preprocessing artifacts and serve reranking requests.
@@ -68,21 +88,21 @@ The verifier uses a separate environment and unprivileged submission execution.
 The index directory is supplied by the caller. Consult
 [instruction.md](instruction.md) for the complete CLI and result format.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 A hidden query is a hit if a relevant document is among the five returned
 candidates. Accuracy@5 is the fraction of hits over all hidden queries.
 Valid runs receive this fraction as a continuous quality score.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks executable behavior, complete outputs, valid ranking
 fields, candidate membership, and compliance with the fixed-model rules.
 Retrieval outside the pool is not a valid way to improve this task's score.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory judge checks task compliance. Final reward equals
 Accuracy@5 only when evaluation is valid and the judge passes; otherwise zero.
@@ -90,7 +110,7 @@ The model being optimized around is the fixed reranker, not the trajectory judge
 The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit
 0.2.0 and receives its credentials only in the verifier.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -113,7 +133,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -126,9 +146,13 @@ assets, credentials, or hardware.
 | [Starter notes](environment/starter/README.md) | Initial pipeline and local validation guidance |
 | [Verifier notes](tests/README.md) | Additional verification details |
 
-## Instruction source
+### Instruction source
 
 `raw-instruction.md` preserves the original structured instruction. The request
 in `instruction.md` corrects its `/tast/model/bge-reranker-large` path typo to
 the actual read-only mount `/task/models/bge-reranker-large`; the fixed model
 and all candidate/model restrictions are unchanged.
+
+## References
+
+None.

@@ -28,6 +28,14 @@ prefix and `all` are reserved. Check `tasks/` on the current base and active PRs
 for name collisions. Set `task.name` to `search-swe/<task-name>`. A PR may contain
 multiple uniquely named tasks.
 
+Use the task title as the README's level-one heading and these level-two sections
+in order: `Task Metadata`, `Change Log`, `Difficulty Explanation`,
+`Verification Explanation`, and `References`. Include dated versions and concise
+changes in the changelog; new tasks start at `1.0.0` with `Added initial task`.
+Keep the current README version aligned with `task.toml`. Describe difficulty,
+scoring and runtime validation, and list existing paper/data/method references
+or `None`. Setup commands and detailed explanations can use level-three headings.
+
 Describe the task's goal, starting state and measured outcomes.
 CPU is the default; choose `--hardware gpu` for actual GPU execution. Repeat
 `--author` for coauthors. Use actual authors in `task.toml`, not only “Search-SWE”,
@@ -68,6 +76,9 @@ Use `--task <task-name>` for downloads and local trials. The downloader's
 `--task-path tasks/<task-name>` also accepts a canonical repository-relative
 path. Jobs default to `jobs/<task-name>`; alternate asset output roots contain
 `<task-name>/`. The launcher reads the package's local assets.
+For GPU trials, add `--gpu-device <host-index-or-UUID>` to select the same device
+for the agent and verifier. Choose an available GPU with the task's required
+capacity and a separate output directory for each simultaneous run.
 
 Follow the skill's [validation layers](../.agents/skills/create-searchswe-task/references/validation.md):
 Compose rendering, builds, verifier known-good and negative cases, and an

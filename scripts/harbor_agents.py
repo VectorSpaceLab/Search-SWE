@@ -3,6 +3,7 @@
 from harbor.agents.installed.codex import Codex
 from harbor.agents.installed.claude_code import ClaudeCode
 from harbor.agents.installed.pi import Pi
+from dataclasses import replace
 from harbor.environments.base import BaseEnvironment
 import json
 import shlex
@@ -11,11 +12,7 @@ from pathlib import Path
 
 from harbor.models.trajectories.trajectory import Trajectory
 from scripts.pi_trajectory import convert_events
-
-
-CODEX_VERSION = "0.157.1"
-CLAUDE_CODE_VERSION = "2.1.283"
-PI_VERSION = "0.87.1"
+from scripts.harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
 
 
 async def _require_version(
@@ -104,6 +101,9 @@ class PreinstalledOpenRouterClaudeCode(PreinstalledClaudeCode):
 
 class PreinstalledPi(Pi):
     """Run the pinned Pi CLI without runtime package downloads."""
+
+    CLI_FLAGS = [replace(flag, choices=list(PI_THINKING_LEVELS))
+                 if flag.kwarg == "thinking" else flag for flag in Pi.CLI_FLAGS]
 
     async def run(self, instruction, environment, context):
         try:

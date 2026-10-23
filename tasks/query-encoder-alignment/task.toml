@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/query-encoder-alignment"
-version = "0.2.0"
+version = "1.0.0"
 description = "Optimize a query encoder based on a supplied small backbone against fixed document vectors."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "query-encoder", "distillation", "embedding", "gpu"]

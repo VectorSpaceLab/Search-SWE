@@ -1,18 +1,43 @@
 # Long-PDF Sentence Evidence — Vectorless
 
-Build a reusable, embedding-free index over the supplied *War and Peace* PDF and its fixed sentence inventory. Return up to five complete original sentence units supporting each interpretive question. Version 0.3.1 adopts the revised `long-pdf-evidence` v0.4.1 data and **SentenceEvidenceAccuracy**. Earlier page Recall@5 checks do not validate this version.
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `long-pdf-evidence-vectorless` |
+| Version | 1.0.0 |
+| Authors | Jianlyu |
+| Primary metric | SentenceEvidenceAccuracy |
+| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 10800 s |
+| Dataset | single long PDF |
+| Hidden queries | 12 |
+
+Build a reusable, embedding-free index over the supplied *War and Peace* PDF and its fixed sentence inventory. Return up to five complete original sentence units supporting each interpretive question. The task uses **SentenceEvidenceAccuracy** and the sentence-evidence inputs attributed in [SOURCES.md](SOURCES.md).
 
 The unchanged PDF has 2,043 physical pages; the question-independent inventory has 28,798 units. Ten public questions include support requirements and sufficient evidence. Twelve private questions use disjoint reference units. Page numbers are provenance only; alternative correct sentence evidence is accepted. See [instruction.md](instruction.md) for the agent request and [raw-instruction.md](raw-instruction.md) for the structured contract.
 
-## Runtime and isolation
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+The system must construct a reusable embedding-free index and retrieve original sentence evidence from a long novel. Evidence must jointly support the question within the output and runtime budgets.
+
+## Verification Explanation
+
+### Runtime and isolation
 
 The CPU image provides 16 CPUs, 64 GiB RAM and 100 GiB storage, without a GPU. Development is limited to 7,200 seconds. `/app/build.sh` creates a persistent index in 2,400 seconds. All build workers stop before private queries become visible, and the staged PDF **and sentence inventory** become root-owned (files 0400, directories 0700). Query processing must use only the index, supplied queries and submission code. Optional query-time services must start from that index alone. Embeddings are prohibited during both build and search; lexical indexing and permitted generation/non-embedding reranking remain available.
 
 The fresh separate verifier transfers `/app`, rebuilds the index, and runs submission commands as UID 10001. Up to five query processes share the index, each with 900 seconds and a shared 1,800-second deadline; cleanup has another 60 seconds. Failed or invalid queries remain in the twelve-query denominator with zero. The root-side grader reads a private corpus mount to verify fixed hashes and original sentence membership. Public validation and all judge credentials are excluded from submission processes.
 
-The answer judge uses OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0, two workers and at most two attempts/request, within 2,700 seconds. Complete evidence support earns 1; topical or incomplete evidence earns 0. API/parse failure invalidates the measurement and fails closed. The separate trajectory audit uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.147.0 with `deepseek/deepseek-v4.1-flash`, bounded at 3,600 seconds. Only a valid binary audit pass preserves accuracy as the final 0–1 reward. The entire verifier has 10,800 seconds.
+The answer judge uses OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0, two workers and at most two attempts/request, within 2,700 seconds. Complete evidence support earns 1; topical or incomplete evidence earns 0. API/parse failure invalidates the measurement and fails closed. The separate trajectory audit uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash`, bounded at 3,600 seconds. Only a valid binary audit pass preserves accuracy as the final 0–1 reward. The entire verifier has 10,800 seconds.
 
-## Credentials and evaluation
+### Credentials and evaluation
 
 Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the coding agent; `ANSWER_JUDGE_API_KEY` for the semantic judge; and `VERIFIER_OPENAI_API_KEY` / `VERIFIER_OPENAI_BASE_URL` for the trajectory audit. Both judge endpoints are `https://openrouter.ai/api/v1`. Set `ANSWER_JUDGE_BASE_URL` to that endpoint and `ANSWER_JUDGE_MODEL_NAME` to `deepseek/deepseek-v4.1-flash` for launcher validation; the task also pins both values. Optional solver calls use the separate `OPENROUTER_API_KEY` and only the models/endpoints in [available_resources.md](environment/docs/available_resources.md). The judge model is not a solver resource. Never include credential values in this package or artifacts.
 
@@ -28,7 +53,7 @@ bash scripts/run_task.sh --task long-pdf-evidence-vectorless --agent codex --ope
   --output jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-RUN_ID
 ```
 
-## Sources and validation status
+### Sources and validation status
 
 All four public inputs use the reviewed original task's published immutable pins, sizes and SHA-256 hashes. Private queries/references are reused unchanged from its v0.4.1 verifier. See [SOURCES.md](SOURCES.md) for provenance and publication limits. Private files are excluded from agent mounts but remain visible to repository readers, so this is not a secret evaluation set.
 
@@ -41,3 +66,7 @@ The October 16 Codex + OpenRouter Luna max trial completed verification with **S
 The four public inputs intentionally reuse the original task's published paths and immutable pins. Search-SWE `ac7dcc1` supports cross-task reuse while retaining source-path and integrity checks. On October 17, both checkouts and remote main contained that fix; this package passed the contribution checkout's merge-ready checker without asset changes. All 4 asset hashes, 20 task tests and the 174-test shared suite passed. The proposed duplicate upload was cancelled, and no data was published. See `contributing/dev/contribution-readiness/2026-10-17/REVIEW.md` for the current review.
 
 A public cart-purpose question omits the requester, allowing competing original scenes. Its supplied public reference requirements identify the intended furniture request; this observation does not invalidate the separate hidden-set measurement. On October 17 the contributor requested retaining wording unless modification was necessary, so the original public data are retained and this optional clarification is not a submission blocker. The diagnostic and proposed wording remain recorded in `public-query-ambiguity.md` under the October 16 author evidence directory. No question, grader or resource budget was changed in this review.
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

@@ -1,10 +1,21 @@
 # Sparse Retrieval Pruning
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `sparse-retrieval-pruning` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | quality_gated_linear_starter_speedup |
+| Compute | 1 CPUs; 32 GiB RAM; 80 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 16200 s |
+| Dataset | MS MARCO Passage v1 with frozen SPLADE sparse vectors |
+| Hidden queries | 1000 |
+
 Optimize a sparse retrieval system while preserving strict quality requirements.
 
-**Task:** `sparse-retrieval-pruning` · **Metric:** Quality-gated linear speedup reward
-
-## Overview
+### Overview
 
 Sparse retrieval efficiency depends on how terms, document identities, and
 posting lists fit together. A compact index is not useful if remapped terms
@@ -19,16 +30,9 @@ wall time relative to that reference. Quality thresholds are hard gates;
 passing submissions receive `clip((speedup - 4) / 12, 0, 1)`: 4× starts scoring,
 10× earns 50 points and 16× earns 100 points.
 
-## What This Task Tests
+### Task Setup
 
-- Building a bounded-memory inverted index over a large sparse corpus.
-- Keeping dictionaries, document mappings, and posting metadata consistent.
-- Reducing retrieval work without sacrificing required ranking quality.
-- Achieving speedups through Python data structures and algorithms rather than parallelism.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -45,7 +49,7 @@ The public assets are pinned to an immutable dataset revision in
 [assets.json](assets.json). Downloading verifies file sizes and SHA-256 checksums.
 Their Hugging Face source paths are under `tasks/sparse-retrieval-pruning/`.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The corpus, executable interface, and quality/runtime requirements are fixed.
 The agent may replace the starter's index format or retrieval algorithm.
@@ -58,7 +62,7 @@ code, compiled submission executables, and parallel query execution are outside
 the task. The input is set-valued; readers should not assume that weighted
 encoder outputs or a retrainable transformer are supplied.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU Python 3.12 environment has one CPU, 32 GiB memory, 80 GiB storage,
 and no GPU. The agent has two hours; the Harbor verifier has 270 minutes (worst-case stage budget).
@@ -69,7 +73,22 @@ within those bounds, and all verification stages share the overall phase budget.
 The formal build/search path requires no external service, credentials, or
 downloads. The private integrity judge's API access is a separate concern.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Building a bounded-memory inverted index over a large sparse corpus.
+- Keeping dictionaries, document mappings, and posting metadata consistent.
+- Reducing retrieval work without sacrificing required ranking quality.
+- Achieving speedups through Python data structures and algorithms rather than parallelism.
+
+## Verification Explanation
+
+### Submission Contract
 
 The transferred system includes `/app/build.sh` and `/app/run.sh`. The build
 creates all persistent state under the caller's index directory; the query
@@ -81,14 +100,14 @@ The exact fields and CLI are in [instruction.md](instruction.md). The
 [index format guide](environment/docs/index_format.md) explains the starter,
 but that particular storage format is not a required output artifact.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 Quality is measured using mean NDCG@10 and qrels-based Recall@100. The current
 minimums are **0.89** and **0.99** respectively.
 
-### Correctness and Latency Reward
+#### Correctness and Latency Reward
 
 The fixed corpus contains 1,000,000 documents. Each formal search invocation
 processes the same 1,000 hidden queries; the public development set contains
@@ -120,7 +139,7 @@ Let `s = median(starter wall time) / median(candidate wall time)`. If every
 round meets both quality gates and all execution/output/integrity checks pass,
 reward is `max(0, min(1, (s - 4) / 12))`, and score is 100 times reward.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 If either quality threshold, output and execution checks, or the trajectory
 audit fails, final reward is `0`. Otherwise the final reward is the speedup
@@ -128,7 +147,7 @@ reward described above. The verifier measures reference wall time afresh for eac
 The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -152,7 +171,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -165,7 +184,7 @@ assets, credentials, or hardware.
 | [Index format guide](environment/docs/index_format.md) | Starter layout and consistency relationships |
 | [Resource policy](environment/docs/available_resources.md) | Python dependency and execution restrictions |
 
-## Revision 0.5.2 validation
+### Revision 0.5.2 validation
 
 This revision implements the approved 4×–16× speedup calibration and five-round
 alternating protocol. Linux x86_64 Landlock and seccomp are required by the
@@ -196,3 +215,7 @@ Revision 0.5.2 removes a per-UID `RLIMIT_NPROC` that incorrectly counted
 unrelated containers on the host and could block the starter's serial shell
 launch. The container PID limit, kernel thread prohibition, worker monitoring,
 quality gates and scoring are unchanged.
+
+## References
+
+None.

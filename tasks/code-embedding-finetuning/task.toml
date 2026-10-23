@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/code-embedding-finetuning"
-version = "0.1"
+version = "1.0.0"
 description = "Improve a fixed-backbone code-retrieval embedder on supplied training data."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "code-retrieval", "embedding", "fine-tuning", "gpu"]

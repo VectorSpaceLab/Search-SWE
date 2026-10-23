@@ -4,7 +4,7 @@ artifacts = ["/app"]
 
 [task]
 name = "search-swe/code-context-retrieval"
-version = "0.1.0"
+version = "1.0.0"
 description = "Retrieve source regions needed to understand and address an issue in a fixed repository snapshot."
 authors = [{ name = "Bingyu" }]
 keywords = ["code-search", "context-retrieval", "repository-exploration"]

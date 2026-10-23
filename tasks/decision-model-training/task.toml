@@ -4,7 +4,7 @@ artifacts = ["/app/submission"]
 
 [task]
 name = "search-swe/decision-model-training"
-version = "0.1.0"
+version = "1.0.0"
 description = "Build an offline decision model that generalizes across categorical, Boolean and ordinal tasks."
 authors = [{ name = "Bingyu" }]
 keywords = ["decision-model", "multi-task-learning", "classification", "gpu", "offline"]

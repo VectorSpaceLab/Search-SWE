@@ -9,9 +9,9 @@ RUN /opt/conda/bin/python -m pip install --no-cache-dir --no-deps \
     --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     "gemlite==0.6.0.post2" "hqq==0.2.8.post1" "termcolor==3.3.0"
 
-ARG SEARCH_SWE_CODEX_VERSION=0.157.1
-ARG SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.283
-ARG SEARCH_SWE_PI_VERSION=0.87.1
+ARG SEARCH_SWE_CODEX_VERSION=0.164.0
+ARG SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.309
+ARG SEARCH_SWE_PI_VERSION=1.4.0
 RUN npm install --global --ignore-scripts \
     --registry=https://registry.npmmirror.com \
     "@openai/codex@${SEARCH_SWE_CODEX_VERSION}" \

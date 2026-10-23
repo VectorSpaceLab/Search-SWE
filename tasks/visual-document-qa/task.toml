@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/visual-document-qa"
-version = "0.4.0"
+version = "1.0.0"
 description = "Build a page search and question answering system over long visual documents."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["visual-documents", "page-search", "question-answering"]

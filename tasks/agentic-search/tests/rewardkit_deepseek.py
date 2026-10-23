@@ -4,11 +4,21 @@
 from __future__ import annotations
 
 import json
+from importlib.metadata import version
 import os
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from rewardkit import agents as rewardkit_agents
 from rewardkit.agents import CodexBackend, register_agent
+
+
+# RewardKit 0.2.0 selects its CLI/cache through this module-level pin. Keep its
+# installer, isolated authentication and JSON parser while using our tested CLI.
+CODEX_VERSION = "0.164.0"
+if version("harbor-rewardkit") != "0.2.0":
+    raise RuntimeError("Revalidate the Codex runtime pin before upgrading RewardKit")
+rewardkit_agents._CODEX_VERSION = CODEX_VERSION
 
 
 MODEL = {

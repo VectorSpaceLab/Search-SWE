@@ -1,22 +1,47 @@
 # Biomedical Graph Retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `biomedical-graph-retrieval` |
+| Version | 1.0.0 |
+| Authors | Cooki-e |
+| Primary metric | ExactSetAccuracy |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 5400 s |
+| Dataset | Complete fixed biomedical graph with authored, verified questions |
+| Public queries | 8 |
+| Hidden queries | 20 |
 
 Author: Cooki-e. Build a reusable search system over the supplied knowledge graph
 and return complete sets of internal node IDs. No training or fine-tuning.
 
 The local package includes the corpus, 8 public validation questions and 20
-private test questions. Version 0.2.2 retains the original three public examples
-and adds five independently verified examples: target-set intersection and
+private test questions. The public examples include target-set intersection and
 exclusion, distinct support counting, ordinary shortest paths, exclusive-target
 pathways, and ordered protein-pair counting. The graph and private split are
 unchanged. Public and private query anchors are disjoint; the public set does
 not cover every private query structure.
 
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Queries require complete answer sets from a graph, including intersections, exclusions, counts and paths. A single missing or extra node fails exact-set scoring, and the system must finish within each query deadline.
+
+## Verification Explanation
+
+### Scoring and recorded validation
+
 The completed v0.2.1 Codex/OpenRouter `openai/gpt-6-luna`, `max` trial scored
 0/20 exact sets with valid execution, no query timeouts and a passing trajectory
-audit. That trial used the previous three-example public set; it is not a
-v0.2.2 model result. [VALIDATION.md](VALIDATION.md) records the public-data update,
+audit. That trial used the three-example public set recorded in its original
+revision. [VALIDATION.md](VALIDATION.md) records the public-data update,
 local checks, historical run and finalizer repair separately. Source attribution,
 licensing records and construction evidence remain in the authoring workspace;
 source dataset names are omitted from this package.
@@ -48,3 +73,11 @@ python scripts/run_task.py --task biomedical-graph-retrieval --agent pi \
 
 The last command previews a launch and does not call a model. Completed runtime
 evidence, revision coverage and remaining release steps are in [VALIDATION.md](VALIDATION.md).
+
+The executable contract is in [instruction.md](instruction.md); [raw-instruction.md](raw-instruction.md) records the structured specification. See [tests/](tests/) for the separate verifier and [task.toml](task.toml) for phase budgets.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+## References
+
+None.

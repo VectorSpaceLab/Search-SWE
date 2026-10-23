@@ -1,10 +1,21 @@
 # Memory-constrained Dense Retrieval
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `memory-constrained-dense-retrieval` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | Accuracy@3 |
+| Compute | 16 CPUs; 0.5 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 7200 s |
+| Dataset | NaturalQuestions |
+| Hidden queries | 20 |
+
 Search a fixed vector collection larger than available RAM while meeting strict query deadlines.
 
-**Task:** `memory-constrained-dense-retrieval` · **Version:** 0.7.1 · **Metric:** Accuracy@3 × P95 latency factor, with a 95% quality floor
-
-## Overview
+### Overview
 
 This task contains 1.5 million precomputed NaturalQuestions document vectors,
 each with 1,024 float32 dimensions. The raw vectors occupy about 6.14 GB,
@@ -16,16 +27,9 @@ the system must become ready quickly and serve independent query invocations
 within a tight end-to-end deadline. The architecture is open, so memory
 management and service lifecycle are as important as the search algorithm.
 
-## What This Task Tests
+### Task Setup
 
-- Designing dense-vector search under a memory budget smaller than the corpus.
-- Balancing index preparation, retrieval quality, and query latency.
-- Keeping a reusable service available across short-lived query clients.
-- Accounting for process startup and serialization in end-to-end performance.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -52,7 +56,7 @@ Top-3 hits, favoring small relevant-document margins over rank four and
 balancing those margins between splits. This margin is a difficulty proxy,
 not evidence of failure by a measured ANN baseline.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 Document and query vectors are supplied inputs. Index organization, compression,
 storage access, and the retrieval implementation may change. External models,
@@ -60,7 +64,7 @@ retrieval services, and answer mappings are not part of the task.
 An internal representation must still produce valid results for the supplied
 vectors and preserve their document identities.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 Both phase containers provide 16 CPUs for development and offline construction, 512 MiB aggregate memory, no swap, 100 GiB storage allowance and no GPU. Final online queries have a separate one-logical-CPU budget: the client, restarted service and every descendant share the same single allowed CPU. Both phases use a per-process open-file soft and hard limit of 1,048,576, including non-root verifier build and query processes. The memory cgroup includes the build, resident service, clients, all descendants, charged file-cache pages, and runtime/verifier overhead; it is not a per-process allowance. Both agent development and final verification have a 120-minute total limit. Failed development experiments do not by themselves set the final reward; final verification starts in a fresh container. The final build has a 150-second limit and each query has a 0.5-second hard deadline. The 100 GiB storage allowance is an audited policy, not a kernel filesystem quota; index sizes are reported.
 
@@ -72,7 +76,22 @@ The submitted build must finish within **150 seconds**, including service
 startup. Every query invocation has a **0.5-second wall-clock limit**, measured
 from process start through exit and protected output capture, including the full query path. The grader records index size.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Designing dense-vector search under a memory budget smaller than the corpus.
+- Balancing index preparation, retrieval quality, and query latency.
+- Keeping a reusable service available across short-lived query clients.
+- Accounting for process startup and serialization in end-to-end performance.
+
+## Verification Explanation
+
+### Submission Contract
 
 The deliverable contains `/app/build.sh` and `/app/run.sh`. The first builds the
 index and starts a reusable service; the second accepts query-vector files and
@@ -83,9 +102,9 @@ separately for each question. Submission execution is unprivileged, with
 persistent and runtime artifacts written to the supplied index directory.
 The complete interface is in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 Each query earns 1 only when its invocation exits successfully, its valid output
 is captured within 0.5 seconds, and its top three results contain a relevant
@@ -93,7 +112,7 @@ document. Otherwise that query earns 0. The primary metric is the mean of
 these 20 binary scores; 17 passing queries give Accuracy@3 = 0.85 and fail the minimum 0.95 quality requirement. The report
 also records retrieval accuracy without the latency gate for diagnosis.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks output coverage, document IDs, finite scores, ordering,
 and the execution deadline for each invocation. Incorrect answers, malformed
@@ -103,7 +122,7 @@ process group while preserving the separately started query service. Build
 failure, an invalid index, or invalid evaluator inputs still invalidate the
 evaluation. The 512 MiB container memory limit applies throughout execution.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A trajectory audit independently checks task compliance. Let `A` be the mean of the 20 latency-gated Accuracy@3 values and `L95` the P95 duration in seconds. The service must achieve `A >= 0.95`: at least 19 of the 20 queries must pass the accuracy, output and 0.5-second execution gates. Below this quality floor the reward is zero. At or above it, the normalized reward before the integrity gate is `A * min(1, 0.030 / L95)`; the displayed score is 100 times this reward. Accuracy and the latency factor are still reported when the quality floor is missed. This is an acceptance threshold on this fixed workload, not a statistical confidence guarantee. At `A=1`, P95 values of 30, 60 and 150 ms earn 100, 50 and 20 points. At `A=0.95`, 30 and 150 ms earn 95 and 19 points; `A=0.90` earns zero regardless of speed. A failed build, invalid or oversized index, invalid evaluator inputs, out-of-memory kill observed in the final verifier container, or failed retrieval-integrity check makes the overall reward zero.
 
@@ -112,7 +131,7 @@ The verifier starts from an empty index workspace and builds once. After the suc
 It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its
 DeepSeek endpoint and key only in the verifier.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -135,7 +154,7 @@ Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspec
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -146,8 +165,12 @@ assets, credentials, or hardware.
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 
-## Local regression checks
+### Local regression checks
 
 Run `python -m unittest discover -s tasks/memory-constrained-dense-retrieval/tests -p "test_*.py"`. Runtime grading requires Linux blocking process waits and a cgroup-v2 container with memory.max=536870912 and memory.swap.max=0. The grader records final-verifier container memory peak/events; any OOM kill in that container fails the evaluation. The two Compose overlays set identical 16-CPU, 512-MiB/no-swap container limits. The native query launcher enforces one logical CPU for all online submission processes.
 
 The verifier snapshots each output immediately after observing client exit, in a root-only directory. Query timing ends after capture completes, so every scored byte was received within the measured interval. Validation uses only that protected snapshot; writes through retained descriptors after capture cannot change it. The same capture-inclusive duration controls the 0.5-second deadline and P95.
+
+## References
+
+None.

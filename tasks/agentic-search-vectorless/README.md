@@ -1,22 +1,41 @@
 # Agentic Search — Vectorless
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `agentic-search-vectorless` |
+| Version | 1.0.0 |
+| Authors | Jianlyu |
+| Primary metric | GoldRecall@5 |
+| Compute | 32 CPUs; 128 GiB RAM; 200 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 19200 s |
+| Dataset | BrowseComp-Plus |
+| Hidden queries | 20 |
+
 Build retrieval over the 100,195-document BrowseComp-Plus corpus without embeddings, BM25 or external retrieval/reranking. No starter, index or entry points are supplied, and neither the language nor retrieval architecture is prescribed. Each query may make at most 20 independent retrieval rounds. Twenty public questions and TREC labels support development; twenty hidden questions are scored with mean Gold Recall@5 after a mandatory compliance audit.
 
 [raw-instruction.md](raw-instruction.md) is the structured specification. [instruction.md](instruction.md) is the complete prose request sent to the agent. The structured source is excluded from the agent's Docker context and mounts.
 
-## Environment and verifier
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Retrieval must combine evidence across a large corpus within 20 retrieval rounds per query. The resource policy excludes embeddings, BM25 and external retrieval services, so the system needs an effective corpus navigation and evidence selection strategy.
+
+## Verification Explanation
+
+### Environment and verifier
 
 The CPU shared image provides 32 CPUs, 128 GiB RAM and 200 GiB storage. Agent time is 7,200 seconds. The verifier discards the transferred `/app/index`, builds once as UID/GID 65534 and runs up to five query invocations sharing the fresh index and any optional build-started service. Build has a 600-second cap. Build, query execution and deterministic scoring share a 15,300-second wall-clock allowance, with no individual query timeout. The verifier has 19,200 seconds including a separate audit of up to 3,600 seconds. Any execution/output failure invalidates the entire submission.
 
-Submitted processes receive an explicit environment allowlist and the task `OPENROUTER_API_KEY`, never judge credentials. The task-local `tests/trajectory_gate.py` orchestrates retrieval and the mandatory audit. After retrieval, submission processes stop before auditing. The judge uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.147.0 with `deepseek/deepseek-v4.1-flash` at `https://openrouter.ai/api/v1`. Configure host `VERIFIER_OPENAI_BASE_URL` and `VERIFIER_OPENAI_API_KEY` locally; the latter is a separate OpenRouter judge key. Missing trajectory, bad output, judge failure/timeout or a detected violation leaves zero reward. Algorithm and round-limit auditing is not a formal guarantee of detecting every violation.
+Submitted processes receive an explicit environment allowlist and the task `OPENROUTER_API_KEY`, never judge credentials. The task-local `tests/trajectory_gate.py` orchestrates retrieval and the mandatory audit. After retrieval, submission processes stop before auditing. The judge uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash` at `https://openrouter.ai/api/v1`. Configure host `VERIFIER_OPENAI_BASE_URL` and `VERIFIER_OPENAI_API_KEY` locally; the latter is a separate OpenRouter judge key. Missing trajectory, bad output, judge failure/timeout or a detected violation leaves zero reward. Algorithm and round-limit auditing is not a formal guarantee of detecting every violation.
 
-## Sources and structural references
-
-The corpus/public split has the exact current `tasks/agentic-search/assets.json` hashes and named paths, pinned to official dataset revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. No source bytes were changed or republished. See [SOURCES.md](SOURCES.md) for provenance and usage terms. Published inputs may be reused at their original paths. The hidden split remains runtime-isolated but visible to repository readers; it is not a secret evaluation set.
-
-Read-only references: `tasks/agentic-search` for corpus layout, build/query lifecycle and deterministic Recall scoring, and `tasks/long-pdf-evidence` for the current trajectory-judge backend. Intentional differences: no ReAct/BM25 starter, no embeddings or BM25, no external retrieval/reranking, and a broader audit of the embedding/BM25 bans and other task constraints; the reviewed task now also has a trajectory audit. The allowed Qwen generation models remain those in this package's resource document.
-
-## Validation
+### Validation
 
 From the repository root, restore inputs with `python scripts/download_assets.py --task agentic-search-vectorless`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
 
@@ -26,7 +45,7 @@ The October 15 Codex + OpenRouter `openai/gpt-6-luna`, effort `max`, trial produ
 
 The job is `jobs/evaluations/agentic-search-vectorless/codex/openai/gpt-6-luna/max/attempt-1/2026-10-15__14-05-14/`. Before the PR #17 fixes, all 28 recorded package file hashes matched the evaluated revision, apart from documentation changes. On October 17, against `ac7dcc1`, merge-ready checks, all 3 asset hashes, 22 task tests and the 174-test shared suite passed. These are historical results; v0.2.2 subsequently clarifies the audit's permitted query-input interface. Public and hidden query IDs and gold document IDs are disjoint. The author review is `contributing/dev/contribution-readiness/2026-10-17/REVIEW.md`.
 
-### PR #17 audit clarification (v0.2.2)
+#### PR #17 audit clarification (v0.2.2)
 
 The audit explicitly permits reading the query file passed to `run.sh --queries`
 during formal query execution. Obtaining hidden queries outside that interface,
@@ -40,7 +59,7 @@ checks, release checks, and the **174-test shared suite**. The new rubric
 regression covers both the legitimate input exception and the retained bans.
 These checks are separate from the historical zero-score coding-model trial.
 
-### Real-corpus known-good verification (October 17)
+#### Real-corpus known-good verification (October 17)
 
 An author-only reference submission was frozen after public-only calibration
 (public Gold Recall@5 **0.115833**, 6/20 questions with hits). It reuses the earlier
@@ -73,3 +92,20 @@ provenance checks and results are retained under
 `contributing/dev/agentic-search-vectorless/2026-10-17-pr17/`, outside the public
 task package. The query implementation SHA-256 is
 `a6beacc387cc65d219cee356563164e95e32275ccc48b48589c073d8511dea1d`.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task agentic-search-vectorless
+bash scripts/run_task.sh --task agentic-search-vectorless --model YOUR_AGENT_MODEL
+```
+
+## References
+
+### Sources and structural references
+
+The corpus/public split has the exact current `tasks/agentic-search/assets.json` hashes and named paths, pinned to official dataset revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. No source bytes were changed or republished. See [SOURCES.md](SOURCES.md) for provenance and usage terms. Published inputs may be reused at their original paths. The hidden split remains runtime-isolated but visible to repository readers; it is not a secret evaluation set.
+
+Read-only references: `tasks/agentic-search` for corpus layout, build/query lifecycle and deterministic Recall scoring, and `tasks/long-pdf-evidence` for the current trajectory-judge backend. Intentional differences: no ReAct/BM25 starter, no embeddings or BM25, no external retrieval/reranking, and a broader audit of the embedding/BM25 bans and other task constraints; the reviewed task now also has a trajectory audit. The allowed Qwen generation models remain those in this package's resource document.

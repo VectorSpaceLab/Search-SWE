@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/lightweight-query-retrieval"
-version = "0.4.0"
+version = "1.0.0"
 description = "Reduce complete query processing time while maintaining a required retrieval quality across three document collections."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "efficiency", "query-encoding", "gpu"]

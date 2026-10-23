@@ -114,7 +114,7 @@ The launcher selects exactly one coding-model hostname: the hostname in `AGENT_O
 `api.anthropic.com` host for direct Claude Code. With `--openrouter`, Codex and
 Claude Code use `openrouter.ai`. The launcher passes the selected host through
 Harbor's `--allow-agent-host`, which augments only the `agent.run()` phase.
-Codex 0.157.1, Pi 0.87.1, and Claude Code 2.1.283 are preinstalled in every
+Codex 0.164.0, Pi 1.4.0, and Claude Code 2.1.309 are preinstalled in every
 agent image, so agent setup does not need package-registry or general internet
 access.
 
@@ -144,7 +144,7 @@ invoking Harbor directly on a non-public task, add the matching hostname:
 PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
   --env scripts.harbor_environments:PhaseScopedDocker \
   --agent scripts.harbor_agents:PreinstalledCodex --model MODEL_ID \
-  --ak version=0.157.1 \
+  --ak version=0.164.0 \
   --allow-agent-host MODEL_API_HOST
 ```
 
@@ -156,7 +156,7 @@ PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
   --env scripts.harbor_environments:PhaseScopedDocker \
   --agent scripts.harbor_agents:PreinstalledClaudeCode \
   --model ANTHROPIC_MODEL_ID \
-  --ak version=2.1.283 \
+  --ak version=2.1.309 \
   --ae 'ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}' \
   --allow-agent-host api.anthropic.com
 ```

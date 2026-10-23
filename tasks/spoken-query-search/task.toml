@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/spoken-query-search"
-version = "0.5.0"
+version = "1.0.0"
 description = "Build document search that handles uncertainty in noisy speech transcriptions."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["speech", "uncertainty", "document-retrieval", "multilingual"]

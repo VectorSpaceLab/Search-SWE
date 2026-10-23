@@ -1,4 +1,15 @@
-# deletion-resilient-vector-search
+# Deletion Resilient Vector Search
+
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `deletion-resilient-vector-search` |
+| Version | 1.0.0 |
+| Authors | jianlyu |
+| Primary metric | normalized log-error reduction * (0.8 + 0.2 memory efficiency) |
+| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 86400 s |
 
 Maintain graph-vector search quality and reclaim memory through 100 deletion stages on SIFT1M and GIST1M.
 
@@ -9,7 +20,21 @@ The coding agent receives [instruction.md](instruction.md),
 Those documents specify the submission interface, allowed inputs, scoring,
 failure behavior and public self-check commands.
 
-## Restore inputs
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Repeated deletions affect graph connectivity, recall and memory use. The implementation must retain search quality while reclaiming memory across 100 deletion stages on two vector collections.
+
+## Verification Explanation
+
+The verifier replays 100 deletion stages on each dataset, measuring Recall@10 and process memory. Reward combines normalized logarithmic error reduction over the frozen tombstone reference with memory efficiency. Build, mutation, query and resource limits apply throughout the sequence. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
 
@@ -25,7 +50,7 @@ python tasks/deletion-resilient-vector-search/tools/prepare_truth.py --dataset g
 restoration paths. Keep verifier inputs outside agent mounts. Model cards,
 licenses and data-use restrictions are described in the resource document.
 
-## Run
+### Run
 
 The task allocates 16 CPU cores, 64 GiB RAM and
 100 GiB storage. Agent development has
@@ -68,7 +93,7 @@ After every container/process for this run has exited, unmount its storage:
 python tasks/deletion-resilient-vector-search/tools/prepare_storage.py --run-id RUN_ID --unmount
 ```
 
-## Validate the package
+### Validate the package
 
 ```bash
 python scripts/check_tasks.py tasks/deletion-resilient-vector-search
@@ -79,3 +104,7 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+## References
+
+None.

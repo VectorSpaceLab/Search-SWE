@@ -6,7 +6,7 @@ artifacts = [
 
 [task]
 name = "search-swe/rust-bm25-search"
-version = "0.1.0"
+version = "1.0.0"
 description = "Build a Rust BM25 index from MS MARCO passages and improve quality, search time and index size above a pinned Pyserini quality floor."
 authors = [{ name = "MXueguang", email = "x93ma@edu.uwaterloo.ca" }]
 keywords = ["information-retrieval", "bm25", "rust", "cpu", "efficiency"]

@@ -1,14 +1,26 @@
 # Quantity-aware Retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: **Bingyu**. This is a local, unpublished Search-SWE task package over
+| Field | Value |
+| --- | --- |
+| Task | `quantity-aware-retrieval` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Normalized binary nDCG@10 |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 4800 s |
+| Dataset | MedQuant, original passages and qrels |
+| Public queries | 0 |
+| Hidden queries | 210 |
+
+Author: **Bingyu**. This Search-SWE task uses
 MedQuant. The required deliverable is an executable retrieval system. Resources
 include labeled examples, Qwen3-Embedding-0.6B and documented OpenRouter/Jina APIs. No
 baseline implementation, authoring helper, or precomputed document vectors are
 provided to the agent.
 
-## Data and split
+### Data and split
 
 | Input | Size |
 | --- | ---: |
@@ -36,7 +48,19 @@ fixtures are in `../../../task_development/quantity-aware-retrieval/`, outside
 this task. No `authoring/`, `bundled/`, `environment/tools/` or public starter is
 part of the package.
 
-## Evaluation
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Clinical relevance depends on numerical conditions as well as topic similarity. The system must interpret quantities and units from the supplied text and generalize from synthetic examples to the original hidden questions.
+
+## Verification Explanation
+
+### Evaluation
 
 The engine implements `/app/build.sh` and `/app/run.sh`, as specified in
 `instruction.md`. A separate verifier runs the submission as UID 10001, with
@@ -72,7 +96,30 @@ a 21,600-second (6-hour) agent phase shared by implementation, optional training
 validation. Both phases use the repository shared CUDA 13.0/Python 3.12 image.
 The GPU environment document is copied from `docker/gpu/environment.md`.
 
-## Provenance and limitations
+### Local operation and validation
+
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+
+```bash
+python scripts/download_assets.py --task quantity-aware-retrieval --verify-only
+python -m unittest discover -s tasks/quantity-aware-retrieval/tests -p 'test_*.py'
+python scripts/run_task.py --task quantity-aware-retrieval --agent codex --openrouter --dry-run
+```
+
+The coding model and verifier credentials are configured in the repository's
+ignored `.env`; do not place credentials in this task. Task APIs are optional.
+The verifier judge requires `VERIFIER_OPENAI_BASE_URL` and
+`VERIFIER_OPENAI_API_KEY`. A real coding-model trial and live judge health check
+are separate from package/unit/container smoke tests. See `VALIDATION.md` for
+commands actually run, observed results, and unperformed release/evaluation steps.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+### Provenance and limitations
 
 MedQuant and the underlying training material are from
 [QuantityAwareRankers](https://github.com/satya77/QuantityAwareRankers), associated
@@ -99,20 +146,3 @@ files were independently checked against their manifest sizes and SHA-256.
 The model card declares Apache-2.0. The enclosing repository's code license does
 not establish redistribution rights for the MedQuant/training sources; those
 terms remain unresolved and are recorded in the published source notices.
-
-## Local operation and validation
-
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
-
-```bash
-python scripts/download_assets.py --task quantity-aware-retrieval --verify-only
-python -m unittest discover -s tasks/quantity-aware-retrieval/tests -p 'test_*.py'
-python scripts/run_task.py --task quantity-aware-retrieval --agent codex --openrouter --dry-run
-```
-
-The coding model and verifier credentials are configured in the repository's
-ignored `.env`; do not place credentials in this task. Task APIs are optional.
-The verifier judge requires `VERIFIER_OPENAI_BASE_URL` and
-`VERIFIER_OPENAI_API_KEY`. A real coding-model trial and live judge health check
-are separate from package/unit/container smoke tests. See `VALIDATION.md` for
-commands actually run, observed results, and unperformed release/evaluation steps.

@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/video-moment-search"
-version = "0.6.0"
+version = "1.0.0"
 description = "Build temporal search over fixed video representations."
 authors = [{ name = "Haoran Jin" }]
 keywords = ["video", "moment-retrieval", "temporal", "gpu"]

@@ -1,4 +1,15 @@
-# budgeted-bimetric-retrieval
+# Budgeted Bimetric Retrieval
+
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `budgeted-bimetric-retrieval` |
+| Version | 1.0.0 |
+| Authors | jianlyu |
+| Primary metric | baseline-normalized mean nDCG@10 |
+| Compute | 16 CPUs; 32 GiB RAM; 64 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 16200 s |
 
 Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query.
 
@@ -9,7 +20,21 @@ The coding agent receives [instruction.md](instruction.md),
 Those documents specify the submission interface, allowed inputs, scoring,
 failure behavior and public self-check commands.
 
-## Restore inputs
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+A large candidate corpus must be searched with only 20 expensive distance calls and two seconds per query. Candidate generation and allocation of the limited oracle calls must improve ranking over the frozen baseline.
+
+## Verification Explanation
+
+The verifier averages nDCG@10 over all 3,452 hidden queries, including failed queries as zero, then normalizes improvement between the frozen baseline and full-corpus expensive-vector reference. Per-query oracle-call and time limits are enforced; build, resource and integrity failures give zero final reward. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
 
@@ -22,7 +47,7 @@ python scripts/download_assets.py --task budgeted-bimetric-retrieval --verify-on
 restoration paths. Keep verifier inputs outside agent mounts. Model cards,
 licenses and data-use restrictions are described in the resource document.
 
-## Run
+### Run
 
 The task allocates 16 CPU cores, 32 GiB RAM and
 64 GiB storage. Agent development has
@@ -70,7 +95,7 @@ After every container/process for this run has exited, unmount its storage:
 python tasks/budgeted-bimetric-retrieval/tools/prepare_storage.py --run-id RUN_ID --unmount
 ```
 
-## Validate the package
+### Validate the package
 
 ```bash
 python scripts/check_tasks.py tasks/budgeted-bimetric-retrieval
@@ -81,3 +106,7 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+## References
+
+None.

@@ -1,6 +1,18 @@
 # Methodology Inspiration Retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `methodology-inspiration-retrieval` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Mean Recall@3 improvement |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 3000 s |
+| Dataset | MIR, screened fixed-corpus derivative |
+| Public queries | 0 |
+| Hidden queries | 122 |
 
 Build a working search engine that retrieves papers offering methodological
 inspiration for a research problem and motivation. The solver receives a fixed
@@ -8,7 +20,7 @@ abstract collection, citation examples, Stella 400M, one A100 40GB and the
 documented OpenRouter/Jina APIs. No implementation or training procedure is
 required. Author: **Bingyu**.
 
-## Package contract
+### Package contract
 
 | Item | Setting |
 | --- | --- |
@@ -34,7 +46,7 @@ shared environment. `/opt/stella/bin/python` supplies an isolated Transformers
 the base PyTorch installation. Model loading and readiness belong to the build
 budget; initialization deferred to `run.sh` counts against the 12-second limit.
 
-## Data and provenance
+### Data and provenance
 
 Source: [MIR: Methodology Inspiration Retrieval for Scientific Research Problems](https://aclanthology.org/2025.acl-long.1390/),
 Garikaparthi et al., ACL 2025;
@@ -76,7 +88,19 @@ per-paper redistribution license inventory. No blanket unrestricted license is
 claimed. Stella's upstream model card declares MIT; its revision is
 `ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20`.
 
-## Evaluation
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Relevant papers may share a useful methodology with a research proposal without sharing its topic vocabulary. The system must retrieve those connections from abstracts within the short batch retrieval deadline.
+
+## Verification Explanation
+
+### Evaluation
 
 For each query, `recall_q = |top3 ∩ positives_q| / |positives_q|`.
 `Q` is the arithmetic mean over all 122 queries. Positive-set sizes are
@@ -99,7 +123,7 @@ receives zero. A successful passing trajectory audit is required for final
 reward; unavailable or failed judges never silently pass. The numerical
 normalization is author/verifier information, not solver implementation advice.
 
-## Authoring and release status
+### Authoring and release status
 
 Construction scripts, source maps, review decisions, baseline implementations
 and runtime evidence live in the sibling author workspace
@@ -118,3 +142,20 @@ metric, normalization and deadlines. Fenced command examples follow the user's
 preferred instruction style. No starter or reference solution is shipped.
 
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task methodology-inspiration-retrieval
+bash scripts/run_task.sh --task methodology-inspiration-retrieval --gpu-device 0 --model YOUR_AGENT_MODEL
+```
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Task reference](https://aclanthology.org/2025.acl-long.1390/).

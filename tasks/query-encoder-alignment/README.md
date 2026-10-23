@@ -1,10 +1,22 @@
 # Query-side Encoder Alignment
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `query-encoder-alignment` |
+| Version | 1.0.0 |
+| Authors | Search-SWE |
+| Primary metric | Accuracy@1 error reduction above frozen 0.6B ridge, after runtime gate |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 43200 s / 5700 s |
+| Dataset | local frozen retrieval corpus |
+| Public queries | 100 |
+| Hidden queries | 100 |
+
 Improve a compact query encoder against a document collection whose embeddings cannot change.
 
-**Task:** `query-encoder-alignment` v0.2.0 · **Metric:** Accuracy@1 error reduction above frozen ridge, with a runtime gate
-
-## Overview
+### Overview
 
 Replacing or tuning a query encoder does not automatically preserve its
 compatibility with an existing document index. This task fixes the document
@@ -16,16 +28,9 @@ reference. It is therefore a joint representation and execution problem:
 a query vector must land in the right document space, and the complete query
 pipeline must stay within the relative runtime budget.
 
-## What This Task Tests
+### Task Setup
 
-- Aligning a compact query representation with a frozen document-vector space.
-- Preserving document identities and vector-row correspondence.
-- Balancing query encoding quality with end-to-end execution time.
-- Packaging deterministic inference and retrieval for offline verification.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -42,7 +47,7 @@ signals on public inputs. Its private permissions keep it inaccessible to the
 unprivileged final process; it is not an allowed final inference backbone.
 There are 100 hidden evaluation queries, isolated from the agent environment.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 The query-side system may be adapted within the supplied 0.6B backbone
 requirement. Document vectors must not be modified, re-encoded, replaced,
@@ -51,24 +56,35 @@ or reordered. Task network access during development is restricted to
 evaluation labels, or external retrieval results. The final submission must
 be self-contained and offline.
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The Python 3.12 runtime uses CUDA-enabled PyTorch, 8 CPUs, 32 GiB memory, and
 a 100 GiB storage budget. The local Docker backend does not enforce that budget
 with a filesystem quota; the completed calibration stayed well below it.
 Both Compose configurations and `task.toml` request **one
-NVIDIA GPU**. Set `QUERY_ALIGNMENT_GPU_DEVICE` to the reserved host GPU UUID or
-index before rendering/building a trial. Both phases explicitly map this device.
-For local Docker, the shared launcher works around Harbor 0.22.0's GPU
-capability preflight with `--override-gpus 0`; the Compose reservations still
-provide the GPU to both containers.
+NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
 The agent has 12 hours. Task-specific verification has 70 minutes inside
 the 95-minute Harbor verifier phase, with the integrity check bounded separately.
 The candidate must finish within **60% of the measured reference runtime**.
 The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Aligning a compact query representation with a frozen document-vector space.
+- Preserving document identities and vector-row correspondence.
+- Balancing query encoding quality with end-to-end execution time.
+- Packaging deterministic inference and retrieval for offline verification.
+
+## Verification Explanation
+
+### Submission Contract
 
 The complete deliverable lives under `/app/submission` and includes an executable
 `run.sh`. It accepts document vectors and query files, and returns one ranked
@@ -78,9 +94,9 @@ Outputs must be deterministic and preserve query order, and execution must
 leave no background processes. [instruction.md](instruction.md) defines the
 complete interface; no separate submitted build step is required.
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 The public quality reference freezes Qwen3-Embedding-0.6B and fits centered
 ridge once on all public corpus/text-vector pairs. Its fixed settings and
@@ -105,7 +121,7 @@ Both references exclude same-ID documents and all canonical-text copies:
 NFKC, collapse whitespace, casefold. They rank all unchanged vectors, filter,
 then refill; ties use corpus row order. The grader rejects excluded results.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 Candidate wall time must be at most `0.60 × starter wall time`, measured on the
 same hidden workload. Missing the gate makes reward zero even if accuracy is
@@ -116,7 +132,7 @@ sets time and a second fresh process checks byte-identical results. Timeout
 cleanup time is logged separately. Vector checksums and shape, query coverage/order, result validity, and
 clean process termination are also checked.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 The normalized quality reward is accepted only after runtime and validity gates
 and the independent trajectory audit pass. Failure at any gate produces zero.
@@ -127,7 +143,7 @@ network denial.
 The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
 
-## Running This Task
+### Running This Task
 
 From the repository root, follow the [quick start](../../docs/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
@@ -142,8 +158,7 @@ so the reference model's private file permissions retain their intended effect.
 ```bash
 python scripts/download_assets.py --task query-encoder-alignment
 python scripts/download_assets.py --task query-encoder-alignment --verify-only
-export QUERY_ALIGNMENT_GPU_DEVICE=YOUR_RESERVED_GPU_UUID
-bash scripts/run_task.sh --task query-encoder-alignment --agent codex --openrouter \
+bash scripts/run_task.sh --task query-encoder-alignment --gpu-device 0 --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --output jobs/query-encoder-alignment-UNIQUE_RUN_ID
 ```
 
@@ -155,7 +170,7 @@ Configure `AGENT_OPENROUTER_API_KEY`, `VERIFIER_OPENAI_API_KEY` and
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -168,7 +183,7 @@ assets, credentials, or hardware.
 | [Starter notes](environment/starter/README.md) | Teacher-side baseline and public validation |
 | [Resource policy](environment/docs/available_resources.md) | Development access and offline submission rules |
 
-## Data provenance and local checks
+### Data provenance and local checks
 
 The packaged ArguAna corpus matches mteb/arguana commit
 `6c1bcf74b13dfd823aff056b79d4d93e702f19c7`, with task-specific IDs; its source
@@ -212,3 +227,9 @@ This one accepted Luna/max solve supports the approximate 20-point difficulty
 target; the historical Opus artifact replay scores below 50. A legal author
 solution achieving 100% hidden accuracy has not been demonstrated; synthetic
 grader tests establish the full-score numeric boundary only.
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Task reference](https://arxiv.org/abs/2506.05176v3).

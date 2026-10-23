@@ -1,15 +1,25 @@
 # ChunQiu Temporal Retrieval
 
-Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+## Task Metadata
 
-Author: **Bingyu**. Local task package, version **0.1.0**.
+| Field | Value |
+| --- | --- |
+| Task | `chunqiu-temporal-retrieval` |
+| Version | 1.0.0 |
+| Authors | Bingyu |
+| Primary metric | Mean binary nDCG@10 |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
+| Agent / verifier time limits | 21600 s / 3000 s |
+| Dataset | ChunQiuTR, audited event-only derivative |
+| Public queries | 0 |
+| Hidden queries | 778 |
 
 Retrieve original event records for reign-based dates and time windows in
 Classical Chinese annals. Return up to ten records from the complete corpus.
 The submission may use the supplied local model and the documented APIs.
 No starter implementation or author baseline is included in the agent files.
 
-## Data and audit
+### Data and audit
 
 Source: [official ChunQiuTR](https://github.com/xbdxwyh/ChunQiuTR/tree/392d6ec8d62de8256b3b45578f7b4484c22042ce),
 commit `392d6ec8d62de8256b3b45578f7b4484c22042ce`.
@@ -54,7 +64,19 @@ records can still require difficult contextual temporal inference.
 
 See [LICENSE.data.md](LICENSE.data.md) for source and model notices. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
-## Runtime and scoring
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Questions combine Classical Chinese event descriptions with reign-based dates and temporal windows. Retrieval must resolve these constraints against original records while preserving relevance under the fixed runtime limits.
+
+## Verification Explanation
+
+### Runtime and scoring
 
 One A100 40GB, 16 CPUs, 32 GiB RAM, 100 GiB storage; development is six hours.
 Both images use the repository GPU image. `build.sh --corpus --index-dir` has
@@ -81,7 +103,7 @@ mounted read-only. Public examples are not mounted in verification. Hidden
 labels, grader code, audit credentials, trajectories and reward logs remain
 root-private. Query order and request IDs are refreshed at verification time.
 
-## Structural references and validation
+### Structural references and validation
 
 Reviewed base: `46197a43f8cbb364e72b6d63d5db873ae7d2cac8`.
 `tasks/reasoning-query-rewriting` supplies the full-corpus CLI and separate
@@ -104,3 +126,20 @@ python scripts/check_tasks.py tasks/chunqiu-temporal-retrieval
 ```
 
 Public data pins are present. See RUN_RESULTS.md for current trial evidence and VALIDATION.md for historical author-stage checks.
+
+See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+
+### Running the task
+
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+
+```bash
+python scripts/download_assets.py --task chunqiu-temporal-retrieval
+bash scripts/run_task.sh --task chunqiu-temporal-retrieval --gpu-device 0 --model YOUR_AGENT_MODEL
+```
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+
+## References
+
+- [Task reference](https://aclanthology.org/2026.findings-acl.612/).

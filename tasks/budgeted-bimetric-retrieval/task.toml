@@ -3,7 +3,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/budgeted-bimetric-retrieval"
-version = "0.2.2"
+version = "1.0.0"
 description = "Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query."
 authors = [{name = "jianlyu"}]
 keywords = ["retrieval", "bimetric", "nq", "query-budget", "cpu"]

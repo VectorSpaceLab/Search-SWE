@@ -1,10 +1,22 @@
 # Visual-Document Question Answering
 
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `visual-document-qa` |
+| Version | 1.0.0 |
+| Authors | Haoran Jin |
+| Primary metric | SourceMacroAnswerAccuracy |
+| Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
+| Agent / verifier time limits | 7200 s / 45000 s |
+| Dataset | DocLensDatasets: MMLongBench-Doc and FinRAGBench-V |
+| Public queries | 5 |
+| Hidden queries | 2471 |
+
 Answer questions from text, tables and figures in a specified long document.
 
-**Task:** `visual-document-qa` · **Metric:** SourceMacroAnswerAccuracy
-
-## Overview
+### Overview
 
 Relevant information in a long PDF may span prose, tables, charts and
 several pages. The system must locate and read that evidence, then give a direct
@@ -13,15 +25,9 @@ answer or identify that the document does not contain the requested information.
 Each request identifies a document. Evidence-page citations are reported, while
 final answer quality is the primary metric.
 
-## What This Task Tests
+### Task Setup
 
-- Indexing long PDFs while retaining page provenance.
-- Combining textual and visual evidence for answer generation.
-- Handling numeric, list and unanswerable questions.
-
-## Task Setup
-
-### Provided Assets
+#### Provided Assets
 
 | Asset | Purpose |
 | --- | --- |
@@ -43,7 +49,7 @@ can also appear in private questions. Four upstream answer-type metadata fields
 are corrected deterministically; the questions, canonical answers and comparison
 rules are unchanged.
 
-### Fixed Components and Allowed Changes
+#### Fixed Components and Allowed Changes
 
 PDFs, original question/answer labels and output interfaces are fixed.
 Parsing, rendering, indexing, retrieval and answer synthesis are implementation
@@ -51,14 +57,28 @@ choices. No starter, local GPU or precomputed vectors are supplied.
 Optional OpenRouter and Jina resources follow the
 [resource policy](environment/docs/available_resources.md).
 
-### Environment and Resource Limits
+#### Environment and Resource Limits
 
 The CPU environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and
 no GPU. Development has two hours. Build has 14,400 seconds; each of two
 query calls has an independent 10,800-second allowance. These limits remain
 inside the 45,000-second overall verifier budget.
 
-## Submission Contract
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-10-23 | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+- Indexing long PDFs while retaining page provenance.
+- Combining textual and visual evidence for answer generation.
+- Handling numeric, list and unanswerable questions.
+
+## Verification Explanation
+
+### Submission Contract
 
 Submit executable `/app/build.sh` and `/app/run.sh` with supporting files
 under `/app`. Each input names a document and question. Return the query ID,
@@ -71,9 +91,9 @@ writable. Generated files must use the supplied index, output and temporary path
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
-## Evaluation
+### Evaluation
 
-### Search Quality
+#### Search Quality
 
 MMLongBench-Doc uses the source answer-extraction prompt and unchanged rule
 comparators, including ANLS, numeric, list and unanswerable handling.
@@ -86,7 +106,7 @@ Evidence-page precision, recall and F1 are diagnostics, not part of the primary
 answer score. Out-of-range source page references are excluded only from citation
 diagnostics and do not remove the corresponding answer question.
 
-### Score Normalization
+#### Score Normalization
 
 The final reward uses the raw quality described above, with fixed reference
 quality `b = 0.4350989780543772` and integer score anchor `a = 20` on the 0–100 scale:
@@ -101,7 +121,7 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
-### Correctness and Resource Gates
+#### Correctness and Resource Gates
 
 The verifier checks execution, output structure, document/page validity and
 stage limits. Completed valid rows survive query-call timeout; missing or invalid
@@ -109,7 +129,7 @@ rows receive zero. Other query-command failures invalidate that call.
 Trusted answer-extraction or judge transport failures invalidate the measurement
 rather than establishing a low baseline or model score.
 
-### Integrity Checks and Final Reward
+#### Integrity Checks and Final Reward
 
 A separate trajectory audit checks task compliance and gates the quality
 reward. A confirmed violation sets reward to zero; unavailable or incomplete
@@ -120,7 +140,7 @@ Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs. Answer judges,
 where used, are distinct from trajectory auditing.
 
-## Running This Task
+### Running This Task
 
 Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
 and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
@@ -148,7 +168,7 @@ Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/visual-document-qa/`.
 
-## Task Files
+### Task Files
 
 | File or directory | What to read it for |
 | --- | --- |
@@ -161,3 +181,7 @@ credentials or hardware. Results are written under `jobs/visual-document-qa/`.
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+## References
+
+- [Data, model and method provenance](SOURCES.md).

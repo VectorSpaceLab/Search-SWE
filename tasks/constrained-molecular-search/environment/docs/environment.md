@@ -5,7 +5,7 @@ Python 3.12, PyTorch 2.9.0+cu130, CUDA 13.0 and the common Search-SWE packages.
 Use /opt/conda/bin/python and /opt/conda/bin/pip. Task additions are
 rdkit 2024.3.5, duckdb 1.3.2, tensorboard 2.20.0, lightgbm 4.6.0 and
 nvidia-ml-py 12.560.30. The agent image includes the repository's pinned
-Codex CLI 0.157.1, Claude Code 2.1.283 and Pi 0.87.1. The base supplies Git,
+Codex CLI 0.164.0, Claude Code 2.1.309 and Pi 1.4.0. The base supplies Git,
 C++ tools and nvcc.
 
 APEX and its GPU top-k extension are built from bundled pinned sources.

@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/biomedical-graph-retrieval"
-version = "0.2.2"
+version = "1.0.0"
 description = "Build a graph retrieval engine that returns complete node-ID answer sets under a per-query deadline."
 authors = [{ name = "Cooki-e" }]
 keywords = ["information-retrieval", "knowledge-graph", "biomedical", "exact-set-accuracy"]
