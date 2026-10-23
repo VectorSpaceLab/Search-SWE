@@ -6,7 +6,7 @@ artifacts = ["/var/tmp/search-swe-submission.tar", "/logs/agent/trajectory.json"
 name = "search-swe/protein-text-bidirectional-retrieval"
 version = "0.6.1"
 description = "Learn compact 64-dimensional protein/text embeddings and maximize strict reciprocal-top1 pair recovery under online latency and submission limits."
-authors = [{name = "hanhainebula", email = "2512674094@qq.com"}]
+authors = [{name = "jianlyu", email = "2512674094@qq.com"}]
 keywords = ["protein-retrieval", "cross-modal", "contrastive-learning", "online-retrieval", "gpu"]
 
 [metadata]

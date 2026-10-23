@@ -5,7 +5,7 @@ artifacts = ["/tmp/search-swe-submission.tar"]
 name = "search-swe/budgeted-candidate-reranking"
 version = "0.2.1"
 description = "Improve fixed BM25 Top-100 passage reranking with a metered, frozen local Qwen3-1.7B model."
-authors = [{ name = "hanhainebula" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "reranking", "inference-budget", "gpu"]
 
 [metadata]

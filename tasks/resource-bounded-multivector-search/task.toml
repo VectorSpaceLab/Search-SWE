@@ -8,7 +8,7 @@ artifacts = [
 name = "search-swe/resource-bounded-multivector-search"
 version = "0.3.1"
 description = "Reduce complete-workload query latency while retaining at least 99% exact MaxSim Recall@100."
-authors = [{ name = "hanhainebula" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "multi-vector", "colbert", "maxsim", "cpu", "quora"]
 objective = "Minimize query time at Recall@100 >= 0.99; normalize improvement between frozen baseline and reference times."
 

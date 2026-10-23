@@ -9,7 +9,7 @@ artifacts = [
 name = "search-swe/deletion-resilient-vector-search"
 version = "0.1.6"
 description = "Maintain graph-vector search quality and reclaim memory through 100 deletion stages on SIFT1M and GIST1M."
-authors = [{ name = "Cooki-e" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["vector-search", "dynamic-index", "deletion", "hnsw", "recall", "memory", "cpu"]
 
 [metadata]

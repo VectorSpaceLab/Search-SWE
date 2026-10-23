@@ -5,7 +5,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 name = "search-swe/budgeted-bimetric-retrieval"
 version = "0.2.1"
 description = "Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query."
-authors = [{name = "hanhainebula"}]
+authors = [{name = "jianlyu"}]
 keywords = ["retrieval", "bimetric", "nq", "query-budget", "cpu"]
 
 [metadata]

@@ -9,7 +9,7 @@ artifacts = [
 name = "search-swe/incremental-vector-search"
 version = "0.10.2"
 description = "Build an incremental vector index and maximize recall across five retrieval sizes under per-stage time budgets."
-authors = [{ name = "Cooki-e" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["vector-search", "incremental-indexing", "approximate-nearest-neighbors", "cpu"]
 
 [metadata]

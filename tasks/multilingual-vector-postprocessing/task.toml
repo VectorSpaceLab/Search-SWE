@@ -5,7 +5,7 @@ artifacts = ["/logs/agent/collected-submission", "/logs/agent/submission-freeze-
 name = "search-swe/multilingual-vector-postprocessing"
 version = "0.1.2"
 description = "Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors within one A100 and six hours."
-authors = [{ name = "hanhainebula" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "multilingual", "vector-postprocessing", "representation-learning", "gpu"]
 
 [metadata]

@@ -8,7 +8,7 @@ artifacts = [
 name = "search-swe/large-scale-formula-retrieval"
 version = "0.4.1"
 description = "Retrieve relevant formulas from the complete ARQMath v3 corpus with 34 MiB prepared artifacts in a 40 MiB serving filesystem and 50 ms CPU queries."
-authors = [{ name = "hanhainebula" }]
+authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "formula", "latex", "arqmath", "cpu"]
 objective = "Maximize nDCG prime under fixed build, query, memory and storage limits."
 
