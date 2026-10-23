@@ -1,0 +1,59 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/lightweight-query-retrieval"
+version = "0.4.0"
+description = "Reduce complete query processing time while maintaining a required retrieval quality across three document collections."
+authors = [{ name = "Bingyu" }]
+keywords = ["information-retrieval", "efficiency", "query-encoding", "gpu"]
+
+[metadata]
+primary_metric = "Retrieval runtime after a macro nDCG@10 quality gate"
+dataset = "BEIR SciFact, NFCorpus and FiQA; author-released LightRetriever examples"
+base_model = "meta-llama/Llama-3.2-1B"
+corpus_document_count = 66454
+example_count = 80000
+hidden_query_count = 1271
+gpu_hardware = "1 x NVIDIA A100 40GB"
+index_build_timeout_seconds = 1200
+service_load_timeout_seconds = 120
+query_batch_timeout_seconds = 120
+timing_repeats = 3
+data_status = "Public derivative assets pinned to the official dataset; original model pinned upstream"
+
+minimum_ndcg_at_10 = 0.45
+
+full_credit_seconds = 0.0
+
+zero_credit_seconds = 0.8
+
+[agent]
+timeout_sec = 21600.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 3900.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 32768
+storage_mb = 102400
+gpus = 1
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

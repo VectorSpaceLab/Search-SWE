@@ -1,5 +1,7 @@
 # Join-aware table retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Build a CPU search engine over 1,056 tables in 206 opaque database groups. Given a natural-language question without a database ID, return exactly five tables and at most six public column-level equality relationships. A question scores one only when an acceptable table-and-join plan is completely covered. The task score is the mean over all hidden questions. Author: **Bingyu**.
 
 ## Current revision
@@ -36,6 +38,13 @@ The subset scores above were used for selection and are **not an independent est
 The fresh program used one Jina table-reranking request followed by local five-table subset and join-graph search, with a local fallback. It made no Qwen generation calls at query time. Its final public development self-tests scored 10/10 both online and offline; the checker was reviewed, but raw predictions were not saved and the development script did not enforce the wall-clock deadline. These are development scores, not an independent validation replay.
 
 The fresh program solved `shipment_header_and_item_orders`; the earlier success on `municipal_occupancy` remains in the evidence. Consequently **eight of ten** have never been observed solved across all three programs, and the fresh program failed nine. This ten-question challenge has measured difficulty, not a claim that every question defeats every implementation. The full result is in `task_results/join-aware-table-retrieval/codex-openrouter-gpt-6-luna-max-v060-20261014-232013/REPORT.txt`, with per-query records in `query-results.json`. The requested model and effort were verified from the actual session. No score-based rerun occurred. This README was updated after evaluation; questions, labels, corpus, instructions and runtime files remain unchanged from the frozen trial.
+
+[VALIDATION.md](VALIDATION.md) consolidates the trial ID, UTC timestamps,
+instruction fingerprint, configured budgets, raw/final scores and original
+evidence locations. The 2026-10-22 reconciliation confirmed that all 23
+non-README files in the frozen run manifest still match. This existing trial is
+reused without rerunning the coding agent. No model judge is configured for this
+task; the HTTP-observability limitation above is retained.
 
 ## Earlier validation sets
 
@@ -77,7 +86,7 @@ python scripts/download_assets.py --task join-aware-table-retrieval --verify-onl
 python scripts/check_tasks.py tasks/join-aware-table-retrieval
 ```
 
-Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 3 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ## Attribution
 

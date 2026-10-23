@@ -1,0 +1,24 @@
+{"query_id":"warmup_0","collection":"corpus1","text":"BLM gene encodes RecQ-class DNA helicase.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_1","collection":"corpus1","text":"Consumption of whole fruits increases the risk of type 2 diabetes.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_2","collection":"corpus1","text":"Most termination events in Okazaki fragments are dictated by initiation patterns.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_3","collection":"corpus1","text":"Notch signaling occurs between tumor cells and stromal cells.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_4","collection":"corpus1","text":"G-CSF increases the expansion and infiltration of MDSCs into tumors.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_5","collection":"corpus1","text":"Autophagy deficiency in the liver increases vulnerability to insulin resistance.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_6","collection":"corpus1","text":"Increased flux of microbial products suppresses immune responses.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_7","collection":"corpus1","text":"Early patent ductus ateriosus (PDA) screening decreases in-hospital mortality.","instruction":"Given a scientific claim, retrieve documents that support or refute the claim"}
+{"query_id":"warmup_8","collection":"corpus2","text":"What about Semmelweis and medicine's shameful handwashing history?","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_9","collection":"corpus2","text":"Gut Flora & Obesity","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_10","collection":"corpus2","text":"Preventing Arthritis","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_11","collection":"corpus2","text":"Uruguay","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_12","collection":"corpus2","text":"licorice","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_13","collection":"corpus2","text":"sunflower seeds","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_14","collection":"corpus2","text":"Meatless Mondays","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_15","collection":"corpus2","text":"Consumers Union","instruction":"Given a question, retrieve relevant documents that best answer the question"}
+{"query_id":"warmup_16","collection":"corpus3","text":"401K or Indian CD","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_17","collection":"corpus3","text":"Why do some companies offer 401k retirement plans?","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_18","collection":"corpus3","text":"Historic prices for currencies, commodities,","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_19","collection":"corpus3","text":"Deducting SEP-IRA contributions as a sole proprietor with no employees","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_20","collection":"corpus3","text":"Might it make sense not to look into debt that is in collections?","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_21","collection":"corpus3","text":"Are stock purchases on NASDAQ trackable to personal information?","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_22","collection":"corpus3","text":"Can I deduct personal loans or use them as tax “write offs?”","instruction":"Given a financial question, retrieve user replies that best answer the question"}
+{"query_id":"warmup_23","collection":"corpus3","text":"Can anyone help me figure out what my monthly take-home salary will be?","instruction":"Given a financial question, retrieve user replies that best answer the question"}

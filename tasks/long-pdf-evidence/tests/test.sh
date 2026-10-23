@@ -10,7 +10,7 @@ STAGED_QUERIES=$INPUT_DIR/queries.jsonl
 RESULTS_DIR=/logs/verifier/long-pdf-evidence-eval
 OUTPUT_PATH=$RESULTS_DIR/results.jsonl
 BUILD_TIMEOUT_SECONDS=2400
-# The runner enforces 1,800 seconds of query execution; allow cleanup afterwards.
+# Internal safety watchdog, separate from the 30-second per-query limit.
 RUN_TIMEOUT_SECONDS=1860
 MAX_OUTPUT_BYTES=$((64 * 1024 * 1024))
 SUBMISSION_USER=submission
@@ -234,7 +234,7 @@ elif [[ -z "$execution_error" ]]; then
             --output-dir "$SUBMISSION_OUTPUT_DIR" \
             --output "$OUTPUT_PATH" \
             --logs-dir "$RESULTS_DIR/query_logs" \
-            --timeout 900 \
+            --timeout 30 \
             --total-timeout 1800 \
             --concurrency 5
         run_status=$?

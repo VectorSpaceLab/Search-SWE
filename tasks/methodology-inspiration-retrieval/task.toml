@@ -1,0 +1,64 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/methodology-inspiration-retrieval"
+version = "0.1.1"
+description = "Retrieve papers that provide methodological inspiration for scientific research problems."
+authors = [{ name = "Bingyu" }]
+keywords = ["information-retrieval", "scientific-literature", "methodology", "gpu"]
+
+[metadata]
+dataset = "MIR, screened fixed-corpus derivative"
+source_revision = "5a793828a6894856123819cefa637b3e21bd5477"
+primary_metric = "Mean Recall@3 improvement"
+metric_k = 3
+corpus_document_count = 4851
+example_count = 19613
+example_source_count = 1358
+public_query_count = 0
+hidden_query_count = 122
+base_model = "NovaSearch/stella_en_400M_v5"
+zero_score_baseline = 0.310109
+index_build_timeout_seconds = 1200
+inference_timeout_seconds = 12
+gpu_hardware = "1 x NVIDIA A100 40GB"
+data_status = "Published derivative; screened test questions; unfiltered source examples except test-source isolation."
+
+[agent]
+timeout_sec = 21600.0
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+
+[verifier]
+timeout_sec = 3000.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+cpus = 16
+memory_mb = 32768
+storage_mb = 102400
+gpus = 1
+
+[environment.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

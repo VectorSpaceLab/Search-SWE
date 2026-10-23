@@ -1,16 +1,25 @@
 # Biomedical Graph Retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Author: Cooki-e. Build a reusable search system over the supplied knowledge graph
 and return complete sets of internal node IDs. No training or fine-tuning.
 
-The local package includes the corpus, 3 public validation questions and 20
-private test questions. Version 0.2.1 preserves the graph and private split and
-provides three public examples with different query plans from the hidden set.
-Both splits require multi-step graph computation and complete answers, verified
-by independent calculations. Comparable difficulty is a structural judgment;
-no fresh coding-agent score is available. Source attribution, licensing records and construction evidence are
-retained separately in the authoring workspace; source dataset names are omitted
-from this package.
+The local package includes the corpus, 8 public validation questions and 20
+private test questions. Version 0.2.2 retains the original three public examples
+and adds five independently verified examples: target-set intersection and
+exclusion, distinct support counting, ordinary shortest paths, exclusive-target
+pathways, and ordered protein-pair counting. The graph and private split are
+unchanged. Public and private query anchors are disjoint; the public set does
+not cover every private query structure.
+
+The completed v0.2.1 Codex/OpenRouter `openai/gpt-6-luna`, `max` trial scored
+0/20 exact sets with valid execution, no query timeouts and a passing trajectory
+audit. That trial used the previous three-example public set; it is not a
+v0.2.2 model result. [VALIDATION.md](VALIDATION.md) records the public-data update,
+local checks, historical run and finalizer repair separately. Source attribution,
+licensing records and construction evidence remain in the authoring workspace;
+source dataset names are omitted from this package.
 
 `instruction.md` is the concise agent request; `raw-instruction.md` is its
 structured equivalent. Resource and time limits are in the instruction and
@@ -28,7 +37,7 @@ Only the corpus, public validation and generic resource documents are mounted
 into the agent environment. Private questions, labels, grader and audit files
 remain verifier-only. No author solutions or screening traces are supplied.
 
-Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 3 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ```bash
 python scripts/download_assets.py --task biomedical-graph-retrieval --verify-only
@@ -37,5 +46,5 @@ python scripts/run_task.py --task biomedical-graph-retrieval --agent pi \
   --model deepseek/deepseek-flash --dry-run
 ```
 
-The last command previews a launch and does not call a model. Validation evidence
-and remaining unrun layers are recorded in `VALIDATION.md`.
+The last command previews a launch and does not call a model. Completed runtime
+evidence, revision coverage and remaining release steps are in [VALIDATION.md](VALIDATION.md).

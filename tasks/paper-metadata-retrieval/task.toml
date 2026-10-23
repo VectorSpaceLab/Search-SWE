@@ -1,0 +1,57 @@
+schema_version = "1.4"
+
+artifacts = ["/app", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/paper-metadata-retrieval"
+version = "0.1.1"
+description = "Build a search system that identifies a paper satisfying a research need and its stated source conditions."
+authors = [{ name = "Cooki-e" }]
+keywords = ["information-retrieval", "scientific-literature", "metadata", "constraints"]
+
+[metadata]
+dataset = "Fixed full-text paper collection with authored requests"
+primary_metric = "Accuracy@1"
+metric_k = 1
+corpus_document_count = 70000
+public_query_count = 3
+hidden_query_count = 8
+query_concurrency = 1
+query_timeout_seconds = 30
+build_timeout_seconds = 1800
+all_hidden_queries_required = false
+data_status = "Official published assets; fixed disjoint 3/8 split; source and retrieved-alternative review, without exhaustive corpus-wide uniqueness proof."
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+
+[verifier]
+timeout_sec = 5400.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai", "api.jina.ai"]
+cpus = 16
+memory_mb = 32768
+storage_mb = 102400
+gpus = 0
+
+[environment.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+
+[verifier.env]
+OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
+JINA_API_KEY = "${JINA_API_KEY:-}"
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

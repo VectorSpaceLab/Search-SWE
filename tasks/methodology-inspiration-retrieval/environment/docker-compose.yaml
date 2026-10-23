@@ -1,0 +1,34 @@
+services:
+  main:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - type: bind
+        source: ../data/corpus.jsonl
+        target: /task/data/corpus.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../models/stella_en_400M_v5
+        target: /task/models/stella_en_400M_v5
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../data/examples.jsonl
+        target: /task/data/examples.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false

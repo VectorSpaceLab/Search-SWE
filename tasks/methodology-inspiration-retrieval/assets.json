@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 4896582,
+      "sha256": "74ba7050bd73e967b182d708f88f249b38b6bc9dbd55c209757e4fbf22b4de88",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "2182510dda66f946a153a5b09515f82fb4da125e",
+        "filename": "tasks/methodology-inspiration-retrieval/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/examples.jsonl",
+      "size_bytes": 47646619,
+      "sha256": "568b572a8817e9c54fe877d0d94baff312d165d8f339e40d611e0228c53d894b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "2182510dda66f946a153a5b09515f82fb4da125e",
+        "filename": "tasks/methodology-inspiration-retrieval/examples.jsonl"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/1_Pooling/config.json",
+      "size_bytes": 186,
+      "sha256": "d58b19f64c2bd0ff30fdc4e45103ef8e5fcec974923c433db59b50ab01595ee7",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "1_Pooling/config.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/2_Dense_1024/config.json",
+      "size_bytes": 122,
+      "sha256": "cc74bf19ea6e14816f175a114d3101b9ec236b831ad8706c0f89c5b0517e33a0",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "2_Dense_1024/config.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/2_Dense_1024/model.safetensors",
+      "size_bytes": 4198592,
+      "sha256": "caed226f6fc2317d1dde81540cbc2cc40055ab27dbf8e4377facfb281ac16fdd",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "2_Dense_1024/model.safetensors"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/README.md",
+      "size_bytes": 169941,
+      "sha256": "9e8da1ad6f2063ce0f060a904d91338378d9a87cd6c5da3e8da091351c00aaf9",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/config.json",
+      "size_bytes": 892,
+      "sha256": "6ef7d87b6f011a3a2ae4612fca7767a0cab58c754648931acb8f61c4f52f24ae",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/config_sentence_transformers.json",
+      "size_bytes": 397,
+      "sha256": "9dfc0a2ca6ccc6f9da7734df0404206ae745cb08ca138d257714bfd9257355fb",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "config_sentence_transformers.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/configuration.py",
+      "size_bytes": 7127,
+      "sha256": "3411088045ffb8a9a0aa9936eae275896b39983a2ee5b08f091b44e6289e4fe4",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "configuration.py"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/model.safetensors",
+      "size_bytes": 1740785344,
+      "sha256": "17e549d16172a548a3115739b55575968eb6523653daad76c46b0758e9425032",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/modeling.py",
+      "size_bytes": 57500,
+      "sha256": "41ce2703d91c4bf5ba18bf6616d40f26ef350fa793d81b27a457f3526f01ef42",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "modeling.py"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/modules.json",
+      "size_bytes": 316,
+      "sha256": "4145357aafae913f78ca56d1b398e862c5cbeb482b4d418cf9f5e1d147bf416b",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "modules.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/sentence_bert_config.json",
+      "size_bytes": 51,
+      "sha256": "d9c158879ebdc946201519a154e8f2006d66ac633a8f3fa5de95da20fdd14729",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "sentence_bert_config.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/special_tokens_map.json",
+      "size_bytes": 695,
+      "sha256": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "special_tokens_map.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/tokenizer.json",
+      "size_bytes": 711661,
+      "sha256": "cb374d6bc042c22455946f4e09a89d29882a199fdaf8fb25be00dc8b8857a448",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/tokenizer_config.json",
+      "size_bytes": 1384,
+      "sha256": "9f0bb2a01bb9555bee3a8e3711cfa85bd34370d00a7c67e9745cebc7901e1085",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/stella_en_400M_v5/vocab.txt",
+      "size_bytes": 231508,
+      "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+      "source": {
+        "repo_id": "NovaSearch/stella_en_400M_v5",
+        "repo_type": "model",
+        "revision": "ffeb2b7ee715c226d4ffe5e4619f7dbb48624c20",
+        "filename": "vocab.txt"
+      }
+    }
+  ]
+}

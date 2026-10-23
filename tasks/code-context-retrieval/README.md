@@ -1,5 +1,7 @@
 # Code context retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Author: **Bingyu**. Version: **0.1.0**.
 
 Build a reusable search engine that returns the source regions needed to understand and address an issue in a fixed repository snapshot. The target is the original SWE-Explore reading context, including relevant implementation, helpers and tests. It is not exact bug-line localization and does not require generating a patch.
@@ -23,6 +25,15 @@ Invalid or failed query outputs and timeouts score zero for that query. Build fa
 The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour development budget. Index construction and service readiness have 3,600 seconds. Each query invocation has 180 seconds including API waits and output writing, concurrency one. Both images use the standard CPU image. The resource documents match `agentic-search`; only its documented OpenRouter/Jina retrieval APIs and four Qwen generation models are allowed. Corpus or answer lookup on external sites is not permitted.
 
 ## Difficulty evidence
+
+One packaged CPU/API Codex/OpenRouter `openai/gpt-6-luna`, `max` trial produced
+mean line F1 and reward **0.17146875932337885**. The coding agent reached its
+7,200-second development limit (`AgentTimeoutError`); the subsequent verifier
+completed all 20 queries with valid outputs and no query timeouts. This is a
+scored submission after development-budget exhaustion, not an exception-free
+agent completion. [VALIDATION.md](VALIDATION.md) records the trial, matching
+instruction fingerprint, timings and original evidence locations. No online
+trajectory judge is configured for this task.
 
 Author-side screening evaluated the same selected issues with a common five-region/500-line output budget and 180-second query limit. Dense retrieval and reranking used local Qwen3 8B models; agents used local Qwen3.5-9B without thinking, at most 25 exploration steps plus a final call. Local GPU pilot latency is not a measurement of the packaged CPU/API environment. Index/model startup was excluded; enhanced-agent timing summed separately measured retrieval and exploration.
 
@@ -51,4 +62,4 @@ The authoring directory is `task_development/code-bug-localization`, adjacent to
 
 Run `python scripts/download_assets.py --task code-context-retrieval --verify-only` from this checkout to verify local asset hashes, and `python -m unittest discover -s tasks/code-context-retrieval/tests -p test_contract.py` for scoring regression checks. `VALIDATION.md` records actual runtime checks and remaining validation layers.
 
-Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 51,922 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.

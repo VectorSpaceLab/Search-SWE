@@ -1,5 +1,7 @@
 # Negative-constraint retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Build a Top-1 search engine over 8,011 fixed passages. The 20 authored queries
 require a named subject and semantic exclusions such as roles, events, named
 works, institutions or other content. There are 10 public validation and 10
@@ -47,7 +49,7 @@ Generation factual review was sampled, with source corrections recorded in the
 author ledger. These are assistant annotations, not independent human adjudication
 or exhaustive certification of every generated factual detail.
 
-No explicit dataset redistribution license was found upstream; that source-license limitation remains unresolved. Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package. Source terms and attribution remain applicable; publication does not establish additional licensing rights. The corpus is not bundled into either image or Git. Fresh restoration on 2026-10-16 verified all 3 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+The upstream dataset redistribution-license question remains unresolved. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ## Difficulty evidence
 
@@ -164,7 +166,12 @@ docker build -t search-swe-local:nc-agent tasks/negative-constraint-retrieval/en
 docker build -t search-swe-local:nc-verifier tasks/negative-constraint-retrieval/tests
 ```
 
-Publication pins are now present. See `VALIDATION.md` for historical author-stage checks and remaining prerequisites. Static checks and deterministic fixtures are not an end-to-end coding-model trial.
+The strict task/release check reports the three unpublished revisions until
+publication; it must not be made green using fabricated SHAs. Author staging
+checks use `check_release(..., packages=[task], allow_unpublished=True)` with the
+local task-only staging manifest. See `VALIDATION.md` for actual executed checks
+and remaining prerequisites. Static checks and deterministic fixtures are not
+an end-to-end coding-model trial.
 
 For a future configured trial, preserve any existing ignored checkout `.env`
 and set the chosen coding model/provider and its credential, for example

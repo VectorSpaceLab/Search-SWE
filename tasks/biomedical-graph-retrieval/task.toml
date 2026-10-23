@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/biomedical-graph-retrieval"
-version = "0.2.1"
+version = "0.2.2"
 description = "Build a graph retrieval engine that returns complete node-ID answer sets under a per-query deadline."
 authors = [{ name = "Cooki-e" }]
 keywords = ["information-retrieval", "knowledge-graph", "biomedical", "exact-set-accuracy"]
@@ -15,12 +15,12 @@ keywords = ["information-retrieval", "knowledge-graph", "biomedical", "exact-set
 [metadata]
 dataset = "Complete fixed biomedical graph with authored, verified questions"
 primary_metric = "ExactSetAccuracy"
-public_query_count = 3
+public_query_count = 8
 hidden_query_count = 20
 query_concurrency = 1
 query_timeout_seconds = 30
 build_timeout_seconds = 1800
-data_status = "Published public assets; unchanged graph and 20 hidden queries; 3 new public examples with different query plans, independently verified complete answer sets and disjoint public/private query anchors."
+data_status = "Published public assets; unchanged graph and 20 hidden queries; 8 public examples comprising the original 3 and 5 verified additions covering basic operators and selected private-family structures, with disjoint public/private query anchors."
 
 [agent]
 timeout_sec = 7200.0

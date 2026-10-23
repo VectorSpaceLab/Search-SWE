@@ -1,6 +1,8 @@
 # Quantity-aware Retrieval
 
-Author: **Bingyu**. This is a Search-SWE task package over
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
+Author: **Bingyu**. This is a local, unpublished Search-SWE task package over
 MedQuant. The required deliverable is an executable retrieval system. Resources
 include labeled examples, Qwen3-Embedding-0.6B and documented OpenRouter/Jina APIs. No
 baseline implementation, authoring helper, or precomputed document vectors are
@@ -45,18 +47,18 @@ scores that query zero. Other executable/output failures invalidate the run.
 
 Quality is mean binary nDCG@10, using the complete original positive set for
 IDCG, capped at ten positions. The frozen reference is BM25 and
-Qwen3-Embedding-8B, top-1000 each, RRF constant 60, then Qwen3-Reranker-8B on the
-first 200 candidates with the official generic retrieval instruction.
+Qwen3-Embedding-8B, top-1000 each, fused with RRF constant 60.
 
 | Reference scope | Mean nDCG@10 |
 | --- | ---: |
-| All original 210 questions | 0.31736759004837656 |
-| User-selected rounded reward anchor | **0.3174** |
+| All original 210 questions | 0.1838410794397215 |
+| User-selected rounded reward anchor | **0.1838** |
 
-For raw private score Q and B = 0.3174, reward is
+For raw private score Q and B = 0.1838, reward is
 `max(0, min(1, (Q-B)/(1-B)))`. The anchor uses the four-decimal rounding explicitly
-chosen by the user. Reference scores come from already-executed, fresh single-A100
-rankings; no reference parameters were changed. No per-query baseline
+chosen by the user. The reference comes from the archived single-A100 hybrid
+retrieval run in `../../../task_development/quantity-aware-retrieval/research/medquant-baselines-v1/summary.json`
+(`methods.hybrid`). No per-query baseline
 oracle or choice of the best model on private results is used.
 
 An independent trajectory integrity judge uses the repository's pinned
@@ -96,11 +98,11 @@ is pinned to `97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3`. All ten installed model
 files were independently checked against their manifest sizes and SHA-256.
 The model card declares Apache-2.0. The enclosing repository's code license does
 not establish redistribution rights for the MedQuant/training sources; those
-terms remain unresolved and are recorded in the published dataset's source notices.
+terms remain unresolved and are recorded in the published source notices.
 
 ## Local operation and validation
 
-Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package; model weights retain their original upstream pins. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 2 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ```bash
 python scripts/download_assets.py --task quantity-aware-retrieval --verify-only

@@ -24,7 +24,7 @@ class ScoringContract(unittest.TestCase):
         self.assertEqual(scoring.ndcg_at_10([str(i) for i in range(10)], set(self.order)), 1)
 
     def test_normalization_at_baseline_and_perfect(self):
-        b = .3174
+        b = grader.BASELINE_NDCG
         self.assertEqual(scoring.normalized_reward(b, b), 0)
         self.assertEqual(scoring.normalized_reward(0, b), 0)
         self.assertEqual(scoring.normalized_reward(1, b), 1)

@@ -1,5 +1,7 @@
 # Legal stance retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Given a legal claim and `supported`, `refuted` or `all`, retrieve ten ranked
 court-summary document IDs. `all` is the union of both evidence directions;
 either direction can be absent. This is retrieval over recorded majority
@@ -99,9 +101,7 @@ the pinned inventory. Runtime corpus/example/model files are restored under
 ignored `data/` and `models/`. Hidden test files are copied only into the
 verifier image.
 
-Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package; model weights retain their original upstream pins. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 3 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
-
-The author-side packaging entry point is `task_development/legal-precedent-retrieval/package_task.py` from the parent workspace; its sibling `package-build/hf-data` contains the exact staging bundle.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ## Structural precedents and validation
 

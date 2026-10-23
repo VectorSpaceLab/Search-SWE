@@ -1,5 +1,7 @@
 # ChunQiu Temporal Retrieval
 
+Current run and release status (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md). Earlier validation-stage statements are superseded by that dated record.
+
 Author: **Bingyu**. Local task package, version **0.1.0**.
 
 Retrieve original event records for reign-based dates and time windows in
@@ -50,7 +52,7 @@ The audit checks content, query templates and identical-text contradictions;
 it is not a new philological validation of every historical passage. Text-only
 records can still require difficult contextual temporal inference.
 
-See [LICENSE.data.md](LICENSE.data.md) for source and model notices. Public runtime data are published in [search-swe/Search-SWE](https://huggingface.co/datasets/search-swe/Search-SWE/tree/2a2188f3a9426361da5f10c82a35148269574a92) and pinned by immutable commit in `assets.json`, with exact sizes and SHA-256 hashes. Private evaluation inputs remain in the verifier package; model weights retain their original upstream pins. Source terms and attribution remain applicable; publication does not establish additional licensing rights. Fresh restoration on 2026-10-16 verified all 3 dataset-backed runtime files against their recorded sizes and SHA-256 hashes.
+See [LICENSE.data.md](LICENSE.data.md) for source and model notices. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ## Runtime and scoring
 
@@ -101,4 +103,4 @@ python -m unittest discover -s tasks/chunqiu-temporal-retrieval/tests -p 'test_*
 python scripts/check_tasks.py tasks/chunqiu-temporal-retrieval
 ```
 
-Publication pins are now present. Earlier author-stage checks and remaining runtime validation are recorded in `VALIDATION.md`.
+Public data pins are present. See RUN_RESULTS.md for current trial evidence and VALIDATION.md for historical author-stage checks.

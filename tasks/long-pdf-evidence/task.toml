@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/long-pdf-evidence"
-version = "0.4.1"
+version = "0.4.3"
 description = "Retrieve original sentences that completely support concise questions about a long novel."
 authors = [{ name = "Search-SWE" }, { name = "Bingyu" }]
 keywords = ["information-retrieval", "search", "evidence locator"]
@@ -19,7 +19,7 @@ metric_k = 5
 public_example_count = 10
 hidden_query_count = 12
 sentence_count = 28798
-answer_judge_model = "openai/gpt-6-luna"
+answer_judge_model = "deepseek/deepseek-v4.1-flash"
 answer_judge_reasoning_effort = "high"
 query_concurrency = 5
 data_status = "Unchanged published PDF; published sentence inventory and revised public examples; 12 authored hidden queries."
@@ -65,7 +65,7 @@ JINA_API_KEY = "${JINA_API_KEY:-}"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 JINA_API_KEY = "${JINA_API_KEY:-}"
 ANSWER_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
-ANSWER_JUDGE_MODEL_NAME = "openai/gpt-6-luna"
+ANSWER_JUDGE_MODEL_NAME = "deepseek/deepseek-v4.1-flash"
 ANSWER_JUDGE_API_KEY = "${ANSWER_JUDGE_API_KEY:-}"
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
 OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

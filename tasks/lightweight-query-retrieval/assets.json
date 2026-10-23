@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/corpus.jsonl",
+      "size_bytes": 63686025,
+      "sha256": "bf6c6fc3d4c4e4ee6e12441b39bc078f3cc0b188bfce3755a0f0d430ac62b4af",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "ff16485accd6d258610c158fce45e36b50a47c3f",
+        "filename": "tasks/lightweight-query-retrieval/corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/examples.jsonl",
+      "size_bytes": 2287253229,
+      "sha256": "6724b541e4f1dbd6cf7809a8651726529f04b1383ff5be5752fe6fa530ef2227",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "ff16485accd6d258610c158fce45e36b50a47c3f",
+        "filename": "tasks/lightweight-query-retrieval/examples.jsonl"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/LICENSE.txt",
+      "size_bytes": 7712,
+      "sha256": "0b4284c1f87029e67654c7953afa16279961632cf73dcfe33374c4c2f298fa35",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "LICENSE.txt"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/README.md",
+      "size_bytes": 41239,
+      "sha256": "7dc455178a8c7c21f9cfe0aef0808a92e78ade6e58e04c18354c668934b929ea",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/USE_POLICY.md",
+      "size_bytes": 6021,
+      "sha256": "40e2777d7faa6beaf98400654170f414d8ab29b921b5163ad4ea0a1d39894201",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "USE_POLICY.md"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/config.json",
+      "size_bytes": 843,
+      "sha256": "bfb5d39c327ee5c3a65e3574596ff30b052a445cfc59a25bdf3b4c0c5a44f4d2",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/generation_config.json",
+      "size_bytes": 185,
+      "sha256": "da81b0dd4001a8e19fb5840d2b524f6957f44ddde6f5c3fe32b1f36cef5205bf",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "generation_config.json"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/model.safetensors",
+      "size_bytes": 2471645608,
+      "sha256": "68a2e4be76fa709455a60272fba8e512c02d81c46e6c671cc9449e374fd6809a",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/special_tokens_map.json",
+      "size_bytes": 301,
+      "sha256": "cc2e013b7545f183ef03e079a3c91c6f364fa37e4068c512d7dd843e59024535",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "special_tokens_map.json"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/tokenizer.json",
+      "size_bytes": 9085657,
+      "sha256": "79e3e522635f3171300913bb421464a87de6222182a0570b9b2ccba2a964b2b4",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/Llama-3.2-1B/tokenizer_config.json",
+      "size_bytes": 50500,
+      "sha256": "8004530facf809ac432114de2a4dcc65fcb632da5ec16d666091aeb6a2ee444a",
+      "source": {
+        "repo_id": "meta-llama/Llama-3.2-1B",
+        "repo_type": "model",
+        "revision": "4e20de362430cd3b72f300e6b0f18e50e7166e08",
+        "filename": "tokenizer_config.json"
+      }
+    }
+  ]
+}

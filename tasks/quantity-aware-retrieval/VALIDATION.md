@@ -1,6 +1,35 @@
-# Local validation — 2026-10-14
+# Local validation
 
-Publication update (2026-10-16): public inputs are now published and pinned; fresh downloads passed size/SHA-256 verification. See the README for the official revision. The records below describe earlier validation stages; their statements about unpublished assets are historical. This publication does not add a new coding-agent trial or resolve outstanding source-license questions.
+Release reconciliation (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
+
+## Baseline revision — 2026-10-23, v0.1.1
+
+The user selected **0.1838** as the new zero-reward baseline. It is the rounded
+nDCG@10 of the archived BM25 + Qwen3-Embedding-8B hybrid run (top-1000 each,
+RRF 60): **0.1838410794397215**. Source:
+`../../../task_development/quantity-aware-retrieval/research/medquant-baselines-v1/summary.json`,
+`methods.hybrid`. The reward is now `max(0, min(1, (Q-0.1838)/(1-0.1838)))`.
+
+The saved Codex / `openai/gpt-6-luna` / `max` trial from 2026-10-22 has valid
+results for 210 queries, raw nDCG@10 **0.3157221500219995**, and a successful,
+passing trajectory judge. Applying the new formula gives final reward
+**0.161629686378338**; its original reward under baseline 0.3174 was zero.
+This is an offline recalculation using the saved evaluation and integrity gate,
+not a new agent or judge run. The original run artifacts are preserved at
+`../../../task_results/quantity-aware-retrieval/codex-openrouter-gpt-6-luna-max-v010-20261022T135859Z/jobs/2026-10-22__21-59-35/quantity-aware-retrieval__63D7YGN/verifier/`.
+The evidence files are `quantity-aware-retrieval-eval/evaluation.json`,
+`reward.json`, and `reward-details.json` (`final_gate`).
+
+Validation for this revision: all eight task-local unit tests passed; the TOML
+and grader baseline agree; the production scoring/finalizer functions reproduce
+the recalculated reward using the saved integrity gate. `instruction.md` is
+unchanged. The task static checker still reports the two existing unpublished
+data revision errors for `data/corpus.jsonl` and `data/examples.jsonl`.
+
+## Archived packaging validation — 2026-10-14, v0.1.0
+
+Everything below records the original packaging checks, with baseline 0.3174.
+Statements about unperformed trials and scores describe that historical revision.
 
 This is a locally constructed package with tested data, model compatibility,
 retrieval interface and deterministic grading. It has **not** completed a live

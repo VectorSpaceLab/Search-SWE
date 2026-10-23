@@ -108,7 +108,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--logs-dir", type=Path, required=True)
     parser.add_argument("--run-script", type=Path, default=Path("/app/run.sh"))
-    parser.add_argument("--timeout", type=float, default=900)
+    parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--total-timeout", type=float, default=1800)
     parser.add_argument("--concurrency", type=int, choices=range(1, 6), default=5)
     args = parser.parse_args()

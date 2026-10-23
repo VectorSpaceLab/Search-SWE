@@ -4,7 +4,7 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/quantity-aware-retrieval"
-version = "0.1.0"
+version = "0.1.1"
 description = "Build a retrieval system that ranks clinical passages by relevance to natural-language numerical conditions."
 authors = [{ name = "Bingyu" }]
 keywords = ["information-retrieval", "numerical-reasoning", "units", "gpu"]
@@ -18,7 +18,7 @@ public_query_count = 0
 hidden_query_count = 210
 example_count = 80000
 base_model = "Qwen/Qwen3-Embedding-0.6B"
-baseline_ndcg_at_10 = 0.3174
+baseline_ndcg_at_10 = 0.1838
 query_timeout_seconds = 5.0
 index_build_timeout_seconds = 1200.0
 gpu_hardware = "1 x NVIDIA A100 40GB"

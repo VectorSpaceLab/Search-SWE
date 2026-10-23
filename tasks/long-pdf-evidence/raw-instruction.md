@@ -26,7 +26,7 @@ Create persistent index/runtime artifacts under the passed index directory, star
 
 `/app/run.sh --index-dir /app/index --queries /path/to/queries.jsonl --output /path/to/results.jsonl --top-k 5`
 
-Process every input query, emit exactly one object per query. Verifier calls separately per query, up to five concurrent calls sharing the index/service. Any compliant internal protocol is allowed.
+Process every input query, emit exactly one object per query. Verifier calls separately per query. Any compliant internal protocol is allowed. Internal evaluator scheduling uses up to five concurrent calls sharing the index/service; this scheduling detail is omitted from the agent-facing instruction.
 
 ## Output
 
@@ -39,8 +39,9 @@ Process every input query, emit exactly one object per query. Verifier calls sep
 
 ## Runtime and grading
 
-- Build: 2,400 seconds. Each query: 900 seconds. Shared query phase: 1,800 seconds, concurrency at most five. Queuing excluded from individual time, included in shared budget. Unfinished/unlaunched queries score zero. Runner cleanup/result collection: extra 60 seconds. Whole verifier: 10,800 seconds.
-- Check corpus hashes, exact sentence membership and output contract. Then OpenRouter `openai/gpt-6-luna`, effort `high`, temperature 0 judges the entire evidence set. Credentials are verifier-only; this does not extend submission API permissions.
+- Build: 2,400 seconds. Each query: 30 seconds, measured from its invocation; a timed-out query receives zero. The agent-facing instruction states the per-query limit without a total query-phase budget or concurrency requirement.
+- Internal evaluator safeguards: 1,800-second shared query budget, concurrency at most five, with an extra 60 seconds for runner cleanup/result collection. Queuing is excluded from the individual allowance. Whole verifier: 10,800 seconds. These safeguards do not shorten the per-query allowance for the fixed twelve-query workload.
+- Check corpus hashes, exact sentence membership and output contract. Then OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0 judges the entire evidence set. Credentials are verifier-only; this does not extend submission API permissions.
 - Binary support: complete explanation/contrast/reversal/qualification = 1, otherwise 0. Topical or scene matching alone fails. Accept alternative evidence; no exact reference-ID requirement. No borrowing missing facts from reference or outside knowledge. Harmless redundant evidence permitted within limits.
 - `SentenceEvidenceAccuracy` = mean binary support across all 12 private queries, including failed/invalid/missing/time-out zeros. Isolated failures do not invalidate other queries. Shared build/setup failure prevents all scoring.
 - Judge infrastructure/parse errors invalidate measurement and fail closed with final reward 0, separately reported from retrieval mistakes.
