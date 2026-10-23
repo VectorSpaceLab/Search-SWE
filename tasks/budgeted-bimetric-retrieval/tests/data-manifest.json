@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "tests/data/qrels.tsv",
+      "size_bytes": 87138,
+      "sha256": "6df0cd2cbbe88504b64c68f21e946a759b62c4d864225720cec256f0196e2210"
+    },
+    {
+      "path": "tests/data/queries.f32",
+      "size_bytes": 56557568,
+      "sha256": "3c9e9aa3c6d79fc0aa6a29be69908b1aa0d44ff1dbee1de5fb118e5c274c9e91"
+    },
+    {
+      "path": "tests/data/queries.jsonl",
+      "size_bytes": 29472070,
+      "sha256": "c49036ebb7c7e19b94ba9249f7de94a4969f7a3350d3292e4dd0fe029447e64e"
+    }
+  ],
+  "provenance": "Verifier-only inputs; sources and encoding are described in environment/docs/available_resources.md. Keep these files outside agent mounts."
+}

@@ -1,0 +1,49 @@
+schema_version = "1.4"
+artifacts = ["/tmp/search-swe-submission.tar"]
+
+[task]
+name = "search-swe/budgeted-candidate-reranking"
+version = "0.2.1"
+description = "Improve fixed BM25 Top-100 passage reranking with a metered, frozen local Qwen3-1.7B model."
+authors = [{ name = "hanhainebula" }]
+keywords = ["information-retrieval", "reranking", "inference-budget", "gpu"]
+
+[metadata]
+objective = "Allocate a per-query weighted token budget to improve linear-gain nDCG@10 over frozen simple baselines."
+dataset = "MS MARCO passage; all 43 judged TREC DL2019 public queries and all 54 judged DL2020 test queries"
+primary_metric = "nDCG@10 improvement normalized by fixed-candidate headroom"
+model = "Qwen/Qwen3-1.7B"
+model_revision = "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+weighted_tokens_per_query = 2048
+output_token_weight = 4
+strategy_seconds_per_query = 1.0
+inference_seconds_per_query = 90.0
+deployment_seconds = 600.0
+warmup_seconds = 60.0
+gpu_profile = "One NVIDIA A100-SXM4-40GB; 24 GiB total device memory cap, 22 GiB PyTorch allocator cap"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 7200.0
+user = "root"
+environment_mode = "separate"
+network_mode = "no-network"
+
+[[verifier.collect]]
+command = "/opt/conda/bin/python /task/runtime/submission_transfer.py"
+user = "root"
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 32768
+storage_mb = 40960
+gpus = 1

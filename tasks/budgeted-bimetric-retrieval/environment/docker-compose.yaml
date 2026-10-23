@@ -1,0 +1,112 @@
+services:
+  main:
+    cpuset: ${BIMETRIC_CPUSET:-0-15}
+    cpus: 15
+    mem_limit: 31g
+    memswap_limit: 31g
+    pids_limit: 512
+    # The standard launcher adds no-new-privileges to every service.
+    volumes:
+    - type: bind
+      source: ../data/public
+      target: /task/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./docs
+      target: /task/docs
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/oracle-socket
+      target: /run/oracle
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/app
+      target: /app
+      read_only: false
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/tmp
+      target: /tmp
+      read_only: false
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/var-tmp
+      target: /var/tmp
+      read_only: false
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/home
+      target: /home/submission
+      read_only: false
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/shm
+      target: /dev/shm
+      read_only: false
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/agent/lock
+      target: /run/lock
+      read_only: false
+      bind:
+        create_host_path: false
+    depends_on:
+      oracle:
+        condition: service_healthy
+  oracle:
+    cpuset: ${BIMETRIC_CPUSET:-0-15}
+    build:
+      context: ./oracle
+    cpus: 1
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 32
+    read_only: true
+    # The standard launcher adds no-new-privileges to every service.
+    volumes:
+    - type: bind
+      source: ../data/public
+      target: /public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/verifier/expensive.f32
+      target: /private/expensive.f32
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/verifier/dev-queries.f32
+      target: /private/dev-queries.f32
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/oracle-socket
+      target: /run/oracle
+      read_only: false
+      bind:
+        create_host_path: false
+    healthcheck:
+      test:
+      - CMD
+      - /opt/conda/bin/python
+      - -c
+      - import socket; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect('/run/oracle/oracle.sock');
+        s.close()
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s

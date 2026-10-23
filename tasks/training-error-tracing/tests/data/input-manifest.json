@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "actual_queries": 100,
+  "groups": 10,
+  "source": "fixed-r5 original generated tokens; first10 pergroup using frozen semantic priority",
+  "hashes": {
+    "queries.jsonl": "11574eca7faea4c6952c1708f6a5782e49e1b731a78596bdf9281cdc2c4c2881",
+    "labels.json": "65ed4d9f7d513ae63d7abfb23ce5bbce51376891c6da60d3936d82acc3d3c16f"
+  },
+  "error_producer_adapter_sha256": "9fbbda3c90d2115eeb537b269a29458d2fdf3705d0f8d896a0096232cd178864",
+  "diagnostic_probe_kind": "fixed-training-diagnostic-probe-v1"
+}

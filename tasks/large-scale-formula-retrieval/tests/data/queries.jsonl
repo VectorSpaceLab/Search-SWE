@@ -1,0 +1,76 @@
+{"query_id": "B.301", "latex": "\\|A\\|_2=\\sqrt{\\rho(A^TA)}"}
+{"query_id": "B.302", "latex": "z=\\sqrt[n]{s}e^{\\frac{i\\varphi}{n}}"}
+{"query_id": "B.303", "latex": "[x,y] = x"}
+{"query_id": "B.304", "latex": "[T_X^{0,1}, T_X^{0,1}] \\subset T_X^{0,1}"}
+{"query_id": "B.305", "latex": "\\lim\\limits_{N\\to\\infty}\\left\\lfloor\\sum\\limits_{r=1}^N\\frac{1}{2^r}\\right\\rfloor"}
+{"query_id": "B.308", "latex": "\\zeta(s)=\\sum_{n=1}^\\infty\\frac{1}{n^s}=\\frac{1}{\\Gamma(s)}\\int_0^\\infty \\frac{x^{s-1}}{e^x-1}dx"}
+{"query_id": "B.310", "latex": "\\frac{4}{x}+\\frac{10}{y}=1"}
+{"query_id": "B.311", "latex": "f(x)=\\frac{9^{x}}{9^x+3}"}
+{"query_id": "B.312", "latex": "\\left\\lfloor \\frac{\\left\\lfloor a/b \\right\\rfloor}{c} \\right\\rfloor=\\left\\lfloor\\frac{a}{bc}\\right\\rfloor"}
+{"query_id": "B.313", "latex": "|ab|=rs"}
+{"query_id": "B.314", "latex": "\\sum \\|e_n-x_n\\| < 1"}
+{"query_id": "B.315", "latex": "P(m\\text{++})\\implies P(m)"}
+{"query_id": "B.317", "latex": "\\int \\frac{1}{\\left(x^2+1\\right)^n}dx"}
+{"query_id": "B.318", "latex": "e^{x} \\geq \\left(1+\\frac{x}{n}\\right)^{n}"}
+{"query_id": "B.319", "latex": "A_1 \\subseteq A_2 \\subseteq \\ldots \\subseteq A_n \\subseteq A_{n+1} \\subseteq \\ldots"}
+{"query_id": "B.320", "latex": "\\int_{0}^{1}\\frac{\\sin^{-1}(x)}{x}"}
+{"query_id": "B.321", "latex": "ax+by=d"}
+{"query_id": "B.322", "latex": "a_n=\\frac{n(n+1)}{2}"}
+{"query_id": "B.323", "latex": "(\\mathbb{R} [x]/(x^4 + 1))^*"}
+{"query_id": "B.324", "latex": "\\sum_{n=1}^{\\infty} \\sum_{m=1}^\\infty \\frac{1}{{n^2 +m^2}}."}
+{"query_id": "B.325", "latex": "n!+2, n! +3, ..., n! + n"}
+{"query_id": "B.326", "latex": "F=P \\oplus T"}
+{"query_id": "B.327", "latex": "\\begin{vmatrix}\n1 & 1 &1 \\\\ \nx & y & z \\\\\nx^2 & y^2 &z^2 \\\\\n\\end{vmatrix}"}
+{"query_id": "B.328", "latex": "\\sum_{k=1}^{n}\\cos\\frac{2\\pi k}{n}=0"}
+{"query_id": "B.329", "latex": "A \\subseteq V \\subseteq \\overline{V} \\subseteq U"}
+{"query_id": "B.330", "latex": "\\Delta=[x+a(n-1)](x-a)^{n-1}"}
+{"query_id": "B.331", "latex": "4^x+6^x=9^x"}
+{"query_id": "B.333", "latex": "\\frac{\\sqrt{1-p^2}}{2\\pi(1-2p\\sin(\\varphi)\\cos(\\varphi))}"}
+{"query_id": "B.334", "latex": "a^{log_a(b)}=b"}
+{"query_id": "B.338", "latex": "y = \\frac{a+bx}{b-x}"}
+{"query_id": "B.341", "latex": "\\{a, a+b, a+2b, \\cdots\\}"}
+{"query_id": "B.342", "latex": "f(x_4) =\\frac{2}{5}e^{\\frac{-x}{10}}\\left(1-e^{\\frac{-x}{10}}\\right)^3."}
+{"query_id": "B.343", "latex": "P(E) = 1/6"}
+{"query_id": "B.344", "latex": "\\mathcal{A}=\\{\\{a\\}\\}"}
+{"query_id": "B.345", "latex": "r\\equiv \\begin{cases} x=1 \\\\ y=1 \\\\z=\\lambda -2 \\end{cases}"}
+{"query_id": "B.347", "latex": "(a+b, a-b) = 1"}
+{"query_id": "B.348", "latex": "\n\\begin{pmatrix}\nA & -B\\\\ \nB & A\n\\end{pmatrix}"}
+{"query_id": "B.349", "latex": "x! = \\sqrt{2\\pi x} * (\\frac{x}{e})^x"}
+{"query_id": "B.350", "latex": "x^3 - x, x \\in \\mathbb{N}"}
+{"query_id": "B.351", "latex": "\\lim_{n\\to\\infty}\\inf \\mu (A_n) \\geq \\mu(A)"}
+{"query_id": "B.352", "latex": "\\int_0^\\infty f(x) dx"}
+{"query_id": "B.353", "latex": "Cov(x,y) = 0"}
+{"query_id": "B.354", "latex": "p_1p_2\\mid a"}
+{"query_id": "B.355", "latex": "f(f(x)^2+f(y))=xf(x)+y"}
+{"query_id": "B.357", "latex": "f(n)=n^2-n+2"}
+{"query_id": "B.358", "latex": "ds = \\sqrt{1 + \\frac{dy}{dx}^2}"}
+{"query_id": "B.359", "latex": "\\tan\\theta=\\frac{x}{2}"}
+{"query_id": "B.360", "latex": "1/ \\vert x \\vert"}
+{"query_id": "B.361", "latex": "F(x)=\\int_a^xf(t)dt"}
+{"query_id": "B.362", "latex": "x R y \\lor y R x"}
+{"query_id": "B.363", "latex": "P[X^* \\geq x | \\mathcal{F}_0]= 1 \\wedge X_0 / x"}
+{"query_id": "B.364", "latex": "d(x,A)\\leqslant d(x,y)+d(y,A)"}
+{"query_id": "B.365", "latex": "\\alpha^+"}
+{"query_id": "B.366", "latex": "S=\\{ e_1,e_2,e_3,....,e_n\\}"}
+{"query_id": "B.367", "latex": "d(x,M)=\\frac{|\\langle f,x \\rangle|}{||f||}"}
+{"query_id": "B.368", "latex": "\\sum_{n\\geq1}\\frac{1}{n^2}=\\sum_{n\\leq x}\\frac1{n^2}+\\mathcal O(1/x)."}
+{"query_id": "B.369", "latex": "J_n=\\int_{-\\pi}^\\pi \\frac{\\sin{(nx)}}{(1+2^n) \\sin{x}}\\,\\mathrm{d}x\\:?"}
+{"query_id": "B.370", "latex": "s(x) = \\sum\\limits_{j=1}^n c_j\\chi_{A_j}(x)"}
+{"query_id": "B.376", "latex": "\\lim\\limits_{n\\to\\infty}\\dfrac{\\sqrt1+\\sqrt2+\\sqrt3+\\ldots+\\sqrt n}{n\\sqrt n}"}
+{"query_id": "B.377", "latex": "\\mathbb{R}^{n+1}-\\mathbb{R}^n"}
+{"query_id": "B.380", "latex": "\\int_0^\\pi f(t) \\sin(t)dt =\\int_0^\\pi f(t) \\cos(t)dt = 0"}
+{"query_id": "B.381", "latex": "A_1 \\times ... \\times A_n"}
+{"query_id": "B.384", "latex": "f_3(n) = \\binom n2"}
+{"query_id": "B.386", "latex": "\\sum _{n=-\\infty }^{\\infty } e^{-n^2 \\pi x}=\\frac{1}{\\sqrt{x}}\\sum _{n=-\\infty }^{\\infty } e^{-\\frac{n^2 \\pi }{x}}"}
+{"query_id": "B.388", "latex": "\\left[\\begin{array}{ccc|c}1&10&-6&1\\\\1&k&-1&2\\\\2&-1&k&5\\end{array}\\right]"}
+{"query_id": "B.389", "latex": "\\frac{(1+r)^{N+1}-(1+r)-rN}{r^2(1+r)^N}"}
+{"query_id": "B.390", "latex": "t_n:=\\frac {x_1+x_2+...+x_n}{n}"}
+{"query_id": "B.391", "latex": "\\mathbb{E} |X+Y|^r \\leq c_r (\\mathbb{E} |X|^r + \\mathbb{E} |Y|^r),"}
+{"query_id": "B.393", "latex": "|f(z^{2})| \\leq  2|f(z)|"}
+{"query_id": "B.394", "latex": "\\forall \\epsilon > 0, \\exists \\delta > 0, |x-a|<\\delta \\implies |f(x) - f(a)| < \\epsilon"}
+{"query_id": "B.395", "latex": "f(a+b) = f(a) + f(b)"}
+{"query_id": "B.396", "latex": "f_X(x)=\\frac{2x}{\\theta^2} \\quad"}
+{"query_id": "B.397", "latex": "1 + 2 + 3 + 4 + \\cdots = -\\frac{1}{12}"}
+{"query_id": "B.398", "latex": "\\lim_{x \\rightarrow c} f'(x) = L = \\lim_{x \\rightarrow c^+} f'(x) =\\lim_{x \\rightarrow c^-} f'(x)"}
+{"query_id": "B.399", "latex": "M = {\\{\\langle x,y \\rangle \\in \\mathbb{R^2} | a \\leq x \\leq b , c \\leq y \\leq d}\\}"}
+{"query_id": "B.400", "latex": "\\left(\\frac{1}{2^{n-2}}\\right)^2"}

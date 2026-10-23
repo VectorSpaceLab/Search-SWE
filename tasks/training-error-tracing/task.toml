@@ -1,0 +1,49 @@
+schema_version = "1.4"
+
+artifacts = ["/app/submission", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/training-error-tracing"
+version = "0.6.1"
+description = "Improve a working training-record retriever beyond training-text routing and layer-streamed fixed-base fallback."
+authors = [{ name = "hanhainebula" }]
+keywords = ["information-retrieval", "training-data-attribution", "gradient-retrieval", "gpu"]
+
+[metadata]
+primary_metric = "quality-gated paired query-latency and GPU-memory cost"
+base_model = "Qwen/Qwen2.5-7B compact fixed diagnostic probe"
+provided_assets_limit_bytes = 5000000000
+training_records = 52001
+development_groups = 5
+hidden_groups = 10
+development_queries = 50
+hidden_queries = 100
+
+[agent]
+timeout_sec = 14400.0
+user = "root"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier]
+timeout_sec = 8400.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+cpus = 16
+memory_mb = 65536
+storage_mb = 65536
+gpus = 1
+

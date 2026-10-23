@@ -1,0 +1,15 @@
+{
+  "rows": 52001,
+  "training_sha256": "78eee041c434b068c63d2d38382707726491737f974c6e95b1887cb981530f2a",
+  "base_manifest_sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114",
+  "base_nll_sha256": "3a51dc0ed3f1450adf616869e299072da6426184624073474f7ea5bf8b71387f",
+  "alternatives_sha256": "b039d0f0643d85e84fe6c4011853cc872489db7a64814867a34f1a73826d9180",
+  "indexing": "actual input token position j, predicted by logit j-1",
+  "missing_value": -1,
+  "missing_meaning": "prompt, padding, or base top-1 equals observed training token",
+  "parameters_updated": false,
+  "adapter_loaded": false,
+  "private_labels_or_queries_used": false,
+  "uncompressed_source_sha256": "fa66e35956a0b41d92eee2e825e90cfd4131a2cf3001c310ddf97d584b49f0d6",
+  "storage_format": "numpy-npz-values-lossless"
+}

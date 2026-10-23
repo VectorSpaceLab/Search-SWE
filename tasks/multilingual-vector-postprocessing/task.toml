@@ -1,0 +1,56 @@
+schema_version = "1.4"
+artifacts = ["/logs/agent/collected-submission", "/logs/agent/submission-freeze-status.json", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/multilingual-vector-postprocessing"
+version = "0.1.2"
+description = "Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors within one A100 and six hours."
+authors = [{ name = "hanhainebula" }]
+keywords = ["information-retrieval", "multilingual", "vector-postprocessing", "representation-learning", "gpu"]
+
+[metadata]
+objective = "Improve equal-dataset, equal-query-language nDCG@20 over frozen simple vector transformations."
+primary_metric = "clip((Q-B)/(U-B),0,1), with B and U frozen before agent evaluation"
+dataset = "Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition"
+encoder = "intfloat/multilingual-e5-large"
+encoder_revision = "3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3"
+dimensions = 1024
+training_vectors = 2000000
+probe_vectors = 200000
+corpus_documents = 6320
+development_queries = 3138
+hidden_queries = 13002
+preparation_seconds = 1800
+query_seconds = 0.5
+gpu_profile = "Exactly one NVIDIA A100 40GB in each agent/verifier stage"
+
+[agent]
+timeout_sec = 21600.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 10800.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+
+[[verifier.collect]]
+command = "/opt/conda/bin/python -I /task/runtime/freeze_submission.py"
+user = "root"
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 65536
+storage_mb = 102400
+gpus = 1

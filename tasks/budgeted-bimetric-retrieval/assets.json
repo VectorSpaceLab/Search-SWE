@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/public/cheap.f32",
+      "size_bytes": 384000000,
+      "sha256": "91775ac5391c7d8ef43d4f441573dff081c54a83531beeaf27e3d3a7198d7f49",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/budgeted-bimetric-retrieval/v020/public/cheap.f32"
+      }
+    },
+    {
+      "path": "data/public/config.json",
+      "size_bytes": 1367,
+      "sha256": "1f21c2da82aa07edb72a33e8f15eed3cf90d73297d252e079428cb8cefb92c44",
+      "mode": "0644",
+      "source": {
+        "local_path": "environment/config/public.json"
+      }
+    },
+    {
+      "path": "data/public/corpus.parquet",
+      "size_bytes": 46972114,
+      "sha256": "94fdc82caa239bef860e5e4717e93e7e5947ada50bdc3c7cbac129d293cec1d5",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/budgeted-bimetric-retrieval/v020/public/corpus.parquet"
+      }
+    },
+    {
+      "path": "data/public/dev-qrels.tsv",
+      "size_bytes": 11267,
+      "sha256": "a341442961897df119aa6fd42acd8fda1bd5c5883e0b910bd9802c3302cb1482",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/budgeted-bimetric-retrieval/v020/public/dev-qrels.tsv"
+      }
+    },
+    {
+      "path": "data/public/dev-queries.jsonl",
+      "size_bytes": 4269697,
+      "sha256": "21f2c63024a655d30be5e7aedf05213fdaf5fc833e159b0012ab198544b250e9",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/budgeted-bimetric-retrieval/v020/public/dev-queries.jsonl"
+      }
+    },
+    {
+      "path": "data/verifier/dev-queries.f32",
+      "size_bytes": 8192000,
+      "sha256": "d62d3f92ce26c11e5fe0e68926706f597ebfb19c35bb3153d77b4b16bbf78dd8",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/verifier/dev-queries.f32"
+      }
+    },
+    {
+      "path": "data/verifier/expensive.f32",
+      "size_bytes": 4096000000,
+      "sha256": "9cc73e1ad727526f8eaf7a3b53ebfc70ff23db2dd32540b3750baa6673a2ecb1",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/budgeted-bimetric-retrieval/v020/verifier/expensive.f32"
+      }
+    }
+  ]
+}

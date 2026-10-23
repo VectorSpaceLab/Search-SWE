@@ -1,0 +1,47 @@
+services:
+  main:
+    pids_limit: 512
+    tmpfs:
+    - /app:rw,exec,nosuid,nodev,size=95g,mode=0755
+    - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    volumes:
+    - type: bind
+      source: ../models
+      target: /task/models
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/public
+      target: /task/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/private
+      target: /task/private
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../environment/runtime
+      target: /task/runtime
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../environment/docs
+      target: /task/docs
+      read_only: true
+      bind:
+        create_host_path: false
+    memswap_limit: 64g
+    shm_size: 64m

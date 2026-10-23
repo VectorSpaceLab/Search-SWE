@@ -1,0 +1,60 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app/submission",
+]
+
+[task]
+name = "search-swe/large-scale-formula-retrieval"
+version = "0.4.1"
+description = "Retrieve relevant formulas from the complete ARQMath v3 corpus with 34 MiB prepared artifacts in a 40 MiB serving filesystem and 50 ms CPU queries."
+authors = [{ name = "hanhainebula" }]
+keywords = ["information-retrieval", "formula", "latex", "arqmath", "cpu"]
+objective = "Maximize nDCG prime under fixed build, query, memory and storage limits."
+
+[metadata]
+primary_metric = "nDCG_prime"
+public_query_count = 5
+hidden_query_count = 76
+max_results = 1000
+corpus_instance_count = 22804571
+corpus_visual_count = 8073699
+corpus_post_count = 2466080
+build_timeout_seconds = 3600
+query_timeout_seconds = 0.05
+serving_capacity_bytes = 41943040
+prepared_artifact_limit_bytes = 35651584
+
+[agent]
+timeout_sec = 7200.0
+user = "submission"
+network_mode = "allowlist"
+allowed_hosts = ["huggingface.co", "cdn-lfs.huggingface.co", "cdn-lfs-us-1.hf.co", "cas-bridge.xethub.hf.co", "cas-server.xethub.hf.co", "transfer.xethub.hf.co"]
+
+[verifier]
+# 3600 build + 76 * (120 load + 30 warmup + 0.05 query) < 15004 s,
+# plus trusted cleanup/reporting. Query failures retain the full denominator.
+timeout_sec = 18000.0
+user = "root"
+environment_mode = "separate"
+network_mode = "no-network"
+
+[[verifier.collect]]
+command = "/opt/conda/bin/python /task/budget_evidence.py collect"
+user = "root"
+timeout_sec = 120.0
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 2
+memory_mb = 4096
+storage_mb = 65536
+gpus = 0
+
+[environment.healthcheck]
+command = "/opt/conda/bin/python /task/budget_evidence.py setup"
+timeout_sec = 30.0
+retries = 1

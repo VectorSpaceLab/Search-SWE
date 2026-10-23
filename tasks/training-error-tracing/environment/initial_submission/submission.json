@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "method": "Public training-text routing with all28 fixed NF4 layers streamed from CPU and native IPC",
+  "configuration": {
+    "model": "Qwen/Qwen2.5-7B",
+    "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+    "probe": "Read-only /task/models/base; all 28 serialized NF4 double-quantized decoder layers, complete BF16 input embeddings, original tokenizer, and supplied 64,439-row BF16 diagnostic output head remain fixed.",
+    "inference": "Reconstruct exact NF4 Params4bit state from supplied safetensors, keep packed layer weights on CPU, move only the current decoder layer to CUDA for its forward, and restore its fixed CPU parameters immediately afterward. BF16 compute, SDPA attention, no optimizer updates.",
+    "query_alignment": "Use supplied input_ids without re-tokenization or truncation; compute every marked target position at causal index j-1. For multi-position spans, select the strongest selected-head alternative-to-actual-token contrast, matching the public starter.",
+    "candidate_pool": "Boundary-aware case-insensitive target_text occurrences in training outputs with source-token surfaces from supplied base-token-alternatives.npz and target NLLs from supplied base-token-nll.npz.",
+    "ranking": "First apply the public starter training-IDF lexical source gate (top-three aggregation, minimum one rare matching term, ten candidate rows, aggregate at least 1.0 and 1.12 margin). Otherwise rank by fresh fixed-probe source-token mass, then training-only maximum target-token NLL, then opaque ID.",
+    "request_state": "No query hidden states, logits, features, scores or rankings persist between requests. Cached output rows, candidate pools and text statistics depend only on fixed training inputs and the supplied probe.",
+    "ranker_training": false,
+    "external_services": false,
+    "dataset_terms": "CC BY-NC 4.0 research/noncommercial",
+    "provided_training_features": [
+      "/task/data/base-nll/base-token-nll.npz",
+      "/task/data/base-alternatives/base-token-alternatives.npz"
+    ],
+    "fixed_layers": 28,
+    "probe_head_rows": 64439,
+    "provided_assets_bytes": 4868975243,
+    "public_tool_sha256": {
+      "retrieval_index.py": "321392702e3dee4b1a16d7eb5016e9c248876ab55c2ca39832e08e8b39fc47a9",
+      "candidate_features.py": "192a4be46402eac2e328db1ccdf7dc7fdd6030d9c1a3cc881bff7daa4432cbb8",
+      "source_coherence.py": "441a759dae1df2b364f561df221db5ae3ae5e5855cb4655691e01462112e74d6",
+      "fixed_features.py": "b72ea9fe8a6cac6cc9832678d6fb7da56a91611e6731cb6832395c4f4d479c22",
+      "token_contract.py": "08579d1465084944759af74374556c8183775118871a33f6bcd5a1591db345d3",
+      "lexical_source.py": "24b18fa3e32e0b3eea6608459bd1c0fade0bc61471e159193340fef37a207dba",
+      "compact_probe.py": "fbb4c81f35e8d84cf687ee942e7b6e27cd3c349cc813db77eef1e857dceda629",
+      "native_client.cpp": "1a3b982cfc583251b67f81cd4e43649eb8e57dfa3ffc489b459f0aa8098c8d24",
+      "streamed_source.py": "a6ee892a3022ad4738d7e3d0bc659e9a88891042705011ac7ad1ab383ac7a77e"
+    },
+    "submission_code_sha256": {
+      "prepare.sh": "9e4635c9cd549caba8ac92354f06fad154f244e7230ce103fd5ab4dbd82009c9",
+      "run.sh": "98dd50073a5077b3bf69ebd64bca556d3ef6fb23c9f845e31baf648fb84186f8",
+      "retriever_service.py": "a6ee892a3022ad4738d7e3d0bc659e9a88891042705011ac7ad1ab383ac7a77e"
+    }
+  },
+  "frozen_artifacts": []
+}

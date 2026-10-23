@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "kind": "fixed-training-diagnostic-probe-v1",
+  "source_model": "Qwen/Qwen2.5-7B",
+  "source_revision": "d149729398750b98c0af14eb82c78cfe92750796",
+  "source_manifest_sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114",
+  "layers": 28,
+  "decoder": "Exact existing bitsandbytes NF4 double-quantized inference state",
+  "embedding": "Complete original BF16 input embedding matrix",
+  "output_head": "Original BF16 rows, losslessly compressed, with opaque original token IDs",
+  "head_selection": "Union of public training token IDs, public training alternative IDs, and every vocabulary token sharing a nonempty token_surface with those alternatives. No queries or labels used.",
+  "head_rows": 64439,
+  "head_ids_sha256": "d47d27f57afb1f3a13b0cbb6cb479c2de7eb9e116582b5facdd4726bf9f8f1e3",
+  "files": {
+    "tokenizer.json": {
+      "bytes": 7031645,
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+    },
+    "output-head.npz": {
+      "bytes": 365713156,
+      "sha256": "f73117ff25229362d337dfcfe6cabbd7c2da693301730eee0dbb51adb95b3322"
+    },
+    "config.json": {
+      "bytes": 2162,
+      "sha256": "91abc8c7569d22d39b4afe0aba4a482144da68619822049f59e2894ebf0044d5"
+    },
+    "tokenizer_config.json": {
+      "bytes": 7228,
+      "sha256": "c91efca15ceff6e9ee9424db58a6f59cd41294e550a86cbd07e3c1fb500b34f9"
+    },
+    "model.safetensors": {
+      "bytes": 4457259789,
+      "sha256": "7a100a2a9979e7bbc6862812633796bcde3a993e1dd4c0c65e541779bc218d19"
+    },
+    "vocab.json": {
+      "bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    },
+    "verified-manifest.json": {
+      "bytes": 4028,
+      "sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114"
+    },
+    "merges.txt": {
+      "bytes": 1671839,
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+    },
+    "LICENSE": {
+      "bytes": 11343,
+      "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e"
+    }
+  },
+  "torch": "2.9.0+cu130"
+}

@@ -1,0 +1,13 @@
+{
+  "rows": 52001,
+  "base_manifest_sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114",
+  "training_sha256": "78eee041c434b068c63d2d38382707726491737f974c6e95b1887cb981530f2a",
+  "losses_sha256": "3a51dc0ed3f1450adf616869e299072da6426184624073474f7ea5bf8b71387f",
+  "parameters_updated": false,
+  "adapter_disabled": true,
+  "loaded_adapter": null,
+  "indexing": "input position j; response tokens only; prompt/pad/index0 zero",
+  "private_labels_or_queries_used": false,
+  "uncompressed_source_sha256": "7fad24936ba65b03b9041acd2e39587e74e074250eb2a06545de3c7e8c41696d",
+  "storage_format": "numpy-npz-values-lossless"
+}

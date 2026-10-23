@@ -1,0 +1,71 @@
+schema_version = "1.4"
+artifacts = ["/var/tmp/search-swe-submission.tar", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/instruction-following-embedding"
+version = "0.7.1"
+description = "Adapt a compact E5-large-v2 query adapter within a 512KiB deployment budget while retaining the fixed base document space."
+authors = [{ name = "hanhainebula" }]
+keywords = ["information-retrieval", "instruction-following", "embedding", "fine-tuning", "gpu"]
+
+[metadata]
+objective = "Improve harmonic p-MRR across all three subsets through compact query-adapter adaptation within512KiB against the fixed base document tower, retaining two-version nDCG@10."
+dataset = "FollowIR Robust04/Core17/News21; topic-disjoint 20-group development and 84-group test partition"
+primary_metric = "Harmonic mean of three positive subset p-MRR values (otherwise zero), gated by six nDCG@10 checks"
+backbone = "intfloat/e5-large-v2"
+model_revision = "f169b11e22de13617baa190a028a32f3493550b6"
+training_records = 1717
+public_groups = 20
+hidden_groups = 84
+document_count = 98312
+embedding_dimensions = 1024
+max_sequence_length = 512
+candidates_per_query = 1000
+scoring_metric = "harmonic-subset-pmrr"
+baseline_harmonic_pmrr = 0.0
+reference_harmonic_pmrr = 0.07054277758767746
+reference_macro_pmrr_diagnostic = 0.07203999275551132
+relevance_retention = 0.9
+preparation_seconds = 3600
+query_seconds = 1.0
+query_backbone_forwards = 1
+query_batch_sequences = 1
+serving_profile = "fixed-e5-mean-v1"
+submission_kind = "compact-standard-lora-or-base"
+maximum_submission_bytes = 524288
+weight_precisions = ["float16", "bfloat16", "float32"]
+training_protocol = "train-only-supervision-public-validation"
+document_tower = "fixed-provided-e5-base"
+development_cutoff = "freeze-and-grade-last-submission"
+gpu_profile = "One NVIDIA A100-SXM4-40GB"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 7200.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+
+[[verifier.collect]]
+command = "/opt/conda/bin/python /task/runtime/submission_transfer.py --freeze-agent-processes"
+user = "root"
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 32768
+storage_mb = 32768
+gpus = 1

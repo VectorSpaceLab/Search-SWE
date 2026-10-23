@@ -1,0 +1,20 @@
+services:
+  main:
+    pids_limit: 256
+    tmpfs:
+      - /app:rw,exec,nosuid,nodev,size=24g,mode=0755
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - type: bind
+        source: ../models/Qwen3-1.7B
+        target: /task/models/Qwen3-1.7B
+        read_only: true
+        bind:
+          create_host_path: false
+
