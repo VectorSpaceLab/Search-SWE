@@ -13,7 +13,7 @@
 | Dataset | BEIR SciFact, NFCorpus and FiQA; author-released LightRetriever examples |
 | Hidden queries | 1271 |
 
-Author: Bingyu. Task version 0.4.0. Built with Llama.
+Author: Bingyu. Built with Llama.
 
 Build a fast batch retrieval service, subject to a required search-quality
 threshold. The agent receives the original Llama-3.2-1B base model and 80,000

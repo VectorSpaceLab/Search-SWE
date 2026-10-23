@@ -13,7 +13,7 @@
 | Dataset | OpenJev mixture and held-out suite |
 | Hidden queries | 4200 |
 
-Author: Bingyu. Version: 0.1.0. Published task package; the saved coding-agent result is recorded in RUN_RESULTS.md.
+Author: Bingyu. Published task package; the saved coding-agent result is recorded in RUN_RESULTS.md.
 
 Build an offline Qwen3-0.6B-based system for categorical choices, Boolean
 judgments, and ordinal ratings. This task follows the user's revised OpenJev
