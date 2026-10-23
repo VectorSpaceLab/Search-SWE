@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "models/esm2_t30_150M_UR50D/README.md",
+      "size_bytes": 1705,
+      "sha256": "462a2f24724e19c6be0efab926315c294a863c9a9770e2c8b3d859b2d81a07de",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/esm2_t30_150M_UR50D/config.json",
+      "size_bytes": 779,
+      "sha256": "e512f68ec444d99477703a9806639ca83da3dbc19f6c5fe428d6e5b7460972dc",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/esm2_t30_150M_UR50D/model.safetensors",
+      "size_bytes": 595257706,
+      "sha256": "c3f1da8aea53bddd32c246c86168c23b9fd72341fb9db9a94436f855f5053566",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/esm2_t30_150M_UR50D/special_tokens_map.json",
+      "size_bytes": 125,
+      "sha256": "3aedcd4211c0d43aec4e607ff60a63255f3174ead795e997350f09a5f8cd9ee1",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "special_tokens_map.json"
+      }
+    },
+    {
+      "path": "models/esm2_t30_150M_UR50D/tokenizer_config.json",
+      "size_bytes": 95,
+      "sha256": "7e9161ecdb548ec45a41cbc6b24aa4476fdd418461f491c4207baa99419a29ad",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/esm2_t30_150M_UR50D/vocab.txt",
+      "size_bytes": 93,
+      "sha256": "0b82cc0a7c7cf9e567b1e5892d793285b9fbae822c964ca48696f7db44598e03",
+      "source": {
+        "repo_id": "facebook/esm2_t30_150M_UR50D",
+        "repo_type": "model",
+        "revision": "a695f6045e2e32885fa60af20c13cb35398ce30c",
+        "filename": "vocab.txt"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/LICENSE.md",
+      "size_bytes": 1072,
+      "sha256": "8542b3a65414366ae3228e8f1658e538ec95f9b8855599c9c6e36751d592be66",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "LICENSE.md"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/README.md",
+      "size_bytes": 2306,
+      "sha256": "bab6ce712d47e58600106843cae3ccc5d4ff2788ce6cc57183a4bb8813438525",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/config.json",
+      "size_bytes": 385,
+      "sha256": "56bab767c02bc792897638feb8addc06d483d9c73769a5f554bbabea1f5507a1",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/pytorch_model.bin",
+      "size_bytes": 440474434,
+      "sha256": "d513412d396cecec5f67936ac871b4aaf1178dfb5193776e790fd2b28bba240c",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "pytorch_model.bin"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/tokenizer_config.json",
+      "size_bytes": 28,
+      "sha256": "53b6f42b8b8daddbdc6d3532c324187a92b46c1602bd6e8d4ad5a413b4fc90e1",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/vocab.txt",
+      "size_bytes": 225062,
+      "sha256": "7b36651908a88bc38bda41b728b2a598191e0d3b553cbacf7b1e5f026d5b5b9f",
+      "source": {
+        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
+        "repo_type": "model",
+        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
+        "filename": "vocab.txt"
+      }
+    },
+    {
+      "path": "data/private/proteinkg25/pairs.json",
+      "size_bytes": 1400018,
+      "sha256": "ac703ecfd246f4d240489ff1ee83d861d83b7792c2774e96b24733790217af4c",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/proteinkg25/pairs.json"
+      }
+    },
+    {
+      "path": "data/private/proteinkg25/protein.jsonl",
+      "size_bytes": 4125604,
+      "sha256": "753866d4cbd409876aea3ac27e4413facb4503b3bb2362466dac3d0e2159b9f8",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/proteinkg25/protein.jsonl"
+      }
+    },
+    {
+      "path": "data/private/proteinkg25/text.jsonl",
+      "size_bytes": 8999685,
+      "sha256": "b83432cd65f8825fe971e56be0fdd30e42a8206ab4b45dd4d42e98ab06aef905",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/proteinkg25/text.jsonl"
+      }
+    },
+    {
+      "path": "data/private/swissprot/pairs.json",
+      "size_bytes": 1400018,
+      "sha256": "d1df09c930def0ffe61109bf7b837f1cccab8ee98d0ee233f01bc91eb4b3357c",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/swissprot/pairs.json"
+      }
+    },
+    {
+      "path": "data/private/swissprot/protein.jsonl",
+      "size_bytes": 4107165,
+      "sha256": "a3001e9fa57553ca553ef41aeb736d6e544ea23c66f2aafc597585d5a51601bd",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/swissprot/protein.jsonl"
+      }
+    },
+    {
+      "path": "data/private/swissprot/text.jsonl",
+      "size_bytes": 5090948,
+      "sha256": "374b2239124b53c9a12a09680235f423afc8cf045d16b15a972ca37a2048f08c",
+      "mode": "0600",
+      "source": {
+        "local_path": "tests/bundled-assets/data/private/swissprot/text.jsonl"
+      }
+    },
+    {
+      "path": "data/public/train/proteinkg25.jsonl",
+      "size_bytes": 488935080,
+      "sha256": "23cfd82aa9843c4a1a182b5992c7dcbd0050ea2a4309638c9c33bb9b28e093a9",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/train/proteinkg25.jsonl"
+      }
+    },
+    {
+      "path": "data/public/train/swissprot.jsonl",
+      "size_bytes": 311183572,
+      "sha256": "f47b03497c1c1f0cb9a0e3ba864f83de9b9f931288257a3c08c32814078dd732",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/train/swissprot.jsonl"
+      }
+    },
+    {
+      "path": "data/public/valid/proteinkg25/pairs.json",
+      "size_bytes": 1418,
+      "sha256": "ec746ebb6883d096e7c9d03747651fa3ebae4b54a450b9efd5230bd9bb304386",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/proteinkg25/pairs.json"
+      }
+    },
+    {
+      "path": "data/public/valid/proteinkg25/protein.jsonl",
+      "size_bytes": 4125871,
+      "sha256": "7f2a8e9a41a3b338a702d74a9e63c3fab5ac2715abe8875be1bdc10c5e8d28ac",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/proteinkg25/protein.jsonl"
+      }
+    },
+    {
+      "path": "data/public/valid/proteinkg25/text.jsonl",
+      "size_bytes": 8744045,
+      "sha256": "6682792b1718be93596aa41fd9d4e933a90da2ffbff0241d214380d3180eed6e",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/proteinkg25/text.jsonl"
+      }
+    },
+    {
+      "path": "data/public/valid/swissprot/pairs.json",
+      "size_bytes": 1418,
+      "sha256": "8e1ca18eeb5fc005c6123c707b7d9ac6531942fdff3d5624349ef57686240cbc",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/swissprot/pairs.json"
+      }
+    },
+    {
+      "path": "data/public/valid/swissprot/protein.jsonl",
+      "size_bytes": 4113097,
+      "sha256": "b3926d59bd54e25d8fcb5895c1302ea3066ad759deb0da2a8aed901a4648cf10",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/swissprot/protein.jsonl"
+      }
+    },
+    {
+      "path": "data/public/valid/swissprot/text.jsonl",
+      "size_bytes": 5004316,
+      "sha256": "d7bcaf9bd500db125177d076c43af0ab77c005d092d3d32a167cb99248844aea",
+      "mode": "0644",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/protein-text-bidirectional-retrieval/public/valid/swissprot/text.jsonl"
+      }
+    }
+  ]
+}

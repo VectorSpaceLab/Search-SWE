@@ -1,0 +1,42 @@
+{
+  "family": "simple-ensemble",
+  "status": "frozen",
+  "property_mode": "simple-hybrid",
+  "score_choices": {
+    "DRD2": {
+      "family": "raw",
+      "fraction": 0.25,
+      "Q": 0.15734767025089608
+    },
+    "ESR1": {
+      "family": "raw",
+      "fraction": 1.0,
+      "Q": 0.1663082437275986
+    },
+    "F10": {
+      "family": "raw",
+      "fraction": 0.5,
+      "Q": 0.10412186379928316
+    },
+    "MET": {
+      "family": "raw",
+      "fraction": 0.0,
+      "Q": 0.12974910394265238
+    },
+    "PARP1": {
+      "family": "raw",
+      "fraction": 0.25,
+      "Q": 0.2103942652329749
+    }
+  },
+  "property_sources": [
+    "raw",
+    "normalized",
+    "raw",
+    "normalized",
+    "normalized",
+    "raw"
+  ],
+  "metric": "Public Recall@279; comparison only, no score normalization",
+  "private_feedback_used": false
+}

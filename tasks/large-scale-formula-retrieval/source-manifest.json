@@ -1,0 +1,70 @@
+{
+  "README_DATA.md": {
+    "bytes": 8491,
+    "sha256": "0c00dcc76a92840801f4792e7495e2ed8796449b482118ec1cc8a09bcaf34b67"
+  },
+  "MaRF.pdf": {
+    "bytes": 1210572,
+    "sha256": "919731fab837fee9c291087f222979a2227666457084e66eca8bcc2fbfe5cab5"
+  },
+  "topics2021.xml": {
+    "bytes": 173455,
+    "sha256": "e86b4c25bad39649e20e285a99bcd872587c2816260970a6db0ef8525fcd396e"
+  },
+  "qrel_task2_2022_official.tsv": {
+    "bytes": 215192,
+    "sha256": "f68f5229338af8d78fd29d509c577d35671c4ddbae6d5144b730d7cd45db092b"
+  },
+  "qrel_task2_a2_v3.tsv": {
+    "bytes": 152814,
+    "sha256": "fb57cec8b66b01da638f42b387b8d16a5b9ac06a988faf16ce9c9c8a611220b4"
+  },
+  "README_formulas_V3.0.md": {
+    "bytes": 5830,
+    "sha256": "4656b8e91c441ea75cbebfca8304fc4e4add15b340f65e75bdcdaed40c651493"
+  },
+  "ARQMath-Guidlines-v5.3.md": {
+    "bytes": 8458,
+    "sha256": "b59aa3e992078cd5d59c0bc2d6dccf8f5795fcb7e019ac06754a12d8911523fd"
+  },
+  "Posts.V1.3.zip": {
+    "bytes": 938162184,
+    "sha256": "8cef2cda5285ee509468a5e2a11024f6b863af923ee072c023c9c72003fb78be"
+  },
+  "arqmath22.pdf": {
+    "bytes": 1482653,
+    "sha256": "0806c37536e1632b7d36a816cb06e7a94a345b565dc9aac0e6da50b3174027ca"
+  },
+  "task2_get_results.py": {
+    "bytes": 2923,
+    "sha256": "ce7bb0d9a106cd08e0db8fd2eb77144e359de7a59cfee2e24942527349f11a32"
+  },
+  "de_duplicate_2022.py": {
+    "bytes": 5452,
+    "sha256": "70b42f6446768ef4ff92a93c703da1c4fcfc0f3834746723e50ca2bdf6b2e6c1"
+  },
+  "latex_representation_v3.zip": {
+    "bytes": 425764325,
+    "sha256": "3e0c0c3019874267c17c92e2989431995c603c86f1ee16a5e2376eb3930409be"
+  },
+  "qrel_task2_2022_all.tsv": {
+    "bytes": 246140,
+    "sha256": "814a3038070cd1a5f098249018430ff8b8ee96fe4ebe6fc09d33452fee20847e"
+  },
+  "ReadMe.docx": {
+    "bytes": 9418,
+    "sha256": "d3c599af4fc2f634e7683be7d7e05a6b5a2e5bfe8a7678c6da18575c26d03c84"
+  },
+  "topics2022.xml": {
+    "bytes": 195747,
+    "sha256": "c26d35a2505343ed899dd3bfd0dd059d42453e190938e313b698ecdceb20e4ee"
+  },
+  "formulas2022.tsv": {
+    "bytes": 50461,
+    "sha256": "fcb5d4caffe38d507f9c211bc131bfc77aa290001796c88d68ef334ce4ad0b8a"
+  },
+  "formulas2021.tsv": {
+    "bytes": 45469,
+    "sha256": "d7aed84f201eb7724423e4a558823a53280ca7db5dfe96e6bada1d55543972a8"
+  }
+}

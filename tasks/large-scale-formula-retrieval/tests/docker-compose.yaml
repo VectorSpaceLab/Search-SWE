@@ -1,0 +1,37 @@
+services:
+  main:
+    ipc: private
+    cpuset: ${FORMULA_CPUSET:-80,81}
+    mem_limit: 4g
+    memswap_limit: 4g
+    cpus: 2
+    pids_limit: 512
+    volumes:
+    - type: bind
+      source: ${FORMULA_STORAGE_ROOT}/evidence
+      target: /task-evidence
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${HOST_VERIFIER_LOGS_PATH:?Harbor must supply its native trial path}/../trial.log
+      target: /task-run/trial.log
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/public
+      target: /task/data/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${FORMULA_STORAGE_ROOT:?Prepare job storage first}/verifier
+      target: /work
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${FORMULA_STORAGE_ROOT:?Prepare job storage first}/serve
+      target: /serve
+      bind:
+        create_host_path: false

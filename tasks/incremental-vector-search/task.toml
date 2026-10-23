@@ -1,0 +1,51 @@
+schema_version = "1.4"
+
+artifacts = [
+    "/app/submission",
+    "/logs/agent/trajectory.json",
+]
+
+[task]
+name = "search-swe/incremental-vector-search"
+version = "0.10.2"
+description = "Build an incremental vector index and maximize recall across five retrieval sizes under per-stage time budgets."
+authors = [{ name = "jianlyu" }]
+keywords = ["vector-search", "incremental-indexing", "approximate-nearest-neighbors", "cpu"]
+
+[metadata]
+primary_metric = "Time-gated logarithmic missed-neighbor reduction over public reference"
+dimensions = [1536, 3072]
+retrieval_sizes = [100, 200, 400, 800, 1000]
+initial_vectors = 105000
+stages = 10
+insert_batch = 1000
+query_batch = 1000
+exact_scan_fraction = 0.10
+timing_policy = "same-environment-exact-reference"
+scoring_policy = "log-missed-neighbor-gain-over-public-reference"
+
+[agent]
+timeout_sec = 7200.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 28800.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 32768
+storage_mb = 32768
+gpus = 0
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

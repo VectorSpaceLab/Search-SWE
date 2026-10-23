@@ -1,0 +1,29 @@
+services:
+  main:
+    cpuset: ${DELETION_CPUSET:-0-15}
+    memswap_limit: 64g
+    pids_limit: 512
+    volumes:
+    - type: bind
+      source: ../data/public
+      target: /task/data/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/verifier
+      target: /task/data/verifier
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../environment/tools
+      target: /task/tools
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${DELETION_STORAGE_ROOT:?Prepare job storage first}/verifier
+      target: /work
+      bind:
+        create_host_path: false

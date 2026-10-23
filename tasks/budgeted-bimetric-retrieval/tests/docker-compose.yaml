@@ -1,0 +1,45 @@
+services:
+  main:
+    cpuset: ${BIMETRIC_CPUSET:-0-15}
+    cpus: 16
+    mem_limit: 32g
+    memswap_limit: 32g
+    pids_limit: 512
+    # The standard launcher adds no-new-privileges to every service.
+    volumes:
+    - type: bind
+      source: ../environment/baseline
+      target: /task/baseline
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../environment/tools
+      target: /task/tools
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/public
+      target: /task/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/verifier/expensive.f32
+      target: /task/private/data/expensive.f32
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/verifier/dev-queries.f32
+      target: /task/private/data/dev-queries.f32
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${BIMETRIC_STORAGE_ROOT:?Prepare task storage first}/verifier
+      target: /work
+      read_only: false
+      bind:
+        create_host_path: false

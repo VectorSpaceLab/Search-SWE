@@ -1,0 +1,39 @@
+{
+  "documents": 250000,
+  "cheap_dimension": 384,
+  "expensive_dimension": 4096,
+  "dtype": "little-endian float32",
+  "unit_normalized": true,
+  "document_ids": "row i -> doc{i}; source_id records original BEIR ID",
+  "distance": "Euclidean L2 from stored float32 vectors; float64 difference and accumulation",
+  "cheap_model": {
+    "repo": "TaylorAI/bge-micro-v2",
+    "revision": "3edf6d7de0faa426b09780416fe61009f26ae589",
+    "max_tokens": 512,
+    "forward_dtype": "float32",
+    "pooling": "mean",
+    "query_prefix": ""
+  },
+  "expensive_model": {
+    "repo": "Salesforce/SFR-Embedding-Mistral",
+    "revision": "33a60fe7b5e00b9414981280c571e8a4f9f42f1b",
+    "max_tokens": 4096,
+    "forward_dtype": "bfloat16",
+    "pooling": "lasttoken",
+    "query_prefix": "Instruct: Given a question, retrieve Wikipedia passages that answer the question\nQuery: "
+  },
+  "document_input": "title + one space + text",
+  "public_queries": 500,
+  "test_queries": 3452,
+  "development_seed": 20261017,
+  "score_budget": 20,
+  "query_seconds": 2,
+  "fixed_asset_bytes": 4625555597,
+  "grading_references": {
+    "B": 0.8460412084949013,
+    "U": 0.9117533972383719
+  },
+  "source_documents": 2681468,
+  "corpus_seed": 20261021,
+  "corpus_selection": "All dev/test qrel documents plus seeded uniform sampling without replacement; sorted source rows; sequential remapping"
+}

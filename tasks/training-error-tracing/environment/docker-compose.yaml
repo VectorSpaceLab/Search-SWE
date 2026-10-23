@@ -1,0 +1,49 @@
+services:
+  main:
+    cpus: 16
+    mem_limit: "64g"
+    deploy:
+      resources:
+        limits:
+          cpus: "16"
+          memory: "64g"
+          pids: 2048
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "4gb"
+    memswap_limit: "64g"
+    pids_limit: 2048
+    volumes:
+      - type: bind
+        source: ../data/public
+        target: /task/data
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../models
+        target: /task/models
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../tools
+        target: /task/tools
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./licenses
+        target: /task/licenses
+        read_only: true
+        bind:
+          create_host_path: false

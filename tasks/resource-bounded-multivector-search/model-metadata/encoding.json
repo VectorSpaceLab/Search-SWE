@@ -1,0 +1,101 @@
+{
+  "model_repo": "colbert-ir/colbertv2.0",
+  "model_revision": "c1e84128e85ef755c096a95bdb06b47793b13acf",
+  "colbert_code_commit": "cc4f3dc91c0b45d2d08c251d9d95178285c65f1c",
+  "quora_revision": "54934c6ffc800b0928b057f047315b5d1a1d71d8",
+  "qrels_revision": "7906857d63e4b4d41fd16c954c929c3ff3c580d9",
+  "doc_maxlen": 220,
+  "query_maxlen": 32,
+  "mask_punctuation": true,
+  "attend_to_mask_tokens": false,
+  "projection": "linear.weight; L2 normalization",
+  "dtype": "float32",
+  "tf32": false,
+  "attention": "eager",
+  "batch_size": 128,
+  "device": "NVIDIA A100-SXM4-40GB",
+  "CUDA_VISIBLE_DEVICES": "3",
+  "torch": "2.9.0+cu130",
+  "files": {
+    "data/public/corpus/ids.json": {
+      "size_bytes": 4598702,
+      "sha256": "c2840f6562569335f6ff5ca8250ef195ec4848b12897e065957468d4646fc724"
+    },
+    "data/public/corpus/config.json": {
+      "size_bytes": 195,
+      "sha256": "fab133908b4bf29f10dd71da75bf51ff3e65e32587227a06fa62d2a168ab609d"
+    },
+    "data/public/corpus/offsets.i64": {
+      "size_bytes": 4183456,
+      "sha256": "45cf7effca6a7f03f5bf4b8174d709e5d9680be9e5a5ffcf8d7c62eaa00cdec4"
+    },
+    "data/public/corpus/vectors.f32": {
+      "size_bytes": 4168073728,
+      "sha256": "ad304d0acc4682ccff342ec294a2a17b051dfbe16959efcaa24161478609159f"
+    },
+    "data/public/dev/ids.json": {
+      "size_bytes": 43849,
+      "sha256": "aaa065a988e5a99552a1fc6c4254ff5857556f3768d1aeed39da0858bf3a23d0"
+    },
+    "data/public/dev/config.json": {
+      "size_bytes": 178,
+      "sha256": "498afad46c4a8cf23784299a89a86bc73c8c76eeeef790eca7b1a59c34fd24a7"
+    },
+    "data/public/dev/offsets.i64": {
+      "size_bytes": 40008,
+      "sha256": "d0a1ee1caff2f18ea8b42ac4057323bf555cf68b2b52e99b7240095d1fe95a70"
+    },
+    "data/public/dev/vectors.f32": {
+      "size_bytes": 81920000,
+      "sha256": "fa0a4bca270e71d944e00762b94b075f791be836069413ed22da30855771a633"
+    },
+    "data/verifier/test/ids.json": {
+      "size_bytes": 87729,
+      "sha256": "0deecfd5b1751a664201aaa77d5b2426d9de0c3760f74f91e559b33b16a7589f"
+    },
+    "data/verifier/test/config.json": {
+      "size_bytes": 178,
+      "sha256": "ee4f7f002ec25f3b5bb8d6d8d149bd48a83578e698c68074a0c67635ba4e95d5"
+    },
+    "data/verifier/test/offsets.i64": {
+      "size_bytes": 80008,
+      "sha256": "77ea307ab4dc2e5be56be508c093c03bd5c4f3d0fbdb6a6f713f6eac6b8601bc"
+    },
+    "data/verifier/test/vectors.f32": {
+      "size_bytes": 163840000,
+      "sha256": "a864ca0733db51f69a28c064cc64f663189cb5b72fc335a629651827b7e9571d"
+    }
+  },
+  "splits": {
+    "corpus": {
+      "rows": 522931,
+      "tokens": 8140769,
+      "dimension": 128,
+      "dtype": "<f4",
+      "offset_dtype": "<i8",
+      "max_length": 220,
+      "mean_tokens": 15.567577749263288,
+      "seconds": 379.6548973489553
+    },
+    "dev": {
+      "rows": 5000,
+      "tokens": 160000,
+      "dimension": 128,
+      "dtype": "<f4",
+      "offset_dtype": "<i8",
+      "max_length": 32,
+      "mean_tokens": 32.0,
+      "seconds": 2.5079295989125967
+    },
+    "test": {
+      "rows": 10000,
+      "tokens": 320000,
+      "dimension": 128,
+      "dtype": "<f4",
+      "offset_dtype": "<i8",
+      "max_length": 32,
+      "mean_tokens": 32.0,
+      "seconds": 4.823529584333301
+    }
+  }
+}

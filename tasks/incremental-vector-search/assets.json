@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/upstream/1536/train-00000-of-00026.parquet",
+      "size_bytes": 367354366,
+      "sha256": "27519d7104c8ac6d0f51ac18e8ac23b29d67cbab8465bc3302b458ca3dcbbb78",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_type": "dataset",
+        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
+        "filename": "data/train-00000-of-00026.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/1536/train-00008-of-00026.parquet",
+      "size_bytes": 367411722,
+      "sha256": "979928f18cf96e56e89bf6d8eb6925d6d4b68c926030f98fe834719756e6b42b",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_type": "dataset",
+        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
+        "filename": "data/train-00008-of-00026.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/1536/train-00017-of-00026.parquet",
+      "size_bytes": 367382445,
+      "sha256": "b0603494c3738ba86f33bdf36b6fe7611ca26cd4705a24e08335b3a21532ea4d",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_type": "dataset",
+        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
+        "filename": "data/train-00017-of-00026.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/1536/train-00025-of-00026.parquet",
+      "size_bytes": 367349263,
+      "sha256": "44b1b03eee0c918b60ad83306f6e0d4384114763dd796540f83a90bb80553fc3",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_type": "dataset",
+        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
+        "filename": "data/train-00025-of-00026.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00000-of-00063.parquet",
+      "size_bytes": 393581818,
+      "sha256": "2910a16e7acdb1bd806aefb385b8fc1a6536f70f1334ccbaeca85e22761179bf",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00000-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00009-of-00063.parquet",
+      "size_bytes": 393591197,
+      "sha256": "9913da987b97340731404bce00607424f982917fb5c89e0529e3f51047e0e72c",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00009-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00018-of-00063.parquet",
+      "size_bytes": 393621113,
+      "sha256": "0b6b2a576caaf3c2b6a485044a5344d8ca26b469b311e2d47c69b8988a518c0c",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00018-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00027-of-00063.parquet",
+      "size_bytes": 393570397,
+      "sha256": "7d4e09e4f24138dfe596296decb416802f7ad6dd136b302838e67bca52e8c414",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00027-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00035-of-00063.parquet",
+      "size_bytes": 393591443,
+      "sha256": "fa36547c6915cb10a183c063d28545f92760eaa5926f86a0eccaef79fbceb2b9",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00035-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00044-of-00063.parquet",
+      "size_bytes": 393613894,
+      "sha256": "20d76e27dae5f1728bd946351d59ad3fb96edb3ea518c518b910fee9878db0e3",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00044-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00053-of-00063.parquet",
+      "size_bytes": 393601013,
+      "sha256": "3204b843e092ad587a708cacb26c18300a9d3181cefee7233b87f4596f577184",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00053-of-00063.parquet"
+      }
+    },
+    {
+      "path": "data/upstream/3072/train-00062-of-00063.parquet",
+      "size_bytes": 393582587,
+      "sha256": "50916dc7a00746468b5ad03de636a090e469c25687f302b5c5f7506ae000c096",
+      "source": {
+        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_type": "dataset",
+        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
+        "filename": "data/train-00062-of-00063.parquet"
+      }
+    }
+  ]
+}

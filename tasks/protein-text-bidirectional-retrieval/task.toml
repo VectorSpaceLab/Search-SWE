@@ -1,0 +1,56 @@
+schema_version = "1.4"
+
+artifacts = ["/var/tmp/search-swe-submission.tar", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/protein-text-bidirectional-retrieval"
+version = "0.6.1"
+description = "Learn compact 64-dimensional protein/text embeddings and maximize strict reciprocal-top1 pair recovery under online latency and submission limits."
+authors = [{name = "jianlyu", email = "2512674094@qq.com"}]
+keywords = ["protein-retrieval", "cross-modal", "contrastive-learning", "online-retrieval", "gpu"]
+
+[metadata]
+primary_metric = "Equal-weight mean of per-dataset strict reciprocal-top1 paired success fractions"
+paper = "https://aclanthology.org/2024.acl-long.324/"
+datasets = ["ProtT3 SwissProtV3", "ProtT3 OntoProteinDatasetV2"]
+candidate_count_per_group = 10000
+hidden_query_count_per_group = 10000
+group_count = 4
+public_validation_pairs_per_dataset = 10
+submission_limit_bytes = 262144
+embedding_dimensions = 64
+preparation_seconds_per_group = 900
+online_p95_seconds_per_group = 1.0
+online_hard_timeout_seconds = 3.0
+
+[agent]
+timeout_sec = 3600.0
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+# 40,000 requests at 3 seconds, 4 x 900 seconds preparation, cleanup and audit.
+timeout_sec = 130000.0
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+
+[[verifier.collect]]
+command = "/opt/conda/bin/python /task/runtime/submission_transfer.py --collect"
+user = "root"
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = 16
+memory_mb = 65536
+storage_mb = 102400
+gpus = 1

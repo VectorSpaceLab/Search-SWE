@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+# Restored on the host via assets.json and mounted read-only.
+bundled-assets/

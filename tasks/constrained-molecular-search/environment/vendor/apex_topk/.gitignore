@@ -1,0 +1,5 @@
+# .gitignore
+apex_topk/_ops.so
+apex_topk.egg-info
+build
+cccl

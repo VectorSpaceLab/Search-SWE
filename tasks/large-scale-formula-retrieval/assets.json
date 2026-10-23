@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/public/corpus.json",
+      "size_bytes": 421,
+      "sha256": "246aa1ada8c4c4736ed1f36d030942e209e7a96983e36c024f926e9d9d0d7268",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/corpus.json"
+      }
+    },
+    {
+      "path": "data/public/dev/qrels.tsv",
+      "size_bytes": 11763,
+      "sha256": "288a1d685f5c3e11be0a8d0c6979e6788900300aac54aa75d0080d8918e57d86",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/dev/qrels.tsv"
+      }
+    },
+    {
+      "path": "data/public/dev/queries.jsonl",
+      "size_bytes": 424,
+      "sha256": "c12aa6cac9ad2c0b1b2b2d4fc312e7ba90e9e9d9ffb9b48a94069563dd972e7a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/dev/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/public/formulas.tsv",
+      "size_bytes": 1359262181,
+      "sha256": "05a1db7d13056e90f72f4149cccebcf8f3b1da06bae89493700e02a5e974a1ec",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/formulas.tsv"
+      }
+    },
+    {
+      "path": "data/public/instance_visual.npy",
+      "size_bytes": 113283812,
+      "sha256": "a70d4cef8fff26a2e40a6bc17e638cb923b28f61b1915538ec342c94bd07a54e",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/instance_visual.npy"
+      }
+    },
+    {
+      "path": "data/public/posts.sqlite",
+      "size_bytes": 3845664768,
+      "sha256": "45d64a00e9c91d691f5599a7fd955099e835dae7c1941839b5e8d9f00f693c73",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/large-scale-formula-retrieval/public/posts.sqlite"
+      }
+    }
+  ]
+}

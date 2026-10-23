@@ -1,0 +1,37 @@
+services:
+  main:
+    cpuset: "64-79"
+    pids_limit: 256
+    mem_limit: 32g
+    memswap_limit: 32g
+    volumes:
+    - type: bind
+      source: ../data/public
+      target: /task/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./docs
+      target: /task/docs
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./exact_search.py
+      target: /task/reference/exact_search.py
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./baseline_search.py
+      target: /task/reference/baseline_search.py
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./profile_public.py
+      target: /task/tools/profile_public.py
+      read_only: true
+      bind:
+        create_host_path: false

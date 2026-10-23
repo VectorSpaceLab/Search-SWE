@@ -1,0 +1,69 @@
+services:
+  main:
+    pids_limit: 512
+    tmpfs:
+    - /app:rw,exec,nosuid,nodev,size=28g,mode=0755
+    - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    volumes:
+    - type: bind
+      source: ../data/upstream/robust04/corpus.jsonl
+      target: /task/corpus/robust04.jsonl
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/upstream/core17/corpus.jsonl
+      target: /task/corpus/core17.jsonl
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/upstream/news21/corpus.jsonl
+      target: /task/corpus/news21.jsonl
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../models/e5-large-v2
+      target: /task/models/e5-large-v2
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ../data/train.jsonl
+      target: /task/data/train.jsonl
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./runtime
+      target: /task/runtime
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./public
+      target: /task/public
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./docs
+      target: /task/docs
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ./baselines
+      target: /task/baselines
+      read_only: true
+      bind:
+        create_host_path: false

@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/upstream/robust04/corpus.jsonl",
+      "size_bytes": 111531585,
+      "sha256": "8fc79bf2085b0946f14b9f15b2cc2969b1e04141cdb25decec8ec224c46174a3",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/robust04/queries.jsonl",
+      "size_bytes": 44525,
+      "sha256": "cd5d0e91aeb7fa62e79a8b929efed316e8a945a9c2f882979a2426974595f218",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "queries.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/robust04/top_ranked.jsonl",
+      "size_bytes": 1842985,
+      "sha256": "2393a10e64fedf3d31f29dc6369703ca2d752c34250985961e559dd6fbe2449a",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "top_ranked.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/robust04/qrels_og/test.jsonl",
+      "size_bytes": 1076694,
+      "sha256": "ee622b0f856012f37af638c156fdeb85616a22e667ba232d1c195fb2617308db",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "qrels_og/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/robust04/qrels_changed/test.jsonl",
+      "size_bytes": 1076694,
+      "sha256": "c080ff035bc12170cb722b03de8c6c468cf988e4d26949ba51f337da0bf186dd",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "qrels_changed/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/robust04/README.md",
+      "size_bytes": 1970,
+      "sha256": "7e0c01f71db614de54ef29d4d9f73975000ed01f62a33f2cb1045e7085ce440e",
+      "source": {
+        "repo_id": "jhu-clsp/robust04-instructions",
+        "repo_type": "dataset",
+        "revision": "a5a1c4fe2bc528ac12e83f8cdf82178da85d2f1d",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "data/upstream/core17/corpus.jsonl",
+      "size_bytes": 45286737,
+      "sha256": "a4b4f9d9be227f8a38ccc68632846b301294282eab90d2013bf9fd954d35192b",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/core17/queries.jsonl",
+      "size_bytes": 18864,
+      "sha256": "4d6c0f11b969bdc3217bf3cbdd3f098ee80d94079a878cc8e9da7cc65cbc6795",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "queries.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/core17/top_ranked.jsonl",
+      "size_bytes": 588920,
+      "sha256": "c2bc9f778f2604bae6a73b481b0b8b4cbbb92fee5101089832843e77ef28be6a",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "top_ranked.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/core17/qrels_og/test.jsonl",
+      "size_bytes": 248420,
+      "sha256": "83915fb89fdad3d6cd0d07876761953137ed3bc684798da3426e798c2373656e",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "qrels_og/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/core17/qrels_changed/test.jsonl",
+      "size_bytes": 248420,
+      "sha256": "c27243f4b1ab32008c62ace03cb6c75390ef2019a9b4b487798286bca2ab0872",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "qrels_changed/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/core17/README.md",
+      "size_bytes": 1969,
+      "sha256": "6066b94941932df24383d382f1613fa968e748cdba2718647e8b1993c55e09c3",
+      "source": {
+        "repo_id": "jhu-clsp/core17-instructions",
+        "repo_type": "dataset",
+        "revision": "e39ff896cf3efbbdeeb950e6bd7c79f266995b07",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "data/upstream/news21/corpus.jsonl",
+      "size_bytes": 77329107,
+      "sha256": "f0061703296ea8a75bebd20aee5f9ff20a85a2c6c27a3ccda08f879e6fdd518f",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "corpus.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/news21/queries.jsonl",
+      "size_bytes": 37524,
+      "sha256": "3c6e6a078b9c8dc5022ab79df908883074d7652f412808bc4614d9d3aef56f2f",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "queries.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/news21/top_ranked.jsonl",
+      "size_bytes": 1723128,
+      "sha256": "7a883543903c1bc27dde0084ecf5648cc7a41298dfc360e92a30b37bdc60064f",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "top_ranked.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/news21/qrels_og/test.jsonl",
+      "size_bytes": 329726,
+      "sha256": "0652cf6e6bc6708e85ac56a27ca5d66fb623cedd4502af5a37dc878ba1cb5990",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "qrels_og/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/news21/qrels_changed/test.jsonl",
+      "size_bytes": 321098,
+      "sha256": "c0c573dfb9d13e7f27824eb2a285da274f81f829dd486bdd3add6a1657b12042",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "qrels_changed/test.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/news21/README.md",
+      "size_bytes": 1975,
+      "sha256": "b65a958af3f6c88027d5337e1a03a3dc8bc6deac7ec8f6c2a1e0f480fe16816a",
+      "source": {
+        "repo_id": "jhu-clsp/news21-instructions",
+        "repo_type": "dataset",
+        "revision": "e0144086b45fe31ac125e9ac1a83b6a409bb6ca6",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "data/upstream/train/train.jsonl",
+      "size_bytes": 2306389,
+      "sha256": "ca99cc3d1ab885eefa3674f980a498efa5f230770e24c55bcff8e784811fc4b6",
+      "source": {
+        "repo_id": "jhu-clsp/FollowIR-train",
+        "repo_type": "dataset",
+        "revision": "545192353a0192e2ed0e0e4f1604ff8a231f8733",
+        "filename": "train.jsonl"
+      }
+    },
+    {
+      "path": "data/upstream/train/README.md",
+      "size_bytes": 2029,
+      "sha256": "45a6f7ad7d9cd7644caadc743e8443419834a3e21cea8ba764427575eec7fb5a",
+      "source": {
+        "repo_id": "jhu-clsp/FollowIR-train",
+        "repo_type": "dataset",
+        "revision": "545192353a0192e2ed0e0e4f1604ff8a231f8733",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/config.json",
+      "size_bytes": 616,
+      "sha256": "2394ce5c9ffac96c88496de5d7a92f5d3fec1015b9d25f9f85545f13dfd7a269",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "config.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/model.safetensors",
+      "size_bytes": 1340616616,
+      "sha256": "d741c1a688a6169af0ecb5a047c44645cd992c31e1bf431269f98bba9ae2911a",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "model.safetensors"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/tokenizer.json",
+      "size_bytes": 711396,
+      "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/tokenizer_config.json",
+      "size_bytes": 314,
+      "sha256": "ae83fa6ca0333117ff12606020af925d648667ef70d92ff7f27d781ba0ca4544",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/special_tokens_map.json",
+      "size_bytes": 125,
+      "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "special_tokens_map.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/vocab.txt",
+      "size_bytes": 231508,
+      "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "vocab.txt"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/README.md",
+      "size_bytes": 67842,
+      "sha256": "478cc58fb7c5e4412a6c85f3fd0abb2898a1d7c2bc12db10d14892629e14d740",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "README.md"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/1_Pooling/config.json",
+      "size_bytes": 201,
+      "sha256": "56c469dba9e31869bb7dfceb9b3d76ac06549d1ba869509d8eb4e8aeb31d62d1",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "1_Pooling/config.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/modules.json",
+      "size_bytes": 387,
+      "sha256": "c6e29747481e8b5dd2b58401966aeac910de39092f90cda9a704b1545f902b04",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "modules.json"
+      }
+    },
+    {
+      "path": "models/e5-large-v2/sentence_bert_config.json",
+      "size_bytes": 57,
+      "sha256": "948201d8329907aae938fa62f9ceeed53f5694dacc2b87b9f3b78b37ee986529",
+      "source": {
+        "repo_id": "intfloat/e5-large-v2",
+        "repo_type": "model",
+        "revision": "f169b11e22de13617baa190a028a32f3493550b6",
+        "filename": "sentence_bert_config.json"
+      }
+    }
+  ]
+}

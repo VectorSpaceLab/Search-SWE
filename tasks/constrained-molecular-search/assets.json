@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "data/private/properties.npy",
+      "size_bytes": 298717976,
+      "sha256": "3cc54772f6892ed0de6a737387518ac58a731e5bb4c6971d0cbf67ec0bfa469b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/private/properties.npy"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "data/private/scores.npy",
+      "size_bytes": 497863208,
+      "sha256": "ef3fdc54c06288bd991b9853a27376fc3efcf35e014145d92e1f7080b8b4b5c8",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/private/scores.npy"
+      },
+      "mode": "0600"
+    },
+    {
+      "path": "data/public/dev/candidate_ids.npy",
+      "size_bytes": 2781544,
+      "sha256": "f66faf050038cc35ba6011ee95124f9d213dd1bfcb27fe538d5db4339d72f762",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/candidate_ids.npy"
+      }
+    },
+    {
+      "path": "data/public/dev/library/library.json",
+      "size_bytes": 708,
+      "sha256": "e8f32fc36cfc0e39622b0eb1d8f1bfbf647edb80e8dde8f76d09d3c1816e87f6",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/library/library.json"
+      }
+    },
+    {
+      "path": "data/public/dev/library/reactions.parquet",
+      "size_bytes": 22806,
+      "sha256": "b2b80251852ab51c03c6d64f5704624200f93fd2ae4e0253540528ef4910a0a0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/library/reactions.parquet"
+      }
+    },
+    {
+      "path": "data/public/dev/library/synthons.parquet",
+      "size_bytes": 2960551,
+      "sha256": "c838e188d692c6ebce520ec74be65068c9f2d5d4e8bf0ba3878805cdfafe7020",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/library/synthons.parquet"
+      }
+    },
+    {
+      "path": "data/public/dev/properties.npy",
+      "size_bytes": 90738944,
+      "sha256": "3c4594527275771d1c967dd7f8826667f461cadeb31027448522396a55d7a6c1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/properties.npy"
+      }
+    },
+    {
+      "path": "data/public/dev/queries.jsonl",
+      "size_bytes": 21785,
+      "sha256": "26d8dd66b5a9ea9fd726fabbc9acb5a3306c622c742f7d91be97a55346ecca78",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/public/dev/truth.npz",
+      "size_bytes": 126612,
+      "sha256": "7d5e54510a575fa4529e2ada57d3c7d77ddfaa8666dffaa2ecf1104fc6f1c7ec",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/dev/truth.npz"
+      }
+    },
+    {
+      "path": "data/public/library/library.json",
+      "size_bytes": 551,
+      "sha256": "4886b53f224a363dc0309ea318fd2174917add867ef95ad7d84076a2acaba65b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/library/library.json"
+      }
+    },
+    {
+      "path": "data/public/library/reactions.parquet",
+      "size_bytes": 21248,
+      "sha256": "7c6aee22b15c49f07a2fc3064b41b5b681a48988c951bfe5db6c1ffe7b8e59b1",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/library/reactions.parquet"
+      }
+    },
+    {
+      "path": "data/public/library/synthons.parquet",
+      "size_bytes": 5265655,
+      "sha256": "a250caddffcf509214d12bcf8846466e25659db5abb8c9dd7a16d12886361f8a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/library/synthons.parquet"
+      }
+    },
+    {
+      "path": "data/public/train/labeled.parquet",
+      "size_bytes": 149339468,
+      "sha256": "fcd1c75bce860256179746029a958c6e053ec4c46badde62cec454140d183d43",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/train/labeled.parquet"
+      }
+    },
+    {
+      "path": "data/public/train/library/reactions.parquet",
+      "size_bytes": 22806,
+      "sha256": "b2b80251852ab51c03c6d64f5704624200f93fd2ae4e0253540528ef4910a0a0",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/train/library/reactions.parquet"
+      }
+    },
+    {
+      "path": "data/public/train/library/synthons.parquet",
+      "size_bytes": 2960551,
+      "sha256": "c838e188d692c6ebce520ec74be65068c9f2d5d4e8bf0ba3878805cdfafe7020",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/data/public/train/library/synthons.parquet"
+      }
+    },
+    {
+      "path": "models/apex_brics_csl_12M.pt",
+      "size_bytes": 157784636,
+      "sha256": "37ae518ba1403cf4d79eb0016adf422fb0dfa841555f08f2239cf7f716b0da01",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/models/apex_brics_csl_12M.pt"
+      }
+    },
+    {
+      "path": "models/encoder.pt",
+      "size_bytes": 679304,
+      "sha256": "4673a189e62604d4d54c90f0d236d6ff0903954b5944a8b244aef82ffeb94ca5",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/models/encoder.pt"
+      }
+    },
+    {
+      "path": "models/factorizer_brics_csl_12M.pt",
+      "size_bytes": 2841529,
+      "sha256": "dde8ef7435ee324f584b2f0ec052cdfeb548b53d1b11d69aa22acc099628219b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/models/factorizer_brics_csl_12M.pt"
+      }
+    },
+    {
+      "path": "models/probe.pt",
+      "size_bytes": 10170,
+      "sha256": "95ecc4fb7a784d4273f835a89c68294907e197a744cd652596d7c14e8905ef5c",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/constrained-molecular-search/models/probe.pt"
+      }
+    }
+  ]
+}

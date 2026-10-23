@@ -1,0 +1,12 @@
+{
+  "score_kind": "quality-gated-efficiency-v1",
+  "reference_cost_ratio": 0.5,
+  "repetitions": 3,
+  "query_order_seed": 20261020,
+  "query_count": 100,
+  "group_count": 10,
+  "minimum_queries_per_group": 10,
+  "prepare_timeout_sec": 1800,
+  "query_timeout_sec": 10,
+  "storage_bytes": 68719476736
+}

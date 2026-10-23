@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "models/base/LICENSE",
+      "size_bytes": 11343,
+      "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+      "source": {
+        "repo_id": "Qwen/Qwen2.5-7B",
+        "repo_type": "model",
+        "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+        "filename": "LICENSE"
+      }
+    },
+    {
+      "path": "models/base/config.json",
+      "size_bytes": 2162,
+      "sha256": "91abc8c7569d22d39b4afe0aba4a482144da68619822049f59e2894ebf0044d5",
+      "source": {
+        "local_path": "model-metadata/compact-base/config.json"
+      }
+    },
+    {
+      "path": "models/base/merges.txt",
+      "size_bytes": 1671839,
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+      "source": {
+        "repo_id": "Qwen/Qwen2.5-7B",
+        "repo_type": "model",
+        "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+        "filename": "merges.txt"
+      }
+    },
+    {
+      "path": "models/base/model.safetensors",
+      "size_bytes": 4457259789,
+      "sha256": "7a100a2a9979e7bbc6862812633796bcde3a993e1dd4c0c65e541779bc218d19",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/compact-v050/models/base/model.safetensors"
+      }
+    },
+    {
+      "path": "models/base/output-head.npz",
+      "size_bytes": 365713156,
+      "sha256": "f73117ff25229362d337dfcfe6cabbd7c2da693301730eee0dbb51adb95b3322",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/compact-v050/models/base/output-head.npz"
+      }
+    },
+    {
+      "path": "models/base/probe.json",
+      "size_bytes": 2122,
+      "sha256": "37a3baeb6f89e36edb2f7eed508db85615c99f666fc5627581a7644cca41a3a3",
+      "source": {
+        "local_path": "model-metadata/compact-base/probe.json"
+      }
+    },
+    {
+      "path": "models/base/tokenizer.json",
+      "size_bytes": 7031645,
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "source": {
+        "repo_id": "Qwen/Qwen2.5-7B",
+        "repo_type": "model",
+        "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+        "filename": "tokenizer.json"
+      }
+    },
+    {
+      "path": "models/base/tokenizer_config.json",
+      "size_bytes": 7228,
+      "sha256": "c91efca15ceff6e9ee9424db58a6f59cd41294e550a86cbd07e3c1fb500b34f9",
+      "source": {
+        "repo_id": "Qwen/Qwen2.5-7B",
+        "repo_type": "model",
+        "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+        "filename": "tokenizer_config.json"
+      }
+    },
+    {
+      "path": "models/base/verified-manifest.json",
+      "size_bytes": 4028,
+      "sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114",
+      "source": {
+        "local_path": "model-metadata/base/verified-manifest.json"
+      }
+    },
+    {
+      "path": "models/base/vocab.json",
+      "size_bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "source": {
+        "repo_id": "Qwen/Qwen2.5-7B",
+        "repo_type": "model",
+        "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+        "filename": "vocab.json"
+      }
+    },
+    {
+      "path": "data/public/base-alternatives/base-token-alternatives.npz",
+      "size_bytes": 3492254,
+      "sha256": "b039d0f0643d85e84fe6c4011853cc872489db7a64814867a34f1a73826d9180",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/compact-v050/data/public/base-alternatives/base-token-alternatives.npz"
+      }
+    },
+    {
+      "path": "data/public/base-alternatives/complete.json",
+      "size_bytes": 815,
+      "sha256": "8b561b8020d36d948dad8d1066d25b01da25b227b4194d8f53f643d487b4ebd6",
+      "source": {
+        "local_path": "environment/input-metadata/base-alternatives/complete.json"
+      }
+    },
+    {
+      "path": "data/public/base-alternatives/row-ids.json",
+      "size_bytes": 1404028,
+      "sha256": "08eb5ca4492d76552b1ded912fc3fa320399709800627f0f53a9cfa7bb1fc9d9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/public/base-alternatives/row-ids.json"
+      }
+    },
+    {
+      "path": "data/public/base-nll/base-token-nll.npz",
+      "size_bytes": 5874549,
+      "sha256": "3a51dc0ed3f1450adf616869e299072da6426184624073474f7ea5bf8b71387f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/compact-v050/data/public/base-nll/base-token-nll.npz"
+      }
+    },
+    {
+      "path": "data/public/base-nll/complete.json",
+      "size_bytes": 647,
+      "sha256": "4acec65694d8cf4cbc25fa799ca54794f20a4c9d5794700704c77d2a684a4b1c",
+      "source": {
+        "local_path": "environment/input-metadata/base-nll/complete.json"
+      }
+    },
+    {
+      "path": "data/public/base-nll/row-ids.json",
+      "size_bytes": 1404028,
+      "sha256": "08eb5ca4492d76552b1ded912fc3fa320399709800627f0f53a9cfa7bb1fc9d9",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/public/base-nll/row-ids.json"
+      }
+    },
+    {
+      "path": "data/public/dev-labels.json",
+      "size_bytes": 24858,
+      "sha256": "b4226035e9becca6e7fb5e42bdb2a8db2a73c9d041c8c6df8e5abfe28280c67b",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/public/dev-labels.json"
+      }
+    },
+    {
+      "path": "data/public/dev-queries.jsonl",
+      "size_bytes": 27521,
+      "sha256": "f199b125fc52eccae7ee20b087c9d0aca65d13bd845e357a8149eb1e044b9b05",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/public/dev-queries.jsonl"
+      }
+    },
+    {
+      "path": "data/public/train.jsonl",
+      "size_bytes": 22265963,
+      "sha256": "78eee041c434b068c63d2d38382707726491737f974c6e95b1887cb981530f2a",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "3635ca4269c1a1122c2da50187d0db42f3f73006",
+        "filename": "tasks/training-error-tracing/public/train.jsonl"
+      }
+    }
+  ]
+}

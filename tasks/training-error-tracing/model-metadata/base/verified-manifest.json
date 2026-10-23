@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "filename": "generation_config.json",
+      "size_bytes": 138,
+      "sha256": "8c970692323e3ea0e9b8b0a4dca79388d31226e41f83c9fd6014804280ebf6e8",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "config.json",
+      "size_bytes": 686,
+      "sha256": "267ce68584c5f24c3b267d934db2de68dd21d1ca677fb78ed809eb60067f7642",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "README.md",
+      "size_bytes": 3819,
+      "sha256": "8a23291de92bddc940674a5b7088b8443bde94a1df7f1911703d2cd6554c7328",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "tokenizer_config.json",
+      "size_bytes": 7228,
+      "sha256": "c91efca15ceff6e9ee9424db58a6f59cd41294e550a86cbd07e3c1fb500b34f9",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "LICENSE",
+      "size_bytes": 11343,
+      "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "model.safetensors.index.json",
+      "size_bytes": 27752,
+      "sha256": "624bf7c47cd12468fdc16e38a47cf4f19e0415b859a223ba3c027eed2f0e1028",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "merges.txt",
+      "size_bytes": 1671839,
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "vocab.json",
+      "size_bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "tokenizer.json",
+      "size_bytes": 7031645,
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "model-00004-of-00004.safetensors",
+      "size_bytes": 3556377672,
+      "sha256": "b5a2298dddcf228129975a9a271912a9f8dc817957deecde523e3154481ec3fb",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "model-00002-of-00004.safetensors",
+      "size_bytes": 3864726352,
+      "sha256": "687e8d08dc82b5f7d69322f1d8691d49b59db9039b07e7ea71010fb6434d5274",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "model-00003-of-00004.safetensors",
+      "size_bytes": 3864726424,
+      "sha256": "32652eb23537597cca8c7a56ec85b5d5f1c7245b16269a904d57e85aa1aff30e",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    },
+    {
+      "filename": "model-00001-of-00004.safetensors",
+      "size_bytes": 3945441440,
+      "sha256": "b6d4b6e881d17e9235934419b1c17a8bb0f1108579404e0a468a6afdeae6e868",
+      "repo_id": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "transport": "official-modelscope"
+    }
+  ]
+}
