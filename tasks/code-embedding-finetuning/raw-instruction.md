@@ -7,7 +7,7 @@ Improve the supplied code-retrieval embedder using the provided corpus and train
 ## Requirements
 
 - Treat /task as read-only and write the final checkpoint to /app/submission/model.
-- The Agent phase has a 12-hour time limit. Task-specific submission verification has a 1-hour time limit, excluding the separate integrity judge. If the Agent phase, task-specific verification, or integrity judge times out, the score is 0.
+- The Agent phase has a 6-hour time limit. Task-specific submission verification has a 1-hour time limit, excluding the separate integrity judge. If the Agent phase, task-specific verification, or integrity judge times out, the score is 0.
 - Start from the backbone at /task/models/bge-base-en-v1.5.
 - Preserve the backbone architecture, parameter names, parameter shapes, and parameter count.
 - Produce a self-contained checkpoint that AutoTokenizer.from_pretrained and AutoModel.from_pretrained can load with local_files_only=True.

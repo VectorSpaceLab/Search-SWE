@@ -1,7 +1,8 @@
 services:
   main:
+    mem_limit: 32g
     cpuset: ${DELETION_CPUSET:-0-15}
-    memswap_limit: 64g
+    memswap_limit: 32g
     pids_limit: 512
     volumes:
     - type: bind

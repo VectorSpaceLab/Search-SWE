@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | clip((Q-B)/(U-B),0,1), with B and U frozen before agent evaluation |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 1 GPU |
+| Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 21600 s / 10800 s |
 | Dataset | Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition |
 
@@ -50,7 +50,7 @@ licenses and data-use restrictions are described in the resource document.
 
 ### Run
 
-The task allocates 16 CPU cores, 64 GiB RAM and
+The task allocates 16 CPU cores, 16 GiB RAM and
 100 GiB storage. Agent development has
 21600 seconds. Final-stage limits and accounting are
 specified in the task contract; the verifier service timeout also includes its

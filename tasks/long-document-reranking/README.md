@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | Search-SWE |
 | Primary metric | Accuracy@5 |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 4800 s |
 | Dataset | MTEB NarrativeQARetrieval |
 | Public queries | 100 |
@@ -56,7 +56,7 @@ the mounted path and runtime configuration are the operational reference.
 
 #### Environment and Resource Limits
 
-The CPU Python 3.12 environment provides 16 CPUs, 64 GiB memory, 100 GiB storage,
+The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage,
 and no GPU. The agent has two hours and the Harbor verifier 80 minutes.
 The grader's build and run caps are 1,800 and 3,600 seconds respectively,
 but these stages and the integrity check must still fit inside the overall

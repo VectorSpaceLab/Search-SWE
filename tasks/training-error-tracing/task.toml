@@ -43,6 +43,6 @@ os = "linux"
 network_mode = "allowlist"
 allowed_hosts = ["openrouter.ai"]
 cpus = 16
-memory_mb = 65536
+memory_mb = 16384
 storage_mb = 65536
 gpus = 1

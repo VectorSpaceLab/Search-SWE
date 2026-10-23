@@ -1,5 +1,6 @@
 services:
   main:
+    mem_limit: 16g
     volumes:
       - type: bind
         source: ../data/corpus

@@ -22,7 +22,7 @@ hidden_query_count = 200
 validation_seed = 42
 
 [agent]
-timeout_sec = 43200.0
+timeout_sec = 21600.0
 user = "root"
 network_mode = "no-network"
 

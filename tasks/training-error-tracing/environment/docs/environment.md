@@ -1,6 +1,6 @@
 # Runtime and hardware
 
-The task uses the shared GPU image `docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0` in both phases. Both Compose overlays request one GPU with `count: 1`; the allocated device must be an A10040GB. The verifier discovers its UUID inside the container. Limits are16CPU quota,64GiB RAM, no swap,4GiB shared memory and2048PIDs. CPU-only retrieval is permitted within the assigned container. Model/data/tool mounts are read-only.
+The task uses the shared GPU image `docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0` in both phases. Both Compose overlays request one GPU with `count: 1`; the allocated device must be an A10040GB. The verifier discovers its UUID inside the container. Limits are16CPU quota,16GiB RAM, no swap,4GiB shared memory and2048PIDs. CPU-only retrieval is permitted within the assigned container. Model/data/tool mounts are read-only.
 
 Use `/opt/conda/bin/python`, with torch2.9.0+cu130, transformers5.15.1, peft0.20.0, accelerate1.15.0, bitsandbytes0.50.2, numpy2.5.3, sklearn1.9.1, joblib1.6.0, rank-bm250.2.2 and safetensors0.8.0. The image also has cc/c++ for native code. No model downloads are needed; all permitted fixed inputs are under `/task/data` and `/task/models`. Optional modules under `/task/tools` need that directory added to `sys.path` from custom Python entry points.
 

@@ -16,7 +16,7 @@ copies of query texts; that does not grant access to hidden relevance labels.
 
 ## Development and resources
 Read /task/docs/environment.md and /task/docs/available_resources.md. Use 8 CPU
-cores, 32 GiB RAM, 100 GiB storage and one GPU, within 12 hours. Training,
+cores, 32 GiB RAM, 100 GiB storage and one GPU, within 6 hours. Training,
 adapters and query-side architectural changes are allowed. The supplied 4B
 model and /app/starter may be used on public inputs during development;
 4B is not an allowed final inference backbone and is inaccessible to the final

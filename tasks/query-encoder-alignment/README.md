@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | Accuracy@1 error reduction above frozen 0.6B ridge, after runtime gate |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 43200 s / 5700 s |
+| Agent / verifier time limits | 21600 s / 5700 s |
 | Dataset | local frozen retrieval corpus |
 | Public queries | 100 |
 | Hidden queries | 100 |
@@ -64,7 +64,7 @@ with a filesystem quota; the completed calibration stayed well below it.
 Both Compose configurations and `task.toml` request **one
 NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
-The agent has 12 hours. Task-specific verification has 70 minutes inside
+The agent has 6 hours. Task-specific verification has 70 minutes inside
 the 95-minute Harbor verifier phase, with the integrity check bounded separately.
 The candidate must finish within **60% of the measured reference runtime**.
 The evaluation runner also caps each reference/candidate run at 1,800 seconds.
@@ -211,8 +211,9 @@ runtime, output and determinism checks and scores zero at its own quality anchor
 Historical artifact replay: Opus xhigh 76%, 36.8421/100 and time gate passed;
 Luna xhigh 64%, quality 5.2632/100, time gate failed and retrieval reward zero.
 These are retrieval replays, not new model solves or newly accepted judge runs.
-The completed Codex 0.157.1 + OpenRouter `openai/gpt-6-luna`, effort `max` run
-scores **18.4211/100**: hidden Accuracy@1 69%, A0 62%, candidate 12.1705 s
+The historical Codex 0.157.1 + OpenRouter `openai/gpt-6-luna`, effort `max` run
+used the 12-hour development limit and scored **18.4211/100**: hidden Accuracy@1
+69%, A0 62%, candidate 12.1705 s
 against a 25.2756 s reference (15.1654 s limit). The repeat output is
 byte-identical. The independent DeepSeek integrity judge accepted the submission;
 `measurement_valid=true`, with no infrastructure exception. The solve took
@@ -223,10 +224,11 @@ The preceding r1 attempt was canceled before submission when an external
 service occupied its reserved GPU; it has no valid model score. Both records
 are retained. No scoring parameter changed between attempts.
 
-This one accepted Luna/max solve supports the approximate 20-point difficulty
+This historical Luna/max solve supports the approximate 20-point difficulty
 target; the historical Opus artifact replay scores below 50. A legal author
 solution achieving 100% hidden accuracy has not been demonstrated; synthetic
-grader tests establish the full-score numeric boundary only.
+grader tests establish the full-score numeric boundary only. Model-run evidence
+for the six-hour budget will come from the release evaluations.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
 

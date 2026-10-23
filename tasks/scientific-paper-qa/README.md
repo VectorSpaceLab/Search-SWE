@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | Search-SWE |
 | Primary metric | LLMJudgeAccuracy |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | research-paper PDFs |
 | Hidden queries | 10 |
@@ -51,7 +51,7 @@ replacing corpus-grounded work with external answers.
 
 #### Environment and Resource Limits
 
-The CPU Python 3.12 environment provides 16 CPUs, 64 GiB memory, 100 GiB storage,
+The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage,
 and no GPU. The agent has two hours and the Harbor verifier four hours.
 The submitted build has a 3,600-second limit. The verifier launches up to five
 query processes at once, each with 900 seconds from process start; queue time

@@ -51,6 +51,6 @@ workdir = "/app"
 os = "linux"
 network_mode = "no-network"
 cpus = 16
-memory_mb = 65536
+memory_mb = 16384
 storage_mb = 102400
 gpus = 1

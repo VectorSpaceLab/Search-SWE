@@ -3,7 +3,7 @@
 Python 3.12 is at /opt/conda/bin/python. The shared GPU image contains CUDA
 PyTorch, Transformers, SentenceTransformers, FlagEmbedding, NumPy and FAISS.
 Both stages have 8 CPU cores, 32 GiB RAM, 100 GiB storage and one NVIDIA GPU.
-Development lasts at most 12 hours; task verification at most 70 minutes,
+Development lasts at most 6 hours; task verification at most 70 minutes,
 within a 95-minute verifier including an independently bounded integrity judge.
 
 /task/data and /task/models are read-only. data/doc.npy contains 8,674 by 2,560

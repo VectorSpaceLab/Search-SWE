@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | Equal-weight mean of per-dataset strict reciprocal-top1 paired success fractions |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 1 GPU |
+| Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 3600 s / 130000 s |
 
 Learn compact 64-dimensional protein/text embeddings and maximize strict reciprocal-top1 pair recovery under online latency and submission limits.
@@ -50,7 +50,7 @@ licenses and data-use restrictions are described in the resource document and
 
 ### Run
 
-The task allocates 16 CPU cores, 64 GiB RAM and
+The task allocates 16 CPU cores, 16 GiB RAM and
 100 GiB storage. Agent development has
 3600 seconds. Final-stage limits and accounting are
 specified in the task contract; the verifier service timeout also includes its

@@ -20,7 +20,7 @@ The objective is to maximize Gold Recall@5 on held-out questions. No starter, in
 - Read `/task/docs/available_resources.md` for optional generative resources, runtime credential handling, exact model allowlists, API restrictions, and jailbreak penalties.
 - `build.sh` and `run.sh` must be executable files under `/app`.
 - The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
-- Resources are 32 CPUs, 128 GiB RAM, 200 GiB storage, and no GPU.
+- Resources are 32 CPUs, 16 GiB RAM, 200 GiB storage, and no GPU.
 
 
 ### Build interface

@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | Jianlyu |
 | Primary metric | GoldRecall@5 |
-| Compute | 32 CPUs; 128 GiB RAM; 200 GiB storage; 0 GPUs |
+| Compute | 32 CPUs; 16 GiB RAM; 200 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 19200 s |
 | Dataset | BrowseComp-Plus |
 | Hidden queries | 20 |
@@ -31,7 +31,7 @@ Retrieval must combine evidence across a large corpus within 20 retrieval rounds
 
 ### Environment and verifier
 
-The CPU shared image provides 32 CPUs, 128 GiB RAM and 200 GiB storage. Agent time is 7,200 seconds. The verifier discards the transferred `/app/index`, builds once as UID/GID 65534 and runs up to five query invocations sharing the fresh index and any optional build-started service. Build has a 600-second cap. Build, query execution and deterministic scoring share a 15,300-second wall-clock allowance, with no individual query timeout. The verifier has 19,200 seconds including a separate audit of up to 3,600 seconds. Any execution/output failure invalidates the entire submission.
+The CPU shared image provides 32 CPUs, 16 GiB RAM and 200 GiB storage. Agent time is 7,200 seconds. The verifier discards the transferred `/app/index`, builds once as UID/GID 65534 and runs up to five query invocations sharing the fresh index and any optional build-started service. Build has a 600-second cap. Build, query execution and deterministic scoring share a 15,300-second wall-clock allowance, with no individual query timeout. The verifier has 19,200 seconds including a separate audit of up to 3,600 seconds. Any execution/output failure invalidates the entire submission.
 
 Submitted processes receive an explicit environment allowlist and the task `OPENROUTER_API_KEY`, never judge credentials. The task-local `tests/trajectory_gate.py` orchestrates retrieval and the mandatory audit. After retrieval, submission processes stop before auditing. The judge uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash` at `https://openrouter.ai/api/v1`. Configure host `VERIFIER_OPENAI_BASE_URL` and `VERIFIER_OPENAI_API_KEY` locally; the latter is a separate OpenRouter judge key. Missing trajectory, bad output, judge failure/timeout or a detected violation leaves zero reward. Algorithm and round-limit auditing is not a formal guarantee of detecting every violation.
 
@@ -41,7 +41,7 @@ From the repository root, restore inputs with `python scripts/download_assets.py
 
 Use `python scripts/check_tasks.py tasks/agentic-search-vectorless`, `python scripts/download_assets.py --task agentic-search-vectorless --verify-only`, and `python -B -m unittest discover -s tasks/agentic-search-vectorless/tests -p 'test_*.py' -q`. Full trials use `scripts/run_task.sh --task agentic-search-vectorless` with locally configured agent, optional generation and verifier-judge credentials.
 
-The October 15 Codex + OpenRouter `openai/gpt-6-luna`, effort `max`, trial produced **Gold Recall@5 = 0**, compliance audit **1**, and final reward **0**. The verifier rebuilt the index in 460.82 seconds and completed all 20 query invocations in 154.15 seconds, with valid outputs and no scoring errors. The agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError`; the saved submission still received a valid zero score. This is evidence of working execution and auditing, not of positive retrieval quality. No setting was weakened or trial repeated merely because of the score.
+The historical October 15 Codex + OpenRouter `openai/gpt-6-luna`, effort `max`, trial used 128 GiB RAM and produced **Gold Recall@5 = 0**, compliance audit **1**, and final reward **0**. The verifier rebuilt the index in 460.82 seconds and completed all 20 query invocations in 154.15 seconds, with valid outputs and no scoring errors. The agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError`; the saved submission still received a valid zero score. This is evidence of working execution and auditing, not of positive retrieval quality. No setting was weakened or trial repeated merely because of the score.
 
 The job is `jobs/evaluations/agentic-search-vectorless/codex/openai/gpt-6-luna/max/attempt-1/2026-10-15__14-05-14/`. Before the PR #17 fixes, all 28 recorded package file hashes matched the evaluated revision, apart from documentation changes. On October 17, against `ac7dcc1`, merge-ready checks, all 3 asset hashes, 22 task tests and the 174-test shared suite passed. These are historical results; v0.2.2 subsequently clarifies the audit's permitted query-input interface. Public and hidden query IDs and gold document IDs are disjoint. The author review is `contributing/dev/contribution-readiness/2026-10-17/REVIEW.md`.
 
@@ -59,7 +59,7 @@ checks, release checks, and the **174-test shared suite**. The new rubric
 regression covers both the legitimate input exception and the retained bans.
 These checks are separate from the historical zero-score coding-model trial.
 
-#### Real-corpus known-good verification (October 17)
+#### Real-corpus known-good verification (October 17, 128 GiB RAM)
 
 An author-only reference submission was frozen after public-only calibration
 (public Gold Recall@5 **0.115833**, 6/20 questions with hits). It reuses the earlier

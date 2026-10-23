@@ -24,7 +24,7 @@ public_query_count = 100
 hidden_query_count = 100
 
 [agent]
-timeout_sec = 43200.0
+timeout_sec = 21600.0
 user = "root"
 network_mode = "allowlist"
 allowed_hosts = [

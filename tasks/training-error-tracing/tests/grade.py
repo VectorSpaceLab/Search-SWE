@@ -35,8 +35,8 @@ def verify_runtime_limits():
         raise ValueError("Verifier must enforce exactly 16 CPU cores of quota")
     memory = (cgroup / "memory.max").read_text().strip()
     swap = (cgroup / "memory.swap.max").read_text().strip()
-    if memory == "max" or int(memory) != 64*1024**3 or swap != "0":
-        raise ValueError("Verifier must enforce 64 GiB RAM and no swap")
+    if memory == "max" or int(memory) != 16*1024**3 or swap != "0":
+        raise ValueError("Verifier must enforce 16 GiB RAM and no swap")
     raw = subprocess.check_output(["nvidia-smi", "--query-gpu=uuid,name,memory.total",
                                    "--format=csv,noheader,nounits"], text=True, timeout=10)
     rows = list(csv.reader(raw.splitlines()))

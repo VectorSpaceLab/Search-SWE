@@ -122,7 +122,7 @@ latency percentiles, cumulative preparation, resource peaks, raw Q and final sco
 
 ### Timing and resource protocol
 
-You have one NVIDIA A100-SXM4-40GB, 16 CPU cores, 64 GiB combined container memory/swap, 100 GiB
+You have one NVIDIA A100-SXM4-40GB, 16 CPU cores, 16 GiB combined container memory/swap, 100 GiB
 total task storage and 512 processes including descendants. The entire development phase lasts 3,600
 seconds, including reading, coding, preprocessing, all base encoding and feature caches, every
 training/tuning trial, public checks and final submission. Inputs are downloaded before this clock

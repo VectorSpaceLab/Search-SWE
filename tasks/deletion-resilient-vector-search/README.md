@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | normalized log-error reduction * (0.8 + 0.2 memory efficiency) |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 86400 s |
 
 Maintain graph-vector search quality and reclaim memory through 100 deletion stages on SIFT1M and GIST1M.
@@ -52,7 +52,7 @@ licenses and data-use restrictions are described in the resource document.
 
 ### Run
 
-The task allocates 16 CPU cores, 64 GiB RAM and
+The task allocates 16 CPU cores, 32 GiB RAM and
 100 GiB storage. Agent development has
 7200 seconds. Final-stage limits and accounting are
 specified in the task contract; the verifier service timeout also includes its

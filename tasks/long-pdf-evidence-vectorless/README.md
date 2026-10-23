@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | Jianlyu |
 | Primary metric | SentenceEvidenceAccuracy |
-| Compute | 16 CPUs; 64 GiB RAM; 100 GiB storage; 0 GPUs |
+| Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 10800 s |
 | Dataset | single long PDF |
 | Hidden queries | 12 |
@@ -31,7 +31,7 @@ The system must construct a reusable embedding-free index and retrieve original 
 
 ### Runtime and isolation
 
-The CPU image provides 16 CPUs, 64 GiB RAM and 100 GiB storage, without a GPU. Development is limited to 7,200 seconds. `/app/build.sh` creates a persistent index in 2,400 seconds. All build workers stop before private queries become visible, and the staged PDF **and sentence inventory** become root-owned (files 0400, directories 0700). Query processing must use only the index, supplied queries and submission code. Optional query-time services must start from that index alone. Embeddings are prohibited during both build and search; lexical indexing and permitted generation/non-embedding reranking remain available.
+The CPU image provides 16 CPUs, 16 GiB RAM and 100 GiB storage, without a GPU. Development is limited to 7,200 seconds. `/app/build.sh` creates a persistent index in 2,400 seconds. All build workers stop before private queries become visible, and the staged PDF **and sentence inventory** become root-owned (files 0400, directories 0700). Query processing must use only the index, supplied queries and submission code. Optional query-time services must start from that index alone. Embeddings are prohibited during both build and search; lexical indexing and permitted generation/non-embedding reranking remain available.
 
 The fresh separate verifier transfers `/app`, rebuilds the index, and runs submission commands as UID 10001. Up to five query processes share the index, each with 900 seconds and a shared 1,800-second deadline; cleanup has another 60 seconds. Failed or invalid queries remain in the twelve-query denominator with zero. The root-side grader reads a private corpus mount to verify fixed hashes and original sentence membership. Public validation and all judge credentials are excluded from submission processes.
 
@@ -61,7 +61,7 @@ Reviewed precedent: `tasks/long-pdf-evidence` at `f1c4f57`, selected for the sam
 
 Authoring and validation evidence is recorded outside the package in `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/`. All four assets, 20 task tests, 173 shared tests, both image builds and a disposable-container boundary check passed. At the contributor's request, this revision uses DeepSeek v4.1 Flash through OpenRouter for answer judging. A public positive/negative probe passed using the existing authorized verifier credential. The default local `.env` now also assigns that credential to answer judging; the separate solver credential is unchanged.
 
-The October 16 Codex + OpenRouter Luna max trial completed verification with **SentenceEvidenceAccuracy = 0.25 (3/12)**, compliance audit **1**, and final reward **0.25**. All twelve hidden queries executed successfully in 438.15 seconds; output-invalid and answer-judge-error counts were both zero. The coding agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError` even though its saved submission received a valid score. This was one formal attempt with no retry, not an uninterrupted agent completion. Results are in `jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-20261016-attempt1/2026-10-16__20-03-01/`; the author report is `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/RESULTS.md`.
+The historical October 16 Codex + OpenRouter Luna max trial used 64 GiB RAM and completed verification with **SentenceEvidenceAccuracy = 0.25 (3/12)**, compliance audit **1**, and final reward **0.25**. All twelve hidden queries executed successfully in 438.15 seconds; output-invalid and answer-judge-error counts were both zero. The coding agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError` even though its saved submission received a valid score. This was one formal attempt with no retry, not an uninterrupted agent completion. Results are in `jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-20261016-attempt1/2026-10-16__20-03-01/`; the author report is `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/RESULTS.md`.
 
 The four public inputs intentionally reuse the original task's published paths and immutable pins. Search-SWE `ac7dcc1` supports cross-task reuse while retaining source-path and integrity checks. On October 17, both checkouts and remote main contained that fix; this package passed the contribution checkout's merge-ready checker without asset changes. All 4 asset hashes, 20 task tests and the 174-test shared suite passed. The proposed duplicate upload was cancelled, and no data was published. See `contributing/dev/contribution-readiness/2026-10-17/REVIEW.md` for the current review.
 

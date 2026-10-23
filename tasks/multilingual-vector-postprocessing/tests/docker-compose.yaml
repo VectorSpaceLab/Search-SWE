@@ -1,18 +1,19 @@
 services:
   main:
+    mem_limit: 16g
     command: ["sleep", "infinity"]
     read_only: true
     pids_limit: 512
     shm_size: 1g
     mem_swappiness: 0
-    memswap_limit: 64g
+    memswap_limit: 16g
     tmpfs:
     - /app:rw,exec,nosuid,nodev,size=91g,mode=0755
     - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
     - /var/tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
     - /opt/harbor:rw,exec,nosuid,nodev,size=256m,mode=0755
     # Separate verifiers receive Harbor's collected artifacts by upload.
-    # These transport pages share the same 64-GiB cgroup RAM limit.
+    # These transport pages share the same 16-GiB cgroup RAM limit.
     - /logs/agent:rw,nosuid,nodev,size=91g,mode=0700
     - /logs/artifacts:rw,nosuid,nodev,size=1g,mode=0700
     deploy:

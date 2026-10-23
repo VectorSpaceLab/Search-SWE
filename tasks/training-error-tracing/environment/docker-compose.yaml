@@ -1,12 +1,12 @@
 services:
   main:
     cpus: 16
-    mem_limit: "64g"
+    mem_limit: "16g"
     deploy:
       resources:
         limits:
           cpus: "16"
-          memory: "64g"
+          memory: "16g"
           pids: 2048
         reservations:
           devices:
@@ -14,7 +14,7 @@ services:
               count: 1
               capabilities: [gpu]
     shm_size: "4gb"
-    memswap_limit: "64g"
+    memswap_limit: "16g"
     pids_limit: 2048
     volumes:
       - type: bind

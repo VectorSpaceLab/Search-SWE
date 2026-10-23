@@ -21,7 +21,7 @@ is writable. No symlinks in submitted artifacts. Compilation must therefore
 write to work_dir and counts toward the build allowance. Use only supplied files
 and installed tools. Process/thread cap: 512; maximum protocol line: 1 MiB.
 
-The declared envelope is 16 logical CPUs / 64 GiB memory / 100 GiB task storage.
+The declared envelope is 16 logical CPUs / 32 GiB memory / 100 GiB task storage.
 Queries are serial and restricted to one logical CPU, inherited by descendants;
 the supervisor temporarily adopts the stopped worker's effective UID to set
 affinity, then restores root before grading. No added container capabilities are

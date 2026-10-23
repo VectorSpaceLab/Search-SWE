@@ -14,7 +14,7 @@ methods are all allowed.
 ## Requirements
 
 You have 14,400 seconds for implementation, feature/cache computation, retrieval-ranker training,
-tuning and development evaluation, using one A100 40GB, 16 CPU cores and 64 GiB RAM. You may train a
+tuning and development evaluation, using one A100 40GB, 16 CPU cores and 16 GiB RAM. You may train a
 separate retrieval ranker on public development labels during this stage. Do not update the fixed
 probe or tokenizer, obtain the clean original Alpaca corpus for differencing, obtain hidden queries
 before delivery, or use hidden labels, verifier files, author-only reference artifacts or prior test

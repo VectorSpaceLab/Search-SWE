@@ -12,7 +12,7 @@ Build genuine retrieval that supports brief interpretive questions about one lon
 ## Environment and integrity
 
 - Read `/task/docs/environment.md` and `/task/docs/available_resources.md`. Follow their exact model/provider/endpoint allowlists, credential handling, and jailbreak penalties. No implicit unlisted resources. Credentials are runtime-injected, never embedded in artifacts/images.
-- 16 CPUs, 64 GiB RAM, 100 GiB storage, no GPU; 120-minute agent allowance including validation/debugging.
+- 16 CPUs, 16 GiB RAM, 100 GiB storage, no GPU; 120-minute agent allowance including validation/debugging.
 - `/task` is read-only; write submission files only under `/app`.
 - No hidden labels, hard-coded query-to-location mappings, precomputed query-to-answer mappings/files, external evaluation judgments, or external search/answer services that supply locations/answers. Documented APIs may support genuine retrieval within their policy.
 

@@ -10,7 +10,7 @@ import grade
 
 class RuntimeLimits(unittest.TestCase):
     def profile(self, gpu="GPU-assigned, NVIDIA A100-SXM4-40GB, 40960\n", **overrides):
-        limits = {"cpu.max": "1600000 100000", "memory.max": str(64 * 1024**3),
+        limits = {"cpu.max": "1600000 100000", "memory.max": str(16 * 1024**3),
                   "memory.swap.max": "0"}
         limits.update(overrides)
         with patch.object(Path, "read_text", lambda path: limits[path.name]), \
@@ -22,7 +22,7 @@ class RuntimeLimits(unittest.TestCase):
             result = self.profile()
         self.assertEqual(result["gpu_uuid"], "GPU-assigned")
         self.assertEqual(result["cpu_quota_cores"], 16)
-        self.assertEqual(result["memory_max_bytes"], 64 * 1024**3)
+        self.assertEqual(result["memory_max_bytes"], 16 * 1024**3)
         self.assertEqual(result["memory_swap_max_bytes"], 0)
         self.assertEqual(result["gpu_memory_total_mib"], 40960)
 
@@ -46,7 +46,7 @@ class RuntimeLimits(unittest.TestCase):
                 self.profile(**limits)
 
     def test_gpu_probe_failure_is_an_infrastructure_error(self):
-        limits = {"cpu.max": "1600000 100000", "memory.max": str(64 * 1024**3),
+        limits = {"cpu.max": "1600000 100000", "memory.max": str(16 * 1024**3),
                   "memory.swap.max": "0"}
         with patch.object(Path, "read_text", lambda path: limits[path.name]), \
                 patch.object(grade.subprocess, "check_output", side_effect=FileNotFoundError), \

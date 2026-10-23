@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | held-out Accuracy@1 improvement |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 43200 s / 5100 s |
+| Agent / verifier time limits | 21600 s / 5100 s |
 | Dataset | code-retrieval |
 | Public queries | 10 |
 | Hidden queries | 200 |
@@ -62,7 +62,7 @@ For local Docker, the shared launcher works around Harbor 0.22.0's GPU
 capability preflight with `--override-gpus 0`; the Compose reservations still
 provide the GPU to both containers.
 
-The agent phase has 12 hours. Task-specific verification has one hour,
+The agent phase has 6 hours. Task-specific verification has one hour,
 followed by a separately bounded integrity check, within an 85-minute Harbor
 verifier phase. The submission training environment is offline; the coding
 agent and private judge have their own API configuration.

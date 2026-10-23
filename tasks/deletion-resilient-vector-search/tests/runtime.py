@@ -13,7 +13,7 @@ import time
 import psutil
 
 UID = 10001
-MEMORY = 64 << 30
+MEMORY = 32 << 30
 STORAGE = 100 << 30
 MAX_LINE = 1 << 20
 MAX_DIAGNOSTICS = 128 << 20

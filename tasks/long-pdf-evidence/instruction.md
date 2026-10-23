@@ -4,7 +4,7 @@ The PDF and sentence inventory are under `/task/data/corpus`. Public validation 
 
 Read `/task/docs/environment.md` for the runtime and `/task/docs/available_resources.md` for permitted APIs and credential rules. Use only the supplied corpus and permitted services. Do not use hidden labels, hard-coded query-to-location or query-to-answer mappings, external answer datasets, or search services supplying evidence locations or evaluation answers. Never embed credentials in submission files.
 
-You have 16 CPUs, 64 GiB RAM, 100 GiB storage, no GPU, and 120 minutes for implementation and validation. Keep submission files and dependencies under `/app`; `/task` is read-only. Only `/app` transfers to a fresh verifier, where commands run as a non-root user. Development processes do not transfer, and public validation files are unavailable there. Honor all supplied paths, which may differ during verification.
+You have 16 CPUs, 16 GiB RAM, 100 GiB storage, no GPU, and 120 minutes for implementation and validation. Keep submission files and dependencies under `/app`; `/task` is read-only. Only `/app` transfers to a fresh verifier, where commands run as a non-root user. Development processes do not transfer, and public validation files are unavailable there. Honor all supplied paths, which may differ during verification.
 
 Provide executable `/app/build.sh` and `/app/run.sh`. The verifier builds once:
 

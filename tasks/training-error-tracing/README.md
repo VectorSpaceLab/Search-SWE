@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | quality-gated paired query-latency and GPU-memory cost |
-| Compute | 16 CPUs; 64 GiB RAM; 64 GiB storage; 1 GPU |
+| Compute | 16 CPUs; 16 GiB RAM; 64 GiB storage; 1 GPU |
 | Agent / verifier time limits | 14400 s / 8400 s |
 
 Improve a working training-record retriever beyond training-text routing and layer-streamed fixed-base fallback.
@@ -49,7 +49,7 @@ licenses and data-use restrictions are described in the resource document.
 
 ### Run
 
-The task allocates 16 CPU cores, 64 GiB RAM and
+The task allocates 16 CPU cores, 16 GiB RAM and
 64 GiB storage. Agent development has
 14400 seconds. Final-stage limits and accounting are
 specified in the task contract; the verifier service timeout also includes its

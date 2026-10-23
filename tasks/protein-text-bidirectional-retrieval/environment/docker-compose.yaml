@@ -1,5 +1,6 @@
 services:
   main:
+    mem_limit: 16g
     pids_limit: 512
     tmpfs:
     - /app:rw,exec,nosuid,nodev,size=95g,mode=0755
@@ -37,5 +38,5 @@ services:
       read_only: true
       bind:
         create_host_path: false
-    memswap_limit: 64g
+    memswap_limit: 16g
     shm_size: 64m

@@ -4,16 +4,16 @@ The shared CUDA 13.0/Python 3.12 image supplies PyTorch 2.9.0+cu130,
 Transformers 5.15.1, NumPy, SciPy, scikit-learn, FAISS GPU and ordinary build tools.
 Task additions are peft 0.20.0 and nvidia-ml-py 13.580.82. The final verifier uses
 the same model runtime. Both phases receive exactly one NVIDIA A100-SXM4-40GB,
-16 CPU cores, 64 GiB container memory, 100 GiB total task storage and 512 processes.
+16 CPU cores, 16 GiB container memory, 100 GiB total task storage and 512 processes.
 
 Development lasts 3,600 seconds total: reading, coding, data processing, all
 base encoding, training, tuning, public checks and final submission. Original
 inputs and base weights are already downloaded. Work under `/app`; `/tmp` is
 also writable. `/app` has a 95 GiB tmpfs ceiling and `/tmp` 1 GiB. Their actual
-contents count toward both the 64 GiB memory limit and the 100 GiB total task
+contents count toward both the 16 GiB memory limit and the 100 GiB total task
 storage limit, together with read-only inputs and checkpoints/indexes/caches.
 Storage accounting uses logical file sizes, including sparse files.
-Container memory plus swap is capped at 64 GiB, with no extra swap allowance.
+Container memory plus swap is capped at 16 GiB, with no extra swap allowance.
 These ceilings do not promise 96 GiB of simultaneously resident data. Framework
 setup, logs and artifact-transfer staging are separate and must not be used for
 training, caches or checkpoints.

@@ -8,7 +8,7 @@
 | Version | 1.0.0 |
 | Authors | Search-SWE |
 | Primary metric | GoldRecall@5 |
-| Compute | 32 CPUs; 128 GiB RAM; 200 GiB storage; 0 GPUs |
+| Compute | 32 CPUs; 16 GiB RAM; 200 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 17100 s |
 | Dataset | BrowseComp-Plus |
 | Hidden queries | 20 |
@@ -63,7 +63,7 @@ trusted proof of compliance.
 
 #### Environment and Resource Limits
 
-The CPU Python 3.12 environment provides 32 CPUs, 128 GiB memory, 200 GiB storage,
+The CPU Python 3.12 environment provides 32 CPUs, 16 GiB memory, 200 GiB storage,
 and no GPU. The agent has two hours; the Harbor verifier has 17,100 seconds.
 A shared 15,300-second verification budget includes a 600-second build cap and
 120 seconds reserved for scoring. Five query workers share the remaining budget;

@@ -70,8 +70,8 @@ equally to obtain Q. B=0.9127469497437668 and U=0.9353486724891793 give Score = 
 clip((Q-B)/(U-B),0,1); the framework reward is Score/100. Configurations for identity, language
 centering, global principal-component removal and regularized whitening are selected/frozen using
 public development data; B is the maximum hidden Q across those four fixed configurations; U is a
-fixed feasible quality reference under the same data and resource limits, not a theoretical upper
-bound. Reusing the baseline is legal and earns zero without improvement. Ideal nDCG=1 is diagnostic,
+fixed quality reference from the original task calibration, not a theoretical upper bound.
+Reusing the baseline is legal and earns zero without improvement. Ideal nDCG=1 is diagnostic,
 and extra speed/GPU savings/language count do not earn extra points.
 
 A single query error, timeout, wrong shape, nonfinite or unnormalizable output earns zero for that
@@ -85,7 +85,7 @@ diagnostics are reported.
 ### Timing and resource protocol
 
 One physical NVIDIA A100 40GB is available in both phases with the same allocation, together with 16
-CPUs, 64 GiB memory and 100 GiB total task storage including provided inputs, weights, optimizer
+CPUs, 16 GiB memory and 100 GiB total task storage including provided inputs, weights, optimizer
 state, checkpoints, indexes and caches. Each container has a combined limit of 512
 processes/threads. The whole agent phase is at most 21,600 seconds (six hours), including
 reading/coding, all training experiments, statistics, tuning, development checks and final
@@ -94,7 +94,7 @@ and freezes /app/submission when the agent ends or its deadline expires. Only th
 framework-owned audit artifacts are transferred.
 
 The image is read-only. /app has a 91 GiB tmpfs; /tmp, /root and /var/tmp have 1 GiB tmpfs each,
-charged to the same 64 GiB RAM budget. The private /dev/shm area is 1 GiB for IPC and shares that
+charged to the same 16 GiB RAM budget. The private /dev/shm area is 1 GiB for IPC and shares that
 RAM budget. The small /opt/harbor tmpfs, framework logs and collection metadata are for the
 framework, not extra task cache/storage. The submitted verifier process runs without privileged
 file/network access and shares the same CPU/RAM/GPU limits. Network/model/data services are

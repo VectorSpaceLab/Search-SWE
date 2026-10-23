@@ -133,7 +133,7 @@ submission zero. Low recall or poor memory reclamation alone is not a violation.
 
 ### Timing and resource protocol
 
-- Development: 120 minutes, 16 logical CPU cores, 64 GiB memory, 100 GiB task storage.
+- Development: 120 minutes, 16 logical CPU cores, 32 GiB memory, 100 GiB task storage.
   No GPU, internet, external datasets, external models, or submission model API.
   The coding agent's own provider connection is not a submission resource.
   Development runs as unprivileged `submission`; `/app`, `/tmp` and the user home
@@ -158,7 +158,7 @@ submission zero. Low recall or poor memory reclamation alone is not a violation.
   During deletion, only query-independent graph/index/cache maintenance is allowed.
   Work delayed into querying is charged there. Processes are stopped between phases.
 - Memory covers the process family, vectors, graph, caches and temporary build/delete
-  state. The Docker memory cap is 64 GiB, with swap disabled. Sampled total process-family RSS, including
+  state. The Docker memory cap is 32 GiB, with swap disabled. Sampled total process-family RSS, including
   file-backed mappings and each process's resident shared mappings, is measured at
   phase boundaries and at least every 10 ms while awaiting responses. Peak sampled
   RSS during public calibration defines M0; each hidden query phase defines Mt.
