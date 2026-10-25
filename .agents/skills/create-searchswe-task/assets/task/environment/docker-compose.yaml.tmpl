@@ -1,0 +1,17 @@
+services:
+  main:
+    cpus: @@CPUS@@
+    mem_limit: "@@MEMORY_MB@@m"
+    memswap_limit: "@@MEMORY_MB@@m"
+    deploy:
+      resources:
+        limits:
+          cpus: "@@CPUS@@"
+          memory: "@@MEMORY_MB@@m"
+@@GPU_RESERVATION@@    volumes:
+      - type: bind
+        source: ./docs
+        target: /task/docs
+        read_only: true
+        bind:
+          create_host_path: false

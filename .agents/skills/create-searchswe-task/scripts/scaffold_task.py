@@ -1,327 +1,146 @@
 #!/usr/bin/env python3
-"""Create a fail-closed Search-SWE task skeleton without overwriting files."""
+"""Generate a Search-SWE task with a separate grader and trajectory audit."""
 
 from __future__ import annotations
 
 import argparse
+import ast
 from datetime import date
 import json
 from pathlib import Path
 import re
 import sys
-import textwrap
 
 
 IMAGES = {
     "cpu": "docker.io/hanhainebula/search-swe-base:cpu-py3.12-1.0.0",
     "gpu": "docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0",
 }
-
 TASK_NAME = r"(?!all$)(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
+TEMPLATES = Path(__file__).resolve().parents[1] / "assets/task"
+PINS = ("CODEX_VERSION", "CLAUDE_CODE_VERSION", "PI_VERSION")
 
 
-def clean(text: str) -> str:
-    return textwrap.dedent(text).lstrip("\n").rstrip() + "\n"
+def target_pins(root: Path) -> dict[str, str]:
+    """Read version constants without executing code from the target checkout."""
+    source = root / "scripts/harness_versions.py"
+    values = {}
+    for node in ast.parse(source.read_text(), filename=str(source)).body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name) and target.id in PINS:
+                value = ast.literal_eval(node.value)
+                if not isinstance(value, str) or not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?", value):
+                    raise ValueError(f"Invalid harness pin: {target.id}")
+                values[target.id] = value
+    if set(values) != set(PINS):
+        raise ValueError("Target scripts/harness_versions.py must define all three CLI pins")
+    return values
 
 
-def compose(hardware: str, *, environment: bool) -> str:
-    gpu = ""
-    if hardware == "gpu":
-        gpu = clean(
-            """
-                deploy:
-                  resources:
-                    reservations:
-                      devices:
-                        - driver: nvidia
-                          count: 1
-                          capabilities: [gpu]
-            """
-        )
-    volumes = ""
-    if environment:
-        volumes = clean(
-            """
-                volumes:
-                  - type: bind
-                    source: ./docs
-                    target: /task/docs
-                    read_only: true
-                    bind:
-                      create_host_path: false
-            """
-        )
-    body = "services:\n  main:\n"
-    body += textwrap.indent(gpu, "    ") if gpu else ""
-    body += textwrap.indent(volumes, "    ") if volumes else ""
-    if not gpu and not volumes:
-        body += "    {}\n"
-    return body
-
-
-def files_for(task_name: str, hardware: str) -> dict[str, str]:
-    image = IMAGES[hardware]
-    gpus = 1 if hardware == "gpu" else 0
-    return {
-        ".gitignore": clean(
-            """
-            /data/
-            /models/
-            __pycache__/
-            *.py[cod]
-            """
-        ),
-        "README.md": clean(
-            f"""
-            # {task_name}
-
-            ## Task Metadata
-
-            | Field | Value |
-            | --- | --- |
-            | Task | `{task_name}` |
-            | Version | 1.0.0 |
-            | Hardware | {hardware.upper()} |
-
-            Describe the objective, authors, inputs, metric and resource budgets
-            consistently with task.toml. Link dataset/model provenance and licenses.
-
-            ## Change Log
-
-            | Date | Version | Description |
-            | --- | --- | --- |
-            | {date.today().isoformat()} | 1.0.0 | Added initial task |
-
-            ## Difficulty Explanation
-
-            Explain the engineering challenges and any measured difficulty evidence.
-
-            ## Verification Explanation
-
-            Describe the submission interface, scoring, limits, credential setup
-            and local validation commands. Record actual model-trial feedback.
-
-            ## References
-
-            None.
-            """
-        ),
-        "assets.json": json.dumps(
-            {"schema_version": 1, "files": []}, indent=2
-        )
-        + "\n",
-        "raw-instruction.md": clean(
-            f"""
-            # Task: {task_name}
-
-            ## Task Description
-
-            Replace this text with the task goal and starting state.
-
-            ## Requirements
-
-            Specify exact paths, interfaces, formats, constraints, and files
-            that may or may not be modified.
-
-            ## Available Validation Data
-
-            Describe only agent-visible examples and a practical self-check.
-
-            ## Environment and Available Resources
-
-            Point to `/task/docs/environment.md` and, when applicable,
-            `/task/docs/available_resources.md`.
-
-            ## Expected Artifacts
-
-            Define every required output path, permission, and invocation.
-
-            ## Verification
-
-            Describe graded behavior at a high level without exposing hidden
-            answers or implementation details.
-
-            ## Hidden Test Overview
-
-            Summarize covered scenarios without revealing hidden inputs,
-            labels or reference outputs. State public performance gates in
-            Requirements instead of hiding them from the agent.
-            """
-        ),
-        "instruction.md": clean(
-            f"""
-            Replace this scaffold for {task_name} after completing raw-instruction.md.
-            Begin with a concrete work need and how the result will be used.
-            Carry that practical context through the current data and starting
-            system, resources, constraints, acceptance criteria, and optimization
-            objective. Omit self-introductions and invented identities; preserve
-            the sense of a real task without adding requirements for the setting.
-            Use connected prose paragraphs without
-            headings, lists, tables, or fenced blocks. Preserve every source
-            condition and exact interface; follow references/instruction-rewrite.md
-            in the authoring skill and remove this author-only prompt before use.
-            """
-        ),
-        "task.toml": clean(
-            f"""
-            schema_version = "1.4"
-
-            artifacts = [
-                "/app",
-            ]
-
-            [task]
-            name = "search-swe/{task_name}"
-            version = "1.0.0"
-            description = "Replace with the task's observable objective."
-            authors = [{{ name = "Search-SWE" }}]
-            keywords = ["information-retrieval", "search"]
-
-            [metadata]
-            primary_metric = "Replace with the primary metric"
-
-            [agent]
-            timeout_sec = 7200.0
-            user = "root"
-            network_mode = "no-network"
-
-            [verifier]
-            timeout_sec = 3600.0
-            user = "root"
-            environment_mode = "separate"
-            network_mode = "no-network"
-
-            [environment]
-            build_timeout_sec = 1800.0
-            workdir = "/app"
-            os = "linux"
-            network_mode = "no-network"
-            cpus = 8
-            memory_mb = 32768
-            storage_mb = 102400
-            gpus = {gpus}
-            """
-        ),
-        "environment/Dockerfile": clean(
-            f"""
-            FROM {image}
-
-            RUN mkdir -p /app /task/data /task/docs /logs
-            """
-        ),
-        "environment/docker-compose.yaml": compose(
-            hardware, environment=True
-        ),
-        "environment/docs/environment.md": clean(
-            f"""
-            # Environment
-
-            This is a {hardware.upper()} task based on `{image}`.
-
-            Replace this text with the exact task-visible runtime, commands,
-            installed additions, paths, and hardware capabilities.
-            """
-        ),
-        "environment/docs/available_resources.md": clean(
-            """
-            # Available Resources
-
-            The scaffold declares no external API resources. If the task needs
-            one, document only the injected endpoints, model allowlists,
-            environment-variable names, and usage restrictions. Never include
-            credential values.
-            """
-        ),
-        "tests/.dockerignore": clean(
-            """
-            __pycache__/
-            *.py[cod]
-            """
-        ),
-        "tests/Dockerfile": clean(
-            f"""
-            FROM {image}
-
-            RUN useradd --create-home --uid 10001 --user-group submission
-
-            COPY . /tests/
-
-            RUN chmod 700 /tests \\
-                && chmod 700 /tests/test.sh
-            """
-        ),
-        "tests/docker-compose.yaml": compose(hardware, environment=False),
-        "tests/test.sh": clean(
-            r"""
-            #!/usr/bin/env bash
-            set -u
-
-            reward_dir=/logs/verifier
-            mkdir -p "$reward_dir"
-            printf '0\n' > "$reward_dir/reward.txt"
-            printf '%s\n' \
-              'Verifier scaffold is intentionally fail-closed; implement it.' >&2
-            exit 1
-            """
-        ),
+def files_for(args: argparse.Namespace, pins: dict[str, str]) -> dict[str, str]:
+    # These are supervisor allowances, distinct from submission-phase budgets
+    # that the contributor must design and enforce inside grader.py.
+    judge_supervisor = args.judge_timeout_sec + 300
+    verifier_timeout = args.grader_timeout_sec + judge_supervisor + 600
+    author_toml = ", ".join("{ name = " + json.dumps(name, ensure_ascii=False) + " }"
+                            for name in args.author)
+    gpu_reservation = ""
+    if args.hardware == "gpu":
+        gpu_reservation = """        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+"""
+    values = {
+        **pins,
+        "TASK_NAME": args.task_name,
+        "TITLE": args.title or args.task_name.replace("-", " ").title(),
+        "AUTHORS_TOML": author_toml,
+        "AUTHORS_MD": ", ".join(name.replace("|", "\\|") for name in args.author),
+        "DATE": date.today().isoformat(),
+        "IMAGE": IMAGES[args.hardware],
+        "HARDWARE": args.hardware.upper(),
+        "GPUS": str(int(args.hardware == "gpu")),
+        "GPU_RESERVATION": gpu_reservation,
+        "CPUS": str(args.cpus),
+        "MEMORY_MB": str(args.memory_mb),
+        "STORAGE_MB": str(args.storage_mb),
+        "AGENT_TIMEOUT": str(args.agent_timeout_sec),
+        "GRADER_TIMEOUT": str(args.grader_timeout_sec),
+        "JUDGE_TIMEOUT": str(args.judge_timeout_sec),
+        "JUDGE_SUPERVISOR_TIMEOUT": str(judge_supervisor),
+        "VERIFIER_TIMEOUT": str(verifier_timeout),
     }
+    generated = {}
+    for template in sorted(TEMPLATES.rglob("*.tmpl")):
+        text = template.read_text()
+        for key, value in values.items():
+            text = text.replace(f"@@{key}@@", value)
+        if re.search(r"@@[A-Z_]+@@", text):
+            raise ValueError(f"Unresolved template field in {template.name}")
+        generated[template.relative_to(TEMPLATES).as_posix().removesuffix(".tmpl")] = text
+    return generated
+
+
+def positive(value: str) -> int:
+    try:
+        number = int(value)
+        if number > 0:
+            return number
+    except ValueError:
+        pass
+    raise argparse.ArgumentTypeError("must be a positive integer")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "task_name",
-        help="Descriptive lowercase task name, at most five hyphen-separated words",
-    )
-    parser.add_argument(
-        "--hardware",
-        choices=sorted(IMAGES),
-        default="cpu",
-        help="Task hardware class; defaults to cpu",
-    )
-    parser.add_argument(
-        "--repo-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Search-SWE repository root; defaults to the current directory",
-    )
-    parser.add_argument("--author", action="append", required=True, help="Actual author name; repeat for coauthors")
+    parser.add_argument("task_name", help="At most five lowercase hyphen-separated words")
+    parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--hardware", choices=sorted(IMAGES), default="cpu")
+    parser.add_argument("--author", action="append", required=True, help="Actual author; repeat for coauthors")
+    parser.add_argument("--title", help="Readable title shared by README and structured instruction")
+    parser.add_argument("--cpus", type=positive, default=8)
+    parser.add_argument("--memory-mb", type=positive, default=32768, help="RAM in MiB")
+    parser.add_argument("--storage-mb", type=positive, default=102400, help="Storage in MiB")
+    parser.add_argument("--agent-timeout-sec", type=positive, default=7200)
+    parser.add_argument("--grader-timeout-sec", type=positive, default=1800,
+                        help="Whole primary grader supervisor window; derive from submission stages")
+    parser.add_argument("--judge-timeout-sec", type=positive, default=900,
+                        help="Trajectory Codex session budget; wrapper receives an extra 300 seconds")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     if not re.fullmatch(TASK_NAME, args.task_name):
-        print(
-            "error: use at most five lowercase hyphen-separated words, without a task- prefix; all is reserved",
-            file=sys.stderr,
-        )
+        print("error: use at most five lowercase hyphen-separated words; task- and all are reserved", file=sys.stderr)
         return 2
-
+    args.author = [name.strip() for name in args.author]
+    if any(not name or name.lower() in ("search-swe", "your name", "author")
+           or any(ord(c) < 32 for c in name) for name in args.author):
+        print("error: actual single-line --author names are required", file=sys.stderr)
+        return 2
+    if args.title is not None and (not args.title.strip() or any(ord(c) < 32 for c in args.title)):
+        print("error: --title must be a nonempty single line", file=sys.stderr)
+        return 2
     root = args.repo_root.resolve()
     if not (root / "tasks").is_dir() or not (root / "docker/README.md").is_file():
         print(f"error: not a Search-SWE repository root: {root}", file=sys.stderr)
         return 2
-
     if (root / "tasks").is_symlink():
         print("error: task roots must not be symlinks", file=sys.stderr)
-        return 2
-    if any(not name.strip() or name.strip().lower() in
-           ("search-swe", "your name", "author") for name in args.author):
-        print("error: actual --author names are required", file=sys.stderr)
         return 2
     destination = root / "tasks" / args.task_name
     if destination.exists() or destination.is_symlink():
         print(f"error: task name already exists; refusing overwrite: {destination}", file=sys.stderr)
         return 1
-
-    generated = files_for(args.task_name, args.hardware)
-    if args.author:
-        authors = ", ".join('{ name = ' + json.dumps(name.strip(), ensure_ascii=False) + ' }'
-                            for name in args.author)
-        generated["task.toml"] = generated["task.toml"].replace(
-            'authors = [{ name = "Search-SWE" }]', f"authors = [{authors}]")
-    # Reserve the directory before writing; never merge into an existing task.
+    try:
+        generated = files_for(args, target_pins(root))
+    except (OSError, ValueError, SyntaxError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     destination.mkdir()
     try:
         for relative, content in generated.items():
@@ -330,19 +149,11 @@ def main() -> int:
             path.write_text(content, encoding="utf-8")
         (destination / "tests/test.sh").chmod(0o755)
     except Exception:
-        # The destination did not exist before this invocation, so a failed
-        # scaffold should not leave a misleading partial task behind.
         import shutil
-
         shutil.rmtree(destination, ignore_errors=True)
         raise
-
-    print(
-        f"Created {destination.relative_to(root)} "
-        f"({args.hardware})"
-    )
-    print("Next: replace scaffold text, implement the verifier, add exact assets,")
-    print("and follow the skill's references/validation.md through all layers.")
+    print(f"Created {destination.relative_to(root)} ({args.hardware}, trajectory audit included)")
+    print("Next: implement the grader and rubric, finalize inputs/instruction, and record checks in VALIDATION.md.")
     return 0
 
 

@@ -1,0 +1,19 @@
+FROM @@IMAGE@@
+
+ENV LITELLM_LOCAL_MODEL_COST_MAP=true
+RUN /opt/conda/bin/python -m pip install --no-cache-dir \
+      "harbor-rewardkit==0.2.0" "litellm==1.97.0"
+ARG REWARDKIT_CODEX_VERSION=@@CODEX_VERSION@@
+ARG SEARCH_SWE_NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm install --global --registry="$SEARCH_SWE_NPM_REGISTRY" \
+      "@openai/codex@${REWARDKIT_CODEX_VERSION}" \
+    && mkdir -p "/root/.cache/harbor-rewardkit/codex/${REWARDKIT_CODEX_VERSION}/bin" \
+    && ln -s "$(command -v codex)" \
+      "/root/.cache/harbor-rewardkit/codex/${REWARDKIT_CODEX_VERSION}/bin/codex" \
+    && codex --version | grep -Fx "codex-cli ${REWARDKIT_CODEX_VERSION}"
+RUN useradd --create-home --uid 10001 --user-group submission \
+    && mkdir -p /app /audit /logs/verifier
+COPY . /tests/
+RUN cp -r /tests/jailbreak_judge /audit/ \
+    && chmod -R 0700 /tests /audit \
+    && chmod 0700 /logs/verifier

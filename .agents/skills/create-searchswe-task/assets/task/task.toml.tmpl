@@ -1,0 +1,41 @@
+schema_version = "1.4"
+
+artifacts = ["/app", "/logs/agent/trajectory.json"]
+
+[task]
+name = "search-swe/@@TASK_NAME@@"
+version = "1.0.0"
+description = "Replace with the observable engineering objective."
+authors = [@@AUTHORS_TOML@@]
+keywords = ["information-retrieval", "search"]
+
+[metadata]
+primary_metric = "Replace with the primary metric"
+
+[agent]
+timeout_sec = @@AGENT_TIMEOUT@@
+user = "root"
+network_mode = "no-network"
+
+[verifier]
+# Primary grader + judge wrapper (session + 300 s) + 600 s setup/cleanup.
+# @@GRADER_TIMEOUT@@ + @@JUDGE_SUPERVISOR_TIMEOUT@@ + 600 = @@VERIFIER_TIMEOUT@@ seconds.
+timeout_sec = @@VERIFIER_TIMEOUT@@
+user = "root"
+environment_mode = "separate"
+network_mode = "allowlist"
+allowed_hosts = ["openrouter.ai"]
+
+[verifier.env]
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/app"
+os = "linux"
+network_mode = "no-network"
+cpus = @@CPUS@@
+memory_mb = @@MEMORY_MB@@
+storage_mb = @@STORAGE_MB@@
+gpus = @@GPUS@@

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -uo pipefail
+umask 077
+unset PYTHONHOME PYTHONSTARTUP
+export PYTHONSAFEPATH=1 PYTHONNOUSERSITE=1 PYTHONPATH=/tests
+cd /tests || exit 1
+
+reward_dir=/logs/verifier
+install -d -o root -g root -m 0700 "$reward_dir" "$reward_dir/.private" || exit 1
+printf '0\n' > "$reward_dir/reward.txt"
+printf '{"primary_metric":0,"jailbreak_judge":0,"reward":0}\n' > "$reward_dir/reward.json"
+rm -f "$reward_dir/report.json" "$reward_dir/judge.json" \
+    "$reward_dir/reward-details.json" "$reward_dir/judge-status.json"
+
+cleanup() {
+    pkill -TERM -u submission 2>/dev/null || true
+    sleep 0.5
+    pkill -KILL -u submission 2>/dev/null || true
+}
+phase() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$reward_dir/stages.log"; }
+trap cleanup EXIT
+trap 'phase "terminated"; exit 143' TERM INT HUP
+cleanup
+
+# Implement unprivileged, credential-free candidate execution in grader.py.
+# Hidden tests and judge logs remain root-only; never chmod read-only asset mounts.
+phase "grader start budget=@@GRADER_TIMEOUT@@"
+/usr/bin/timeout --signal=TERM --kill-after=15s @@GRADER_TIMEOUT@@s \
+    /opt/conda/bin/python /tests/grader.py --output-dir "$reward_dir" \
+    > "$reward_dir/grader.stdout.log" 2> "$reward_dir/grader.stderr.log"
+primary_status=$?
+phase "grader end status=$primary_status"
+cleanup
+
+judge_status=125
+phase "judge start budget=@@JUDGE_SUPERVISOR_TIMEOUT@@"
+if (( primary_status == 0 )); then
+    if [[ -n "${OPENAI_BASE_URL:-}" && -n "${OPENAI_API_KEY:-}" \
+          && -s /logs/agent/trajectory.json ]]; then
+        TMPDIR="$reward_dir/.private" \
+        /usr/bin/timeout --signal=TERM --kill-after=15s @@JUDGE_SUPERVISOR_TIMEOUT@@s \
+            /opt/conda/bin/python /tests/rewardkit_deepseek.py /audit \
+            --workspace /app --output "$reward_dir/judge.json" \
+            --max-concurrent-agent 1 --judge deepseek-codex \
+            --model deepseek/deepseek-v4.1-flash \
+            > "$reward_dir/judge.stdout.log" 2> "$reward_dir/judge.stderr.log"
+        judge_status=$?
+    else
+        printf '%s\n' 'Verifier judge credentials and nonempty trajectory are required.' \
+            > "$reward_dir/judge.stderr.log"
+        judge_status=78
+    fi
+fi
+phase "judge end status=$judge_status"
+
+phase "finalizer start budget=30"
+SEARCH_SWE_PRIMARY_STATUS="$primary_status" SEARCH_SWE_JUDGE_STATUS="$judge_status" \
+    /usr/bin/timeout --signal=TERM --kill-after=5s 30s \
+    /opt/conda/bin/python /tests/finalize_reward.py --output-dir "$reward_dir" \
+    --trajectory /logs/agent/trajectory.json \
+    > "$reward_dir/finalizer.stdout.log" 2> "$reward_dir/finalizer.stderr.log"
+finalizer_status=$?
+phase "finalizer end status=$finalizer_status"
+if (( finalizer_status != 0 )); then
+    printf '0\n' > "$reward_dir/reward.txt"
+    printf '{"primary_metric":0,"jailbreak_judge":0,"reward":0}\n' > "$reward_dir/reward.json"
+fi
+exit "$finalizer_status"

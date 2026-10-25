@@ -6,8 +6,10 @@ description: Create or substantially revise Search-SWE task packages with CPU/GP
 # Create a Search-SWE Task
 
 Deliver a reproducible task whose structured source, natural-language request,
-environment, submission interface, and grading agree. Validate the setting
-with an actual configured coding-model run as well as grader checks, and use
+environment, submission interface, and grading agree. Every new task includes
+a verifier-side trajectory integrity audit and a task-root `VALIDATION.md`.
+Validate the setting with an actual configured coding-model run as well as
+grader checks, and use
 the results to refine the setting where needed. This skill contains its authoring
 guidance and helpers. It operates on a **target Search-SWE checkout**, which
 supplies the task packages, Docker definitions, and release/download/launch
@@ -38,7 +40,7 @@ Record a short design summary before writing the package:
 | Identity | Descriptive task name (at most five lowercase hyphen-separated words), actual authors, version |
 | Goal | What working capability or quality/efficiency improvement is measured |
 | Interface | Container input paths, commands, output paths/formats, artifact transfer |
-| Evaluation | Metric, public gates, baseline if needed, failure/timeout behavior |
+| Evaluation | Task metric, required trajectory audit, public gates, baseline if needed, failure/timeout behavior |
 | Inputs | Public/hidden split, actual files, provenance, usage terms; redistribution rights for uploads |
 | Resources | CPU/GPU, memory/storage/time, network, permitted APIs/models |
 | Precedent | Reviewed task path(s), matching dimensions, structural patterns reused, intentional differences |
@@ -57,7 +59,8 @@ For a new task, run the bundled helper using its **actual installed path**:
 SKILL_DIR=/path/to/create-searchswe-task
 REPO=/path/to/Search-SWE
 python "$SKILL_DIR/scripts/scaffold_task.py" example-search \
-  --repo-root "$REPO" --author 'Alice Example' --hardware cpu
+  --repo-root "$REPO" --author 'Alice Example' --hardware cpu \
+  --title 'Example Search' --cpus 8 --memory-mb 16384
 ```
 
 Use `--hardware gpu` only for GPU execution. Create new tasks directly at
@@ -77,12 +80,21 @@ each package and verify immutable asset pins. Public upstream HF datasets may
 be used directly; publish official inputs only when needed. Then merge the PR
 with a **merge commit** to preserve original author history.
 
-The scaffold is **not a finished task**: its verifier always fails, its asset
-manifest is empty, data/model mounts are absent, and instructions are writing
-prompts. Replace them and review the generated budgets, author, artifact list,
-and network settings. The shared image supplies common dependencies; add only
-task-specific pinned packages to each Dockerfile. Both Dockerfiles must use
-the matching CPU/GPU image, consistent with both Compose files and `gpus`.
+The generated layout includes `tests/grader.py`, a bounded `tests/test.sh`,
+`tests/finalize_reward.py`, `tests/rewardkit_deepseek.py`,
+`tests/jailbreak_judge/codex.toml`, and `VALIDATION.md`. It installs coding CLIs
+using the target checkout's `scripts/harness_versions.py` pins and includes the
+trajectory artifact and verifier-only judge credentials. Read
+[references/verifier-contract.md](references/verifier-contract.md) for the report
+contract and budget calculation. Choose CPU/RAM/storage and agent/grader/judge
+timeouts using the helper options and the actual workload.
+
+The scaffold is **not a finished task**: its grader fails until implemented, its
+asset manifest is empty, data/model mounts are absent, and the instruction and
+task-specific audit rubric need completion. Replace them and validate the
+generated budgets, authors, artifacts and network settings. The shared image
+supplies common dependencies; add only task-specific pinned packages to each
+Dockerfile. Both Dockerfiles must use the matching CPU/GPU image, consistent with both Compose files and `gpus`.
 
 ## 3. Implement the contract
 
@@ -108,8 +120,12 @@ Follow the detailed rules in `references/task-authoring.md`:
    transfer submission artifacts, run untrusted code without grading privileges,
    bound execution, and initialize reward to zero. A separate container does not
    protect a grader from submitted code run as root inside that container.
-5. Add author-facing README context and task-local tests, including known-good
-   and invalid submissions. Do not change unrelated tasks or scoring policies.
+5. Complete the trajectory integrity rubric and verify the finalizer with
+   accepting, rejecting, unavailable and malformed audit results. Task metrics
+   may be deterministic; the trajectory audit separately checks compliance.
+6. Add author-facing README context and task-local tests, including known-good
+   and invalid submissions. Record design, commands, evidence and feedback in
+   task-root `VALIDATION.md`. Do not change unrelated tasks or scoring policies.
 
 ## 4. Validate, test with a model, and refine the setting
 
@@ -120,8 +136,8 @@ diagnosis; retry after a relevant fix, not in an unbounded loop.
 
 After local package, asset and grader checks, follow
 [references/model-evaluation.md](references/model-evaluation.md). Run the final
-rewritten instruction with the configured coding model and any required judges;
-inspect its trajectory, artifacts, grader result and judge health. Use this
+rewritten instruction with the configured coding model, the required trajectory
+audit and any task-specific answer judges; inspect its trajectory, artifacts, grader result and judge health. Use this
 feedback to identify task-setting issues, correct them, and revalidate the
 affected checks. Rerun the model when changes affect its task or scoring, within
 the authorized budget, and record the final evaluated revision. An infrastructure
@@ -147,7 +163,8 @@ results, reviewed reference tasks consulted (or that none was close), intentiona
 reuse/deviations, the source-to-request equivalence review, known-good/negative-case
 evidence, the exact evaluated revision/model/effort, observed scores and judge
 health, feedback-driven task changes (or why none were needed), and every unrun
-validation layer.
+validation layer. Keep this evidence indexed in task-root `VALIDATION.md`;
+link the relevant files when handing off the package.
 Never equate a scaffold, a dry-run, or a static release check with a solvable
 end-to-end task.
 

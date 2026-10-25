@@ -50,8 +50,8 @@ design:
 - primary metric, pass gates, baseline (when applicable), and timeout behavior;
 - public inputs versus verifier-only inputs, including provenance and license;
 - CPU or GPU execution, memory/storage needs, network access, and permitted APIs;
-- whether deterministic grading is sufficient or a model judge is genuinely
-  needed.
+- the required trajectory integrity audit and whether answer quality additionally
+  needs a subjective judge.
 
 Ask the maintainer when any of these are ambiguous. Do not invent a data source,
 license, expected metric, hidden split, paid service, or GPU requirement.
@@ -92,16 +92,23 @@ Also provide the repository conventions that apply to the task:
 
 ```text
 ├── raw-instruction.md            # Structured source for the natural-language request
-├── .gitignore                    # Ignore /data/, /models/, Python caches
+├── VALIDATION.md                 # Design, checks, trials, feedback, final revision
+├── .gitignore                    # Ignore /data/, /models/, jobs, credentials, caches
 ├── README.md                     # Author-facing overview and provenance
 ├── environment/
+│   ├── .dockerignore              # Exclude secrets/caches from the build context
 │   ├── docs/environment.md       # Exact tools/runtime visible to the agent
 │   ├── docs/available_resources.md  # Only resources actually injected
 │   └── starter/                  # Optional starter implementation
 ├── model-metadata/               # Small, bundled model metadata when needed
 └── tests/
-    ├── data/                     # Verifier-only queries, labels, references
-    └── grader/test helpers
+    ├── .dockerignore
+    ├── grader.py                 # Task metric and confined submission execution
+    ├── finalize_reward.py        # Metric + required audit; separate health state
+    ├── rewardkit_deepseek.py     # Current pinned trajectory backend
+    ├── jailbreak_judge/codex.toml # Task-specific integrity rubric
+    ├── data/                     # Small verifier-only queries/labels, when needed
+    └── test_*.py                 # Actual grader and failure-case regressions
 ```
 
 Use `schema_version = "1.4"`. Set `task.name` to
@@ -122,7 +129,11 @@ limits, setup and validation under verification; use level-three headings as nee
 List the papers, datasets or methods actually referenced by the task, or `None`.
 New tasks start at `1.0.0` with a dated `Added initial task` changelog entry.
 Keep the README and `task.version` aligned as the task evolves; retain original
-versions and fingerprints in historical validation reports.
+versions and fingerprints in historical validation reports. New packages keep
+design, grader checks, configured-model feedback and final-revision evidence in
+`VALIDATION.md`. Link externally stored evidence without copying secrets or
+author-only solutions into the package; preserve existing tasks' historical
+report names when revising them.
 
 Search-SWE release packages use a separate verifier:
 
@@ -132,8 +143,8 @@ environment_mode = "separate"
 ```
 
 Declare every agent artifact that the separate verifier or result collector
-needs. Include `/logs/agent/trajectory.json` only when it is collected or used
-for audit/judging. Do not assume that a separate verifier can see undeclared
+needs. Include `/logs/agent/trajectory.json` for the required trajectory audit in
+every new task. Do not assume that a separate verifier can see undeclared
 agent state or reconnect to the agent container's services.
 
 ## Default CPU and GPU images
@@ -177,6 +188,12 @@ phases using per-run Compose copies. Keep the package's default `count: 1`
 requests and document any task-specific GPU capacity requirement in its README.
 Install the target checkout's pinned coding-agent CLIs in the agent Dockerfile;
 the current versions are defined in `scripts/harness_versions.py`.
+
+Choose resources from the task workload. Keep CPU/RAM values in TOML, both
+Compose overlays and resource docs consistent, including explicit swap limits
+and any cgroup/RSS guards. Validate actual enforcement where the metric depends
+on it. Derive each supervisor window from all nested stages, repeats and
+cleanup rather than copying another task's timeout.
 
 Pin task-specific package and system dependencies. Do not use `latest`, clone a
 moving branch during a build, copy a host virtual environment, or depend on a
@@ -263,10 +280,13 @@ task uses a less restricted profile.
 
 ## Verifier and reward design
 
-Prefer deterministic programmatic checks for facts that code can measure.
-Use a model judge only for a clearly subjective dimension, and pin its tooling
-and configuration following a selected reviewed precedent with the same judging
-mode, while independently verifying that its judge and access policy apply.
+Prefer deterministic programmatic checks for task metrics that code can measure.
+Every new task also includes a verifier-side trajectory integrity audit; use an
+additional answer-quality judge only where that dimension is subjective. Pin
+tooling and configuration, adapt the audit rubric to the actual task, and
+verify its healthy acceptance/rejection and failure behavior. Follow
+[verifier-contract.md](verifier-contract.md) for the generated reports, stage
+budgets and separation of candidate violations from invalid measurements.
 
 The separate verifier must be self-contained. Its Dockerfile copies `tests/`
 to `/tests` and installs pinned verifier-only dependencies. Protect hidden data,

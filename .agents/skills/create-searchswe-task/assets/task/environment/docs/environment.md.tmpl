@@ -1,0 +1,13 @@
+# Environment
+
+This @@HARDWARE@@ task uses `@@IMAGE@@` and Python 3.12.
+The runtime has @@CPUS@@ CPUs, @@MEMORY_MB@@ MiB RAM, @@STORAGE_MB@@ MiB storage
+and @@GPUS@@ GPUs. Both phase configurations use the same resource profile;
+swap is disabled. Agent development has @@AGENT_TIMEOUT@@ seconds.
+
+Installed coding CLIs: Codex @@CODEX_VERSION@@, Claude Code @@CLAUDE_CODE_VERSION@@,
+and Pi @@PI_VERSION@@. Describe task-specific pinned additions and the exact
+provided data/models, commands, artifact paths, read/write permissions and
+public self-check. Keep this document aligned with the final Docker contexts,
+mounts and grader. Storage accounting/enforcement depends on the task's workload
+and must be implemented and validated where required.

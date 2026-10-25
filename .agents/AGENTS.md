@@ -36,7 +36,9 @@ Markdown links.
    requested result will be used, then connect the available inputs, constraints,
    acceptance criteria and optimization objective in natural prose. Preserve
    practical context without self-introductions or invented identities; the
-   skill defines the rewrite and validation gates.
+   skill defines the rewrite and validation gates. New tasks include the
+   verifier-side trajectory audit and task-root `VALIDATION.md` for design,
+   checks, model feedback and final-revision evidence.
    Before scaffolding, inspect one or two closest reviewed packages already merged
    into the base branch under `tasks/` as read-only structural precedents, selected
    by engineering objective,

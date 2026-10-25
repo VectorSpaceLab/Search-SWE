@@ -1,0 +1,63 @@
+# @@TITLE@@
+
+## Task Metadata
+
+| Field | Value |
+| --- | --- |
+| Task | `@@TASK_NAME@@` |
+| Version | 1.0.0 |
+| Authors | @@AUTHORS_MD@@ |
+| Primary metric | To be defined in task.toml |
+| Compute | @@CPUS@@ CPUs; @@MEMORY_MB@@ MiB RAM; @@STORAGE_MB@@ MiB storage; @@GPUS@@ GPUs |
+| Agent / verifier time limits | @@AGENT_TIMEOUT@@ s / @@VERIFIER_TIMEOUT@@ s |
+| Inputs and public/hidden query counts | To be defined from the actual inputs |
+
+Describe the engineering objective, starting state, inputs and their provenance.
+
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| @@DATE@@ | 1.0.0 | Added initial task |
+
+## Difficulty Explanation
+
+Explain the engineering challenges using observed evidence where available.
+
+## Verification Explanation
+
+Define the submission interface, metric, correctness/performance gates and
+failure behavior consistently with raw-instruction.md and instruction.md.
+The separate verifier combines the task metric with a trajectory integrity audit.
+
+### Budgets and resources
+
+The primary grader supervisor has @@GRADER_TIMEOUT@@ seconds. Document its
+candidate build/query/training budgets, repeats and cleanup so they fit this
+window. The trajectory session has @@JUDGE_TIMEOUT@@ seconds; its wrapper has
+@@JUDGE_SUPERVISOR_TIMEOUT@@ seconds. The outer verifier includes a further
+600 seconds for setup, finalization and cleanup, totaling @@VERIFIER_TIMEOUT@@ seconds.
+Choose resource limits from the workload and validate their enforcement.
+
+### Local validation
+
+Configure coding-agent credentials and verifier-only `VERIFIER_OPENAI_BASE_URL`
+(`https://openrouter.ai/api/v1`) and `VERIFIER_OPENAI_API_KEY` in an ignored local
+`.env`. Submission APIs, if supplied, have separate documented credentials.
+The trajectory judge uses RewardKit 0.2.0 and
+`deepseek/deepseek-v4.1-flash`; adapt its rubric to this task.
+
+```bash
+python scripts/check_tasks.py tasks/@@TASK_NAME@@
+python scripts/download_assets.py --task @@TASK_NAME@@ --verify-only
+bash scripts/run_task.sh --task @@TASK_NAME@@ --agent codex --openrouter \
+  --model YOUR_MODEL --reasoning-effort YOUR_SUPPORTED_EFFORT --dry-run
+```
+
+Restore actual inputs, test the grader and replace placeholders before running
+the configured model. For GPU runs, add `--gpu-device <host-index-or-UUID>`.
+Record commands, results, model feedback and final revision in [VALIDATION.md](VALIDATION.md).
+
+## References
+
+None.

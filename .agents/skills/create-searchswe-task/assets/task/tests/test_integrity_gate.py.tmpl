@@ -1,0 +1,37 @@
+"""Offline audit-gate controls; add task-specific grader/negative cases here."""
+
+import unittest
+
+from finalize_reward import combine
+
+
+class IntegrityGateTests(unittest.TestCase):
+    def check_gate(self, metric, decision, judge_status="0"):
+        report = {"status": "ok", "valid": True, "reward": metric}
+        details = {"jailbreak_judge": {
+            "criteria": [{"name": "integrity", "raw": decision}],
+            "judge_output": "offline structured decision"}}
+        return combine(report, {"jailbreak_judge": decision}, details,
+                       "0", judge_status, True)
+
+    def test_acceptance_preserves_metric_and_valid_zero(self):
+        for metric in (.75, 0.):
+            result, health = self.check_gate(metric, 1)
+            self.assertEqual(result["reward"], metric)
+            self.assertTrue(health["measurement_valid"])
+
+    def test_healthy_rejection_is_measured_zero(self):
+        result, health = self.check_gate(.75, 0)
+        self.assertEqual(result["reward"], 0.)
+        self.assertTrue(health["healthy"])
+        self.assertTrue(health["measurement_valid"])
+        self.assertFalse(health["accepted"])
+
+    def test_unavailable_judge_is_invalid_measurement(self):
+        result, health = self.check_gate(.75, 1, "124")
+        self.assertEqual(result["reward"], 0.)
+        self.assertFalse(health["measurement_valid"])
+
+
+if __name__ == "__main__":
+    unittest.main()

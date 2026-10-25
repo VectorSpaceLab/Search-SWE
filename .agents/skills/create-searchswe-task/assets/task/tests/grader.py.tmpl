@@ -1,0 +1,25 @@
+"""Implement the task metric and confined submission execution here."""
+
+import argparse
+import json
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=Path("/logs/verifier"))
+    args = parser.parse_args()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    # Replace with known-good/negative-tested grading. Launch candidate code
+    # unprivileged, with a clean environment, protected inputs and stage limits.
+    # status=ok: valid output and finite metric; submission_failed: candidate
+    # violation with zero metric; infrastructure_error: unusable measurement.
+    report = {"status": "infrastructure_error", "valid": False, "reward": 0.0,
+              "error": "Task grader scaffold requires implementation", "metrics": {}}
+    (args.output_dir / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+    print(report["error"], flush=True)
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

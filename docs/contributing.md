@@ -80,6 +80,11 @@ For GPU trials, add `--gpu-device <host-index-or-UUID>` to select the same devic
 for the agent and verifier. Choose an available GPU with the task's required
 capacity and a separate output directory for each simultaneous run.
 
+New task packages include a task-specific grader, a verifier-side trajectory
+integrity audit and a task-root `VALIDATION.md` evidence index. The latter
+records grader checks, configured-model feedback, resulting task revisions and
+validation of the final setting. The create-task helper generates this layout.
+
 Follow the skill's [validation layers](../.agents/skills/create-searchswe-task/references/validation.md):
 Compose rendering, builds, verifier known-good and negative cases, and an
 end-to-end trial with a configured coding model when authorized. Use a fresh

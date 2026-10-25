@@ -193,6 +193,13 @@ class TaskWorkflow(unittest.TestCase):
         harbor.chmod(0o755)
         with patch.dict(os.environ, {"PATH": str(binary) + os.pathsep + os.environ.get("PATH", ""),
                                      "DEEPSEEK_API_KEY": "fixture-only"}):
+            missing = self.cli("run_task.py", "--task-path", self.source, "--agent", "pi",
+                               "--model", "deepseek/deepseek-flash")
+            self.assertNotEqual(missing.returncode, 0)
+            self.assertIn("VERIFIER_OPENAI_API_KEY", missing.stderr)
+            (self.repo / ".env").write_text(
+                "VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1\n"
+                "VERIFIER_OPENAI_API_KEY=verifier-fixture-only\n")
             result = self.cli("run_task.py", "--task-path", self.source, "--agent", "pi",
                               "--model", "deepseek/deepseek-flash")
         self.assertEqual(result.returncode, 0, result.stderr)

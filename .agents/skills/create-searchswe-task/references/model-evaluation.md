@@ -8,6 +8,7 @@ source. Read [validation.md](validation.md) for prerequisites and grader checks.
 
 ## Configure and probe
 
+Use task-root `VALIDATION.md` as the evidence index for new packages.
 Record the checkout/revision, task and instruction hashes, harness/version,
 provider, full model ID, reasoning effort, judge configuration, hardware,
 resource limits and intended output directory. Use the user-selected model.
@@ -158,5 +159,6 @@ Hand off the exact command (without secrets), revision/hashes, run and trajector
 paths, completion and judge status, scores/gate outcomes, resource observations,
 cost availability, attempt count and any task changes motivated by the run
 (or why none were needed), with validation evidence for the final setting.
-Keep unperformed or invalid layers explicit. Do not claim the task validated
+Update `VALIDATION.md` with feedback, resulting changes, revalidation and the
+final supported revision. Keep unperformed or invalid layers explicit. Do not claim the task validated
 until the required model run and its interpretation are supported by evidence.

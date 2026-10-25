@@ -8,10 +8,13 @@ task. Nothing in this reference grants permission to publish or use paid APIs.
 
 Keep downloadable fixed files outside the build contexts, under
 `data/` or `models/` in the package at `tasks/<task-name>`.
-Ignore both directories in Git. Hidden
-queries/labels and grading code go in `tests/`, not the public asset bundle.
-For a verifier-only corpus stored in `data/verifier/`, mount only public
-subdirectories into the agent; never mount all of `data/` in that case.
+Ignore both directories in Git. Keep grading code and small verifier-only
+queries/labels under `tests/`. Large fixed verifier inputs may be restored under
+`data/verifier/` or another manifest-declared private input directory, with
+verifier-only read-only mounts and appropriate file/directory modes. Mount only
+public subdirectories into the agent in that case. Hidden evaluation inputs
+are hidden from the running agent; public hosting still requires redistribution
+permission and must not expose genuinely confidential data or credentials.
 
 Each `assets.json` entry has this shape (values below are placeholders, not
 valid checksums/revisions to submit):
@@ -169,6 +172,9 @@ or expose credentials through logs, artifacts, Docker layers or CLI arguments.
 Choose no API, retrieval-only, generation-only, or both based on the task's
 approved resource policy. Reusing a profile does not authorize extra providers
 or models. A mandatory integrity/judge failure must not silently count as a
-pass. For deterministic grading, no RewardKit or model judge is required;
-when using RewardKit, install a fixed compatible version in the verifier image
-and verify its actual CLI/configuration before enabling live judging.
+pass. Every new task includes the trajectory integrity audit even when its task
+metric is deterministic. The generated verifier pins RewardKit and its Codex
+backend; verify the actual CLI, rubric and structured result before live judging.
+Keep an additional answer-quality judge separate. The trajectory artifact,
+verifier-only credentials and allowed judge hostname are part of the package
+contract; see [verifier-contract.md](verifier-contract.md).

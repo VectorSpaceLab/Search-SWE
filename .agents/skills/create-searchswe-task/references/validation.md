@@ -34,6 +34,12 @@ for an authorized remote inspection or PR handoff, not local task authoring.
   limits must not exist only in hidden tests.
 - Parse `task.toml` and `assets.json`; verify unique name, objective and keywords,
   separate verifier, artifact paths, and all five CPU/GPU configuration points.
+- Check the new-task layout includes `VALIDATION.md`, the task-specific grader,
+  finalizer and trajectory rubric/backend. Confirm agent CLI pins come from the
+  target checkout and that both Docker build contexts filter secrets/caches.
+- Validate the budget table from [verifier-contract.md](verifier-contract.md):
+  nested candidate stages fit the primary window, and primary/judge wrappers
+  plus setup, finalization and cleanup fit the outer verifier timeout.
 - Review all scaffold prose, budgets and empty files. An empty `files` manifest
   is valid only if the task genuinely needs no downloadable fixed inputs.
 - Check both build contexts and mounts for hidden-data/solution leakage. Protect
@@ -114,8 +120,11 @@ Test in disposable containers/workspaces, not against host `/app`, `/tests`, or
 `/logs`. Run a known-good submission and meaningful negatives: missing output,
 malformed/duplicate IDs, command failure, timeout, and attempts to write reward
 or read hidden labels. Validate finite scores, logs, process cleanup, and the
-actual artifact transfer into the separate verifier. The scaffold's zero-only
-test is not a grader and cannot establish solvability.
+actual artifact transfer into the separate verifier. Exercise healthy audit
+acceptance and rejection, missing/malformed decisions and judge timeouts. An
+invalid measurement must be distinguishable from a measured zero score. Retain
+stage logs and resource evidence, including under early termination. The
+scaffold's zero-only test is not a grader and cannot establish solvability.
 
 For Oracle validation, `solution/solve.sh` must contain a real known-good
 implementation in an author-only task copy. Do not create a public answer
@@ -133,6 +142,10 @@ If the required run cannot be executed, hand off the missing evidence explicitly
 do not present static checks or Oracle results as that model run.
 
 ## Handoff
+
+Update task-root `VALIDATION.md` with commands, outcomes, evidence paths,
+configured-model feedback, final task/instruction revision and outstanding
+checks. For existing packages, preserve original reports and fingerprints.
 
 Report changed paths, objective, hardware/image selection, input provenance,
 reviewed reference task paths (or no close precedent), structural reuse and

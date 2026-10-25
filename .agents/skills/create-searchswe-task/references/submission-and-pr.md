@@ -12,7 +12,9 @@ their branch to simplify your task. Agree on branch/commit scope before changing
 history. New packages use `tasks/<task-name>` in the contribution branch, with
 `task.name = "search-swe/<task-name>"`. Check names against the current base and
 active PRs. A PR may add multiple uniquely named tasks. Complete the scaffold's
-instructions, assets, environment and grader before runtime validation.
+instructions, assets, environment, grader and trajectory rubric before runtime
+validation. Use `VALIDATION.md` to index checks, model feedback and final-revision
+evidence for each new task.
 
 Set actual `task.toml` authors. Preserve original commits and account-linked Git
 name/email; do not change identity configuration on their behalf. Co-authored-by
