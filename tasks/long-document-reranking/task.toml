@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/long-document-reranking"
-version = "1.0.0"
+version = "1.0.1"
 description = "Optimize long-document reranking over a frozen BM25 Top-100 candidate pool with a fixed local BGE reranker."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "reranking", "cross-encoder", "long-document", "cpu"]
@@ -28,7 +28,9 @@ user = "root"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 4800.0
+# Build + two query runs + integrity judge + setup/cleanup allowance.
+# 1800 + 2 * 3600 + 3600 + 600 = 13200 seconds.
+timeout_sec = 13200.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

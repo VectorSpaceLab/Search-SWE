@@ -5,11 +5,11 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-document-reranking` |
-| Version | 1.0.0 |
+| Version | 1.0.1 |
 | Authors | Search-SWE |
 | Primary metric | Accuracy@5 |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 4800 s |
+| Agent / verifier time limits | 7200 s / 13200 s |
 | Dataset | MTEB NarrativeQARetrieval |
 | Public queries | 100 |
 | Hidden queries | 100 |
@@ -57,15 +57,18 @@ the mounted path and runtime configuration are the operational reference.
 #### Environment and Resource Limits
 
 The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage,
-and no GPU. The agent has two hours and the Harbor verifier 80 minutes.
-The grader's build and run caps are 1,800 and 3,600 seconds respectively,
-but these stages and the integrity check must still fit inside the overall
-verifier phase; their individual maxima are not additive allowances.
+and no GPU. The agent has two hours and the Harbor verifier 13,200 seconds
+(3 hours 40 minutes). The verifier window covers a 1,800-second build, two
+query runs of up to 3,600 seconds each, a 3,600-second trajectory judge,
+and 600 seconds for setup and cleanup:
+`1800 + 2 * 3600 + 3600 + 600 = 13200`.
+Each submission stage remains subject to its own time limit.
 
 ## Change Log
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-26 | 1.0.1 | Allow the verifier window to cover all existing stage budgets plus setup and cleanup. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
