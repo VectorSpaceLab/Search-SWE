@@ -56,7 +56,9 @@ def stop_children():
 
 
 def command(arguments, scratch):
-    env = ["PATH=/opt/conda/bin:/usr/local/bin:/usr/bin:/bin", "USER=submission", "LOGNAME=submission",
+    env = ["PATH=/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin",
+        "JAVA_HOME=/opt/java/openjdk", "OPENAI_API_KEY=search-swe-offline-no-credentials",
+        "USER=submission", "LOGNAME=submission",
         f"HOME={scratch}", f"TMPDIR={scratch}", f"XDG_CACHE_HOME={scratch / 'cache'}",
         f"HF_HOME={scratch / 'huggingface'}", f"TORCH_HOME={scratch / 'torch'}", "LANG=C.UTF-8",
         "PYTHONUNBUFFERED=1", "PYTHONDONTWRITEBYTECODE=1", "TOKENIZERS_PARALLELISM=false",
@@ -99,7 +101,7 @@ def boundary(scratch):
         "test ! -r /tests/data/queries.jsonl", "test ! -r /tests/data/ground_truth.jsonl",
         "test ! -r /tests/grader.py", "test ! -w /logs/verifier", "test ! -e /task/data/examples.jsonl",
         "test ! -r /logs/agent/trajectory.json", "test ! -w /logs/agent",
-        'test -z "${OPENAI_API_KEY+x}"', 'test -z "${OPENROUTER_API_KEY+x}"',
+        'test "$OPENAI_API_KEY" = "search-swe-offline-no-credentials"', 'test -z "${OPENROUTER_API_KEY+x}"',
         'test -z "${JINA_API_KEY+x}"', 'test -z "${CODEX_HOME+x}"']
     result = subprocess.run(command(["/bin/sh", "-c", " && ".join(checks)], scratch), timeout=10,
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

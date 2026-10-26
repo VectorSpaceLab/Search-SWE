@@ -21,6 +21,25 @@ IN_CONTAINER = (os.environ.get("SEARCH_SWE_RUN_CONTAINER_TESTS") == "1"
 
 @unittest.skipUnless(IN_CONTAINER, "requires a disposable root verifier container")
 class SubmissionIsolationTests(unittest.TestCase):
+    def test_java_runtime_survives_sanitized_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            scratch = Path(directory)
+            os.chown(scratch, 10001, 10001)
+            probe = '''
+import os, subprocess
+assert os.environ['JAVA_HOME'] == '/opt/java/openjdk'
+assert os.environ['OPENAI_API_KEY'] == 'search-swe-offline-no-credentials'
+version = subprocess.run(['java', '-version'], capture_output=True, text=True)
+assert version.returncode == 0, version.stderr
+from pyserini.search.lucene import LuceneSearcher
+from jnius import autoclass
+assert autoclass('java.lang.System').getProperty('java.home') == '/opt/java/openjdk'
+print('sanitized Java, JNI and Pyserini imports succeeded')
+'''
+            result = subprocess.run(command(["/opt/conda/bin/python", "-c", probe], scratch),
+                                    text=True, capture_output=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_network_credentials_and_trajectory_are_isolated(self):
         self.assertEqual(pwd.getpwnam("submission").pw_uid, 10001)
         Path("/logs/agent").mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -43,7 +62,8 @@ import json, os, socket, subprocess, sys
 from pathlib import Path
 assert os.getuid() == 10001
 assert 'NoNewPrivs:\\t1' in Path('/proc/self/status').read_text()
-for key in ('OPENAI_API_KEY','OPENAI_BASE_URL','OPENROUTER_API_KEY','VERIFIER_OPENAI_API_KEY','HTTPS_PROXY'):
+assert os.environ['OPENAI_API_KEY'] == 'search-swe-offline-no-credentials'
+for key in ('OPENAI_BASE_URL','OPENROUTER_API_KEY','VERIFIER_OPENAI_API_KEY','HTTPS_PROXY'):
     assert key not in os.environ, key
 for path in ('/logs/agent/trajectory.json','/logs/verifier/.private/judge-reward.json','/tests/grader.py'):
     for mode in ('r','w'):

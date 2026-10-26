@@ -17,7 +17,7 @@ timeout --signal=TERM --kill-after=10s 4650s /opt/conda/bin/python /task/runtime
     > /logs/verifier/grader.stdout 2> /logs/verifier/grader.stderr || primary_status=$?
 /opt/conda/bin/python /tests/integrity_gate.py cleanup
 judge_status=78
-if [ "$primary_status" -eq 0 ] && [ -n "${OPENAI_API_KEY:-}" ] && [ -n "${OPENAI_BASE_URL:-}" ]; then
+if [ -n "${OPENAI_API_KEY:-}" ] && [ -n "${OPENAI_BASE_URL:-}" ]; then
     judge_status=0
     timeout --signal=TERM --kill-after=30s 1200s /opt/conda/bin/python /tests/rewardkit_deepseek.py \
         /audit --workspace /app/submission --output /logs/verifier/audit.json \

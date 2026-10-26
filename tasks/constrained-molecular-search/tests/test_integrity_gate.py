@@ -77,6 +77,46 @@ class IntegrityGateTests(unittest.TestCase):
             self.assertEqual(result['reward'], 0)
             self.assertFalse(result['healthy'])
 
+    def test_failed_primary_still_invokes_the_integrity_audit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tests, runtime = root/'tests', root/'runtime'
+            tests.mkdir()
+            runtime.mkdir()
+            marker, status = root/'audit-called', root/'status.json'
+            (tests/'integrity_gate.py').write_text(
+                "import json,os,sys\nfrom pathlib import Path\n"
+                "if sys.argv[1] == 'finalize':\n"
+                " Path(os.environ['CONTROL_FLOW_STATUS']).write_text(json.dumps({"
+                "'primary':os.environ['SEARCH_SWE_PRIMARY_STATUS'],"
+                "'judge':os.environ['SEARCH_SWE_JUDGE_STATUS']}))\n")
+            (tests/'rewardkit_deepseek.py').write_text(
+                "import os\nfrom pathlib import Path\n"
+                "Path(os.environ['CONTROL_FLOW_MARKER']).write_text('called')\n")
+            (runtime/'evaluate.py').write_text('raise SystemExit(1)\n')
+            (runtime/'transfer.py').write_text('def restore(): pass\n')
+            (runtime/'isolation.py').write_text('def cleanup(): pass\n')
+            driver = (Path(__file__).parent/'test.sh').read_text()
+            for old, new in (
+                    ('/opt/conda/bin/python', sys.executable),
+                    ('/logs/verifier', str(root/'verifier')),
+                    ('/task/runtime', str(runtime)), ('/tests', str(tests)),
+                    ('install -d -o root -g root -m 0700', 'mkdir -p')):
+                driver = driver.replace(old, new)
+            script = root/'driver.sh'
+            script.write_text(driver)
+            env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'),
+                   'OPENAI_API_KEY': 'offline-regression-fixture',
+                   'OPENAI_BASE_URL': 'https://offline.invalid/v1',
+                   'CONTROL_FLOW_MARKER': str(marker),
+                   'CONTROL_FLOW_STATUS': str(status)}
+            result = subprocess.run(['bash', str(script)], env=env,
+                                    text=True, capture_output=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(marker.exists(), 'Failed submissions still need an audit')
+            self.assertEqual(json.loads(status.read_text()),
+                             {'primary': '1', 'judge': '0'})
+
     def test_protected_snapshot_preserves_bytes_and_detects_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)

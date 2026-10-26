@@ -21,7 +21,7 @@ Build retrieval over the 100,195-document BrowseComp-Plus corpus without embeddi
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-25 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 

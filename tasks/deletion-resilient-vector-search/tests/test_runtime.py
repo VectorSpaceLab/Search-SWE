@@ -10,7 +10,7 @@ import runtime
 from runtime import Worker, Violation
 
 
-FIXTURE = '''import json,os,socket,sys,time
+FIXTURE = '''import json,mmap,os,socket,sys,time
 for line in sys.stdin:
  r=json.loads(line); op=r['op']
  if op=='timeout': time.sleep(20)
@@ -21,6 +21,7 @@ for line in sys.stdin:
  if op=='disk':
   with open('large-file','wb') as f: f.truncate(128<<20)
  if op=='fork':
+  held=open('held-map','w+b');held.truncate(4096);mapped=mmap.mmap(held.fileno(),4096)
   child=os.fork()
   if child==0: os.setsid(); time.sleep(20); sys.exit(0)
   print(json.dumps({'child':child}),flush=True); continue
@@ -118,6 +119,17 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(os.sched_getaffinity(child), set(self.cpus[:1]))
         self.worker.request({'op': 'query'})
         self.worker.finish()
+
+    def test_close_waits_for_detached_child(self):
+        self.worker.begin(5)
+        child = self.worker.request({'op': 'fork'})['child']
+        self.worker.finish()
+        self.worker.close()
+        if psutil.pid_exists(child):
+            self.assertEqual(psutil.Process(child).status(), psutil.STATUS_ZOMBIE)
+        from storage import remove_work_tree
+        remove_work_tree(Path('/work/test-worker'))
+        self.assertFalse(Path('/work/test-worker').exists())
 
 
 if __name__ == '__main__':

@@ -1,12 +1,27 @@
 """A bounded ext4 image supplies real ENOSPC instead of an ignored Docker option."""
+import errno
 import os
 import json
 from pathlib import Path
 import subprocess
+import shutil
 import time
 
 LIMIT = 100 << 30
 LOG_RESERVE = 512 << 20
+
+
+def remove_work_tree(path):
+    """Allow bounded FUSE release/dentry lag after all workers have exited."""
+    deadline = time.monotonic() + 2
+    while path.exists():
+        try:
+            shutil.rmtree(path)
+            return
+        except OSError as error:
+            if error.errno not in (errno.ENOTEMPTY, errno.ENOENT) or time.monotonic() >= deadline:
+                raise
+            time.sleep(.05)
 
 
 def file_bytes(root):

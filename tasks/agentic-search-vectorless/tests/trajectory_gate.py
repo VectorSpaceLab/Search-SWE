@@ -133,7 +133,7 @@ def main() -> int:
     trajectory_present = (TRAJECTORY_PATH.is_file() and not TRAJECTORY_PATH.is_symlink()
                           and bool(read_json(TRAJECTORY_PATH)))
     audit_status = None
-    if execution_ok and trajectory_present:
+    if trajectory_present:
         try:
             audit_status = run_audit()
         except (OSError, subprocess.TimeoutExpired) as error:

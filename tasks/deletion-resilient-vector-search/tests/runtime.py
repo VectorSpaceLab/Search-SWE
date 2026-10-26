@@ -237,12 +237,20 @@ class Worker:
         return {'seconds': elapsed, 'rss_bytes': self.peak, 'storage_bytes': self.disk_peak}
 
     def close(self):
-        for p in self.members():
+        members = self.members()
+        for p in members:
             try:
                 p.kill()
             except psutil.NoSuchProcess:
                 pass
         self.process.wait(timeout=10)
+        _, alive = psutil.wait_procs(members, timeout=10)
+        for process in alive:
+            try:
+                if process.status() != psutil.STATUS_ZOMBIE:
+                    raise RuntimeError('Worker process family did not exit before cleanup')
+            except psutil.NoSuchProcess:
+                pass
         self.selector.close()
         self.process.stdin.close()
         self.process.stdout.close()

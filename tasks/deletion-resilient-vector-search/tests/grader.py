@@ -5,7 +5,6 @@ import json
 from runtime_limits import REFERENCES
 import os
 from pathlib import Path
-import shutil
 import sys
 import time
 
@@ -14,7 +13,7 @@ import faiss
 
 from runtime import Worker, Violation
 from scoring import recall, dataset_score, validate_reference
-from storage import evaluation_volume, file_bytes
+from storage import evaluation_volume, file_bytes, remove_work_tree
 
 ROOT = Path('/logs/verifier')
 
@@ -56,7 +55,7 @@ def evaluate(name, cpus):
         return {'valid': False, 'reward': 0.0, 'error': 'Missing executable /app/run.sh', 'stages': []}
     work = Path('/work') / name
     if work.exists():
-        shutil.rmtree(work)
+        remove_work_tree(work)
     fixed_bytes = file_bytes('/task/data/public') + file_bytes('/app')
     worker = None
     report = {'valid': False, 'reward': 0.0, 'stages': [], 'dataset': name}
@@ -118,7 +117,7 @@ def evaluate(name, cpus):
         if worker:
             worker.close()
         if work.exists():
-            shutil.rmtree(work)
+            remove_work_tree(work)
     write(ROOT / f'{name}.json', report)
     return report
 

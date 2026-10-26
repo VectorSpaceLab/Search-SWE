@@ -83,7 +83,7 @@ class RewardTests(unittest.TestCase):
                     status = VERIFY.main()
                 self.assertEqual(float((root / "reward.txt").read_text()), 0.7 if mode == "pass" else 0)
                 self.assertEqual(status, 0 if mode in ("pass", "reject") else 1)
-                self.assertEqual(judge.call_count, 0 if mode in ("missing-trajectory", "execution-failed") else 1)
+                self.assertEqual(judge.call_count, 0 if mode == "missing-trajectory" else 1)
 
     def test_audit_uses_private_output_and_phase_scoped_environment(self):
         with tempfile.TemporaryDirectory() as directory:
