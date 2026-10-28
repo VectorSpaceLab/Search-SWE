@@ -3,6 +3,7 @@ import math
 import os
 from pathlib import Path
 import tempfile
+import tomllib
 import unittest
 from unittest import mock
 
@@ -112,7 +113,9 @@ class ContractTests(unittest.TestCase):
         with mock.patch.object(grader, "TASK_DATA", task / "data"), mock.patch.object(grader, "PRIVATE", task / "tests/data"):
             corpus, queries, gold = grader.load_data()
         self.assertEqual(len(corpus), 18662)
-        self.assertEqual(len(queries), 778)
+        self.assertEqual(len(queries), 775)
+        metadata = tomllib.loads((task / "task.toml").read_text())["metadata"]
+        self.assertEqual(len(queries), metadata["hidden_query_count"])
         examples = grader.read_jsonl(task / "data/examples.jsonl")
         self.assertEqual(len(examples), 6617)
         self.assertFalse({q["query_id"] for q in examples} & gold.keys())

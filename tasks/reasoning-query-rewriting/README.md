@@ -73,7 +73,7 @@ distinct from Docker image construction.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Documented build and query-run time limits and hidden query count |
 
 ## Difficulty Explanation
 

@@ -1,4 +1,35 @@
-# Local validation — 2026-10-14
+# Local validation
+
+## Query removal — 2026-10-28, v1.0.0
+
+Removed these three hidden queries for 魯隱公二年四月 and their qrels rows:
+
+- `query_0a0f0c586a62ce91a86f4ee6`
+- `query_f1aa6ed34a522f97c291e5e3`
+- `query_2c213f84637f1595e3f2e81f`
+
+All three used `doc_086389fc7d08e192db320dcb` and
+`doc_6ee1a8ee1c6f5c792a1b060e` as positives. The first says
+"夏，莒人入向，以姜氏還" without specifying April; the corpus also contains
+"夏，五月，莒人入向" for the same event. The second passage describes 無駭入極
+without specifying a month. The user selected removal of the three precise-month
+queries. The passages remain in the corpus and in the qrels of retained queries.
+
+The hidden set now contains **775 queries**, with the retained rows unchanged.
+Corpus, public examples, dated examples, runtime limits and the nDCG@10 formula
+are unchanged. The grader averages over the 775 retained queries; this task has
+no baseline subtraction or normalization anchor to recalculate. The package
+version remains **1.0.0**. Historical model scores below use the earlier
+778-query set and have not been recalculated; no new model or judge run was made.
+
+Validation: all ten task-local tests passed, including production data loading
+and query-count agreement with `task.toml`. The task static checker reported zero
+errors. Comparison with the previous revision confirmed that each private JSONL
+file lost exactly the three specified rows and retained every other row unchanged.
+The corpus and both public example files still match their published SHA-256
+checksums. `git diff --check` passed.
+
+## Archived local validation — 2026-10-14
 
 Release reconciliation (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
 

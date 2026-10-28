@@ -71,7 +71,7 @@ agent and private judge have their own API configuration.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Clarified the fixed evaluation encoding protocol in task instructions |
 
 ## Difficulty Explanation
 

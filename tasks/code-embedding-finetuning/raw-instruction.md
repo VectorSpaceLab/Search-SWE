@@ -37,6 +37,8 @@ The verifier ignores files outside /app/submission.
 
 The verifier copies the checkpoint into a separate environment, confirms that it preserves the supplied backbone architecture, and evaluates the original and submitted checkpoints with the same fixed embedding and exact-search implementation. Larger held-out Accuracy@1 improvement is better.
 
+Evaluation encodes queries without a prefix and documents as `(title + " " + text).strip()`. Both are truncated to 512 tokens; the final-layer CLS vector is L2-normalized, and retrieval uses exact inner products.
+
 ## Hidden Test Overview
 
 The hidden split contains code-retrieval queries and private relevance labels disjoint from the public validation split. Hidden data is unavailable during the Agent phase.

@@ -1,5 +1,7 @@
 # Run evidence reconciled on 2026-10-23
 
+Label correction (2026-10-28, package version 1.0.0): `test-009` now excludes the unrelated `include/nlohmann/detail/meta/type_traits.hpp:1–5` region. The recorded scores below and the README difficulty results use the earlier labels and have not been recomputed. They remain historical run evidence.
+
 The agent reached its development deadline; subsequent verifier scoring completed. Mean line-level F1 is a valid retrieval result, not a clean agent-completion claim.
 
 | Field | Observed value |

@@ -12,7 +12,7 @@
 | Agent / verifier time limits | 21600 s / 4800 s |
 | Dataset | MedQuant, original passages and qrels |
 | Public queries | 0 |
-| Hidden queries | 210 |
+| Hidden queries | 209 |
 
 Author: **Bingyu**. This Search-SWE task uses
 MedQuant. The required deliverable is an executable retrieval system. Resources
@@ -27,21 +27,22 @@ provided to the agent.
 | Corpus | 153,252 original passages |
 | Labeled examples (`data/examples.jsonl`) | 80,000; 12,453 distinct query texts |
 | Public retrieval validation | None |
-| Private evaluation | All 210 original queries |
+| Private evaluation | 209 queries retained from the original 210 |
 
-Corpus text, questions and original positive sets are unchanged, except opaque
-ID renaming. Corpus order is preserved. The source corpus's
+One query with invalid positive labels has been removed; see
+[the validation record](VALIDATION.md). Corpus text and the retained queries and
+positive sets are unchanged, except opaque ID renaming. Corpus order is preserved. The source corpus's
 quantity fields and query condition/unit/value annotations are not exposed.
 The examples include synthetic edited passages and do not form a corpus-ID
 relevance file. The agent-facing instructions describe inputs, outputs,
 constraints and scoring without prescribing an implementation method.
 
-All original evaluation questions remain private. Benchmark concepts and their
+All retained evaluation questions remain private. Benchmark concepts and their
 source expansion components were excluded during training generation. A later
 review also checked physical/clinical examinations, death-rate, rebleeding,
 placebo, uric-acid and pain/VAS families. This automatic exclusion and limited
-family review do not prove universal semantic isolation. No source question or
-positive set was removed or rewritten.
+family review do not prove universal semantic isolation. The retained query texts
+and positive sets have not been rewritten.
 
 Authoring sources, the split manifest, calibration evidence and validation
 fixtures are in `../../../task_development/quantity-aware-retrieval/`, outside
@@ -52,7 +53,7 @@ part of the package.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Removed one query with invalid positives and recalculated the 209-query baseline |
 
 ## Difficulty Explanation
 
@@ -75,14 +76,15 @@ Qwen3-Embedding-8B, top-1000 each, fused with RRF constant 60.
 
 | Reference scope | Mean nDCG@10 |
 | --- | ---: |
-| All original 210 questions | 0.1838410794397215 |
-| User-selected rounded reward anchor | **0.1838** |
+| Retained 209 questions | 0.18472070182938527 |
+| Four-decimal reward anchor | **0.1847** |
 
-For raw private score Q and B = 0.1838, reward is
+For raw private score Q and B = 0.1847, reward is
 `max(0, min(1, (Q-B)/(1-B)))`. The anchor uses the four-decimal rounding explicitly
-chosen by the user. The reference comes from the archived single-A100 hybrid
-retrieval run in `../../../task_development/quantity-aware-retrieval/research/medquant-baselines-v1/summary.json`
-(`methods.hybrid`). No per-query baseline
+chosen by the user. The reference is recalculated over the retained queries from
+the archived single-A100 hybrid retrieval results in
+`../../../task_development/quantity-aware-retrieval/research/medquant-baselines-v1/per-query-results.jsonl`
+(`methods.hybrid`); [VALIDATION.md](VALIDATION.md) records the exclusion and calculation. No per-query baseline
 oracle or choice of the best model on private results is used.
 
 An independent trajectory integrity judge uses the repository's pinned

@@ -15,6 +15,7 @@ The objective is to maximize retrieval quality on held-out queries while satisfy
 - `build.sh` and `run.sh` must be executable files under `/app`.
 - During verification, `/app` is read-only and the submission runs as a non-root user. Only the supplied `--index-dir` is writable for persistent and runtime-generated artifacts.
 - The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
+- During verification, `build.sh` must finish within 1,800 seconds. The hidden test contains 10 queries; the single `run.sh` invocation must process all of them and finish within 900 seconds total.
 
 ## Build interface
 
