@@ -1,11 +1,11 @@
 # Validation record
 
-## 2026-10-28 semantic judge clarification — 1.0.1
+## 2026-10-28 semantic judge clarification — 1.0.0
 
 Base: `bb0ddbaf105c25cc53e3598c37e0428c943a7098`.
-This revision changes only generic evidence-judge guidance, package version and
-local validation materials. The two PDF tasks use identical prompt text. It has
-no query IDs, sentence IDs, character names or examples from scored questions.
+This revision changes generic evidence-judge guidance and local validation
+materials. The two PDF tasks use identical prompt text. It has no query IDs,
+sentence IDs, character names or examples from scored questions.
 
 All original questions, requirements, reference evidence, assets, executable
 interfaces, model/effort settings, budgets and score aggregation are retained.

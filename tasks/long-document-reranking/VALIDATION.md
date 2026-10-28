@@ -1,8 +1,8 @@
 # Long-document Reranking Validation
 
-## 2026-10-28 verifier revision 1.0.2
+## 2026-10-28 verifier validation — 1.0.0
 
-Base: `bb0ddbaf105c25cc53e3598c37e0428c943a7098`, task version 1.0.1.
+Base: `bb0ddbaf105c25cc53e3598c37e0428c943a7098`.
 This is a correction to the existing task; its CPU runtime, fixed inputs/model,
 candidate pool, output rules, integrity audit and Accuracy@5 metric are retained.
 No other task package supplies implementation or scoring parameters.

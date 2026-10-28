@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-document-reranking` |
-| Version | 1.0.2 |
+| Version | 1.0.0 |
 | Authors | Search-SWE |
 | Primary metric | Accuracy@5 |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
@@ -67,9 +67,7 @@ Each submission stage remains subject to its own time limit.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.2 | Validate both query outputs independently instead of requiring byte equality; disclose the existing stage limits and repeat schedule. |
-| 2026-10-26 | 1.0.1 | Allow the verifier window to cover all existing stage budgets plus setup and cleanup. |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 

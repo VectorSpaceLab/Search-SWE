@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-pdf-evidence` |
-| Version | 1.0.1 |
+| Version | 1.0.0 |
 | Authors | Search-SWE, Bingyu |
 | Primary metric | SentenceEvidenceAccuracy |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
@@ -29,8 +29,7 @@ The unchanged PDF has 2,043 physical pages. Its question-independent inventory c
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.1 | Clarified semantic evidence judging, material conflicts and reference scope; retained questions, requirements, references and scoring. |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -73,7 +72,7 @@ for local checks and the pending live calibration/re-evaluation handoff.
 
 ### Historical judge-model revision
 
-The earlier judge-model pinning revision selected DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. That revision retained the twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. Version 1.0.1 subsequently clarifies generic semantic judgment as described above; the historical scores below are not measurements of that prompt. The historical v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation used 64 GiB RAM and scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
+The earlier judge-model pinning revision selected DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. That revision retained the twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. The current judge prompt clarifies generic semantic judgment as described above; the historical scores below are not measurements of that prompt. The historical v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation used 64 GiB RAM and scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
 
 The earlier DeepSeek rejudgment of a Luna-generated submission returned 8/20 on the old twenty-question version. It is historical reference evidence, not a score for this twelve-question revision. That historical trial's result and judge-health records are summarized in RUN_RESULTS.md.
 

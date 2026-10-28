@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `large-scale-formula-retrieval` |
-| Version | 1.0.1 |
+| Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | nDCG_prime |
 | Compute | 2 CPUs; 4 GiB RAM; 64 GiB storage; 0 GPUs |
@@ -26,8 +26,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.1 | Evaluate Harbor's collected submission after agent timeout; retain development memory enforcement. |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -121,7 +120,7 @@ directories as build contexts. Run the public helper and verifier with the task'
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
 
-### Version 1.0.1 local checks (2026-10-28)
+### Local checks (2026-10-28)
 
 From `tasks/large-scale-formula-retrieval/tests`,
 `python -m unittest test_development test_scoring test_ipc_cleanup test_integrity_gate -v`

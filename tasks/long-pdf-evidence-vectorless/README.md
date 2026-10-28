@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-pdf-evidence-vectorless` |
-| Version | 1.0.1 |
+| Version | 1.0.0 |
 | Authors | Jianlyu |
 | Primary metric | SentenceEvidenceAccuracy |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
@@ -21,8 +21,7 @@ The unchanged PDF has 2,043 physical pages; the question-independent inventory h
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.1 | Clarified semantic evidence judging, material conflicts and reference scope; retained questions, requirements, references and scoring. |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
