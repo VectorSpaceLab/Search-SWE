@@ -155,5 +155,45 @@ class EvidenceScoring(unittest.TestCase):
             self.assertEqual(completed_rows(path), [self.result([])])
 
 
+class PublishedEvidenceLocations(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        path = Path(__file__).with_name("data") / "labels.jsonl"
+        cls.labels = {row["query_id"]: row for row in
+                      (json.loads(line) for line in path.read_text().splitlines())}
+
+    def test_repeated_net_income_row_is_accepted(self):
+        gold = self.labels["query-992438"]
+        for start, end in [(126491, 126529), (156887, 156925)]:
+            with self.subTest(start=start):
+                span = {"document_id": "report-0100", "start": start, "end": end}
+                self.assertEqual(evidence_recall(gold, [span])[0], 1.0)
+
+    def test_summary_debt_rows_cover_two_distinct_facts(self):
+        spans = [
+            {"document_id": "report-0097", "start": 109357, "end": 109408},
+            {"document_id": "report-0097", "start": 109413, "end": 109448},
+        ]
+        self.assertAlmostEqual(
+            evidence_recall(self.labels["query-154389"], spans)[0], 2 / 3)
+
+    def test_repeated_total_is_counted_once(self):
+        spans = [
+            {"document_id": "report-0046", "start": 416910, "end": 416939},
+            {"document_id": "report-0046", "start": 417043, "end": 417072},
+            {"document_id": "report-0046", "start": 695251, "end": 695280},
+        ]
+        self.assertEqual(evidence_recall(self.labels["query-687733"], spans)[0], 1.0)
+
+    def test_alternative_row_still_requires_full_coverage_and_correct_report(self):
+        gold = self.labels["query-992438"]
+        for span in [
+            {"document_id": "report-0100", "start": 156887, "end": 156924},
+            {"document_id": "report-0097", "start": 156887, "end": 156925},
+        ]:
+            with self.subTest(span=span):
+                self.assertEqual(evidence_recall(gold, [span])[0], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

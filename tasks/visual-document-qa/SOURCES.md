@@ -16,10 +16,13 @@ Original PDFs are retained. Identical PDFs are shared across branches, yielding
 the PDFs. Questions identify the source document.
 
 Four incorrect upstream answer-format fields are corrected deterministically;
-questions, canonical answers and comparison rules remain unchanged.
+questions and canonical answers remain unchanged.
+MMLongBench-Doc uses the source answer-extraction prompt and numeric
+comparators for integer and float answers. Its text, list and unanswerable
+answers go directly to a task-specific binary semantic judge. FinRAGBench-V
+retains its source answer judge. The two branches are equally weighted.
 Out-of-range source page references are excluded only from citation diagnostics.
-Answer quality follows each source comparator, with the two branches equally
-weighted. Citation diagnostics do not change the primary answer score.
+Citation diagnostics do not change the primary answer score.
 
 The current package has 5 public input rows and 2,471 held-out rows.
 

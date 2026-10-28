@@ -40,14 +40,14 @@ Held-out questions and labels are verifier-only.
 
 Inputs use MMLongBench-Doc and FinRAGBench-V from
 [DocLensDatasets](https://huggingface.co/datasets/dwzhu/DocLensDatasets/tree/7a54da77adf09d2c88c67f1bbb725718260f1dc1),
-with the original [DocLens](https://github.com/dwzhu-pku/DocLens)
-evaluation definitions. The shared collection contains 433 PDFs and 29,149 pages.
+with evaluation adapted from [DocLens](https://github.com/dwzhu-pku/DocLens)
+as described below. The shared collection contains 433 PDFs and 29,149 pages.
 
 There are five public and 2,471 held-out questions. Identical source PDFs are
 shared rather than duplicated, and documents associated with public examples
 can also appear in private questions. Four upstream answer-type metadata fields
-are corrected deterministically; the questions, canonical answers and comparison
-rules are unchanged.
+are corrected deterministically; the questions and canonical answers are unchanged.
+Text, list and unanswerable answers use semantic comparison.
 
 #### Fixed Components and Allowed Changes
 
@@ -68,6 +68,7 @@ inside the 45,000-second overall verifier budget.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-28 | 1.0.0 | Judge MMLongBench-Doc text, list and unanswerable answers by semantic correctness |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -95,9 +96,13 @@ The full schema and invocation details are in [instruction.md](instruction.md).
 
 #### Search Quality
 
-MMLongBench-Doc uses the source answer-extraction prompt and unchanged rule
-comparators, including ANLS, numeric, list and unanswerable handling.
-FinRAGBench-V uses its original binary answer judge. Both trusted calls use
+MMLongBench-Doc integer and float answers use the source answer-extraction
+prompt and numeric comparators. Text, list and unanswerable answers receive
+a binary semantic judgment directly from the question, reference and full
+submitted answer. Equivalent wording receives credit;
+incorrect entities, comparisons, missing list items or unsupported claims do
+not. Each semantic judgment records a short reason.
+FinRAGBench-V uses its original binary answer judge. Trusted model calls use
 `google/gemini-2.5-flash` through OpenRouter.
 
 Average answers within each source, then give the two sources equal weight.

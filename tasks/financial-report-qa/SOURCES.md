@@ -21,6 +21,14 @@ not numeric answers; earlier answer-generation prototypes do not describe this v
 
 The current package has 5 public input rows and 4,236 held-out rows.
 
+On 2026-10-28, a review added 18 alternative passage locations across nine
+reports, contributing 26 label locations to 18 held-out questions. Each passage
+repeats a complete reference table row; its reporting entity, financial item,
+period, unit and column meaning were checked against the original location.
+The initial alignment had missed these occurrences when date headers were
+formatted differently, a column used an equivalent heading, or a table was
+split across text blocks. Existing evidence units and locations are preserved.
+
 ## Source terms
 
 The [DocFinQA source card](https://huggingface.co/datasets/kensho/DocFinQA/blob/64ebaff62f692495bcc182f45cf9a9606251b19b/README.md) declares MIT, and [FinQA's pinned repository license](https://github.com/czyssrs/FinQA/blob/0f16e2867befa6840783e58be38c9efb9229d742/LICENSE) is MIT. Retain their attribution and the filing identities in the report collection. The dataset notices do not replace any applicable rights in the underlying annual reports. Evidence alignment and the exclusions described above are task adaptations.
