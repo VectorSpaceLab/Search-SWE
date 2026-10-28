@@ -1,6 +1,4 @@
 {"query_id":"query_3792d88c9dc9f0666280440e","relevant_doc_ids":["doc_2093698915f31cc7361d1735","doc_d66fa4a5d755f4ed3223b6f0","doc_0c0382b122d3b47c05c09807","doc_40256812cbc515d6e7ce8b6d"]}
-{"query_id":"query_0a0f0c586a62ce91a86f4ee6","relevant_doc_ids":["doc_086389fc7d08e192db320dcb","doc_6ee1a8ee1c6f5c792a1b060e"]}
-{"query_id":"query_f1aa6ed34a522f97c291e5e3","relevant_doc_ids":["doc_086389fc7d08e192db320dcb","doc_6ee1a8ee1c6f5c792a1b060e"]}
 {"query_id":"query_d2c507b3f98cac5c011100dd","relevant_doc_ids":["doc_75db28eaee83486bd3083d2e","doc_627aa862a7be1280c0c7ea42","doc_d39f4de34239e40c809a5d3e","doc_32f0cf562fec7a85c55d1243","doc_bcb9c94f32c67e61cdce83d1","doc_9bb7f43e50cf092b2178f1ec"]}
 {"query_id":"query_62a6ac7f2d7b5a0c09cb2c8e","relevant_doc_ids":["doc_247e59b071489e83629e9087"]}
 {"query_id":"query_b03117896ba1acccf8ac48bc","relevant_doc_ids":["doc_d5448628d9a685c14c8edc16","doc_4afcff7215061b804e179aa3","doc_0a46502f8f628c19797f4dd3"]}
@@ -205,7 +203,6 @@
 {"query_id":"query_c00b6de051d93716651ef510","relevant_doc_ids":["doc_86bc3cdf45100656b993c92b","doc_b1abed920d20bcdad1ab19f4","doc_4f5bfcece9c3ef04a97bb601","doc_073542a3a10de8fe52f23eda","doc_55d7750f90137a87435923ee","doc_dd12972425fce8f78e2b43b4","doc_62f058fdfbe6b5f469734fca"]}
 {"query_id":"query_7cdd67fd1b72f4541d4fcc26","relevant_doc_ids":["doc_86bc3cdf45100656b993c92b","doc_b1abed920d20bcdad1ab19f4","doc_4f5bfcece9c3ef04a97bb601","doc_073542a3a10de8fe52f23eda","doc_55d7750f90137a87435923ee","doc_dd12972425fce8f78e2b43b4","doc_62f058fdfbe6b5f469734fca"]}
 {"query_id":"query_7d3b0f151aecfac1d9b3b1a4","relevant_doc_ids":["doc_2093698915f31cc7361d1735","doc_d66fa4a5d755f4ed3223b6f0","doc_0c0382b122d3b47c05c09807","doc_40256812cbc515d6e7ce8b6d"]}
-{"query_id":"query_2c213f84637f1595e3f2e81f","relevant_doc_ids":["doc_086389fc7d08e192db320dcb","doc_6ee1a8ee1c6f5c792a1b060e"]}
 {"query_id":"query_eb7e78d44d5f536ceda3e643","relevant_doc_ids":["doc_75db28eaee83486bd3083d2e","doc_627aa862a7be1280c0c7ea42","doc_d39f4de34239e40c809a5d3e","doc_32f0cf562fec7a85c55d1243","doc_bcb9c94f32c67e61cdce83d1","doc_9bb7f43e50cf092b2178f1ec"]}
 {"query_id":"query_9f1e246877830448c296bf16","relevant_doc_ids":["doc_247e59b071489e83629e9087"]}
 {"query_id":"query_f4fcc00b88fa5d81ab20688b","relevant_doc_ids":["doc_d5448628d9a685c14c8edc16","doc_4afcff7215061b804e179aa3","doc_0a46502f8f628c19797f4dd3"]}

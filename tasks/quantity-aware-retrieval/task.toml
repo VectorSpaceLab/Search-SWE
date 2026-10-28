@@ -15,14 +15,14 @@ primary_metric = "Normalized binary nDCG@10"
 metric_k = 10
 corpus_document_count = 153252
 public_query_count = 0
-hidden_query_count = 210
+hidden_query_count = 209
 example_count = 80000
 base_model = "Qwen/Qwen3-Embedding-0.6B"
-baseline_ndcg_at_10 = 0.1838
+baseline_ndcg_at_10 = 0.1847
 query_timeout_seconds = 5.0
 index_build_timeout_seconds = 1200.0
 gpu_hardware = "1 x NVIDIA A100 40GB"
-data_status = "Published public data; all original 210 questions private; original text and qrels preserved; 80000 synthetic labeled examples."
+data_status = "Published public data; 209 private questions retained after removing one query with invalid positives; corpus and remaining qrels unchanged; 80000 synthetic labeled examples."
 
 [agent]
 timeout_sec = 21600.0

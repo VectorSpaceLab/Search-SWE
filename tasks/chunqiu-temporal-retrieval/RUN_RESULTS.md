@@ -1,5 +1,9 @@
 # Run evidence reconciled on 2026-10-23
 
+The results below describe the historical 778-query evaluation. The 2026-10-28
+revision retains 775 queries; see [VALIDATION.md](VALIDATION.md). These historical
+model scores have not been recalculated for that revision.
+
 The verifier produced valid nDCG@10 over 778 queries. A command-timeout exception is retained in the original run. This low score does not establish that training a temporal representation is infeasible; that training route remains unvalidated.
 
 | Field | Observed value |

@@ -1,5 +1,37 @@
 # Local validation
 
+## Query removal and baseline recalculation — 2026-10-28, v1.0.0
+
+Removed `query_0b014897ccb389626678` ("body weight less than 0.1 kilograms")
+and its qrels row. Its two labeled positives describe a body-weight change of
+-0.38 kg and measurement accuracy of 0.01 kg; neither states that body weight
+is below 0.1 kg. The user selected removal of this query. The hidden set now
+contains 209 queries, with the other query texts and qrels unchanged. The
+153,252-document corpus and 80,000 training examples are unchanged.
+
+The baseline method remains BM25 + Qwen3-Embedding-8B, top-1000 each, RRF 60.
+Recalculation uses the archived `methods.hybrid.top10_doc_ids` from
+`../../../task_development/quantity-aware-retrieval/research/medquant-baselines-v1/per-query-results.jsonl`
+(SHA-256 `f5904f1a463c3e15f1e2df75c2e739c8978598990529197724b5b3e83e5c42f2`).
+All 210 archived query texts and gold sets were matched to the original task
+files through the unchanged corpus row-to-ID mapping. Recomputing with the
+production `ndcg_at_10` function reproduces the archived 210-query mean
+0.1838410794397215. The removed query's baseline nDCG@10 is 0, so the retained
+209-query mean is **0.18472070182938527**. Applying the existing four-decimal
+rounding rule gives the new reward anchor **0.1847** in `task.toml` and
+`tests/grader.py`.
+
+This recalculation reuses saved rankings; it does not rerun model inference or
+the integrity judge. Historical run artifacts and their recorded scores are
+preserved. The dated sections below describe earlier 210-query revisions.
+
+Validation: all nine task-local contract tests passed, including consistency
+between packaged queries, qrels, grader constants and TOML metadata. The task
+static checker reported zero errors. Production `load_data()` accepted all
+153,252 documents and the 209 retained query/qrels pairs; a comparison against
+the previous revision confirmed exactly one row was deleted from each private
+JSONL file and all other rows were unchanged. `git diff --check` passed.
+
 Release reconciliation (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
 
 ## Baseline revision — 2026-10-23, v0.1.1

@@ -12,7 +12,7 @@
 | Agent / verifier time limits | 21600 s / 3000 s |
 | Dataset | ChunQiuTR, audited event-only derivative |
 | Public queries | 0 |
-| Hidden queries | 778 |
+| Hidden queries | 775 |
 
 Retrieve original event records for reign-based dates and time windows in
 Classical Chinese annals. Return up to ten records from the complete corpus.
@@ -30,7 +30,7 @@ commit `392d6ec8d62de8256b3b45578f7b4484c22042ce`.
 | Shared corpus | 18,662 |
 | Public labeled queries | 6,617 |
 | Public training-month document associations | 19,452 |
-| Hidden test queries | 778 |
+| Hidden test queries | 775 |
 | Public validation queries | 0 |
 
 The corpus preserves every original event/comment text after removing all
@@ -68,7 +68,7 @@ See [LICENSE.data.md](LICENSE.data.md) for source and model notices. Public inpu
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Removed three hidden queries with unsupported April labels; retained 775 queries |
 
 ## Difficulty Explanation
 

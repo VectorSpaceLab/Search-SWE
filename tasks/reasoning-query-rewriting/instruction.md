@@ -6,6 +6,8 @@ The collection to search is `/task/data/corpus.jsonl`. You can try out the retri
 
 All submission files you create or change must stay under `/app`, and `/task` is read-only. Implementation, validation and debugging must fit within the 120-minute agent phase. The final submission must contain executable `/app/build.sh` and `/app/run.sh` files. You may keep implementation modules in `/app/src` and implementation notes or self-test details in `/app/README.md`, but those two additions are optional. During verification the submission runs as a non-root user and `/app` is read-only; the supplied `--index-dir` is the only writable location for persistent and runtime-generated artifacts.
 
+During verification, `build.sh` must finish within 1,800 seconds. The hidden test contains 10 queries; the single `run.sh` invocation must process all of them and finish within 900 seconds total.
+
 To make the collection ready to search, the verifier starts by invoking:
 
 ```bash

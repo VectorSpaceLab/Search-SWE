@@ -1,6 +1,7 @@
 import math
 from pathlib import Path
 import tempfile
+import tomllib
 import unittest
 from unittest import mock
 
@@ -29,6 +30,21 @@ class ScoringContract(unittest.TestCase):
         self.assertEqual(scoring.normalized_reward(0, b), 0)
         self.assertEqual(scoring.normalized_reward(1, b), 1)
         self.assertAlmostEqual(scoring.normalized_reward((1+b)/2, b), .5)
+
+    def test_packaged_reference_matches_grader_and_metadata(self):
+        root = Path(__file__).resolve().parents[1]
+        metadata = tomllib.loads((root / "task.toml").read_text())["metadata"]
+        queries = grader.read_jsonl(root / "tests/data/queries.jsonl")
+        qrels = grader.read_jsonl(root / "tests/data/ground_truth.jsonl")
+        query_ids = [row["query_id"] for row in queries]
+        qrel_ids = [row["query_id"] for row in qrels]
+        self.assertEqual(len(query_ids), len(set(query_ids)))
+        self.assertEqual(len(qrel_ids), len(set(qrel_ids)))
+        self.assertEqual(set(query_ids), set(qrel_ids))
+        self.assertTrue(all(row["relevant_doc_ids"] for row in qrels))
+        self.assertEqual(len(queries), grader.QUERY_COUNT)
+        self.assertEqual(len(queries), metadata["hidden_query_count"])
+        self.assertEqual(grader.BASELINE_NDCG, metadata["baseline_ndcg_at_10"])
 
     def test_optional_short_rankings(self):
         self.assertEqual(scoring.validate_row(self.row([]), "q", self.order), [])

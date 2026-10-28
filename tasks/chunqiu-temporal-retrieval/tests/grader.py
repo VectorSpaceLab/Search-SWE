@@ -24,7 +24,7 @@ OUTPUT = WORK / "output"
 LOGS = Path("/logs/verifier/chunqiu-temporal-retrieval-eval")
 UID = GID = 10001
 CORPUS_COUNT = 18662
-QUERY_COUNT = 778
+QUERY_COUNT = 775
 BUILD_TIMEOUT_SECONDS = 1200
 QUERY_TIMEOUT_SECONDS = 120
 

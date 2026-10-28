@@ -1,5 +1,9 @@
 # Run evidence reconciled on 2026-10-23
 
+The results below describe the historical 210-query evaluation. The 2026-10-28
+revision retains 209 queries and uses baseline 0.1847; see [VALIDATION.md](VALIDATION.md).
+These historical model scores have not been recalculated for that revision.
+
 The saved v0.1.0 evaluation and passing audit are reused. Version 0.1.1 changes the zero-score baseline to 0.1838, with ceiling 1. The current reward is an offline recalculation from saved nDCG@10; no new agent, retrieval or online judge run occurred.
 
 | Field | Observed value |

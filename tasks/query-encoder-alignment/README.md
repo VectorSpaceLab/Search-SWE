@@ -73,7 +73,7 @@ The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Clarified required 0.6B inference checks in the trajectory audit |
 
 ## Difficulty Explanation
 
