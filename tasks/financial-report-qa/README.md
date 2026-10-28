@@ -67,6 +67,7 @@ each of two query calls has 3,600 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-28 | 1.0.0 | Added reviewed alternative evidence locations for 18 held-out questions |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
