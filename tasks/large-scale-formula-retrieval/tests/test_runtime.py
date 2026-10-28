@@ -64,7 +64,7 @@ for line in sys.stdin:
  if op=='checks':
   out={}
   a,b=socket.socketpair();a.send(b'ok');out['local_ipc']=b.recv(2).decode();a.close();b.close()
-  for k,fn in [('hidden',lambda:open('/tests/private-sentinel').read()),('native_log',lambda:open('/task-run/trial.log').read()),('quota_image',lambda:open('/quota/private-sentinel').read()),('reward',lambda:open('/logs/verifier/reward.txt','w')),('network',lambda:socket.socket()),('affinity',lambda:os.sched_setaffinity(0,range(256)))]:
+  for k,fn in [('hidden',lambda:open('/tests/private-sentinel').read()),('quota_image',lambda:open('/quota/private-sentinel').read()),('reward',lambda:open('/logs/verifier/reward.txt','w')),('network',lambda:socket.socket()),('affinity',lambda:os.sched_setaffinity(0,range(256)))]:
    try: fn();out[k]='allowed'
    except (PermissionError,OSError):out[k]='denied'
   out['cpus']=sorted(os.sched_getaffinity(0));out['uid']=os.getuid();out['key']=os.environ.get('OPENAI_API_KEY')
@@ -78,8 +78,6 @@ for line in sys.stdin:
 class RuntimeTests(unittest.TestCase):
     def setUp(self):
         Path('/tests/private-sentinel').write_text('hidden')
-        Path('/task-run').mkdir(mode=0o700, exist_ok=True)
-        Path('/task-run/trial.log').write_text('private native evidence')
         Path('/quota').mkdir(mode=0o700, exist_ok=True)
         Path('/quota/private-sentinel').write_text('hidden backing storage')
         os.chmod('/tests', 0o700)
@@ -101,7 +99,7 @@ class RuntimeTests(unittest.TestCase):
         self.worker.begin(10, query=True)
         result = self.worker.request({'op': 'checks'})
         self.worker.finish()
-        self.assertEqual(result, {'hidden': 'denied', 'native_log': 'denied', 'quota_image': 'denied', 'reward': 'denied', 'network': 'denied',
+        self.assertEqual(result, {'hidden': 'denied', 'quota_image': 'denied', 'reward': 'denied', 'network': 'denied',
                                  'affinity': 'allowed', 'local_ipc': 'ok', 'cpus': self.cpus, 'uid': 10001, 'key': None, 'capabilities': 0})
 
     def test_timeout(self):

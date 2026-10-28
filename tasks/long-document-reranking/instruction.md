@@ -14,7 +14,7 @@ The verifier starts with:
   --index-dir /app/index
 ```
 
-It must prepare all required corpus, model and runtime artifacts, start the reranking service, and return exit status 0 only when the system can process queries. It must keep that service available across repeated `run.sh` calls. After `build.sh` succeeds, queries arrive through:
+It must prepare all required corpus, model and runtime artifacts, start the reranking service, and return exit status 0 only when the system can process queries, within 1800 seconds. It must keep that service available across repeated `run.sh` calls. After `build.sh` succeeds, queries arrive through:
 
 ```bash
 /app/run.sh \
@@ -24,7 +24,7 @@ It must prepare all required corpus, model and runtime artifacts, start the rera
   --top-k 5
 ```
 
-Every query record carries its fixed BM25 Top-100 candidates; rerank only those candidates and write exactly one result object for each input query. The internal protocol or service endpoint is your choice as long as it works with the build process and the specified interface.
+Every query record carries its fixed BM25 Top-100 candidates; rerank only those candidates and write exactly one result object for each input query. The verifier invokes `run.sh` twice sequentially with the same complete query file and separate output paths. Each invocation has 3600 seconds for all queries, and both outputs must satisfy the result contract. The first invocation supplies the Accuracy@5 score; the second checks continued service availability and output validity, without requiring identical bytes, scores or rankings across invocations. The complete verifier has 13200 seconds, covering the build, both query invocations, the trajectory audit, setup and cleanup. The internal protocol or service endpoint is your choice as long as it works with the build process and the specified interface.
 
 Write JSONL output with a line shaped like `{"query_id":"query-id","results":[{"doc_id":"document-id","score":0.123}]}`. That example shows the fields of a result item; `--top-k 5` requires exactly five items for each valid query. Keep the corresponding input identifier in `query_id` so the reranked documents can be matched back to their question. Each `doc_id` must identify one of that query's supplied candidates and each score must be finite and numeric. Document IDs must not repeat within a query. Sort by descending score and, for equal scores, preserve original candidate order as the tie-break.
 

@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/long-document-reranking"
-version = "1.0.1"
+version = "1.0.0"
 description = "Optimize long-document reranking over a frozen BM25 Top-100 candidate pool with a fixed local BGE reranker."
 authors = [{ name = "Search-SWE" }]
 keywords = ["information-retrieval", "search", "reranking", "cross-encoder", "long-document", "cpu"]

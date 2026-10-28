@@ -322,6 +322,7 @@ def main() -> int:
         if not any(INDEX_DIR.rglob("*")):
             raise RuntimeError("build.sh produced an empty index")
 
+        round_hits: list[list[bool]] = []
         for output_path in (OUTPUT_PATH, REPEAT_OUTPUT_PATH):
             output_path.unlink(missing_ok=True)
             returncode, stdout, stderr = run_submission(
@@ -342,11 +343,12 @@ def main() -> int:
                 raise RuntimeError(f"run.sh failed with status {returncode}: {stderr[-4000:]}")
             if not output_path.is_file() or not output_path.stat().st_size:
                 raise RuntimeError(f"run.sh did not produce {output_path}")
+            result_rows = load_results(output_path)
+            round_hits.append(validate_results(result_rows, queries, query_ids, METRIC_K))
 
-        if OUTPUT_PATH.read_bytes() != REPEAT_OUTPUT_PATH.read_bytes():
-            raise RuntimeError("repeated run.sh output is not byte-for-byte deterministic")
-        result_rows = load_results(OUTPUT_PATH)
-        hits = validate_results(result_rows, queries, query_ids, METRIC_K)
+        # The repeat checks continued service availability and output validity.
+        # Retrieval quality remains the first invocation's Accuracy@5.
+        hits = round_hits[0]
         hit_count = sum(hits)
         reward = hit_count / len(query_ids)
         report.update(

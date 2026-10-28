@@ -13,44 +13,49 @@ class DevelopmentTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.evidence = self.root / 'evidence'
         self.evidence.mkdir(mode=0o700)
-        self.log_dir = self.root / 'native'
-        self.log_dir.mkdir(mode=0o700)
-        self.log = self.log_dir / 'trial.log'
-        self.memory(0)
+        self.memory(0, 0)
 
-    def memory(self, oom):
+    def memory(self, oom, oom_kill):
         (self.evidence / 'agent.json').write_text(json.dumps({
-            'memory_events': f'oom {oom}\noom_kill {oom}\n'}))
+            'memory_events': f'oom {oom}\noom_kill {oom_kill}\n'}))
 
-    def check(self, content):
-        self.log.write_text(content)
-        return check_development(self.evidence, self.log)[1]
+    def test_native_log_is_not_required(self):
+        record, failure = check_development(self.evidence)
+        self.assertIsNone(failure)
+        self.assertEqual(record, json.loads((self.evidence / 'agent.json').read_text()))
 
-    def test_completed_agent(self):
-        self.assertIsNone(self.check('Running command: codex exec\nCommand outputs captured\n'
-                                     'Collecting main service artifacts\nRunning command: verifier\n'))
-
-    def test_timeout_then_successful_cleanup(self):
-        self.assertIn('incomplete', self.check('Running command: codex exec\n'
-                      'Running command: credential cleanup\nCommand outputs captured\n'
-                      'Collecting main service artifacts\n'))
+    def test_agent_timeout_does_not_reject_collected_submission(self):
+        # Harbor still collects the submission when codex exec has no completed
+        # output. Neither this log nor its command counts are a scoring gate.
+        (self.root / 'trial.log').write_text(
+            'Running command: codex exec\n'
+            'Running command: credential cleanup\nCommand outputs captured\n'
+            'Collecting main service artifacts\n')
+        self.assertIsNone(check_development(self.evidence)[1])
 
     def test_development_oom(self):
-        self.memory(1)
-        self.assertEqual(self.check(''), 'development memory limit')
+        for oom, oom_kill in [(1, 0), (0, 1), (2, 2)]:
+            with self.subTest(oom=oom, oom_kill=oom_kill):
+                self.memory(oom, oom_kill)
+                self.assertEqual(check_development(self.evidence)[1], 'development memory limit')
 
-    def test_missing_boundary_is_infrastructure_error(self):
-        with self.assertRaisesRegex(RuntimeError, 'boundary'):
-            self.check('Running command: codex exec\nCommand outputs captured\n')
+    def test_missing_memory_evidence_is_an_error(self):
+        (self.evidence / 'agent.json').unlink()
+        with self.assertRaises(FileNotFoundError):
+            check_development(self.evidence)
 
-    def test_empty_or_unbalanced_evidence(self):
-        for content in ['Collecting main service artifacts\n',
-                        'Running command: codex exec\nCommand outputs captured\n'
-                        'Command outputs captured\nCollecting main service artifacts\n']:
-            with self.subTest(content=content), self.assertRaisesRegex(RuntimeError, 'Invalid native'):
-                self.check(content)
+    def test_malformed_memory_evidence_is_an_error(self):
+        for content in ['{', '{}', '{"memory_events": null}',
+                        '{"memory_events": ""}', '{"memory_events": "oom 0"}',
+                        '{"memory_events": "oom_kill 0"}',
+                        '{"memory_events": "oom unknown\\noom_kill 0"}',
+                        '{"memory_events": "oom -1\\noom_kill 0"}']:
+            (self.evidence / 'agent.json').write_text(content)
+            with self.subTest(content=content), self.assertRaises(
+                    (ValueError, KeyError, AttributeError)):
+                check_development(self.evidence)
 
     def test_evidence_privacy(self):
-        self.log_dir.chmod(0o755)
+        self.evidence.chmod(0o755)
         with self.assertRaisesRegex(RuntimeError, 'private'):
-            self.check('')
+            check_development(self.evidence)

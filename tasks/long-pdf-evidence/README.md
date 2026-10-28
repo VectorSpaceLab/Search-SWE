@@ -29,7 +29,7 @@ The unchanged PDF has 2,043 physical pages. Its question-independent inventory c
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -53,9 +53,26 @@ Public inputs are published and pinned to immutable revisions in `assets.json`, 
 
 Author development and calibration records live outside the package in `task_development/long-pdf-evidence` in the surrounding build workspace. [raw-instruction.md](raw-instruction.md) retains the structured specification and evaluator details; [instruction.md](instruction.md) presents the task, available inputs, executable interface, output requirements, limits and scoring criteria without data-construction explanations or judge implementation details. The prior task supplies the corpus, executable lifecycle and isolation pattern; `scientific-paper-qa` was consulted for separate semantic-judge credentials. The requested `agentic-search` reference currently uses deterministic GoldRecall@5, so its grader is not a semantic-judge implementation.
 
-### Evidence-judge revision
+### Evidence judge calibration
 
-The task pins DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. The twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature are unchanged. The historical v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation used 64 GiB RAM and scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
+The judge evaluates requirements by their semantic support in the question and
+candidate evidence. Equivalent explanations may establish a distinction without
+repeating the reference's wording or separately negating alternatives. Requested
+comparisons, qualifications and causal links remain necessary. Extra evidence affects
+support when it creates a material contradiction or an unresolved essential referent;
+harmless redundancy is allowed. Rejection reasons identify the missing necessary
+relationship or concrete conflict.
+
+`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering
+causality, contrast, qualifications, reference resolution, contradiction and temporal
+context. These author-only cases are not part of scored data or the production prompt.
+`tests/test_judge_request.py` mocks HTTP to check request contents and failure handling;
+it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md)
+for local checks and the pending live calibration/re-evaluation handoff.
+
+### Historical judge-model revision
+
+The earlier judge-model pinning revision selected DeepSeek V4.1 Flash in the grader, task metadata, verifier environment and structured authoring source. That revision retained the twelve questions, reference evidence, sufficiency rubric, averaging rule, reasoning effort and temperature. The agent-facing instruction describes the evidence requirements and 30-second per-query limit without naming the judge or explaining its implementation. The current judge prompt clarifies generic semantic judgment as described above; the historical scores below are not measurements of that prompt. The historical v0.4.3 Codex / `openai/gpt-6-luna` / `max` evaluation used 64 GiB RAM and scored 1/12; both evidence evaluation and trajectory audit succeeded. See [RUN_RESULTS.md](RUN_RESULTS.md).
 
 The earlier DeepSeek rejudgment of a Luna-generated submission returned 8/20 on the old twenty-question version. It is historical reference evidence, not a score for this twelve-question revision. That historical trial's result and judge-health records are summarized in RUN_RESULTS.md.
 

@@ -14,12 +14,6 @@ services:
       bind:
         create_host_path: false
     - type: bind
-      source: ${HOST_VERIFIER_LOGS_PATH:?Harbor must supply its native trial path}/../trial.log
-      target: /task-run/trial.log
-      read_only: true
-      bind:
-        create_host_path: false
-    - type: bind
       source: ../data/public
       target: /task/data/public
       read_only: true

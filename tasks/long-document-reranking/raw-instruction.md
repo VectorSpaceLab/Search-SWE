@@ -30,7 +30,7 @@ The verifier invokes:
   --index-dir /app/index
 ```
 
-`build.sh` must prepare all required corpus, model, and runtime artifacts, start the reranking service, and return exit status `0` only after the system is ready to process queries. The service must remain available across repeated `run.sh` calls.
+`build.sh` must prepare all required corpus, model, and runtime artifacts, start the reranking service, and return exit status `0` only after the system is ready to process queries, within 1800 seconds. The service must remain available across repeated `run.sh` calls.
 
 The `--index-dir` argument is the location for persistent preprocessing, cache, and other runtime artifacts. Do not require the verifier to know any additional fixed paths.
 
@@ -47,6 +47,8 @@ After a successful build, the verifier invokes:
 ```
 
 Each query contains a fixed BM25 Top-100 candidate set. `run.sh` must rerank only the candidates supplied with that query and write exactly one result object for each input query.
+
+The verifier invokes `run.sh` twice sequentially with the same complete query file and separate output paths. Each invocation has 3600 seconds for the entire query file. Both outputs must satisfy the output contract; identical bytes, scores, or rankings across invocations are not required. Accuracy@5 is calculated from the first invocation. The second checks continued service availability and output validity. The total verifier allowance is 13200 seconds, covering the 1800-second build, two 3600-second query invocations, a 3600-second trajectory audit, and 600 seconds for setup and cleanup.
 
 It may use any internal protocol or service endpoint, as long as it works with the `build.sh` process and the command-line interface.
 
