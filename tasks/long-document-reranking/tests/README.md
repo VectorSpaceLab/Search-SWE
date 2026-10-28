@@ -3,8 +3,10 @@
 The hidden query and ground truth files under `data/` are verifier-only.
 `test.sh` protects them and invokes `grader.py`, which builds the submitted
 `/app` system from the supplied corpus, runs the hidden queries twice, checks
-top-5 candidate validity and deterministic scores, and writes the evaluation
-report.
+top-5 candidate validity for each invocation independently, and writes the
+evaluation report. Both outputs must be valid; bytes, scores and rankings may
+differ. Accuracy@5 is calculated from the first invocation, while the second
+checks continued service availability and output validity.
 
 The outer verifier window is 13,200 seconds: 1,800 seconds for the build,
 two query runs of 3,600 seconds each, 3,600 seconds for the trajectory judge,

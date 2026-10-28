@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/long-pdf-evidence"
-version = "1.0.0"
+version = "1.0.1"
 description = "Retrieve original sentences that completely support concise questions about a long novel."
 authors = [{ name = "Search-SWE" }, { name = "Bingyu" }]
 keywords = ["information-retrieval", "search", "evidence locator"]

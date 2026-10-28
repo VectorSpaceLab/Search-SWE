@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-pdf-evidence-vectorless` |
-| Version | 1.0.0 |
+| Version | 1.0.1 |
 | Authors | Jianlyu |
 | Primary metric | SentenceEvidenceAccuracy |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
@@ -21,6 +21,7 @@ The unchanged PDF has 2,043 physical pages; the question-independent inventory h
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-28 | 1.0.1 | Clarified semantic evidence judging, material conflicts and reference scope; retained questions, requirements, references and scoring. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -36,6 +37,23 @@ The CPU image provides 16 CPUs, 16 GiB RAM and 100 GiB storage, without a GPU. D
 The fresh separate verifier transfers `/app`, rebuilds the index, and runs submission commands as UID 10001. Up to five query processes share the index, each with 900 seconds and a shared 1,800-second deadline; cleanup has another 60 seconds. Failed or invalid queries remain in the twelve-query denominator with zero. The root-side grader reads a private corpus mount to verify fixed hashes and original sentence membership. Public validation and all judge credentials are excluded from submission processes.
 
 The answer judge uses OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0, two workers and at most two attempts/request, within 2,700 seconds. Complete evidence support earns 1; topical or incomplete evidence earns 0. API/parse failure invalidates the measurement and fails closed. The separate trajectory audit uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash`, bounded at 3,600 seconds. Only a valid binary audit pass preserves accuracy as the final 0–1 reward. The entire verifier has 10,800 seconds.
+
+### Evidence judge calibration
+
+The judge evaluates requirements by their semantic support in the question and
+candidate evidence. Equivalent explanations may establish a distinction without
+repeating the reference's wording or separately negating alternatives. Requested
+comparisons, qualifications and causal links remain necessary. Extra evidence affects
+support when it creates a material contradiction or an unresolved essential referent;
+harmless redundancy is allowed. Rejection reasons identify the missing necessary
+relationship or concrete conflict.
+
+`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering
+causality, contrast, qualifications, reference resolution, contradiction and temporal
+context. These author-only cases are not part of scored data or the production prompt.
+`tests/test_judge_request.py` mocks HTTP to check request contents and failure handling;
+it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md)
+for local checks and the pending live calibration/re-evaluation handoff.
 
 ### Credentials and evaluation
 

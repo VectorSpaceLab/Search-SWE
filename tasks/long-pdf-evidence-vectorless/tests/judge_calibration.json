@@ -1,0 +1,180 @@
+[
+  {
+    "case_id": "cause_positive_explanation",
+    "question": "Why did the mill stop while the river was still flowing?",
+    "candidate_sentences": [
+      "Water continued to reach the wheel.",
+      "A broken axle kept the wheel from turning the millstones."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain the mechanical failure rather than a lack of water."
+      ],
+      "sentences": [
+        "The mill had water, but its axle was broken, so grinding stopped."
+      ]
+    },
+    "expected_supported": true,
+    "reason": "The supplied water and broken transmission establish the distinction without a separate negative formulation."
+  },
+  {
+    "case_id": "cause_missing_link",
+    "question": "Why did the mill stop while the river was still flowing?",
+    "candidate_sentences": [
+      "The river flowed past the mill.",
+      "The millstones were still."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain the mechanical failure rather than a lack of water."
+      ],
+      "sentences": [
+        "The mill had water, but its axle was broken, so grinding stopped."
+      ]
+    },
+    "expected_supported": false,
+    "reason": "The observations do not establish a cause; the axle failure cannot be borrowed from the reference."
+  },
+  {
+    "case_id": "contrast_both_sides",
+    "question": "How did the brothers differ in their response to the offer?",
+    "candidate_sentences": [
+      "Jon accepted the offer at once, while Eli refused it."
+    ],
+    "reference": {
+      "requirements": [
+        "Contrast the two brothers' decisions."
+      ],
+      "sentences": [
+        "Jon accepted before noon; Eli refused the same offer."
+      ]
+    },
+    "expected_supported": true,
+    "reason": "Both decisions and their contrast are explicit; the time in the reference is incidental."
+  },
+  {
+    "case_id": "contrast_missing_side",
+    "question": "How did the brothers differ in their response to the offer?",
+    "candidate_sentences": [
+      "Jon accepted the offer at once."
+    ],
+    "reference": {
+      "requirements": [
+        "Contrast the two brothers' decisions."
+      ],
+      "sentences": [
+        "Jon accepted before noon; Eli refused the same offer."
+      ]
+    },
+    "expected_supported": false,
+    "reason": "An explicit comparison needs the second brother's response."
+  },
+  {
+    "case_id": "qualification_present",
+    "question": "Under what condition could the gardener keep the cottage?",
+    "candidate_sentences": [
+      "The lease allowed the gardener to remain only while she tended the orchard."
+    ],
+    "reference": {
+      "requirements": [
+        "State the condition attached to continued residence."
+      ],
+      "sentences": [
+        "She could keep the cottage if she continued caring for the orchard."
+      ]
+    },
+    "expected_supported": true,
+    "reason": "The condition is supplied in equivalent wording."
+  },
+  {
+    "case_id": "qualification_missing",
+    "question": "Under what condition could the gardener keep the cottage?",
+    "candidate_sentences": [
+      "The gardener could continue living in the cottage."
+    ],
+    "reference": {
+      "requirements": [
+        "State the condition attached to continued residence."
+      ],
+      "sentences": [
+        "She could keep the cottage if she continued caring for the orchard."
+      ]
+    },
+    "expected_supported": false,
+    "reason": "Permission alone omits the requested condition."
+  },
+  {
+    "case_id": "resolved_reference_and_redundancy",
+    "question": "Why did Nera turn back?",
+    "candidate_sentences": [
+      "Nera reached the flooded ford.",
+      "She turned back because the water was too deep to cross.",
+      "A yellow cart stood beside the inn."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain why Nera could not continue."
+      ],
+      "sentences": [
+        "The ford was impassable, so Nera returned."
+      ]
+    },
+    "expected_supported": true,
+    "reason": "The referent and cause are clear; the cart sentence does not contradict them."
+  },
+  {
+    "case_id": "materially_unresolved_reference",
+    "question": "Why did Nera turn back?",
+    "candidate_sentences": [
+      "Nera and Sela reached the flooded ford.",
+      "She turned back because her horse was lame, while the other rider crossed."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain why Nera could not continue."
+      ],
+      "sentences": [
+        "Nera's horse was lame, so she returned while Sela crossed."
+      ]
+    },
+    "expected_supported": false,
+    "reason": "The candidate does not establish which rider turned back; the reference cannot resolve that essential identity."
+  },
+  {
+    "case_id": "material_contradiction",
+    "question": "Why did the council cancel the banquet?",
+    "candidate_sentences": [
+      "The council cancelled the banquet because the hall was unsafe.",
+      "The hall was safe; the council cancelled the banquet solely because the cook had left."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain the reason for the cancellation."
+      ],
+      "sentences": [
+        "The unsafe hall caused the council to cancel the banquet."
+      ]
+    },
+    "expected_supported": false,
+    "reason": "The candidate asserts incompatible causes and hall conditions for the same cancellation."
+  },
+  {
+    "case_id": "different_times_not_contradiction",
+    "question": "Why was the library closed in winter?",
+    "candidate_sentences": [
+      "During winter the damaged roof made the library unsafe, so it closed.",
+      "After repairs in spring, the library reopened.",
+      "The librarian wore a blue coat."
+    ],
+    "reference": {
+      "requirements": [
+        "Explain the winter closure."
+      ],
+      "sentences": [
+        "Roof damage made the library unsafe during winter."
+      ]
+    },
+    "expected_supported": true,
+    "reason": "Later reopening does not contradict the stated winter cause, and the coat is harmless extra information."
+  }
+]

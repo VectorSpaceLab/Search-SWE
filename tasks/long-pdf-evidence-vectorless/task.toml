@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/long-pdf-evidence-vectorless"
-version = "1.0.0"
+version = "1.0.1"
 description = "Build a reusable, embedding-free index for retrieving complete sentence evidence from a long PDF."
 authors = [{ name = "Jianlyu" }]
 keywords = ["information-retrieval", "search", "evidence locator"]

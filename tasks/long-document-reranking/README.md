@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `long-document-reranking` |
-| Version | 1.0.1 |
+| Version | 1.0.2 |
 | Authors | Search-SWE |
 | Primary metric | Accuracy@5 |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
@@ -50,9 +50,8 @@ fixed. The agent may optimize preprocessing, window selection, score aggregation
 caching, and runtime organization. It may not retrieve additional candidates,
 replace or train the model, distill it, or modify its weights through quantization.
 
-The Docker mounts place the model at `/task/models/bge-reranker-large`.
-The introductory model path in `instruction.md` currently contains a typo;
-the mounted path and runtime configuration are the operational reference.
+The Docker mounts and instructions place the model at
+`/task/models/bge-reranker-large`.
 
 #### Environment and Resource Limits
 
@@ -68,6 +67,7 @@ Each submission stage remains subject to its own time limit.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-28 | 1.0.2 | Validate both query outputs independently instead of requiring byte equality; disclose the existing stage limits and repeat schedule. |
 | 2026-10-26 | 1.0.1 | Allow the verifier window to cover all existing stage budgets plus setup and cleanup. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
@@ -104,6 +104,10 @@ Valid runs receive this fraction as a continuous quality score.
 The verifier checks executable behavior, complete outputs, valid ranking
 fields, candidate membership, and compliance with the fixed-model rules.
 Retrieval outside the pool is not a valid way to improve this task's score.
+Both sequential query invocations must pass the same output checks; their
+bytes, scores and rankings need not match. Only the first invocation determines
+Accuracy@5. The second checks that the service remains available and produces
+valid outputs.
 
 #### Integrity Checks and Final Reward
 
@@ -151,10 +155,10 @@ assets, credentials, or hardware.
 
 ### Instruction source
 
-`raw-instruction.md` preserves the original structured instruction. The request
-in `instruction.md` corrects its `/tast/model/bge-reranker-large` path typo to
-the actual read-only mount `/task/models/bge-reranker-large`; the fixed model
-and all candidate/model restrictions are unchanged.
+`raw-instruction.md` is the structured source for `instruction.md`. Both now
+state the existing build/query limits, repeat schedule and first-run scoring.
+The fixed model, candidate/model restrictions and Accuracy@5 definition remain
+unchanged. Local regression evidence is recorded in [VALIDATION.md](VALIDATION.md).
 
 ## References
 

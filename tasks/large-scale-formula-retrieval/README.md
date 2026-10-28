@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `large-scale-formula-retrieval` |
-| Version | 1.0.0 |
+| Version | 1.0.1 |
 | Authors | jianlyu |
 | Primary metric | nDCG_prime |
 | Compute | 2 CPUs; 4 GiB RAM; 64 GiB storage; 0 GPUs |
@@ -26,6 +26,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-10-28 | 1.0.1 | Evaluate Harbor's collected submission after agent timeout; retain development memory enforcement. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -35,6 +36,11 @@ The complete formula corpus must be searchable with only 34 MiB of prepared arti
 ## Verification Explanation
 
 The verifier maps returned formula instances to visual IDs, deduplicates them and computes nDCG prime using the official judgments. It averages across all 76 hidden questions, including failures, with compact-serving storage and runtime limits enforced. Final reward also requires the integrity audit to pass. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+Harbor enforces the agent deadline and transfers the available submission to the
+verifier. Agent command completion is not a separate scoring gate: the verifier
+checks the submitted build and service normally. Trusted development OOM evidence
+remains mandatory, and a recorded memory violation still makes the score zero.
 
 ### Restore inputs
 
@@ -114,6 +120,20 @@ Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
 directories as build contexts. Run the public helper and verifier with the task's
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
+
+### Version 1.0.1 local checks (2026-10-28)
+
+From `tasks/large-scale-formula-retrieval/tests`,
+`python -m unittest test_development test_scoring test_ipc_cleanup test_integrity_gate -v`
+passed all 25 tests. These cover development-gate acceptance without agent completion logs, retained
+OOM rejection, missing/malformed/private memory evidence, scoring and integrity
+gates. `scripts/check_tasks.py tasks/large-scale-formula-retrieval`, shell syntax
+and diff whitespace checks also passed. The instruction, input assets and
+numeric scoring are unchanged.
+
+Container isolation/storage tests and evaluation of archived submissions were
+not run in this revision; they remain follow-up validation. No coding-model run
+or judge API call was made.
 
 ## References
 

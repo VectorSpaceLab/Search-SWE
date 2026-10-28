@@ -7,7 +7,7 @@ artifacts = [
 
 [task]
 name = "search-swe/large-scale-formula-retrieval"
-version = "1.0.0"
+version = "1.0.1"
 description = "Retrieve relevant formulas from the complete ARQMath v3 corpus with 34 MiB prepared artifacts in a 40 MiB serving filesystem and 50 ms CPU queries."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "formula", "latex", "arqmath", "cpu"]
