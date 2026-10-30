@@ -27,8 +27,9 @@ launcher or Harbor runtime. Inspect an explicitly selected **trusted** target
 checkout/version providing `scripts/check_tasks.py`, `check_release.py`,
 `download_assets.py`, `run_task.py` and their dependencies. Missing tools or an
 older workflow version stop that layer; do not improvise acceptance commands.
-Python 3.12+, PyYAML, python-dotenv and host `scripts/requirements.txt` (Harbor
-0.22.0, huggingface_hub 1.x) are target prerequisites. Docker Engine/Compose,
+Python 3.12+ and the host dependencies declared in `pyproject.toml` are target
+prerequisites; install with `python -m pip install -e .` from the trusted checkout.
+These include Harbor, huggingface_hub, PyYAML and python-dotenv. Docker Engine/Compose,
 image access and appropriate GPU driver/Container Toolkit are needed for runtime.
 
 Accept public upstream or official datasets with immutable pins, verified hashes

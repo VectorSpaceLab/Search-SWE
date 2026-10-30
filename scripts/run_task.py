@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import subprocess
 import sys
 import tomllib
 from urllib.parse import urlsplit
@@ -17,12 +18,16 @@ if __package__:
     from .download_assets import destination_path, read_manifest, relative_path
     from .gpu_device import resolve_gpu_device, validate_gpu_device
     from .harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
+    from .task_storage import StoragePlan, prepared_storage, run_command
+    from .cpu_affinity import validate_cpu_set
 else:
     from docker_dns import parse_servers
     from task_paths import select_task, task_key
     from download_assets import destination_path, read_manifest, relative_path
     from gpu_device import resolve_gpu_device, validate_gpu_device
     from harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
+    from task_storage import StoragePlan, prepared_storage, run_command
+    from cpu_affinity import validate_cpu_set
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -32,7 +37,7 @@ ANTHROPIC_HOST = "api.anthropic.com"
 OPENROUTER_HOST = "openrouter.ai"
 OPENROUTER_CLAUDE_BASE_URL = "https://openrouter.ai/api"
 OPENROUTER_MODEL = re.compile(
-    r"^[a-z0-9][a-z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._:+-]*$"
+    r"^~?[a-z0-9][a-z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._:+-]*$"
 )
 CLAUDE_HOST_ENV_VARS = (
     "ANTHROPIC_API_KEY",
@@ -113,24 +118,28 @@ def main():
         help="Route Codex or Claude Code through OpenRouter using AGENT_OPENROUTER_API_KEY",
     )
     parser.add_argument("--model", help="Agent model; defaults to AGENT_MODEL")
-    parser.add_argument("--env-file", type=Path, help="Defaults to the repository .env if present")
+    env_options = parser.add_mutually_exclusive_group()
+    env_options.add_argument("--env-file", type=Path, help="Defaults to the repository .env if present")
+    env_options.add_argument("--no-env-file", action="store_true", help="Use only process environment configuration")
     parser.add_argument(
         "--reasoning-effort",
         help="Override AGENT_REASONING_EFFORT for Codex or Claude Code",
     )
     parser.add_argument("--codex-config", type=Path, help="Optional native Codex TOML configuration")
-    parser.add_argument("--thinking", choices=PI_THINKING_LEVELS, help="Pi thinking level; overrides PI_THINKING")
+    parser.add_argument("--thinking", choices=("default", *PI_THINKING_LEVELS), help="Pi thinking level; default omits the override")
     parser.add_argument("--container-dns", help="Comma-separated upstream IPv4 DNS servers; overrides CONTAINER_DNS. Keeps Harbor's API allowlist.")
     parser.add_argument("--egress-config", type=Path, help="Direct/proxy gateway JSON; overrides EGRESS_CONFIG. Without it, restricted tasks use the direct gateway.")
     parser.add_argument("--egress-image", help="Direct gateway image (pulled if missing); overrides EGRESS_IMAGE. Cannot be combined with EGRESS_CONFIG.")
     parser.add_argument("--output", type=Path, help="Job output directory; relative to the current directory")
     parser.add_argument("--gpu-device", help="Host GPU index or full GPU UUID, shared by the agent and verifier")
+    parser.add_argument("--cpu-set", help="Logical CPU IDs/ranges for all task services in both phases")
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
+    parser.add_argument("--check", action="store_true", help="Validate model, credentials and configuration without restoring assets or launching")
     args = parser.parse_args()
 
     env_file = args.env_file or REPO / ".env"
     file_env = {}
-    if env_file.is_file():
+    if env_file.is_file() and not args.no_env_file:
         try:
             from dotenv import dotenv_values
         except ImportError:
@@ -178,9 +187,9 @@ def main():
             if args.codex_config is not None:
                 parser.error("--codex-config is only valid with --agent codex")
             effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
-            if effort and effort not in CLAUDE_CODE_EFFORT_LEVELS:
+            if effort and effort not in ("default", *CLAUDE_CODE_EFFORT_LEVELS):
                 parser.error(
-                    "Claude Code reasoning effort must be one of: "
+                    "Claude Code reasoning effort must be one of: default, "
                     + ", ".join(CLAUDE_CODE_EFFORT_LEVELS)
                 )
 
@@ -189,6 +198,18 @@ def main():
     except ValueError as error:
         parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
+    try:
+        storage = StoragePlan.discover(task, task_config)
+    except ValueError as error:
+        parser.error(str(error))
+    if args.cpu_set is not None:
+        try:
+            args.cpu_set = validate_cpu_set(args.cpu_set, task_config["environment"]["cpus"],
+                                            check_host=not args.dry_run)
+        except ValueError as error:
+            parser.error(str(error))
+        if storage:
+            env[storage.cpu_variable] = args.cpu_set
     if args.gpu_device is not None:
         if task_config.get("environment", {}).get("gpus", 0) != 1:
             parser.error("--gpu-device requires a single-GPU task")
@@ -217,7 +238,7 @@ def main():
         command.extend(["--ak", f"version={CODEX_VERSION}"])
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
-            command.extend(["--ak", f"reasoning_effort={effort}"])
+            command.extend(["--ak", f"reasoning_effort={'null' if effort == 'default' else effort}"])
         config = REPO / "scripts/openrouter_codex.toml" if args.openrouter else args.codex_config
         if config is None and env.get("AGENT_CODEX_CONFIG"):
             config = REPO / env["AGENT_CODEX_CONFIG"]
@@ -247,7 +268,7 @@ def main():
         command.extend(["--ak", f"version={CLAUDE_CODE_VERSION}"])
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
-            command.extend(["--ak", f"reasoning_effort={effort}"])
+            command.extend(["--ak", f"reasoning_effort={'null' if effort == 'default' else effort}"])
         if args.openrouter:
             required.append("AGENT_OPENROUTER_API_KEY")
             command.extend([
@@ -261,13 +282,13 @@ def main():
             agent_host = ANTHROPIC_HOST
     else:
         thinking = args.thinking or env.get("PI_THINKING")
-        if thinking and thinking not in PI_THINKING_LEVELS:
+        if thinking and thinking not in ("default", *PI_THINKING_LEVELS):
             parser.error(
-                "PI_THINKING must be one of: " + ", ".join(PI_THINKING_LEVELS)
+                "PI_THINKING must be one of: default, " + ", ".join(PI_THINKING_LEVELS)
             )
         command.extend(["--ak", f"version={PI_VERSION}"])
         if thinking:
-            command.extend(["--ak", f"thinking={thinking}"])
+            command.extend(["--ak", f"thinking={'null' if thinking == 'default' else thinking}"])
         key = PI_MODEL_KEYS[model]
         required.append(key)
         command.extend(["--ae", f"{key}=${{{key}}}"])
@@ -296,13 +317,12 @@ def main():
     # Task-specific judge settings are resolved by task.toml from Harbor's
     # environment; require only the groups used by the selected task.
     for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
-        if name in verifier_env:
-            required.append(name)
+        required.extend(re.findall(r"\$\{([A-Z][A-Z0-9_]*)(?::[-?][^}]*)?\}", verifier_env.get(name, "")))
 
     endpoint_variables = []
     if "OPENAI_API_KEY" in verifier_env:
         endpoint_variables.append("VERIFIER_OPENAI_BASE_URL")
-    if "ANSWER_JUDGE_BASE_URL" in verifier_env:
+    if "${ANSWER_JUDGE_BASE_URL" in verifier_env.get("ANSWER_JUDGE_BASE_URL", ""):
         endpoint_variables.append("ANSWER_JUDGE_BASE_URL")
     for variable in endpoint_variables:
         if not env.get(variable):
@@ -361,6 +381,11 @@ def main():
             if dns_servers:
                 command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
 
+    if args.cpu_set is not None:
+        if not use_gateway:
+            command[command.index("--env") + 1] = "scripts.harbor_environments:GpuDocker"
+        command.extend(["--environment-kwarg", f"cpu_set={args.cpu_set}"])
+
     if args.gpu_device is not None:
         if not use_gateway:
             command[command.index("--env") + 1] = "scripts.harbor_environments:GpuDocker"
@@ -377,6 +402,9 @@ def main():
 
     if args.dry_run:
         print("Preview only; credentials, assets, Docker, GPU, and API access are not checked.")
+        if storage:
+            print(f"Bounded storage and {storage.cpus} logical CPUs are prepared automatically; "
+                  f"optional overrides: {storage.variable}, {storage.cpu_variable}.")
         if use_gateway:
             mode = egress.settings.get("transport", "proxy")
             print(f"Phase-scoped {mode} gateway; task and phase allowlists are enforced by the trusted sidecar.")
@@ -389,6 +417,9 @@ def main():
     missing = [name for name in required if not env.get(name)]
     if missing:
         parser.error("Set the following variables in .env or the shell: " + ", ".join(missing))
+    if args.check:
+        print("Model, credentials and configuration checks passed; no evaluation started.")
+        return 0
     manifest = read_manifest(task)
     unavailable = []
     for entry in manifest["files"]:
@@ -419,6 +450,12 @@ def main():
         env["PYTHONPATH"] += os.pathsep + existing_pythonpath
 
     print(f"Launching {task_key(REPO, task)}; job output: {output}", flush=True)
+    if storage:
+        try:
+            with prepared_storage(storage, env):
+                return run_command(command, env, REPO)
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+            parser.error(str(error))
     # All task and output paths are absolute, so launching works from any directory.
     os.chdir(REPO)
     os.execvpe(command[0], command, env)

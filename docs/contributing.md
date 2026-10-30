@@ -16,7 +16,7 @@ root, use Python 3.12+ and install the host tools and static-test dependencies:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -r scripts/requirements.txt PyYAML python-dotenv
+python -m pip install -e .
 python .agents/skills/create-searchswe-task/scripts/scaffold_task.py example-search \
   --author 'Alice Example' --hardware cpu
 ```

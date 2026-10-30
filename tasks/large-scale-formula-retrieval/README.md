@@ -65,19 +65,14 @@ trusted setup and checks.
 
 This task uses no GPU.
 
-On the Linux Docker host, `/dev/fuse` and `mkfs.ext4` must be available.
-Prepare fresh bounded storage for each run, then set `FORMULA_CPUSET` to
-2 available logical CPU IDs on a supported CPU. Use a unique `RUN_ID`:
-
-```bash
-python tasks/large-scale-formula-retrieval/tools/prepare_storage.py --run-id RUN_ID
-export FORMULA_STORAGE_ROOT="$PWD/jobs/.task-storage/large-scale-formula-retrieval/RUN_ID"
-```
-
-```bash
-export FORMULA_JOB_ROOT="$PWD/jobs/large-scale-formula-retrieval-codex-openrouter-luna-max-RUN_ID"
-install -d -m 0700 "$FORMULA_JOB_ROOT"
-```
+Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`,
+`dpkg-deb`, and root or sudo access. The standard launcher prepares fresh
+bounded agent, verifier and serving storage, chooses 2 logical CPUs from its
+available affinity, and unmounts storage after the run's containers exit.
+Backing images remain under `jobs/.task-storage/large-scale-formula-retrieval/`.
+Set `FORMULA_CPUSET` to preserve a particular 2-CPU allocation when reproducing
+a run. See [bounded task storage](../../docs/evaluation.md#bounded-task-storage)
+for host setup, permissions, recovery and caller-managed storage.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
@@ -95,18 +90,12 @@ Invoke the standard entrypoint directly:
 ```bash
 bash scripts/run_task.sh --task large-scale-formula-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
-  --output "${FORMULA_JOB_ROOT}"
+  --output "jobs/large-scale-formula-retrieval-codex-openrouter-luna-max"
 ```
 
 Inspect the resulting agent trajectory, submission and verifier report under the
 job directory. The score alone does not distinguish an invalid submission from
 an infrastructure error.
-
-After every container/process for this run has exited, unmount its storage:
-
-```bash
-python tasks/large-scale-formula-retrieval/tools/prepare_storage.py --run-id RUN_ID --unmount
-```
 
 ### Validate the package
 

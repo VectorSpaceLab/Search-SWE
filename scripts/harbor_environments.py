@@ -21,6 +21,7 @@ from scripts.egress.config import DEFAULT_IMAGE, direct_config, exact_hosts, loa
 from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
 from environments.egress.gateway import LEASE_SECONDS
 from scripts.gpu_device import GPU_UUID, select_compose_gpu
+from scripts.cpu_affinity import parse_cpu_set, select_compose_cpus
 
 
 # Containerd creation/removal can exceed a minute on busy hosts. These bounded
@@ -55,23 +56,30 @@ def gateway_image_info(reference):
 
 
 class GpuDocker(DockerEnvironment):
-    """Use a per-phase copy of the task Compose file for explicit GPU selection."""
+    """Select task CPU/GPU devices in independent per-phase Compose copies."""
 
-    def __init__(self, *args, gpu_device=None, **kwargs):
+    def __init__(self, *args, gpu_device=None, cpu_set=None, **kwargs):
         if gpu_device is not None and not GPU_UUID.fullmatch(gpu_device):
             raise ValueError("gpu_device must be a resolved UUID; use scripts/run_task.sh --gpu-device")
         self.gpu_device = gpu_device
+        if cpu_set is not None:
+            parse_cpu_set(cpu_set)
+        self.cpu_set = cpu_set
         super().__init__(*args, **kwargs)
 
     @property
     def _docker_compose_paths(self):
         paths = super()._docker_compose_paths
-        if not getattr(self, "gpu_device", None):
+        if not getattr(self, "gpu_device", None) and not getattr(self, "cpu_set", None):
             return paths
         source = self._environment_docker_compose_path
         if source not in paths:
-            raise ValueError("The GPU task must supply environment/tests docker-compose.yaml")
-        document = select_compose_gpu(yaml.safe_load(source.read_text()), self.gpu_device)
+            raise ValueError("The task must supply environment/tests docker-compose.yaml")
+        document = yaml.safe_load(source.read_text())
+        if getattr(self, "gpu_device", None):
+            document = select_compose_gpu(document, self.gpu_device)
+        if getattr(self, "cpu_set", None):
+            document = select_compose_cpus(document, self.cpu_set)
         # Harbor keeps --project-directory at the original environment directory,
         # so relative bind mounts/build paths retain their original meaning.
         directory = self.trial_paths.trial_dir / "gpu"

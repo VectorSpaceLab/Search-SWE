@@ -40,205 +40,90 @@ models come from.
 
 ## 🚀 Quick Start
 
-This walkthrough runs `reasoning-query-rewriting` on CPU with the Codex coding
-agent and GPT-6 Luna through OpenRouter. Search-SWE requires Python 3.12
-or newer and Docker with the CPU, memory, storage, and optional GPU capacity of
-the task you select.
+Install the `search-swe` CLI in a Python 3.12+ environment. The PyPI release
+installation command is:
 
-### 1. Install the host tools
+```bash
+python -m pip install search-swe
+```
+
+The package in this checkout is currently unpublished. To test this development
+version, clone the repository and use an editable install:
 
 ```bash
 git clone https://github.com/VectorSpaceLab/Search-SWE.git
 cd Search-SWE
-python -m pip install -r scripts/requirements.txt
+python -m pip install -e .
 ```
 
-`scripts/requirements.txt` provides the pinned Harbor launcher and the Hugging
-Face asset client. Run the command in any existing Python 3.12+ environment;
-an isolated venv or Conda environment is recommended if you do not already use
-one, but no particular environment manager is required. Task-specific Python
-packages are installed inside Docker.
-
-### 2. Restore the task inputs
+### Run with the CLI
 
 ```bash
-python scripts/download_assets.py --task reasoning-query-rewriting
-python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
+search-swe run
 ```
 
-The downloader checks sizes and SHA-256 checksums and reuses valid files.
+The wizard guides you through harness, provider, searchable model selection,
+reasoning level and API keys, followed by tasks and sequential or parallel execution. Its
+default setting is **Codex + OpenRouter + GPT-6 Luna (max)**. Keys use hidden
+input; configuration is saved to the ignored `.env` only after confirmation.
+You can also keep entered credentials only for the current run.
 
-### 3. Configure the agent and verifier
+Use a native Linux x86_64 Docker host with enough CPU, RAM, disk and optional GPU
+capacity. The CLI restores and checks selected task assets, assigns resources,
+and prepares bounded task storage when needed. Those tasks require root/sudo
+and FUSE; see [host setup](docs/evaluation.md#bounded-task-storage).
 
-The tracked template documents common credentials. Each task's README and
-`task.toml` specify its additional requirements. Copy it once; put real secrets
-only in the ignored `.env` file:
+After configuration, scripted runs are short:
 
 ```bash
-cp .env.example .env
-chmod 600 .env
+search-swe run reasoning-query-rewriting --yes
+search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
+search-swe run code-embedding-finetuning --gpu-devices 0 --yes
 ```
 
-For this Codex + OpenRouter walkthrough, set these four values in `.env` and
-leave unneeded groups empty:
+Parallel tasks receive separate CPU sets and GPUs within the selected resource
+pool. Results, per-task logs and a `run.json` summary are written to a fresh
+`jobs/evaluations/` directory. Use `search-swe list` to browse tasks,
+`search-swe configure` to save settings without running, and `--dry-run` to
+preview. Task definitions remain in the checkout; use `--repo PATH` when running
+an installed CLI from elsewhere.
 
-```dotenv
-AGENT_MODEL=openai/gpt-6-luna
-AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
-VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
-VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
-```
+See the [quick start](docs/quickstart.md), [CLI reference](docs/cli.md), and
+[full evaluation guide](docs/evaluation.md) for custom providers, resource pools,
+network configuration and the underlying single-task launcher.
 
-`AGENT_OPENROUTER_API_KEY` authenticates the Codex coding agent through
-OpenRouter. Use `--openrouter` in the commands below; the launcher supplies
-the API endpoint and Codex provider configuration.
-The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash` trajectory judge
-through OpenRouter and RewardKit 0.2.0. Configure this pair for tasks whose
-`task.toml` declares `VERIFIER_OPENAI_*`. The coding agent and verifier have
-separate credential groups; the launcher passes verifier credentials only to
-the verifier container. This walkthrough does not need `DEEPSEEK_API_KEY`,
-`AGENT_OPENAI_BASE_URL`, or `AGENT_OPENAI_API_KEY`.
+### Run through your agent
 
-For other runs, fill only the matching sections already present in `.env`:
-
-- Pi + GLM-5.3-Flash: `AGENT_MODEL=zai/glm-5.3-flash` and `ZAI_API_KEY`.
-- Codex with a direct endpoint, without `--openrouter`: `AGENT_MODEL`,
-  `AGENT_OPENAI_BASE_URL`, and `AGENT_OPENAI_API_KEY`.
-- Claude Code: `AGENT_MODEL` and `AGENT_ANTHROPIC_API_KEY`; the launcher uses
-  Anthropic's official API by default.
-- OpenRouter Agent mode: `AGENT_OPENROUTER_API_KEY`, `--openrouter`, and a full
-  `provider/model` slug with Codex or Claude Code.
-- Tasks with an answer judge: configure the `ANSWER_JUDGE_*` values declared by the task.
-- Optional submission APIs: use `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY`,
-  `OPENROUTER_API_KEY`, or `JINA_API_KEY` only when the selected task's README
-  and resource documentation permit them.
-
-If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
-[network guide](docs/network-policy.md); otherwise leave it empty.
-
-The [evaluation guide](docs/evaluation.md) documents credential isolation,
-custom endpoints, proxies, and how to read task-owned configuration.
-
-### 4. Run with Codex and GPT-6 Luna through OpenRouter
+Install [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) into
+your coding agent, then tell it which settings and tasks to run. Once this skill
+is available on GitHub, use either installer (Codex shown here):
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max --dry-run
-
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max \
-  --output jobs/reasoning-query-rewriting-codex-openrouter-luna
-```
-
-The dry run only prints the Harbor command. The second command builds the task
-images, runs the agent and the separate verifier, and writes the reward and job
-records under `jobs/reasoning-query-rewriting-codex-openrouter-luna`.
-
-<details>
-<summary><strong>Alternative agent examples</strong></summary>
-
-These examples reuse the downloaded task inputs and the `VERIFIER_*` pair above.
-Configure only the coding-agent credential group for the option you choose.
-
-#### Pi and Z.AI GLM-5.3-Flash
-
-In `.env`, change the agent model and fill its matching key. Keep the
-`VERIFIER_*` OpenRouter judge settings because the RewardKit judge does not change:
-
-```dotenv
-AGENT_MODEL=zai/glm-5.3-flash
-ZAI_API_KEY=YOUR_ZAI_KEY
+npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex
 ```
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
-  --thinking xhigh \
-  --output jobs/reasoning-query-rewriting-pi-glm
+gh skill install VectorSpaceLab/Search-SWE skills/run-searchswe-evaluation --agent codex
 ```
 
-#### Codex and a GPT model
+Then ask your agent:
 
-Set the model name accepted by your GPT-compatible endpoint and its credentials:
+> Use run-searchswe-evaluation with my Search-SWE checkout. Run agentic-search
+> and agentic-search-vectorless with Codex + OpenRouter + openai/gpt-6-luna,
+> max reasoning and concurrency 2. Reuse my .env, monitor the runs and report
+> scores, verifier health and result paths.
 
-```dotenv
-AGENT_MODEL=YOUR_GPT_MODEL
-AGENT_OPENAI_BASE_URL=https://your-agent-endpoint.example/v1
-AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
-```
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex \
-  --reasoning-effort xhigh --output jobs/reasoning-query-rewriting-codex
-```
-
-Omit `--reasoning-effort` when the selected model or provider does not support
-it.
-
-#### Claude Code and the official Anthropic API
-
-Claude Code 2.1.309 is preinstalled in every task image. Set an Anthropic model
-available to your API account and the dedicated coding-agent key:
-
-```dotenv
-AGENT_MODEL=claude-sonnet-4-6
-AGENT_ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY
-```
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code \
-  --reasoning-effort high --output jobs/reasoning-query-rewriting-claude
-```
-
-#### Codex or Claude Code through OpenRouter
-
-Add a dedicated OpenRouter Agent key to `.env`:
-
-```dotenv
-AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
-```
-
-Choose an Agent and pass its full OpenRouter model ID:
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --model openai/gpt-6-luna --reasoning-effort max \
-  --output jobs/reasoning-query-rewriting-codex-openrouter
-
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
-  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
-  --output jobs/reasoning-query-rewriting-claude-openrouter
-```
-
-Add `--dry-run` to either command to preview it before launching. The launcher
-sets the OpenRouter API addresses and keeps this key separate from the
-submission `OPENROUTER_API_KEY` and verifier credentials. Keep the `VERIFIER_*`
-settings from the main example.
-
-Other custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom
-Claude settings remain outside the supported scope. The
-[quick start guide](docs/quickstart.md) covers the Codex + OpenRouter walkthrough;
-the [evaluation guide](docs/evaluation.md) covers credential configuration,
-GPU, network-policy, and custom-provider options.
-
-</details>
-
-For a GPU task, add `--gpu-device 0` (host index or full GPU UUID) to select the
-same device for the agent and verifier. For example, after preparing its inputs
-and credentials:
-
-```bash
-bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
-  --reasoning-effort max --gpu-device 0
-```
-
-Omit the option to use the default single-GPU allocation. See
-[GPU device selection](docs/evaluation.md#gpu-device-selection) for details.
+The skill guides setup, resource checks, execution and monitoring through the
+same CLI. It prompts you to configure missing keys locally. The
+[agent evaluation guide](docs/agent-evaluations.md) covers local checkout
+installation, other agents, user-wide installation and installer prerequisites.
 
 ## 📚 Documentation
 
 | Document | Contents |
 | --- | --- |
 | [Quick start guide](docs/quickstart.md) | A first CPU evaluation, end to end |
+| [Run with your agent](docs/agent-evaluations.md) | Install the evaluation skill and describe settings/tasks |
 | [Evaluation guide](docs/evaluation.md) | Credential setup, coding agents, GPU, network policy, and custom providers |
 | [Network policy](docs/network-policy.md) | Phase-specific allowlists, default direct gateway, and optional proxy egress |
 | [Asset guide](docs/assets.md) | Downloading, verifying, and restoring fixed data and models |

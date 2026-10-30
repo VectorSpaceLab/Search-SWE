@@ -26,7 +26,7 @@ Before authenticated downloads, upload or HF PR merge, run `hf auth whoami`
 in the same host environment used for publication. Reuse an existing authorized
 login or `HF_TOKEN`; report only identity, authentication status and relevant
 access findings. If `hf` is missing, point the operator to the trusted checkout's
-`scripts/requirements.txt` and host environment setup.
+`pyproject.toml` and host setup: `python -m pip install -e .` from that checkout.
 
 If authentication is missing or expired, the coding agent must explicitly remind
 the maintainer to configure their own HF account locally and identify the step

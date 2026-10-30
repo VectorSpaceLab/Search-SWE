@@ -10,3 +10,6 @@ tasks/*/jobs/
 tasks/*/solution/
 __pycache__/
 *.py[cod]
+*.egg-info/
+/build/
+/dist/

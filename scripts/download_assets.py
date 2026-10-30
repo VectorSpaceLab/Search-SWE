@@ -151,7 +151,7 @@ def obtain_source(task, entry, args):
             configure_hf_xet()
         from huggingface_hub import hf_hub_download
     except ImportError as error:
-        raise ValueError("Install dependencies: python -m pip install -r scripts/requirements.txt") from error
+        raise ValueError("Install host dependencies from the repository root: python -m pip install -e .") from error
     download_args = dict(
         repo_id=source["repo_id"], repo_type=source["repo_type"],
         filename=source["filename"], revision=source["revision"],

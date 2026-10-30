@@ -43,6 +43,16 @@ class OpenRouterAgents(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "command format changed"):
             asyncio.run(agent.exec_as_agent(object(), "codex exec --model changed --json"))
 
+    def test_codex_quotes_openrouter_alias_without_shell_expansion(self):
+        agent = PreinstalledOpenRouterCodex(
+            logs_dir=Path("/tmp"), model_name="~vendor/solver-latest", config=CONFIG
+        )
+        with patch.object(Codex, "exec_as_agent", new_callable=AsyncMock) as execute:
+            asyncio.run(agent.exec_as_agent(
+                object(), "codex exec --model solver-latest --json -- task"
+            ))
+        self.assertIn("--model '~vendor/solver-latest' --json", execute.call_args.args[1])
+
     def test_claude_uses_bearer_token_and_complete_model(self):
         agent = PreinstalledOpenRouterClaudeCode(
             logs_dir=Path("/tmp"), model_name="anthropic/claude-opus-5.5",

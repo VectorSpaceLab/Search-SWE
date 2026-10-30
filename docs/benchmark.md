@@ -33,6 +33,9 @@ Search-SWE/
 ├── README.md
 ├── README_zh.md
 ├── LICENSE
+├── pyproject.toml                # Package metadata, dependencies and CLI entrypoint
+├── src/search_swe/               # Interactive configuration and batch scheduler
+├── skills/run-searchswe-evaluation/ # Installable evaluation skill for coding agents
 ├── assets/                       # Hero image used by the README
 ├── docker/                       # Reproducible CPU and GPU base-image contexts
 ├── tasks/
@@ -44,7 +47,6 @@ Search-SWE/
 │   │   └── tests/                # Verifier and grading code
 │   └── ...                       # Additional task packages
 ├── scripts/
-│   ├── requirements.txt          # Host-side launcher and asset dependencies
 │   ├── download_assets.py        # Download and verify fixed data/model inputs
 │   ├── download_models.py        # Download fixed models only
 │   ├── check_release.py          # Check package structure and asset mappings

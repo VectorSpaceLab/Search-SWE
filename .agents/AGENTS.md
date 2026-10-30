@@ -15,7 +15,10 @@ Markdown links.
   [maintain-searchswe-task](skills/maintain-searchswe-task/SKILL.md), independently
   invocable as `$maintain-searchswe-task`. Default to read-only gh evidence review;
   use its bundled offline HF staging helper only at approved stages.
-- **Run an existing task:** use `docs/quickstart.md`; do not scaffold a task.
+- **Run an existing task:** use
+  [run-searchswe-evaluation](../skills/run-searchswe-evaluation/SKILL.md), also
+  installable into an external agent. The CLI workflow is in `docs/quickstart.md`
+  and `docs/cli.md`; the single-task backend is in `docs/evaluation.md`.
 - **Restore fixed inputs:** use `docs/assets.md` and the existing download tools.
 - **Edit project documentation:** keep `README.md` and `README_zh.md` aligned.
   Describe the current contract and workflow directly; keep migration rationale

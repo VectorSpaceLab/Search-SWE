@@ -1,11 +1,11 @@
 # Downloading task data and models
 
-Use Python 3.12 or newer. Install the host-side tools in your environment;
-`scripts/requirements.txt` provides both the Harbor launcher and the Hugging
-Face asset client:
+Use Python 3.12 or newer. From the repository root, install the package and its
+host dependencies declared in `pyproject.toml`, including the Harbor launcher
+and Hugging Face asset client:
 
 ```bash
-python -m pip install -r scripts/requirements.txt
+python -m pip install -e .
 ```
 
 ## Commands
