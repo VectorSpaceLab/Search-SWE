@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Search-SWE Evaluations"
+  short_description: "Configure and run Search-SWE benchmark experiments"
+  default_prompt: "Use $run-searchswe-evaluation to configure and run my chosen model settings and tasks, then report scores, verifier health and result paths."

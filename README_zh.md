@@ -35,193 +35,82 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 
 ## 🚀 快速开始
 
-下面的示例在 CPU 上使用 Codex 编码智能体，通过 OpenRouter 调用 GPT-6 Luna，
-跑通 `reasoning-query-rewriting`。
-Search-SWE 需要 Python 3.12 或更新版本，以及满足所选任务 CPU、内存、存储和
-可选 GPU 要求的 Docker。
+在 Python 3.12+ 环境中安装 `search-swe` CLI。发布到 PyPI 后的安装命令为：
 
-### 1. 安装宿主机工具
+```bash
+python -m pip install search-swe
+```
+
+当前 checkout 中的包尚未发布。测试这个开发版本时，克隆仓库并使用本地可编辑安装：
 
 ```bash
 git clone https://github.com/VectorSpaceLab/Search-SWE.git
 cd Search-SWE
-python -m pip install -r scripts/requirements.txt
+python -m pip install -e .
 ```
 
-`scripts/requirements.txt` 提供固定版本的 Harbor 启动器和 Hugging Face 资源
-客户端。在任意已有的 Python 3.12+ 环境中运行即可；如果尚未使用隔离环境，建议
-使用 venv 或 Conda，但不强制指定环境管理工具。任务专属的 Python 依赖安装在
-Docker 镜像内。
-
-### 2. 恢复任务资源
+### 通过 CLI 运行
 
 ```bash
-python scripts/download_assets.py --task reasoning-query-rewriting
-python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
+search-swe run
 ```
 
-下载器会核对文件大小和 SHA-256，并复用已通过校验的文件。
+向导会依次引导选择 harness、provider、搜索并选择模型、推理强度和配置 API key，然后多选
+任务，选择顺序或并行运行。默认 setting 是 **Codex + OpenRouter + GPT-6 Luna
+（max）**。Key 使用隐藏输入；确认后才将配置保存到被 Git 忽略的 `.env`，也可以
+选择仅在本次运行使用输入的凭证。
 
-### 3. 配置智能体与验证器
+主机需为原生 Linux x86_64 Docker 环境，并具有足够的 CPU、RAM、磁盘和任务所需
+GPU。CLI 会自动恢复并校验所选任务的数据、分配资源，以及准备需要的限额存储。
+使用限额文件系统的任务需要 root/sudo 和 FUSE，详见
+[主机配置](docs/evaluation.md#bounded-task-storage)。
 
-仓库跟踪的模板说明通用凭证；各任务的 README 和 `task.toml` 说明额外配置。复制一次即可；
-真实密钥只填写到被 Git 忽略的 `.env` 中：
+配置完成后，可以直接启动：
 
 ```bash
-cp .env.example .env
-chmod 600 .env
+search-swe run reasoning-query-rewriting --yes
+search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
+search-swe run code-embedding-finetuning --gpu-devices 0 --yes
 ```
 
-本例使用 Codex + OpenRouter，只需在 `.env` 中填写下面四项，其余暂时留空：
+并行任务会在所选资源池内分配不同的 CPU 集合和 GPU。结果、各任务日志与
+`run.json` 摘要保存在新建的 `jobs/evaluations/` 目录下。使用 `search-swe list`
+浏览任务，`search-swe configure` 只保存配置，`--dry-run` 预览配置与命令。
+任务定义仍从 checkout 加载；在其他目录运行安装好的 CLI 时可指定 `--repo PATH`。
 
-```dotenv
-AGENT_MODEL=openai/gpt-6-luna
-AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
-VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
-VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
-```
+[快速开始](docs/quickstart.md)、[CLI 文档](docs/cli.md)及
+[完整评测指南](docs/evaluation.md)介绍自定义 provider、资源池、网络配置和底层单任务入口。
 
-`AGENT_OPENROUTER_API_KEY` 用于 Codex 编码智能体的 OpenRouter 认证。
-运行下面的命令时需指定 `--openrouter`；启动器会提供 API 地址和 Codex provider 配置。
-`VERIFIER_*` 通过 RewardKit 0.2.0 和 OpenRouter 运行固定为
-`deepseek/deepseek-v4.1-flash` 的独立轨迹评审；在 `task.toml` 中声明了
-`VERIFIER_OPENAI_*` 的任务需要配置。编码智能体与 verifier 使用独立的凭证组；
-启动器只把 verifier 凭据传进 verifier 容器。本例无需填写 `DEEPSEEK_API_KEY`、
-`AGENT_OPENAI_BASE_URL` 或 `AGENT_OPENAI_API_KEY`。
+### 通过自己的 agent 运行
 
-其他运行方式只需填写 `.env` 中对应的分组：
-
-- Pi + GLM-5.3-Flash：设置 `AGENT_MODEL=zai/glm-5.3-flash` 和 `ZAI_API_KEY`。
-- Codex 直连服务（不加 `--openrouter`）：设置 `AGENT_MODEL`、
-  `AGENT_OPENAI_BASE_URL` 和 `AGENT_OPENAI_API_KEY`。
-- Claude Code：设置 `AGENT_MODEL` 和 `AGENT_ANTHROPIC_API_KEY`；共享启动器
-  默认使用 Anthropic 官方 API。
-- OpenRouter Agent 模式：设置 `AGENT_OPENROUTER_API_KEY`，并为 Codex 或
-  Claude Code 指定 `--openrouter` 和完整的 `provider/model` 模型 ID。
-- 配置答案评审的任务：填写任务声明的 `ANSWER_JUDGE_*` 变量。
-- 可选 submission API：只在所选任务 README 和资源文档允许且确实使用时，填写
-  `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY`、`OPENROUTER_API_KEY` 或 `JINA_API_KEY`。
-
-需要代理时，按[网络配置](docs/network-policy.md)设置 `.env` 的 `EGRESS_CONFIG`，否则留空。
-
-凭证隔离、自定义服务地址、网络权限和任务配置的读取方法见
-[评测指南](docs/evaluation.md)。
-
-### 4. 使用 Codex，通过 OpenRouter 运行 GPT-6 Luna
+将 [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) 安装到
+自己的 coding agent，再告诉它要用什么 setting 跑哪些 tasks。这个 skill 发布到
+GitHub 后，可任选一种方式安装（以下以 Codex 为例）：
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max --dry-run
-
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max \
-  --output jobs/reasoning-query-rewriting-codex-openrouter-luna
-```
-
-dry-run 只打印 Harbor 命令、不启动容器。第二条命令会构建任务镜像、运行智能体
-和独立验证器，并把 reward 与任务记录写入
-`jobs/reasoning-query-rewriting-codex-openrouter-luna`。
-
-<details>
-<summary><strong>其他智能体示例</strong></summary>
-
-以下示例复用已下载的任务资源和上面的 `VERIFIER_*` 配置。只需配置所选编码
-智能体对应的凭证组。
-
-#### Pi 和 Z.AI GLM-5.3-Flash
-
-在 `.env` 中修改智能体模型并填写对应密钥。RewardKit judge 不会随之改变，因此
-仍需保留 `VERIFIER_*` OpenRouter 裁判配置：
-
-```dotenv
-AGENT_MODEL=zai/glm-5.3-flash
-ZAI_API_KEY=YOUR_ZAI_KEY
+npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex
 ```
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
-  --thinking xhigh \
-  --output jobs/reasoning-query-rewriting-pi-glm
+gh skill install VectorSpaceLab/Search-SWE skills/run-searchswe-evaluation --agent codex
 ```
 
-#### Codex 和 GPT 模型
+然后告诉 agent：
 
-配置你的 GPT 兼容服务所接受的模型名称和凭证：
+> 使用 run-searchswe-evaluation 和我的 Search-SWE checkout，以 Codex + OpenRouter +
+> openai/gpt-6-luna、max 推理强度，运行 agentic-search 和 agentic-search-vectorless，
+> 并发上限为 2。复用我的 .env，跟踪运行进展，最后汇报得分、verifier 状态和结果路径。
 
-```dotenv
-AGENT_MODEL=YOUR_GPT_MODEL
-AGENT_OPENAI_BASE_URL=https://your-agent-endpoint.example/v1
-AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
-```
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex \
-  --reasoning-effort xhigh --output jobs/reasoning-query-rewriting-codex
-```
-
-如果所选模型或服务不支持推理强度，请省略 `--reasoning-effort`。
-
-#### Claude Code 和 Anthropic 官方 API
-
-所有任务镜像都预装 Claude Code 2.1.309。填写 API 账户可用的 Anthropic 模型
-和独立的编码智能体密钥：
-
-```dotenv
-AGENT_MODEL=claude-sonnet-4-6
-AGENT_ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY
-```
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code \
-  --reasoning-effort high --output jobs/reasoning-query-rewriting-claude
-```
-
-#### 通过 OpenRouter 运行 Codex 或 Claude Code
-
-在 `.env` 中填写独立的 OpenRouter Agent 密钥：
-
-```dotenv
-AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
-```
-
-选择 Agent，并传入完整的 OpenRouter 模型 ID：
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --model openai/gpt-6-luna --reasoning-effort max \
-  --output jobs/reasoning-query-rewriting-codex-openrouter
-
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
-  --model anthropic/claude-opus-5.5 --reasoning-effort xhigh \
-  --output jobs/reasoning-query-rewriting-claude-openrouter
-```
-
-可以先为命令加上 `--dry-run` 预览。启动器已配置 OpenRouter 的 API 地址；
-这个 Agent 密钥与任务提交用的 `OPENROUTER_API_KEY` 和裁判密钥分开。
-保留主示例中的 `VERIFIER_*` 配置。
-
-其他自定义 gateway、订阅 OAuth、Bedrock、Vertex、ACP 和自定义 Claude settings
-仍不受支持。Codex + OpenRouter
-流程见[快速开始指南](docs/quickstart.md)；凭证配置、GPU、
-网络权限和自定义模型服务配置见[评测指南](docs/evaluation.md)。
-
-</details>
-
-GPU 任务可以增加 `--gpu-device 0`，使用宿主机编号或完整 GPU UUID，让 agent
-和 verifier 使用同一设备。例如，准备好该任务的数据和凭证后运行：
-
-```bash
-bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
-  --reasoning-effort max --gpu-device 0
-```
-
-省略该参数时使用默认单卡分配。详见[GPU 设备选择](docs/evaluation.md#gpu-device-selection)。
+Skill 会指导 agent 使用同一个 CLI 完成配置、资源检查、启动和监控；缺少 key 时，
+会提醒你在本地配置。[Agent 评测指南](docs/agent-evaluations.md)提供从本地 checkout
+安装、选择其他 agent、用户级安装及安装工具的环境要求。
 
 ## 📚 文档索引
 
 | 文档 | 内容 |
 | --- | --- |
 | [快速开始指南](docs/quickstart.md) | 完整的一次 CPU 评测流程 |
+| [通过 agent 运行](docs/agent-evaluations.md) | 安装评测 skill，并指定 settings 和 tasks |
 | [评测指南](docs/evaluation.md) | 凭证配置、编码智能体、GPU、网络策略和自定义模型服务 |
 | [网络权限](docs/network-policy.md) | 各阶段的 host allowlist、默认直连网关与可选代理出口 |
 | [资源说明](docs/assets.md) | 固定数据与模型的下载、校验和恢复 |

@@ -8,10 +8,11 @@ the checkout's tools; the skill does not bundle a second checker or runtime.
 
 Verify the explicit checkout contains `scripts/check_tasks.py`,
 `check_release.py`, `download_assets.py`, `run_task.py`/`run_task.sh`, and their
-imports. Use Python 3.12+, host dependencies from `scripts/requirements.txt`
-(Harbor 0.22.0 and huggingface_hub 1.x), PyYAML for static Compose parsing, and
-python-dotenv for launcher configuration. Install only in an approved host
-virtual environment. Do not replace missing target tooling with invented commands.
+imports. Use Python 3.12+ and the host dependencies declared in `pyproject.toml`,
+including Harbor, huggingface_hub, PyYAML for static Compose parsing, and
+python-dotenv for launcher configuration. Install with `python -m pip install -e .`
+from the checkout root in an approved host virtual environment.
+Do not replace missing target tooling with invented commands.
 Docker Engine + Compose are needed for builds/trials, published image access for
 pulls, and NVIDIA driver/Container Toolkit for GPU execution. Check provider,
 model, credentials, network, disk and runtime budgets before running a trial.

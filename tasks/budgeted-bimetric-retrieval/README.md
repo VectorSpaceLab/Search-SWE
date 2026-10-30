@@ -57,14 +57,15 @@ trusted setup and checks.
 
 This task uses no GPU.
 
-On the Linux Docker host, `/dev/fuse` and `mkfs.ext4` must be available.
-Prepare fresh bounded storage for each run, then set `BIMETRIC_CPUSET` to
-16 available logical CPU IDs on a supported CPU. Use a unique `RUN_ID`:
-
-```bash
-python tasks/budgeted-bimetric-retrieval/tools/prepare_storage.py --run-id RUN_ID
-export BIMETRIC_STORAGE_ROOT="$PWD/jobs/.task-storage/budgeted-bimetric-retrieval/RUN_ID"
-```
+Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`,
+`dpkg-deb`, and root or sudo access. The standard launcher prepares fresh
+bounded agent/verifier storage and the oracle socket directory, chooses
+16 logical CPUs from its available affinity, and unmounts storage after the
+run's containers exit. Backing images remain under
+`jobs/.task-storage/budgeted-bimetric-retrieval/`.
+Set `BIMETRIC_CPUSET` to preserve a particular 16-CPU allocation when reproducing
+a run. See [bounded task storage](../../docs/evaluation.md#bounded-task-storage)
+for host setup, permissions, recovery and caller-managed storage.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
@@ -82,18 +83,12 @@ Invoke the standard entrypoint directly:
 ```bash
 bash scripts/run_task.sh --task budgeted-bimetric-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
-  --output "jobs/budgeted-bimetric-retrieval-codex-openrouter-luna-max-RUN_ID"
+  --output "jobs/budgeted-bimetric-retrieval-codex-openrouter-luna-max"
 ```
 
 Inspect the resulting agent trajectory, submission and verifier report under the
 job directory. The score alone does not distinguish an invalid submission from
 an infrastructure error.
-
-After every container/process for this run has exited, unmount its storage:
-
-```bash
-python tasks/budgeted-bimetric-retrieval/tools/prepare_storage.py --run-id RUN_ID --unmount
-```
 
 ### Validate the package
 

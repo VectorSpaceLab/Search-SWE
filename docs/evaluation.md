@@ -3,6 +3,12 @@
 This guide documents the complete local evaluation setup. For a first CPU run
 with Codex, use the shorter [quick start](quickstart.md).
 
+The [CLI](cli.md) provides interactive configuration and resource-aware batches:
+`search-swe run` opens the wizard, while `search-swe run TASK --yes` uses saved
+settings. It restores assets and invokes the single-task backend documented below.
+Install the current development checkout with `python -m pip install -e .`;
+the PyPI release installation command is `python -m pip install search-swe`.
+
 Run commands from the Search-SWE repository root unless a section says
 otherwise.
 
@@ -30,7 +36,7 @@ keys may remain unset when the submission does not call those optional services.
 Install the host-side tools in any existing Python 3.12+ environment:
 
 ```bash
-python -m pip install -r scripts/requirements.txt
+python -m pip install -e .
 ```
 
 An isolated venv or Conda environment is recommended if needed, but no
@@ -43,8 +49,9 @@ python scripts/download_assets.py --task TASK_NAME
 python scripts/download_assets.py --task TASK_NAME --verify-only
 ```
 
-The launcher checks asset presence and size; `--verify-only` performs the full
+The single-task backend checks asset presence and size; `--verify-only` performs the full
 SHA-256 check. See [assets.md](assets.md) for local caches and offline restore.
+The CLI performs asset restoration and SHA-256 checking automatically before a batch.
 
 Task Dockerfiles pull versioned public images from the
 [Search-SWE Docker Hub repository](https://hub.docker.com/r/hanhainebula/search-swe-base):
@@ -75,6 +82,46 @@ Add task-specific variables to your ignored `.env` or `--env-file` as documented
 by the task. Shared `.env.example` contains common settings and examples, not an
 exhaustive inventory. Memory, storage, time limits and asset sizes vary by task.
 
+## Bounded task storage
+
+Tasks with a `tools/prepare_storage.py` helper and `*_STORAGE_ROOT` / `*_CPUSET`
+Compose settings use automatic host preparation through `scripts/run_task.sh`.
+Use a native Linux x86_64 host with local rootful Docker, without user namespace
+remapping, plus root or sudo access. On Ubuntu/Debian, install `e2fsprogs` and
+`dpkg` for `mkfs.ext4` and `dpkg-deb`. The host must expose `/dev/fuse`; if the
+kernel module is available but unloaded, enable it with `sudo modprobe fuse`.
+The helper downloads and verifies its pinned FUSE userspace tools on first use.
+
+The launcher chooses the required number of logical CPUs from its own allowed
+affinity. Set the task's `*_CPUSET` variable in `.env` or the shell for a specific
+allocation; its CPU IDs and count are checked before startup. Automatic selection
+does not reserve idle CPUs across simultaneous evaluations. Assign disjoint sets
+when running these tasks concurrently, and preserve the original allocation when
+reproducing performance measurements.
+
+Each launch prepares a unique directory under `jobs/.task-storage/<task-name>/`
+before Harbor starts. Existing filesystem capacities, resource accounting, task
+timers and scoring apply. Allow host disk space for public inputs, images, logs
+and both phases' writable filesystems; a task's 64 GiB storage budget is not the
+total host disk requirement. The filesystem images are sparse and grow with use.
+
+For an ordinary user, the launcher authenticates sudo once and keeps a dedicated
+storage helper alive through teardown. Only that helper is privileged; Harbor
+runs as the invoking user. Model API keys are not passed to the helper. For a
+background launch, configure non-interactive sudo or authenticate before starting.
+
+On normal exit or a forwarded interrupt, the launcher waits for Harbor and checks
+Docker containers before unmounting. Backing images remain available for inspection.
+If containers remain, Docker cannot be checked, or the launcher is forcibly killed,
+storage is retained and the helper prints its exact recovery command. Stop/remove
+only that run's containers before running the displayed `prepare_storage.py ...
+--unmount` command. Delete retained images only after their results are no longer
+needed and all mounts have been released.
+
+For explicitly managed runs, prepare storage with the task helper as root and
+set the task's `*_STORAGE_ROOT` to its absolute path. The launcher uses that
+directory; its owner manages unmounting after all associated containers exit.
+
 ## Environment-file behavior
 
 The launcher reads `.env` in the repository root by default. Use `--env-file`
@@ -104,6 +151,8 @@ AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
 
 `--model` overrides `AGENT_MODEL`. `--reasoning-effort` overrides the optional
 `AGENT_REASONING_EFFORT` environment variable.
+Use `--reasoning-effort default` to omit the effort override and use the
+model/harness configuration. Pi provides the equivalent `--thinking default`.
 
 For a native Codex TOML, add an absolute path or a path relative to the
 repository root:
@@ -249,7 +298,7 @@ any authenticated client. The backend uses the
 [OpenRouter Responses API](https://openrouter.ai/docs/api/api-reference/responses/create-responses).
 
 A task may additionally declare a Chat Completions-compatible answer-equivalence
-judge. When its `task.toml` declares this group, configure:
+judge. Configure the environment variables referenced by its `task.toml`, for example:
 
 ```dotenv
 ANSWER_JUDGE_MODEL_NAME=YOUR_ANSWER_JUDGE_MODEL
@@ -259,6 +308,17 @@ ANSWER_JUDGE_API_KEY=YOUR_ANSWER_JUDGE_KEY
 
 Choose an endpoint allowed by that task's `[verifier].allowed_hosts`. Answer
 and trajectory judges are separate credential groups; configure the ones the task declares.
+Literal model names and endpoints in `task.toml` remain fixed. A task may map its
+answer-judge key to an existing verifier key. The CLI prompts for the actual
+referenced variables and keeps these mappings intact.
+
+## CPU allocation
+
+The CLI assigns each simultaneous task a disjoint CPU set. For a native single-task
+run, `scripts/run_task.sh --cpu-set 0-7 ...` selects exactly the number of logical
+CPUs declared by that task. The generated phase-specific Compose copies apply the
+set to all task services, preserving their CPU quotas, RAM limits and mounts.
+Use the CLI's `--cpu-set` to specify the available pool for a batch instead.
 
 ## Configure optional submission APIs
 

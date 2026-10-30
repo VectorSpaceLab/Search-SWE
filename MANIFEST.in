@@ -1,0 +1,3 @@
+include LICENSE docs/cli.md
+recursive-include src/search_swe *.py
+global-exclude *.pyc

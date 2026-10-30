@@ -1,4 +1,0 @@
-# Host-side tools for Search-SWE: the pinned Harbor launcher and the
-# Hugging Face client used to restore fixed task inputs.
-harbor==0.22.0
-huggingface_hub>=1.0,<2.0

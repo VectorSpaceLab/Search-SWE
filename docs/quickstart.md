@@ -1,117 +1,73 @@
 # Quick start
 
-This guide runs one CPU task with the Codex coding agent and GPT-6 Luna
-through OpenRouter. It keeps the first setup small; other tasks, Pi providers,
-GPU requirements, optional submission APIs, Claude Code, proxies, and custom
-Codex providers are covered in the [full evaluation guide](evaluation.md).
+Use Python 3.12+ and a native Linux x86_64 Docker host with enough resources for
+the selected tasks. The CLI and its pinned Harbor dependency run on the host;
+task-specific libraries run inside Docker.
 
-Run every command below from the Search-SWE repository root.
+You can follow the CLI workflow below, or install the
+[evaluation skill](agent-evaluations.md) and ask your agent to run your chosen
+settings and tasks.
 
-## 1. Install the launcher
+## Install
 
-Search-SWE requires Python 3.12+, Docker, and enough CPU, memory, and storage
-for the selected task. In any existing Python 3.12+ environment, install the
-launcher and asset-downloader dependencies directly:
-
-```bash
-python -m pip install -r scripts/requirements.txt
-```
-
-An isolated venv or Conda environment is recommended if you do not already use
-one, but Search-SWE does not require a particular environment manager.
-Task-specific Python packages are installed in Docker images, not in this host
-environment. Confirm that Docker is available before continuing:
+The PyPI release installation command is `python -m pip install search-swe`.
+This development version is not yet published; install it from the checkout:
 
 ```bash
-docker info
+git clone https://github.com/VectorSpaceLab/Search-SWE.git
+cd Search-SWE
+python -m pip install -e .
+search-swe doctor
 ```
 
-## 2. Restore one task
+Use an isolated Python environment if needed. Task definitions and assets remain
+in the checkout; a wheel installation also needs that checkout, selected through
+the current directory, `--repo PATH`, or `SEARCH_SWE_REPO`.
 
-Start with `reasoning-query-rewriting`, a CPU task with a small asset bundle. Do not download
-every task for a first run:
+## Configure and run
 
 ```bash
-python scripts/download_assets.py --task reasoning-query-rewriting
-python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
+search-swe run
 ```
 
-The second command verifies file sizes and SHA-256 checksums. See the
-[asset guide](assets.md) for cache, offline, and per-kind options.
+Choose the harness and provider, then search for a model and select its reasoning
+level before entering the required API keys. For OpenRouter, type a model name
+or ID, use the arrow keys to select a match, and press Enter; a complete model
+ID can also be entered manually. The default is Codex + OpenRouter + `openai/gpt-6-luna` with `max`
+reasoning. Keys are hidden while typing, and an existing key can be reused
+without displaying it.
 
-## 3. Configure the agent and verifier
+Select tasks with Space and confirm with Enter. For a first CPU run,
+`reasoning-query-rewriting` has a small asset bundle. Choose sequential execution
+initially, or select parallel execution and its concurrency limit. The wizard
+asks for the selected tasks' judge credentials and optionally their submission
+API keys. Review the summary, choose whether to save `.env`, and confirm starting.
 
-Copy the complete environment template, then fill only the Codex-agent and
-RewardKit-verifier sections used by this walkthrough:
+The CLI downloads missing assets, validates checksums, assigns CPU/GPU resources,
+prepares task-specific storage and launches the existing Harbor integration.
+Cancellation before the final confirmation does not modify `.env`.
+
+## Run with saved settings
 
 ```bash
-cp .env.example .env
+search-swe run reasoning-query-rewriting --yes
+search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
+search-swe run code-embedding-finetuning --gpu-devices 0 --yes
 ```
 
-For `reasoning-query-rewriting`, fill in these values:
+Use `search-swe configure` to configure without launching, `search-swe list` to
+list tasks, and `--dry-run` to preview without downloads, API calls or writes.
+Non-interactive scripts supply `--yes`. Keys stay in `.env` or process environment
+variables, never command-line arguments. Exported values override saved file
+values on subsequent invocations.
 
-```dotenv
-AGENT_MODEL=openai/gpt-6-luna
-AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
-VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
-VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
-```
+## Inspect results
 
-`AGENT_OPENROUTER_API_KEY` runs the coding agent. With `--openrouter`, the
-launcher supplies the API endpoint and Codex provider configuration; leave
-`AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY` empty. `--model` can override
-`AGENT_MODEL` for a run.
+The CLI prints the batch directory and each task's log path. Under
+`jobs/evaluations/<unique-run>/`, `run.json` records settings, allocations and
+result locations; `logs/` contains preparation and evaluation logs. Read Harbor's
+reports for the score and judge health: process completion is not a passing score.
 
-The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash`
-trajectory judge through RewardKit 0.2.0 and OpenRouter. Agent and verifier
-credentials remain separate groups, and only the verifier receives the
-`VERIFIER_*` values.
-`reasoning-query-rewriting` also permits OpenRouter and Jina as submission resources;
-their keys are optional and are not needed for an implementation that uses only
-the provided corpus and local runtime.
-
-If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
-[network guide](network-policy.md); otherwise leave it empty.
-
-The local `.env` is ignored by Git. Do not commit or print credentials. On a
-multi-user Unix host, restrict it after adding credentials:
-
-```bash
-chmod 600 .env
-```
-
-## 4. Preview, then run
-
-First inspect the Harbor command without starting containers or making API
-calls:
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max --dry-run
-```
-
-The preview checks command construction only; it does not validate credentials,
-assets, Docker, hardware, or service availability. Start a fresh evaluation
-after those prerequisites are ready:
-
-```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --reasoning-effort max \
-  --output jobs/reasoning-query-rewriting-codex-openrouter-luna
-```
-
-When switching models, omit `--reasoning-effort` if the selected model or
-provider does not support it. Results are written below the output directory as
-Harbor job records.
-Inspect the job reward, verifier logs, and transferred artifacts before treating
-the run as successful.
-
-## Next steps
-
-- Read the [full evaluation guide](evaluation.md) before selecting another task
-  or agent. It documents Codex, Pi, and the pinned Claude Code 2.1.309 launcher,
-  and explains how to read each task's own credential, hardware and network
-  configuration.
-- Read the selected task's `README.md` and `instruction.md` for its resource
-  budget, submission contract, and scoring rules.
-- Use the [asset guide](assets.md) to restore only that task's fixed inputs.
+See the [CLI reference](cli.md) for resource pools, offline assets and packaging;
+the [full evaluation guide](evaluation.md) for credentials and native launcher
+options; and [network policy](network-policy.md) for proxy configuration.

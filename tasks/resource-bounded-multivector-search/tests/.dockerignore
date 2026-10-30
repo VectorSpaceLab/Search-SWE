@@ -1,5 +1,0 @@
-__pycache__/
-*.pyc
-*.so
-# Restored on the host via assets.json and mounted read-only.
-bundled-assets/
