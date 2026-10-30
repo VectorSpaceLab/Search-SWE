@@ -67,8 +67,8 @@ Public inputs are published and pinned to immutable revisions in `assets.json`, 
 ```bash
 python scripts/download_assets.py --task biomedical-graph-retrieval --verify-only
 python -m unittest discover -s tasks/biomedical-graph-retrieval/tests -p 'test_*.py' -v
-python scripts/run_task.py --task biomedical-graph-retrieval --agent pi \
-  --model deepseek/deepseek-flash --dry-run
+python scripts/run_task.py --task biomedical-graph-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max --dry-run
 ```
 
 The last command previews a launch and does not call a model. Completed runtime

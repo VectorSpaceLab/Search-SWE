@@ -60,7 +60,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task paper-metadata-retrieval
-bash scripts/run_task.sh --task paper-metadata-retrieval --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task paper-metadata-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

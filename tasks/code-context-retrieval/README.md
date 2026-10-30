@@ -83,7 +83,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task code-context-retrieval
-bash scripts/run_task.sh --task code-context-retrieval --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task code-context-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

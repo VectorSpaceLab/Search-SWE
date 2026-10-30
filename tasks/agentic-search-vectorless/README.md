@@ -39,7 +39,7 @@ Submitted processes receive an explicit environment allowlist and the task `OPEN
 
 From the repository root, restore inputs with `python scripts/download_assets.py --task agentic-search-vectorless`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
 
-Use `python scripts/check_tasks.py tasks/agentic-search-vectorless`, `python scripts/download_assets.py --task agentic-search-vectorless --verify-only`, and `python -B -m unittest discover -s tasks/agentic-search-vectorless/tests -p 'test_*.py' -q`. Full trials use `scripts/run_task.sh --task agentic-search-vectorless` with locally configured agent, optional generation and verifier-judge credentials.
+Use `python scripts/check_tasks.py tasks/agentic-search-vectorless`, `python scripts/download_assets.py --task agentic-search-vectorless --verify-only`, and `python -B -m unittest discover -s tasks/agentic-search-vectorless/tests -p 'test_*.py' -q`. Full trials use `bash scripts/run_task.sh --task agentic-search-vectorless --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max` with locally configured agent, optional generation and verifier-judge credentials.
 
 The historical October 15 Codex + OpenRouter `openai/gpt-6-luna`, effort `max`, trial used 128 GiB RAM and produced **Gold Recall@5 = 0**, compliance audit **1**, and final reward **0**. The verifier rebuilt the index in 460.82 seconds and completed all 20 query invocations in 154.15 seconds, with valid outputs and no scoring errors. The agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError`; the saved submission still received a valid zero score. This is evidence of working execution and auditing, not of positive retrieval quality. No setting was weakened or trial repeated merely because of the score.
 
@@ -99,7 +99,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task agentic-search-vectorless
-bash scripts/run_task.sh --task agentic-search-vectorless --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task agentic-search-vectorless --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

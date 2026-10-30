@@ -47,7 +47,7 @@ The CPU environment supplies 16 CPUs, 16 GiB memory, 100 GiB storage and no GPU.
 
 Submission processes run as an unprivileged user. The verifier stages only the fixed corpus and query inputs for them, excludes judge credentials from their environment, terminates submission processes before judging, and protects private labels and reward files. `/app` is transferred into a fresh environment; service processes must be recreated by the build. See the [resource policy](environment/docs/available_resources.md) for the unchanged solver API allowlist. The semantic judge does not authorize solvers to call DeepSeek.
 
-For local runs, configure an OpenRouter credential in `ANSWER_JUDGE_API_KEY`; the task pins `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_MODEL_NAME`. Keep the trajectory judge's separate `VERIFIER_OPENAI_*` configuration. Optional solver APIs use `OPENROUTER_API_KEY` and `JINA_API_KEY`. Never store keys in the task package. The shared launcher accepts `--task long-pdf-evidence --model YOUR_AGENT_MODEL`; `--dry-run` only inspects command construction.
+For local runs, configure an OpenRouter credential in `ANSWER_JUDGE_API_KEY`; the task pins `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_MODEL_NAME`. Keep the trajectory judge's separate `VERIFIER_OPENAI_*` configuration. Optional solver APIs use `OPENROUTER_API_KEY` and `JINA_API_KEY`. Never store keys in the task package. The launch example below uses Codex with GPT-6 Luna through OpenRouter; `--dry-run` only inspects command construction.
 
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run evidence and publication status. Existing source terms and attribution remain applicable.
 
@@ -84,7 +84,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task long-pdf-evidence
-bash scripts/run_task.sh --task long-pdf-evidence --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task long-pdf-evidence --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

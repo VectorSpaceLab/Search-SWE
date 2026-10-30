@@ -105,7 +105,8 @@ Public inputs are published and pinned to immutable revisions in `assets.json`, 
 ```bash
 python scripts/download_assets.py --task quantity-aware-retrieval --verify-only
 python -m unittest discover -s tasks/quantity-aware-retrieval/tests -p 'test_*.py'
-python scripts/run_task.py --task quantity-aware-retrieval --agent codex --openrouter --dry-run
+python scripts/run_task.py --task quantity-aware-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max --dry-run
 ```
 
 The coding model and verifier credentials are configured in the repository's

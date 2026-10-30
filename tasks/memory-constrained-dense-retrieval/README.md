@@ -145,12 +145,14 @@ external model-service credentials.
 
 ```bash
 python scripts/download_assets.py --task memory-constrained-dense-retrieval
-bash scripts/run_task.sh --task memory-constrained-dense-retrieval --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task memory-constrained-dense-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 The shared launcher defaults to Codex, also supports Pi and Claude Code, and
 writes results under `jobs/memory-constrained-dense-retrieval/`.
-Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+Adjust `--model` and `--reasoning-effort` for another supported model.
+Add `--dry-run` to inspect
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 

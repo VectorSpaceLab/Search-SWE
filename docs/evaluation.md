@@ -90,9 +90,11 @@ and any custom `--env-file` with `chmod 600`.
 
 ## Configure the coding agent
 
-### Codex
+### Codex with a direct endpoint
 
-Copy `.env.example` and set:
+For the Codex + OpenRouter walkthrough, use the [quick start](quickstart.md)
+or the [OpenRouter section](#codex-or-claude-code-through-openrouter) below.
+To configure a direct endpoint, copy `.env.example` and set:
 
 ```dotenv
 AGENT_MODEL=YOUR_CODEX_MODEL
@@ -125,7 +127,7 @@ Use a full OpenRouter model slug and select the route explicitly:
 
 ```bash
 bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --model openai/gpt-6-astra --reasoning-effort xhigh --dry-run
+  --model openai/gpt-6-luna --reasoning-effort max --dry-run
 bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
   --model anthropic/claude-opus-5.5 --reasoning-effort xhigh --dry-run
 ```
@@ -293,7 +295,8 @@ the agent and separate verifier:
 
 ```bash
 nvidia-smi --query-gpu=index,uuid,name,memory.used --format=csv
-bash scripts/run_task.sh --task code-embedding-finetuning --agent codex \
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max \
   --gpu-device 2 --output jobs/code-embedding-finetuning-gpu2
 ```
 
@@ -343,8 +346,8 @@ Preview command construction first:
 
 ```bash
 bash scripts/run_task.sh \
-  --task TASK_NAME \
-  --model YOUR_AGENT_MODEL \
+  --task TASK_NAME --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max \
   --dry-run
 ```
 
@@ -354,8 +357,8 @@ a fresh jobs root:
 
 ```bash
 bash scripts/run_task.sh \
-  --task TASK_NAME \
-  --model YOUR_AGENT_MODEL \
+  --task TASK_NAME --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max \
   --output jobs/TASK_NAME-run-name
 ```
 

@@ -45,7 +45,8 @@ python scripts/download_assets.py --task example-search --dry-run
 python scripts/download_assets.py --task example-search
 python scripts/download_assets.py --task example-search --verify-only
 python scripts/run_task.py --task example-search \
-  --agent pi --model deepseek/deepseek-flash --dry-run
+  --agent codex --openrouter --model openai/gpt-6-luna \
+  --reasoning-effort max --dry-run
 ```
 
 `--task all` selects every package under `tasks/` in the current checkout.

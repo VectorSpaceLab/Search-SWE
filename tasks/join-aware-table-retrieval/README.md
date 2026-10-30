@@ -116,7 +116,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task join-aware-table-retrieval
-bash scripts/run_task.sh --task join-aware-table-retrieval --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task join-aware-table-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

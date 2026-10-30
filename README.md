@@ -40,9 +40,10 @@ models come from.
 
 ## 🚀 Quick Start
 
-This walkthrough runs `reasoning-query-rewriting` on CPU with the Pi coding agent and DeepSeek
-Flash. Search-SWE requires Python 3.12 or newer and Docker with the CPU, memory,
-storage, and optional GPU capacity of the task you select.
+This walkthrough runs `reasoning-query-rewriting` on CPU with the Codex coding
+agent and GPT-6 Luna through OpenRouter. Search-SWE requires Python 3.12
+or newer and Docker with the CPU, memory, storage, and optional GPU capacity of
+the task you select.
 
 ### 1. Install the host tools
 
@@ -78,27 +79,31 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-For this Pi + DeepSeek walkthrough, set these four values in `.env` and leave
-unneeded groups empty:
+For this Codex + OpenRouter walkthrough, set these four values in `.env` and
+leave unneeded groups empty:
 
 ```dotenv
-AGENT_MODEL=deepseek/deepseek-flash
-DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
+AGENT_MODEL=openai/gpt-6-luna
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
 VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
 VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
 ```
 
-`DEEPSEEK_API_KEY` authenticates the Pi agent for `deepseek/deepseek-flash`.
+`AGENT_OPENROUTER_API_KEY` authenticates the Codex coding agent through
+OpenRouter. Use `--openrouter` in the commands below; the launcher supplies
+the API endpoint and Codex provider configuration.
 The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash` trajectory judge
 through OpenRouter and RewardKit 0.2.0. Configure this pair for tasks whose
-`task.toml` declares `VERIFIER_OPENAI_*`. Use an OpenRouter key for
-`VERIFIER_OPENAI_API_KEY`; the Pi agent uses its separate DeepSeek key. The launcher passes verifier credentials only
-to the verifier container.
+`task.toml` declares `VERIFIER_OPENAI_*`. The coding agent and verifier have
+separate credential groups; the launcher passes verifier credentials only to
+the verifier container. This walkthrough does not need `DEEPSEEK_API_KEY`,
+`AGENT_OPENAI_BASE_URL`, or `AGENT_OPENAI_API_KEY`.
 
 For other runs, fill only the matching sections already present in `.env`:
 
 - Pi + GLM-5.3-Flash: `AGENT_MODEL=zai/glm-5.3-flash` and `ZAI_API_KEY`.
-- Codex: `AGENT_MODEL`, `AGENT_OPENAI_BASE_URL`, and `AGENT_OPENAI_API_KEY`.
+- Codex with a direct endpoint, without `--openrouter`: `AGENT_MODEL`,
+  `AGENT_OPENAI_BASE_URL`, and `AGENT_OPENAI_API_KEY`.
 - Claude Code: `AGENT_MODEL` and `AGENT_ANTHROPIC_API_KEY`; the launcher uses
   Anthropic's official API by default.
 - OpenRouter Agent mode: `AGENT_OPENROUTER_API_KEY`, `--openrouter`, and a full
@@ -114,20 +119,20 @@ If a proxy is required, set `EGRESS_CONFIG` in `.env` following the
 The [evaluation guide](docs/evaluation.md) documents credential isolation,
 custom endpoints, proxies, and how to read task-owned configuration.
 
-### 4. Run with Pi and DeepSeek Flash
+### 4. Run with Codex and GPT-6 Luna through OpenRouter
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
-  --thinking xhigh --dry-run
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
+  --reasoning-effort max --dry-run
 
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent pi \
-  --thinking xhigh \
-  --output jobs/reasoning-query-rewriting-pi-deepseek
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
+  --reasoning-effort max \
+  --output jobs/reasoning-query-rewriting-codex-openrouter-luna
 ```
 
 The dry run only prints the Harbor command. The second command builds the task
 images, runs the agent and the separate verifier, and writes the reward and job
-records under `jobs/reasoning-query-rewriting-pi-deepseek`.
+records under `jobs/reasoning-query-rewriting-codex-openrouter-luna`.
 
 <details>
 <summary><strong>Alternative agent examples</strong></summary>
@@ -196,7 +201,7 @@ Choose an Agent and pass its full OpenRouter model ID:
 
 ```bash
 bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
-  --model openai/gpt-6-astra --reasoning-effort xhigh \
+  --model openai/gpt-6-luna --reasoning-effort max \
   --output jobs/reasoning-query-rewriting-codex-openrouter
 
 bash scripts/run_task.sh --task reasoning-query-rewriting --agent claude-code --openrouter \
@@ -211,7 +216,7 @@ settings from the main example.
 
 Other custom gateways, subscription OAuth, Bedrock, Vertex, ACP, and custom
 Claude settings remain outside the supported scope. The
-[quick start guide](docs/quickstart.md) covers the default Codex path;
+[quick start guide](docs/quickstart.md) covers the Codex + OpenRouter walkthrough;
 the [evaluation guide](docs/evaluation.md) covers credential configuration,
 GPU, network-policy, and custom-provider options.
 
@@ -222,7 +227,8 @@ same device for the agent and verifier. For example, after preparing its inputs
 and credentials:
 
 ```bash
-bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --gpu-device 0
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
+  --reasoning-effort max --gpu-device 0
 ```
 
 Omit the option to use the default single-GPU allocation. See

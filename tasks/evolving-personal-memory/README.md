@@ -171,11 +171,13 @@ The commands below apply in a checkout with this package installed at
 
 ```bash
 python scripts/download_assets.py --task evolving-personal-memory
-bash scripts/run_task.sh --task evolving-personal-memory --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task evolving-personal-memory --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 The shared launcher defaults to Codex and also supports Pi and Claude Code.
-Replace `YOUR_AGENT_MODEL` with the configured model. Add `--dry-run` to inspect
+Adjust `--model` and `--reasoning-effort` for another supported model.
+Add `--dry-run` to inspect
 launch construction without starting an evaluation; it does not validate assets,
 credentials or hardware. Results are written under `jobs/evolving-personal-memory/`.
 

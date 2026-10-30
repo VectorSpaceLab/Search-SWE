@@ -1,9 +1,9 @@
 # Quick start
 
-This guide runs one CPU task with the Codex coding agent. It keeps the first
-setup small; other tasks, Pi providers, GPU requirements, optional submission
-APIs, Claude Code, proxies, and custom Codex providers are covered in the
-[full evaluation guide](evaluation.md).
+This guide runs one CPU task with the Codex coding agent and GPT-6 Luna
+through OpenRouter. It keeps the first setup small; other tasks, Pi providers,
+GPU requirements, optional submission APIs, Claude Code, proxies, and custom
+Codex providers are covered in the [full evaluation guide](evaluation.md).
 
 Run every command below from the Search-SWE repository root.
 
@@ -39,7 +39,7 @@ python scripts/download_assets.py --task reasoning-query-rewriting --verify-only
 The second command verifies file sizes and SHA-256 checksums. See the
 [asset guide](assets.md) for cache, offline, and per-kind options.
 
-## 3. Configure the two services
+## 3. Configure the agent and verifier
 
 Copy the complete environment template, then fill only the Codex-agent and
 RewardKit-verifier sections used by this walkthrough:
@@ -48,16 +48,24 @@ RewardKit-verifier sections used by this walkthrough:
 cp .env.example .env
 ```
 
-For `reasoning-query-rewriting`, fill in these two credential pairs:
+For `reasoning-query-rewriting`, fill in these values:
 
-- `AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY` run the coding agent.
-- `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
-  `VERIFIER_OPENAI_API_KEY` run the independent `deepseek/deepseek-v4.1-flash` trajectory
-  judge through RewardKit 0.2.0.
+```dotenv
+AGENT_MODEL=openai/gpt-6-luna
+AGENT_OPENROUTER_API_KEY=YOUR_AGENT_OPENROUTER_KEY
+VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1
+VERIFIER_OPENAI_API_KEY=YOUR_OPENROUTER_KEY
+```
 
-Set `AGENT_MODEL` in `.env`, or pass `--model` on the command line. The verifier
-uses an OpenRouter key. Agent and verifier credentials remain separate groups,
-and only the verifier receives the `VERIFIER_*` values.
+`AGENT_OPENROUTER_API_KEY` runs the coding agent. With `--openrouter`, the
+launcher supplies the API endpoint and Codex provider configuration; leave
+`AGENT_OPENAI_BASE_URL` and `AGENT_OPENAI_API_KEY` empty. `--model` can override
+`AGENT_MODEL` for a run.
+
+The `VERIFIER_*` pair runs the independent `deepseek/deepseek-v4.1-flash`
+trajectory judge through RewardKit 0.2.0 and OpenRouter. Agent and verifier
+credentials remain separate groups, and only the verifier receives the
+`VERIFIER_*` values.
 `reasoning-query-rewriting` also permits OpenRouter and Jina as submission resources;
 their keys are optional and are not needed for an implementation that uses only
 the provided corpus and local runtime.
@@ -78,7 +86,8 @@ First inspect the Harbor command without starting containers or making API
 calls:
 
 ```bash
-bash scripts/run_task.sh --task reasoning-query-rewriting --dry-run
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
+  --reasoning-effort max --dry-run
 ```
 
 The preview checks command construction only; it does not validate credentials,
@@ -86,14 +95,14 @@ assets, Docker, hardware, or service availability. Start a fresh evaluation
 after those prerequisites are ready:
 
 ```bash
-bash scripts/run_task.sh \
-  --task reasoning-query-rewriting \
-  --reasoning-effort high \
-  --output jobs/reasoning-query-rewriting-codex
+bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
+  --reasoning-effort max \
+  --output jobs/reasoning-query-rewriting-codex-openrouter-luna
 ```
 
-Omit `--reasoning-effort` when the selected model or provider does not support
-it. Results are written below the output directory as Harbor job records.
+When switching models, omit `--reasoning-effort` if the selected model or
+provider does not support it. Results are written below the output directory as
+Harbor job records.
 Inspect the job reward, verifier logs, and transferred artifacts before treating
 the run as successful.
 

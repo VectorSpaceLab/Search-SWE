@@ -167,7 +167,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task lightweight-query-retrieval
-bash scripts/run_task.sh --task lightweight-query-retrieval --gpu-device 0 --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task lightweight-query-retrieval --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.

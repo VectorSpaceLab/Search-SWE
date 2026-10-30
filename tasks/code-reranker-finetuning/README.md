@@ -45,7 +45,7 @@ An earlier author-only local A100 run substituted local BGE embeddings for the A
 
 From the repository root, restore inputs with `python scripts/download_assets.py --task code-reranker-finetuning`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
 
-Use `python scripts/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `scripts/run_task.sh --task code-reranker-finetuning`, which preserves real Compose GPU reservations with the documented Harbor override.
+Use `python scripts/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which preserves real Compose GPU reservations with the documented Harbor override.
 
 #### Historical 6-hour coding-model evaluation (v0.3.1)
 

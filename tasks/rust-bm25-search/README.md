@@ -162,7 +162,8 @@ From the repository root, configure the agent and any task-specific judge creden
 
 ```bash
 python scripts/download_assets.py --task rust-bm25-search
-bash scripts/run_task.sh --task rust-bm25-search --model YOUR_AGENT_MODEL
+bash scripts/run_task.sh --task rust-bm25-search --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 ## References

@@ -131,12 +131,14 @@ the separate credential groups and their API requirements.
 
 ```bash
 python scripts/download_assets.py --task scientific-paper-qa
-bash scripts/run_task.sh --task scientific-paper-qa --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task scientific-paper-qa --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max
 ```
 
 The shared launcher defaults to Codex, also supports Pi and Claude Code, and
 writes results under `jobs/scientific-paper-qa/`.
-Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+Adjust `--model` and `--reasoning-effort` for another supported model.
+Add `--dry-run` to inspect
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 

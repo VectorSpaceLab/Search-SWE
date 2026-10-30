@@ -135,12 +135,14 @@ The asset downloader restores both training data and the fixed backbone.
 
 ```bash
 python scripts/download_assets.py --task code-embedding-finetuning
-bash scripts/run_task.sh --task code-embedding-finetuning --gpu-device 0 --model "YOUR_AGENT_MODEL"
+bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
 The shared launcher defaults to Codex, also supports Pi and Claude Code, and
 writes results under `jobs/code-embedding-finetuning/`.
-Replace `YOUR_AGENT_MODEL` with your configured model. Add `--dry-run` to inspect
+Adjust `--model` and `--reasoning-effort` for another supported model.
+Add `--dry-run` to inspect
 command construction without starting an evaluation; this does not validate
 assets, credentials, or hardware.
 
