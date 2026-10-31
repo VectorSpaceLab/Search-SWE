@@ -1,9 +1,11 @@
-"""Interactive choices are collected before configuration is written or work starts."""
+"""Interactive checkout setup, model configuration and evaluation choices."""
 
+from pathlib import Path
 import questionary
 
 from .configuration import EFFORTS, PI_KEYS, Setting
 from .model_catalog import MODEL_ID, ModelCompleter, eligible, load_models
+from .repository import clone_repo, is_repo, preference_path, remember_repo
 
 
 def ask(question):
@@ -11,6 +13,45 @@ def ask(question):
     if value is None:
         raise KeyboardInterrupt
     return value
+
+
+def select_repository(*, offline=False):
+    default = Path.home() / "Search-SWE"
+    print("Choose where to keep Search-SWE tasks, downloaded assets and evaluation results.")
+    print("The CLI package stays in your Python environment. This choice is remembered for future commands.")
+    while True:
+        choices = []
+        if is_repo(default) or not offline:
+            label = "Use existing checkout at" if is_repo(default) else "Clone to"
+            choices.append(questionary.Choice(f"{label} {default} (default)", value="default"))
+        if not offline:
+            choices.append(questionary.Choice("Clone to a custom path", value="custom"))
+        choices.append(questionary.Choice("Select an existing checkout", value="existing"))
+        action = ask(questionary.select("Search-SWE repository", choices=choices))
+        if action == "default":
+            root = default.resolve()
+        else:
+            root = Path(ask(questionary.path("Existing checkout path" if action == "existing" else "Clone destination",
+                        default=str(default), only_directories=True,
+                        validate=lambda value: bool(value.strip()))).strip()).expanduser().resolve()
+        if not is_repo(root):
+            if action == "existing" or offline:
+                print(f"No Search-SWE checkout found at {root}. Choose a directory containing tasks/ and scripts/run_task.py.")
+                continue
+            if root.exists() and (not root.is_dir() or any(root.iterdir())):
+                print(f"{root} already contains files. Choose a new or empty directory.")
+                continue
+            if not ask(questionary.confirm(f"Clone Search-SWE into {root}?", default=True, auto_enter=False)):
+                raise KeyboardInterrupt
+            root = clone_repo(root)
+        try:
+            remember_repo(root)
+        except OSError as error:
+            print(f"Could not remember this path ({error}); use --repo {root} for future commands.")
+        else:
+            print(f"Repository path saved to {preference_path()}")
+        print(f"Using Search-SWE checkout: {root}")
+        return root
 
 
 def select_setting(current, args):

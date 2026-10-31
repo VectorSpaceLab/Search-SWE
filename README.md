@@ -40,20 +40,10 @@ models come from.
 
 ## 🚀 Quick Start
 
-Install the `search-swe` CLI in a Python 3.12+ environment. The PyPI release
-installation command is:
+Install the `search-swe` CLI from PyPI in a Python 3.12+ environment:
 
 ```bash
 python -m pip install search-swe
-```
-
-The package in this checkout is currently unpublished. To test this development
-version, clone the repository and use an editable install:
-
-```bash
-git clone https://github.com/VectorSpaceLab/Search-SWE.git
-cd Search-SWE
-python -m pip install -e .
 ```
 
 ### Run with the CLI
@@ -61,6 +51,12 @@ python -m pip install -e .
 ```bash
 search-swe run
 ```
+
+On first use, choose where to keep the task repository: accept `~/Search-SWE`,
+enter a custom clone path, or select an existing checkout. Git is needed for
+cloning. The CLI remembers the selected path for later commands; task assets and
+results are stored in that checkout. An existing checkout in the current
+directory is used directly.
 
 The wizard guides you through harness, provider, searchable model selection,
 reasoning level and API keys, followed by tasks and sequential or parallel execution. Its
@@ -91,12 +87,13 @@ an installed CLI from elsewhere.
 See the [quick start](docs/quickstart.md), [CLI reference](docs/cli.md), and
 [full evaluation guide](docs/evaluation.md) for custom providers, resource pools,
 network configuration and the underlying single-task launcher.
+For local CLI development, use `python -m pip install -e .` from the repository root.
 
 ### Run through your agent
 
 Install [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) into
-your coding agent, then tell it which settings and tasks to run. Once this skill
-is available on GitHub, use either installer (Codex shown here):
+your coding agent, then tell it which settings and tasks to run. Use either
+installer (Codex shown here):
 
 ```bash
 npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex

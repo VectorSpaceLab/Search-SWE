@@ -143,7 +143,16 @@ def main(argv=None):
         command_parser.print_help()
         return 0
     try:
-        root = find_repo(args.repo)
+        try:
+            root = find_repo(args.repo)
+        except ValueError:
+            interactive = (args.command in ("run", "configure")
+                           and not args.yes and not args.dry_run
+                           and sys.stdin.isatty() and sys.stdout.isatty())
+            if args.repo or os.environ.get("SEARCH_SWE_REPO") or not interactive:
+                raise
+            from .wizard import select_repository
+            root = select_repository(offline=args.offline)
         if args.command == "list":
             rows = [{"name": task.name, "cpus": task.cpus, "ram_gib": task.memory_mb / 1024,
                      "gpus": task.gpus, "asset_gib": round(task.asset_bytes / 2**30, 2)}

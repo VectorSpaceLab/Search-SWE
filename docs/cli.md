@@ -2,19 +2,18 @@
 
 Configure coding-agent evaluations interactively, restore fixed inputs, and run
 one model setting across selected Search-SWE tasks sequentially or concurrently.
-For agent-driven operation, install the [evaluation skill](agent-evaluations.md)
+For agent-driven operation, install the [evaluation skill](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/agent-evaluations.md)
 and describe the settings and tasks to your agent.
 
 ## Installation
 
-The distribution name and command are both `search-swe`. This checkout contains
-the unpublished `0.1.0.dev0` development version. Once published, installation is:
+The distribution name and command are both `search-swe`. Install from PyPI:
 
 ```bash
 python -m pip install search-swe
 ```
 
-For the current local version, install from the repository root:
+For local CLI development, install from the repository root:
 
 ```bash
 python -m pip install -e .
@@ -24,18 +23,30 @@ search-swe --help
 Python 3.12+ is required. Package dependencies are declared in
 `pyproject.toml`, including the pinned Harbor version. Use a virtual
 environment to isolate these dependencies. The wheel contains the CLI; task
-definitions, Docker integration and fixed assets live in a Search-SWE checkout:
+definitions, Docker integration and fixed assets live in a Search-SWE checkout.
+Start the wizard to choose or prepare that checkout:
 
 ```bash
-git clone https://github.com/VectorSpaceLab/Search-SWE.git
-cd Search-SWE
 search-swe run
 ```
 
+When no checkout is found, interactive `run` and `configure` offer three choices:
+clone to `~/Search-SWE`, clone to a custom path, or select an existing checkout.
+Git is required for cloning. Accept the clone destination to download the
+repository's latest `main` snapshot with a shallow clone, then continue with model configuration. A valid
+checkout at the chosen path is reused; cloning uses a new or empty directory.
+
+The selected path is saved in `$XDG_CONFIG_HOME/search-swe/repository.json`
+(default `~/.config/search-swe/repository.json`) and reused by future commands.
+Repository setup completes before model configuration; task assets and results
+belong to the selected checkout, while the CLI stays in the Python environment.
+
 Repository discovery uses `--repo`, then `SEARCH_SWE_REPO`, then the current
 directory and its parents. Editable installations also recognize their source
-checkout. A wheel installation can run from another directory with
-`search-swe --repo /path/to/Search-SWE run`.
+checkout, followed by the remembered path. To override discovery, use
+`search-swe --repo /path/to/Search-SWE run`. Scripted commands (`--yes`), dry runs,
+`list` and `doctor` require an existing checkout. With `--offline`, the interactive
+selector offers existing checkouts only.
 
 ## Interactive setup
 
@@ -169,11 +180,13 @@ non-interactive sudo access in advance.
 ## Building for publication
 
 ```bash
-python -m pip install build
+python -m pip install build twine
 python -m build
+python -m twine check --strict dist/*
 ```
 
 Inspect both wheel and sdist before publishing. They should contain the CLI,
-metadata, license and documentation, with no `.env`, task
-datasets, trajectories or job outputs. Publication is a separate maintainer
-action; the development package has not been uploaded to PyPI.
+metadata, license and documentation, with no `.env`, task datasets, trajectories
+or job outputs. Keep `pyproject.toml` and `src/search_swe/__init__.py` versions
+aligned before building.
+Upload the checked wheel and sdist with Twine using a PyPI API token.

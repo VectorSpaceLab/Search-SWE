@@ -6,8 +6,8 @@ with Codex, use the shorter [quick start](quickstart.md).
 The [CLI](cli.md) provides interactive configuration and resource-aware batches:
 `search-swe run` opens the wizard, while `search-swe run TASK --yes` uses saved
 settings. It restores assets and invokes the single-task backend documented below.
-Install the current development checkout with `python -m pip install -e .`;
-the PyPI release installation command is `python -m pip install search-swe`.
+Install the CLI with `python -m pip install search-swe`. For local CLI development,
+use `python -m pip install -e .` from the checkout.
 
 Run commands from the Search-SWE repository root unless a section says
 otherwise.
@@ -36,7 +36,7 @@ keys may remain unset when the submission does not call those optional services.
 Install the host-side tools in any existing Python 3.12+ environment:
 
 ```bash
-python -m pip install -e .
+python -m pip install search-swe
 ```
 
 An isolated venv or Conda environment is recommended if needed, but no

@@ -10,25 +10,27 @@ settings and tasks.
 
 ## Install
 
-The PyPI release installation command is `python -m pip install search-swe`.
-This development version is not yet published; install it from the checkout:
+Install the CLI from PyPI in an isolated Python environment:
 
 ```bash
-git clone https://github.com/VectorSpaceLab/Search-SWE.git
-cd Search-SWE
-python -m pip install -e .
-search-swe doctor
+python -m pip install search-swe
 ```
 
-Use an isolated Python environment if needed. Task definitions and assets remain
-in the checkout; a wheel installation also needs that checkout, selected through
-the current directory, `--repo PATH`, or `SEARCH_SWE_REPO`.
+Task definitions, assets and results live in a separate repository checkout.
+The first-run selector below prepares it; Git is required for cloning.
+For local CLI development, use `python -m pip install -e .` from the repository root.
 
 ## Configure and run
 
 ```bash
 search-swe run
 ```
+
+If a checkout has not been found, accept the default `~/Search-SWE` clone path,
+enter a custom path, or choose an existing checkout. Confirm the clone location
+to download the repository. The CLI remembers the selected path for future
+commands, including commands run outside the checkout. Use `--repo PATH` to
+select a different checkout explicitly.
 
 Choose the harness and provider, then search for a model and select its reasoning
 level before entering the required API keys. For OpenRouter, type a model name
@@ -50,6 +52,7 @@ Cancellation before the final confirmation does not modify `.env`.
 ## Run with saved settings
 
 ```bash
+search-swe doctor
 search-swe run reasoning-query-rewriting --yes
 search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
 search-swe run code-embedding-finetuning --gpu-devices 0 --yes

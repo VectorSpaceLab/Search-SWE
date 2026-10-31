@@ -19,12 +19,15 @@ checkout. Locate the checkout from the user's path, `SEARCH_SWE_REPO`, or the
 current workspace. Reuse its existing branch and working tree. If a checkout is
 needed, obtain `https://github.com/VectorSpaceLab/Search-SWE` in the user's chosen
 workspace. Task definitions and backend scripts come from that checkout.
+Interactive `search-swe configure` offers a default `~/Search-SWE` clone path,
+a custom path, or an existing checkout, and remembers the selection. For
+unattended execution, prepare the checkout first and pass `--repo PATH`.
 
 Use a Python 3.12+ host environment with the Search-SWE package installed. Check
-`search-swe --version` and `search-swe run --help`. The current development
-checkout installs with `python -m pip install -e /path/to/Search-SWE`; the published
-distribution installs with `python -m pip install search-swe`. An installed skill
-provides instructions; the package supplies the executable.
+`search-swe --version` and `search-swe run --help`. Install the distribution with
+`python -m pip install search-swe`. For local CLI development, use
+`python -m pip install -e /path/to/Search-SWE`. An installed skill provides
+instructions; the package supplies the executable.
 
 Read `docs/cli.md` in the selected checkout for its supported flags. Read
 `docs/evaluation.md` only for provider, network or bounded-storage setup details.

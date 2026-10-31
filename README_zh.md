@@ -35,18 +35,10 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 
 ## 🚀 快速开始
 
-在 Python 3.12+ 环境中安装 `search-swe` CLI。发布到 PyPI 后的安装命令为：
+在 Python 3.12+ 环境中从 PyPI 安装 `search-swe` CLI：
 
 ```bash
 python -m pip install search-swe
-```
-
-当前 checkout 中的包尚未发布。测试这个开发版本时，克隆仓库并使用本地可编辑安装：
-
-```bash
-git clone https://github.com/VectorSpaceLab/Search-SWE.git
-cd Search-SWE
-python -m pip install -e .
 ```
 
 ### 通过 CLI 运行
@@ -54,6 +46,10 @@ python -m pip install -e .
 ```bash
 search-swe run
 ```
+
+首次使用时，选择任务仓库的位置：接受默认的 `~/Search-SWE`、自定义克隆路径，
+或选择已有 checkout。克隆需要安装 Git。CLI 会记住所选路径，后续命令可直接复用；
+任务数据和评测结果保存在该 checkout 中。如果当前目录已位于仓库内，则直接使用它。
 
 向导会依次引导选择 harness、provider、搜索并选择模型、推理强度和配置 API key，然后多选
 任务，选择顺序或并行运行。默认 setting 是 **Codex + OpenRouter + GPT-6 Luna
@@ -80,12 +76,13 @@ search-swe run code-embedding-finetuning --gpu-devices 0 --yes
 
 [快速开始](docs/quickstart.md)、[CLI 文档](docs/cli.md)及
 [完整评测指南](docs/evaluation.md)介绍自定义 provider、资源池、网络配置和底层单任务入口。
+本地开发 CLI 时，在仓库根目录执行 `python -m pip install -e .`。
 
 ### 通过自己的 agent 运行
 
 将 [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) 安装到
-自己的 coding agent，再告诉它要用什么 setting 跑哪些 tasks。这个 skill 发布到
-GitHub 后，可任选一种方式安装（以下以 Codex 为例）：
+自己的 coding agent，再告诉它要用什么 setting 跑哪些 tasks。可任选一种方式安装
+（以下以 Codex 为例）：
 
 ```bash
 npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex

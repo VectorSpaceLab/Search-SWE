@@ -148,18 +148,22 @@ class RewardKitDeepSeekConfiguration(unittest.TestCase):
 
         for readme in ("README.md", "README_zh.md"):
             text = (REPO / readme).read_text()
-            for name in (
-                "DEEPSEEK_API_KEY",
-                "ZAI_API_KEY",
-                "AGENT_OPENAI_API_KEY",
-                "AGENT_ANTHROPIC_API_KEY",
-                "AGENT_OPENROUTER_API_KEY",
-                "VERIFIER_OPENAI_API_KEY",
-                "ANSWER_JUDGE_*",
-                "OPENROUTER_API_KEY",
-                "JINA_API_KEY",
-            ):
-                self.assertIn(name, text, f"{readme} does not explain {name}")
+            self.assertIn("(docs/evaluation.md)", text, f"{readme} must link to credential setup")
+        guide = (REPO / "docs/evaluation.md").read_text()
+        for name in (
+            "DEEPSEEK_API_KEY",
+            "ZAI_API_KEY",
+            "AGENT_OPENAI_API_KEY",
+            "AGENT_ANTHROPIC_API_KEY",
+            "AGENT_OPENROUTER_API_KEY",
+            "VERIFIER_OPENAI_API_KEY",
+            "ANSWER_JUDGE_MODEL_NAME",
+            "ANSWER_JUDGE_BASE_URL",
+            "ANSWER_JUDGE_API_KEY",
+            "OPENROUTER_API_KEY",
+            "JINA_API_KEY",
+        ):
+            self.assertIn(name, guide, f"docs/evaluation.md does not explain {name}")
 
     @unittest.skipUnless(
         installed_rewardkit_version() == "0.2.0",

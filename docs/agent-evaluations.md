@@ -11,7 +11,7 @@ Run an installer from the workspace used by your coordinating agent. These
 examples target Codex; replace `codex` with your supported agent, such as
 `claude-code`. Install using either tool.
 
-Once the skill's revision is available on GitHub:
+With the skills installer:
 
 ```bash
 npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex
@@ -30,7 +30,7 @@ need an upgrade. The current `npx skills` release requires Node.js 22.20+.
 See the [skills installer documentation](https://github.com/vercel-labs/skills)
 and [GitHub CLI installation reference](https://cli.github.com/manual/gh_skill_install).
 
-For the current local development checkout, install directly from its path:
+To install from a local checkout, use its path:
 
 ```bash
 npx skills add /path/to/Search-SWE --skill run-searchswe-evaluation -a codex
@@ -51,10 +51,14 @@ Reload your agent's skills or start a new session after installation.
 ## Prepare the evaluation host
 
 The agent still needs a Search-SWE checkout, the CLI, Python 3.12+ and a native
-Linux x86_64 Docker host with the selected tasks' resources. Install the local
-development package with `python -m pip install -e /path/to/Search-SWE`; the PyPI
-release command is `python -m pip install search-swe`. The skill itself is an
-instruction package and uses the separately installed CLI.
+Linux x86_64 Docker host with the selected tasks' resources. Install the CLI with
+`python -m pip install search-swe`. For local CLI development, use
+`python -m pip install -e /path/to/Search-SWE`. The skill itself is an instruction
+package and uses the separately installed CLI.
+
+Interactive `search-swe configure` can clone to `~/Search-SWE`, accept a custom
+clone path, or select an existing checkout, and remembers the chosen path. For
+unattended commands, prepare the checkout first and pass `--repo PATH`.
 
 Tell the agent which checkout and environment to use. It will inspect the task
 catalog and host, resolve your setting, and prepare a non-interactive command.
