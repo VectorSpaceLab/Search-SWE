@@ -202,7 +202,7 @@ def parse_judgement(content):
 
 
 def call_judge(config, question, sentences, reference):
-    body = {'model':MODEL, 'temperature':0, 'max_tokens':4096,
+    body = {'model':MODEL, 'temperature':0, 'max_tokens':8192,
             'reasoning':{'effort':EFFORT,'exclude':True}, 'response_format':{'type':'json_object'},
             'messages':[{'role':'system','content':SYSTEM_PROMPT},
                         {'role':'user','content':json.dumps({'QUESTION':question,

@@ -1,8 +1,11 @@
 """Fail-closed scoring for the fixed multilingual retrieval task."""
 import json
-from scoring_parameters import SCORING
 from pathlib import Path
 import sys
+
+# -I removes the script directory; only restore this root-owned verifier path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scoring_parameters import SCORING
 
 sys.path.insert(0, "/task/runtime")
 from evaluate import evaluate

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -15,6 +19,55 @@ SPEC.loader.exec_module(RUNNER)
 
 
 class RunnerTests(unittest.TestCase):
+    @unittest.skipUnless(os.geteuid() == 0, "requires the real untrusted UID boundary")
+    def test_query_io_works_with_private_verifier_logs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            root.chmod(0o755)
+            submission = root / "submission"
+            submission.mkdir()
+            private = root / "private-verifier"
+            private.mkdir(mode=0o700)
+            results = private / "results"
+            (private / "secret").write_text("verifier-only")
+            (submission / "build.sh").write_text("#!/bin/sh\nexit 0\n")
+            program = (
+                "import argparse,json,pathlib\n"
+                "p=argparse.ArgumentParser()\n"
+                "p.add_argument('--index-dir');p.add_argument('--queries');p.add_argument('--output')\n"
+                "a=p.parse_args()\n"
+                f"secret=pathlib.Path({str(private / 'secret')!r})\n"
+                "try: secret.read_text()\n"
+                "except PermissionError: pass\n"
+                "else: raise SystemExit('private verifier data was exposed')\n"
+                "q=json.loads(pathlib.Path(a.queries).read_text())\n"
+                "pathlib.Path(a.output).write_text(json.dumps({'query_id':q['query_id'],'doc_ids':['a','b','c','d','e']})+'\\n')\n"
+            )
+            (submission / "run.sh").write_text(f"#!{sys.executable}\n" + program)
+            for name in ("build.sh", "run.sh"):
+                (submission / name).chmod(0o755)
+            queries = root / "queries.jsonl"
+            queries.write_text('{"query_id":"q1","question":"fixture"}\n')
+            argv = ["run_submission.py", "--submission-dir", str(submission),
+                    "--corpus", str(root / "corpus.jsonl"), "--queries", str(queries),
+                    "--qrels", str(root / "qrels.txt"), "--results-dir", str(results),
+                    "--evaluator", str(root / "evaluate.py")]
+
+            def score(command, **kwargs):
+                self.assertEqual(json.loads((results / "results.jsonl").read_text())["query_id"], "q1")
+                Path(command[command.index("--report") + 1]).write_text('{"valid":true}')
+                return subprocess.CompletedProcess(command, 0)
+
+            with patch.object(sys, "argv", argv), patch.object(RUNNER.subprocess, "run", side_effect=score):
+                status = RUNNER.main()
+                diagnostic = (results / "evaluation.json").read_text()
+                if (results / "run.stderr.log").exists():
+                    diagnostic += (results / "run.stderr.log").read_text()
+                self.assertEqual(status, 0, diagnostic)
+            self.assertEqual(private.stat().st_mode & 0o777, 0o700)
+            self.assertTrue((results / "query_inputs/query-001.jsonl").is_file())
+            self.assertTrue((results / "query_outputs/query-001.jsonl").is_file())
+
     def test_submission_environment_preserves_only_allowed_api_keys(self) -> None:
         values = {
             "API_KEY": "private-secret",

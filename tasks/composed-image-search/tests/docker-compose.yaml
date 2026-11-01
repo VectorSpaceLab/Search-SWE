@@ -1,11 +1,10 @@
 services:
   main:
-    cpu_period: 100000
-    cpu_quota: 800000
+    cpus: 8
     environment:
       HF_HUB_OFFLINE: '1'
       TRANSFORMERS_OFFLINE: '1'
-      LD_LIBRARY_PATH: /usr/local/cuda/compat:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+      LD_LIBRARY_PATH: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
     deploy:
       resources:
         reservations:

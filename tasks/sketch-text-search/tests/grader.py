@@ -37,7 +37,7 @@ def child_env():
         "PYTHONDONTWRITEBYTECODE": "1",
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
-        "LD_LIBRARY_PATH": "/usr/local/cuda/compat:/usr/local/nvidia/lib:/usr/local/nvidia/lib64",
+        "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH", "/usr/local/nvidia/lib:/usr/local/nvidia/lib64"),
         "TMPDIR": home + "/tmp",
         "XDG_CACHE_HOME": home + "/cache",
     }
