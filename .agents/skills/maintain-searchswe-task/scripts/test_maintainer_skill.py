@@ -238,12 +238,12 @@ class MaintainerSkill(unittest.TestCase):
     def test_repository_wrapper_paths(self):
         # Exercise the repository CLI with absolute and cwd-relative paths.
         repository = SKILL.parents[2]
-        if not (repository / "scripts/_maintainer_skill.py").is_file():
+        if not (repository / "scripts/assets/_maintainer_skill.py").is_file():
             self.skipTest("Repository wrappers are inputs, absent in standalone skill copy")
-        scripts = self.repo / "scripts"
-        scripts.mkdir()
+        scripts = self.repo / "scripts/assets"
+        scripts.mkdir(parents=True)
         for name in ("_maintainer_skill.py", "prepare_hf_upload.py"):
-            shutil.copyfile(repository / "scripts" / name, scripts / name)
+            shutil.copyfile(repository / "scripts/assets" / name, scripts / name)
         shutil.copytree(self.skill, self.repo / ".agents/skills/maintain-searchswe-task")
         def repository_cli(name, *args):
             return subprocess.run([sys.executable, str(scripts / name), *map(str, args)],

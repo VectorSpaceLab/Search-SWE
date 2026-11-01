@@ -181,8 +181,8 @@ to submitted programs. Both phases use the pinned repository CPU base image.
 From the Search-SWE root:
 
 ```bash
-python scripts/download_assets.py --task negative-constraint-retrieval --verify-only
-python scripts/check_tasks.py tasks/negative-constraint-retrieval
+python scripts/assets/download_assets.py --task negative-constraint-retrieval --verify-only
+python scripts/validation/check_tasks.py tasks/negative-constraint-retrieval
 python -m unittest discover -s tasks/negative-constraint-retrieval/tests -p 'test_*.py'
 docker build -t search-swe-local:nc-agent tasks/negative-constraint-retrieval/environment
 docker build -t search-swe-local:nc-verifier tasks/negative-constraint-retrieval/tests
@@ -199,7 +199,7 @@ and set the chosen coding model/provider and its credential, for example
 `VERIFIER_OPENAI_API_KEY`. Optional submission resources need
 the shared `OPENROUTER_API_KEY` and/or `JINA_API_KEY`, as in `agentic-search`.
 Do not share secret values in chat or write them into artifacts. The archived v0.1.1 luna trial achieved 8/10 with about 59 seconds for the whole batch; it does not validate the revised setting. The historical trial and completed saved-submission regrade are recorded above. For a separately authorized fresh trial, launch with
-`bash scripts/run_task.sh --task negative-constraint-retrieval` and the chosen
+`bash scripts/evaluation/run_task.sh --task negative-constraint-retrieval` and the chosen
 model/provider flags, previewing with `--dry-run` first.
 
 ### Structural precedent

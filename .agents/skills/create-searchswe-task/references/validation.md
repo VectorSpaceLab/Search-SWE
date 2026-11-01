@@ -6,7 +6,7 @@ the checkout's tools; the skill does not bundle a second checker or runtime.
 
 ## Target prerequisites (stop if missing)
 
-Verify the explicit checkout contains `scripts/check_tasks.py`,
+Verify the explicit checkout contains `scripts/validation/check_tasks.py`,
 `check_release.py`, `download_assets.py`, `run_task.py`/`run_task.sh`, and their
 imports. Use Python 3.12+ and the host dependencies declared in `pyproject.toml`,
 including Harbor, huggingface_hub, PyYAML for static Compose parsing, and
@@ -49,10 +49,10 @@ for an authorized remote inspection or PR handoff, not local task authoring.
 
 ```bash
 task_path=tasks/example-search
-python scripts/check_tasks.py "$task_path" # Requires PyYAML
-python scripts/check_release.py
-python -m unittest discover -s scripts/tests -p 'test_*.py'
-python scripts/download_assets.py --task "${task_path#tasks/}" --dry-run
+python scripts/validation/check_tasks.py "$task_path" # Requires PyYAML
+python scripts/validation/check_release.py
+python -m unittest discover -s tests/unit -p 'test_*.py'
+python scripts/assets/download_assets.py --task "${task_path#tasks/}" --dry-run
 bash -n "$task_path/tests/test.sh"
 git diff --check
 ```
@@ -67,14 +67,14 @@ configuration. Add task-specific regressions inside the package, not shared
 task-name inventories. Do not weaken
 assertions to make a wrongly configured task pass.
 Use `--task <task-name>` for each trial. Before merge, run
-`python scripts/check_tasks.py --merge-ready --base FULL_PR_BASE_SHA` to check
+`python scripts/validation/check_tasks.py --merge-ready --base FULL_PR_BASE_SHA` to check
 package syntax, new-task authors, pinned upstream/official sources and official
 dataset paths. Review and authorize credentialed runtime testing separately
 from unprivileged PR CI.
 
 ## 2. Assets, Compose, and images
 
-After restoring authorized inputs with `scripts/download_assets.py`, verify
+After restoring authorized inputs with `scripts/assets/download_assets.py`, verify
 their SHA-256 checksums with `--verify-only`. The launcher checks only presence
 and size, so it does not replace this step. Missing assets are a blocker for
 runtime verification, not a reason to create empty files at the mount paths.

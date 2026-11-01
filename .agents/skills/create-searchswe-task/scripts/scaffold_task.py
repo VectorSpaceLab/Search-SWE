@@ -23,7 +23,7 @@ PINS = ("CODEX_VERSION", "CLAUDE_CODE_VERSION", "PI_VERSION")
 
 def target_pins(root: Path) -> dict[str, str]:
     """Read version constants without executing code from the target checkout."""
-    source = root / "scripts/harness_versions.py"
+    source = root / "scripts/evaluation/harness_versions.py"
     values = {}
     for node in ast.parse(source.read_text(), filename=str(source)).body:
         if isinstance(node, ast.Assign) and len(node.targets) == 1:
@@ -34,7 +34,7 @@ def target_pins(root: Path) -> dict[str, str]:
                     raise ValueError(f"Invalid harness pin: {target.id}")
                 values[target.id] = value
     if set(values) != set(PINS):
-        raise ValueError("Target scripts/harness_versions.py must define all three CLI pins")
+        raise ValueError("Target scripts/evaluation/harness_versions.py must define all three CLI pins")
     return values
 
 

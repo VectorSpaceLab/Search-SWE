@@ -1,3 +1,4 @@
-include LICENSE docs/cli.md
+include LICENSE docs/evaluation/cli.md
 recursive-include src/search_swe *.py
+recursive-include src/search_swe/data *.json
 global-exclude *.pyc

@@ -22,7 +22,7 @@ were compared byte-for-byte with the base revision and are unchanged.
 Completed locally with the existing `search_swe_cpu` Python environment:
 
 - `python -B -m unittest discover -s tasks/long-pdf-evidence/tests -p 'test_*.py' -v`: **22 passed**. Includes mocked request transmission for all ten synthetic calibration cases, bounded malformed-response failure, and existing provenance, isolation and finalizer checks.
-- `python scripts/check_tasks.py tasks/long-pdf-evidence`: **0 errors**.
+- `python scripts/validation/check_tasks.py tasks/long-pdf-evidence`: **0 errors**.
 - `git diff --check`: passed.
 
 The HTTP mock checks the production prompt and unmodified reference payload reach

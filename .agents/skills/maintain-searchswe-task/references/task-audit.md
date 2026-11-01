@@ -24,8 +24,9 @@ workflow/tool modifications need independent scrutiny, not implicit acceptance.
 
 The portable skill deliberately does not bundle Search-SWE's universal validator,
 launcher or Harbor runtime. Inspect an explicitly selected **trusted** target
-checkout/version providing `scripts/check_tasks.py`, `check_release.py`,
-`download_assets.py`, `run_task.py` and their dependencies. Missing tools or an
+checkout/version providing `scripts/validation/check_tasks.py`,
+`scripts/validation/check_release.py`, `scripts/assets/download_assets.py`,
+`scripts/evaluation/run_task.py` and their dependencies. Missing tools or an
 older workflow version stop that layer; do not improvise acceptance commands.
 Python 3.12+ and the host dependencies declared in `pyproject.toml` are target
 prerequisites; install with `python -m pip install -e .` from the trusted checkout.
@@ -44,17 +45,17 @@ Within the authorized execution scope, from the isolated checkout with trusted t
 
 ```bash
 task_path=tasks/example-search  # Actual package under review
-python scripts/check_tasks.py "$task_path" --base FULL_PR_BASE_SHA
-python scripts/check_release.py
-python -m unittest discover -s scripts/tests -p 'test_*.py'
-python scripts/download_assets.py --task "${task_path#tasks/}" --dry-run
+python scripts/validation/check_tasks.py "$task_path" --base FULL_PR_BASE_SHA
+python scripts/validation/check_release.py
+python -m unittest discover -s tests/unit -p 'test_*.py'
+python scripts/assets/download_assets.py --task "${task_path#tasks/}" --dry-run
 bash -n "$task_path/tests/test.sh"
 git diff --check
 # After separate input-download authorization:
-python scripts/download_assets.py --task "${task_path#tasks/}"
-python scripts/download_assets.py --task "${task_path#tasks/}" --verify-only
+python scripts/assets/download_assets.py --task "${task_path#tasks/}"
+python scripts/assets/download_assets.py --task "${task_path#tasks/}" --verify-only
 # Preview a configured trial, not evidence of successful runtime:
-python scripts/run_task.py --task "${task_path#tasks/}" --agent AGENT_NAME --model MODEL_ID --dry-run
+python scripts/evaluation/run_task.py --task "${task_path#tasks/}" --agent AGENT_NAME --model MODEL_ID --dry-run
 ```
 
 These commands are target contracts, not permission to execute PR-modified tools.
@@ -82,7 +83,7 @@ within the agreed budget. Retain valid low scores as evidence.
 
 For an authorized maintainer trial, select the agreed Codex, Pi or Claude Code
 agent, model and supported effort settings using the trusted checkout's
-`docs/evaluation.md`, `.env.example` and task configuration. Check the required
+`docs/evaluation/runtime.md`, `.env.example` and task configuration. Check the required
 agent, submission API, trajectory-judge and answer-judge credential groups
 separately. Reuse configured, authorized keys and check presence without printing
 values. If keys are missing, tell the contributor or operator the exact variable
@@ -97,7 +98,7 @@ verifier logs and artifacts; record exact commands, head SHA and outcomes. Stop
 at the agreed budget or an unmet prerequisite. Retry a terminal infrastructure
 failure only after a relevant correction; preserve completed usable trials.
 
-Final readiness additionally requires `python scripts/check_tasks.py
+Final readiness additionally requires `python scripts/validation/check_tasks.py
 --merge-ready --base FULL_PR_BASE_SHA`, task-local documentation and automatically
 discovered GPU/network/judge tests,
 verified immutable asset pins and head-specific required checks. Static CI alone

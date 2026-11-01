@@ -17,10 +17,14 @@ Markdown links.
   use its bundled offline HF staging helper only at approved stages.
 - **Run an existing task:** use
   [run-searchswe-evaluation](../skills/run-searchswe-evaluation/SKILL.md), also
-  installable into an external agent. The CLI workflow is in `docs/quickstart.md`
-  and `docs/cli.md`; the single-task backend is in `docs/evaluation.md`.
-- **Restore fixed inputs:** use `docs/assets.md` and the existing download tools.
+  installable into an external agent. The CLI workflow is in `docs/evaluation/quickstart.md`
+  and `docs/evaluation/cli.md`; the single-task backend is in `docs/evaluation/runtime.md`.
+- **Restore fixed inputs:** use `docs/evaluation/assets.md` and the existing download tools.
+- **Change shared tools:** use `scripts/README.md` for entry points and
+  `tests/README.md` for repository regressions and Docker integration checks.
 - **Edit project documentation:** keep `README.md` and `README_zh.md` aligned.
+  Route readers through `docs/README.md`; keep evaluation guides in
+  `docs/evaluation/` and contributor/maintainer guides in `docs/contributing/`.
   Describe the current contract and workflow directly; keep migration rationale
   in the PR description.
 - **Change shared images:** use `docker/README.md`. An ordinary task contribution
@@ -51,7 +55,7 @@ Markdown links.
    A PR may add multiple tasks at `tasks/<task-name>` in its contribution branch.
    Choose a descriptive lowercase name with at most five hyphen-separated words;
    the `task-` prefix and `all` are reserved. Check names against the base and
-   active PRs. Follow `CONTRIBUTING.md` and `docs/contributing.md`: record actual
+   active PRs. Follow `CONTRIBUTING.md` and `docs/contributing/tasks.md`: record actual
    authors, use `--task <task-name>` for local trials, and finish task review and
    asset verification before merging with a merge commit. Public upstream HF
    inputs may retain verified immutable pins; publish official assets only when

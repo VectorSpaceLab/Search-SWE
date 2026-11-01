@@ -68,7 +68,7 @@ for name in ('manifest.json', 'README.md', 'SOURCES.md', '.gitattributes'):
     shutil.copyfile(hf_hub_download(repo_id=repo, repo_type='dataset', revision=sha, filename=name), out / name)
 print(sha)
 PY
-python scripts/prepare_hf_upload.py \
+python scripts/assets/prepare_hf_upload.py \
   --official-manifest /path/to/official-snapshot/manifest.json \
   --task-path tasks/example-search --new-data /path/to/new-data \
   --output /path/to/upload-staging

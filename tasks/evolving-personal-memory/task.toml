@@ -13,6 +13,10 @@ public_example_count = 5
 hidden_query_count = 595
 record_count = 27614
 max_retrieved_records = 350
+[metadata.configuration.VERIFIER_OPENAI_API_KEY]
+description = "OpenRouter key for trajectory auditing and the MEMORA answer judges."
+guidance = "Allow the fixed judge models deepseek/deepseek-v4.1-flash, qwen/qwen3.6-35b-a3b and qwen/qwen3.5-9b. Submission keys are configured independently."
+
 [agent]
 timeout_sec = 7200
 user = "root"

@@ -137,11 +137,11 @@ Run task-local regression tests without API calls:
 python -m unittest discover -s tasks/agentic-search/tests -p 'test_*.py'
 ```
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Configure `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
 `VERIFIER_OPENAI_API_KEY` with an OpenRouter key in the ignored host `.env`.
@@ -168,8 +168,8 @@ Local fixture tests are available via
 No oracle solution is included.
 
 ```bash
-python scripts/download_assets.py --task agentic-search
-bash scripts/run_task.sh --task agentic-search --agent codex --openrouter \
+python scripts/assets/download_assets.py --task agentic-search
+bash scripts/evaluation/run_task.sh --task agentic-search --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

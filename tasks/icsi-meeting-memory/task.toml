@@ -23,6 +23,19 @@ hidden_query_count = 143
 memory_ratio = 0.05
 data_status = "Transcript-grounded generated queries"
 
+[metadata.configuration.OPENROUTER_API_KEY]
+required = true
+description = "Required by the verifier's answerer gateway, including for local retrieval implementations."
+guidance = """
+Allow the answerer's four generation models: qwen/qwen3.6-35b-a3b, qwen/qwen3.5-35b-a3b,
+qwen/qwen3.5-9b and qwen/qwen3-30b-a3b-instruct-2507. The task gateway restricts submitted requests to these models.
+JINA_API_KEY is optional for embedding/reranking. The answer and trajectory judges use VERIFIER_OPENAI_API_KEY separately.
+"""
+
+[metadata.configuration.ANSWER_JUDGE_MODEL_NAME]
+description = "OpenRouter Chat Completions model for evidence and answer grading."
+guidance = "The verifier fixes the endpoint to https://openrouter.ai/api/v1 and uses VERIFIER_OPENAI_API_KEY; that key must allow this model as well as the trajectory judge."
+
 [agent]
 timeout_sec = 7200
 user = "root"

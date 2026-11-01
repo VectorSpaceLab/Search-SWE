@@ -61,14 +61,14 @@ required. New development data may use an authorized personal public HF dataset
 with redistribution permission. The downloader accepts arbitrary HF repositories:
 
 ```bash
-python scripts/download_assets.py --task example-search
-python scripts/download_assets.py --task example-search --verify-only
+python scripts/assets/download_assets.py --task example-search
+python scripts/assets/download_assets.py --task example-search --verify-only
 ```
 
 When official hosting is needed after task and asset review, prepare only the
 selected files at `tasks/<task-name>/...`. Retain other verified upstream and
 official pins. The target checkout's
-`scripts/prepare_hf_upload.py` accepts a current official manifest snapshot,
+`scripts/assets/prepare_hf_upload.py` accepts a current official manifest snapshot,
 the final task package and **only new data**. It verifies hashes, preserves existing
 entries and matching published references, rejects conflicting paths, and stages
 new files plus a merged manifest offline.
@@ -95,7 +95,7 @@ inventory. For individual task contributions, the incremental helper above
 needs only the current manifest and the new data files. Full local checks support:
 
 ```bash
-python scripts/check_release.py --hf-data /path/to/hf-data \
+python scripts/validation/check_release.py --hf-data /path/to/hf-data \
   --verify-data --allow-unpublished
 ```
 
@@ -168,6 +168,22 @@ Only add a variable if that phase needs it. Empty injected values are not proof
 of a working API. The verifier must also filter the environment of submitted
 commands so judge keys are not passed to untrusted code. Do not print, persist,
 or expose credentials through logs, artifacts, Docker layers or CLI arguments.
+
+For host-side CLI setup, add `[metadata.configuration.HOST_VARIABLE]` in
+`task.toml` when a referenced variable needs task-specific instructions. Use
+`description` for its role, `guidance` for provider/model restrictions and setup,
+and `required = true` when the service is necessary before an attempt can start.
+Standard verifier judge mappings are already treated as required. Keep optional
+submission services optional, and keep guidance consistent with
+`environment/docs/available_resources.md`. The CLI asks for missing values only
+for selected tasks; a provider-restricted key needs instructions for assigning
+the corresponding restriction to that key.
+
+The shared OpenRouter submission key requires the fixed 47-model profile in
+`docs/evaluation/submission-models.md`; reasoning-query-rewriting uses its dedicated
+17-model profile. Both exclude `qwen/qwen3-reranker-8b` for cost. Align service
+setup with the applicable key profile and keep the task's own permitted uses
+explicit. Coding-agent and judge credentials have separate model access.
 
 Choose no API, retrieval-only, generation-only, or both based on the task's
 approved resource policy. Reusing a profile does not authorize extra providers

@@ -149,11 +149,11 @@ verifier-only DeepSeek endpoint and key settings.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Configure the verifier's integrity-judge credentials independently of the coding
 agent. The submission itself does not need task-resource API keys or a model
@@ -161,8 +161,8 @@ download. The standard asset command restores the published corpus and
 validation files directly.
 
 ```bash
-python scripts/download_assets.py --task sparse-retrieval-pruning
-bash scripts/run_task.sh --task sparse-retrieval-pruning --agent codex --openrouter \
+python scripts/assets/download_assets.py --task sparse-retrieval-pruning
+bash scripts/evaluation/run_task.sh --task sparse-retrieval-pruning --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

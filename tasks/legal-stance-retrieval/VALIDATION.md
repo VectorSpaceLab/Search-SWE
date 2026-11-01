@@ -40,14 +40,14 @@ pre-existing worktree changes.
 | Layer | Command / evidence | Result |
 | --- | --- | --- |
 | Task grader and judge-transport tests | `python -m unittest discover -s tasks/legal-stance-retrieval/tests -p 'test_*.py'` | 23 tests passed |
-| Shared hardware/network/judge integration | `python -m unittest scripts.tests.test_task_images scripts.tests.test_network_policies scripts.tests.test_rewardkit_deepseek` | 21 tests, 19 passed, 2 skipped because optional installed-package integration dependencies are absent |
-| Runtime assets | `python scripts/download_assets.py --task legal-stance-retrieval --verify-only` | All 13 current files verified, 1.14 GiB; two unused metadata files removed in v0.1.1 |
+| Shared hardware/network/judge integration | `python -m unittest tests.unit.test_task_images tests.unit.test_network_policies tests.unit.test_rewardkit_deepseek` | 21 tests, 19 passed, 2 skipped because optional installed-package integration dependencies are absent |
+| Runtime assets | `python scripts/assets/download_assets.py --task legal-stance-retrieval --verify-only` | All 13 current files verified, 1.14 GiB; two unused metadata files removed in v0.1.1 |
 | Local staged release check | Repository `check_release(..., hf_data=..., verify_data=True, allow_unpublished=True, packages=[task])` | Zero errors; one expected unpublished-data warning |
-| Normal review-stage checker | `python scripts/check_tasks.py tasks/legal-stance-retrieval` | Only the three unpublished dataset revisions are rejected; no fabricated remote pins |
+| Normal review-stage checker | `python scripts/validation/check_tasks.py tasks/legal-stance-retrieval` | Only the three unpublished dataset revisions are rejected; no fabricated remote pins |
 | Both Compose overlays | `docker compose ... config -q` with temporary base service | Passed |
 | Shell and Python syntax | `bash -n tests/test.sh`, `python -m py_compile ...` | Passed |
 | Diff whitespace | `git diff --check` | Passed |
-| Harbor launch preview | `bash scripts/run_task.sh --task legal-stance-retrieval --openrouter --dry-run` | Passed; no model was invoked |
+| Harbor launch preview | `bash scripts/evaluation/run_task.sh --task legal-stance-retrieval --openrouter --dry-run` | Passed; no model was invoked |
 | Agent and verifier images | `docker build` of both task contexts | Both built successfully from the shared GPU image |
 | Agent-visible mounts | Networkless agent-image container | Corpus/training/model/docs visible; no hidden tests or starter |
 | Public/private split and evidence references | Author-side JSONL validation | 5,318 propositions, 10,636 public rows, 311 private rows; exact query text and IDs disjoint; all evidence IDs exist |

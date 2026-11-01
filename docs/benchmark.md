@@ -1,8 +1,10 @@
 # Benchmark design
 
+[Documentation index](README.md)
+
 This document explains how tasks are evaluated, how the repository is organized,
 and where fixed data and model inputs come from. For setup and execution, start
-with the [quick start guide](quickstart.md) and the [evaluation guide](evaluation.md).
+with the [quick start guide](evaluation/quickstart.md) and the [evaluation guide](evaluation/runtime.md).
 A summary of the engineering objectives lives in the
 [project README](../README.md).
 
@@ -47,12 +49,19 @@ Search-SWE/
 │   │   └── tests/                # Verifier and grading code
 │   └── ...                       # Additional task packages
 ├── scripts/
-│   ├── download_assets.py        # Download and verify fixed data/model inputs
-│   ├── download_models.py        # Download fixed models only
-│   ├── check_release.py          # Check package structure and asset mappings
-│   ├── run_task.sh               # Shared Harbor launcher (Codex, Pi, or Claude Code)
-│   └── run_task.py               # Configuration loading and command construction
-└── docs/                         # Installation and evaluation guides
+│   ├── README.md                # Checkout-tool index
+│   ├── evaluation/              # Single-task launcher and Harbor adapters
+│   ├── assets/                  # Fixed-input downloads and publication staging
+│   ├── validation/              # Static task and release checks
+│   └── egress/                  # Network policy, gateway builds and recovery
+├── tests/
+│   ├── unit/                    # Offline repository regressions
+│   └── integration/             # Explicit Docker checks and fixtures
+└── docs/
+    ├── README.md                 # Documentation index and reading paths
+    ├── benchmark.md              # Evaluation design and repository layout
+    ├── evaluation/               # CLI, agents, host setup, assets and networking
+    └── contributing/             # Task contributions and CLI releases
 ```
 
 ## Data and Models
@@ -65,7 +74,7 @@ Each task's `assets.json` records its fixed input files, sizes, SHA-256
 checksums, and download sources. Runtime data belongs in
 `tasks/<task-name>/data/` and fixed models in `tasks/<task-name>/models/`; these
 directories are excluded from Git. Dataset and model revisions are pinned to
-immutable commits. See the [asset guide](assets.md) for the directory layout,
+immutable commits. See the [asset guide](evaluation/assets.md) for the directory layout,
 downloads, and local restoration options.
 
 Dataset provenance, processing details, and usage terms are documented in the

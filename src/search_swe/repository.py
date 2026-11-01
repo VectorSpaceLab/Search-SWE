@@ -10,13 +10,42 @@ import subprocess
 import tempfile
 import tomllib
 
+from . import __version__
+
 
 VARIABLE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::[-?][^}]*)?\}")
 REPOSITORY_URL = "https://github.com/VectorSpaceLab/Search-SWE.git"
 
 
 def is_repo(root):
-    return (root / "tasks").is_dir() and (root / "scripts/run_task.py").is_file()
+    if not (root / "tasks").is_dir():
+        return False
+    if (root / "scripts/evaluation/run_task.py").is_file():
+        return True
+    # Recognize existing checkouts before enforcing the CLI/backend version contract.
+    try:
+        project = tomllib.loads((root / "pyproject.toml").read_text()).get("project", {})
+        return project.get("name") == "search-swe"
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def check_compatibility(root):
+    """Patch releases share a CLI/checkout contract within their release series."""
+    try:
+        project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+        version = project["version"] if project.get("name") == "search-swe" else "unknown"
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        version = "unknown"
+    series = ".".join(__version__.split(".")[:2])
+    if not isinstance(version, str) or not re.fullmatch(re.escape(series) + r"\.\d+", version):
+        raise ValueError(f"Search-SWE CLI {__version__} needs a {series}.x checkout; "
+                         f"{root} declares {version}. Update this checkout to the {series}.x release series "
+                         "(preserve local changes), or use --repo to select a compatible checkout. "
+                         "Updating the Python package alone does not update task/backend files.")
+    if not (root / "scripts/evaluation/run_task.py").is_file():
+        raise ValueError(f"Search-SWE checkout at {root} is missing its evaluation launcher. "
+                         "Restore or update the checkout, or select a complete checkout with --repo.")
 
 
 def preference_path():
@@ -109,13 +138,30 @@ class Task:
         for key, value in self.config.get("verifier", {}).get("env", {}).items():
             if key in ("OPENAI_API_KEY", "OPENAI_BASE_URL") or key.startswith("ANSWER_JUDGE_"):
                 result.update(VARIABLE.findall(str(value)))
+        result.update(name for name, options in self.configuration().items() if options.get("required"))
         return result
 
-    def optional_keys(self):
+    def variables(self):
         result = set()
         for phase in ("environment", "agent", "verifier"):
             for value in self.config.get(phase, {}).get("env", {}).values():
-                result.update(name for name in VARIABLE.findall(str(value)) if name.endswith("API_KEY"))
+                result.update(VARIABLE.findall(str(value)))
+        return result
+
+    def configuration(self):
+        settings = self.config.get("metadata", {}).get("configuration", {})
+        if not isinstance(settings, dict):
+            raise ValueError(f"{self.name}: metadata.configuration must be a table")
+        for name, options in settings.items():
+            if (name not in self.variables() or not isinstance(options, dict)
+                    or set(options) - {"required", "description", "guidance"}
+                    or type(options.get("required", False)) is not bool
+                    or any(not isinstance(options.get(key, ""), str) for key in ("description", "guidance"))):
+                raise ValueError(f"{self.name}: invalid configuration guidance for {name}; use a referenced host variable and required/description/guidance fields")
+        return settings
+
+    def optional_variables(self):
+        result = self.variables()
         return result - self.required_variables()
 
 

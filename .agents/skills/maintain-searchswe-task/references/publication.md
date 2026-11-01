@@ -76,10 +76,10 @@ task_name=example-search
 publication_root=/path/to/new-publication-workspace
 mkdir -- "$publication_root"
 cp -- "$REPO/tasks/$task_name/assets.json" "$publication_root/development-assets.json"
-python "$REPO/scripts/download_assets.py" --task "$task_name" --kind data --dry-run
-python "$REPO/scripts/download_assets.py" --task "$task_name" --kind data \
+python "$REPO/scripts/assets/download_assets.py" --task "$task_name" --kind data --dry-run
+python "$REPO/scripts/assets/download_assets.py" --task "$task_name" --kind data \
   --output-dir "$publication_root/downloads" --cache-dir "$publication_root/development-cache"
-python "$REPO/scripts/download_assets.py" --task "$task_name" --kind data \
+python "$REPO/scripts/assets/download_assets.py" --task "$task_name" --kind data \
   --output-dir "$publication_root/downloads" --verify-only
 ```
 
@@ -206,9 +206,9 @@ official merged commit, rather than a community PR head or a moving branch.
 Verify these new sources with a fresh output directory and cache:
 
 ```bash
-python "$REPO/scripts/download_assets.py" --task "$task_name" --kind data \
+python "$REPO/scripts/assets/download_assets.py" --task "$task_name" --kind data \
   --output-dir "$publication_root/official-downloads" --cache-dir "$publication_root/official-cache"
-python "$REPO/scripts/download_assets.py" --task "$task_name" --kind data \
+python "$REPO/scripts/assets/download_assets.py" --task "$task_name" --kind data \
   --output-dir "$publication_root/official-downloads" --verify-only
 ```
 

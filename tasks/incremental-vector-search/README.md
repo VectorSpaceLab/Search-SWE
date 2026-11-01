@@ -39,8 +39,8 @@ The verifier replays incremental insertions and queries at five retrieval sizes.
 Run from the repository root using the repository's existing Python environment:
 
 ```bash
-python scripts/download_assets.py --task incremental-vector-search
-python scripts/download_assets.py --task incremental-vector-search --verify-only
+python scripts/assets/download_assets.py --task incremental-vector-search
+python scripts/assets/download_assets.py --task incremental-vector-search --verify-only
 python tasks/incremental-vector-search/prepare_data.py
 ```
 
@@ -67,7 +67,7 @@ are not submission inputs.
 Invoke the standard entrypoint directly:
 
 ```bash
-bash scripts/run_task.sh --task incremental-vector-search --agent codex --openrouter \
+bash scripts/evaluation/run_task.sh --task incremental-vector-search --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
   --output "jobs/incremental-vector-search-codex-openrouter-luna-max-RUN_ID"
 ```
@@ -79,8 +79,8 @@ an infrastructure error.
 ### Validate the package
 
 ```bash
-python scripts/check_tasks.py tasks/incremental-vector-search
-python scripts/download_assets.py --task incremental-vector-search --verify-only
+python scripts/validation/check_tasks.py tasks/incremental-vector-search
+python scripts/assets/download_assets.py --task incremental-vector-search --verify-only
 ```
 
 Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective

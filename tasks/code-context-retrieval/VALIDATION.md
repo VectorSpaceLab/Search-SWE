@@ -7,7 +7,7 @@ Removed only `include/nlohmann/detail/meta/type_traits.hpp:1–5` from the `test
 - Compared the packaged labels against the previous Git revision: only this region changed; the other 19 reference rows are byte-identical. Query text, source files, task metadata, grader and scoring formula are unchanged.
 - Loaded the complete repository corpus with the production scorer and validated all 20 reference outputs: every output satisfies the five-region/500-line contract, stays within actual file bounds and scores F1 = 1 against its current labels.
 - Scored a synthetic output containing the four retained regions: the old labels gave F1 = 0.9877149877149877; the corrected labels give F1 = 1. This is a scorer check, not an agent result.
-- All eight existing scoring contract tests passed. `python scripts/check_tasks.py tasks/code-context-retrieval` reported zero errors.
+- All eight existing scoring contract tests passed. `python scripts/validation/check_tasks.py tasks/code-context-retrieval` reported zero errors.
 
 Historical model and baseline scores below and in `RUN_RESULTS.md` use the earlier labels; they have not been recomputed. No new agent or model run was performed. Scoring remains direct mean line F1, so no baseline normalization constant requires updating.
 

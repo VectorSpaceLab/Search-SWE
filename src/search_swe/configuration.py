@@ -8,13 +8,41 @@ import subprocess
 import tempfile
 
 from dotenv.parser import parse_stream
+from . import pi_models
 
 
 DEFAULTS = {"AGENT_MODEL": "openai/gpt-6-luna", "SEARCH_SWE_AGENT": "codex",
             "SEARCH_SWE_PROVIDER": "openrouter", "AGENT_REASONING_EFFORT": "max",
             "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1"}
-PI_KEYS = {"deepseek/deepseek-flash": "DEEPSEEK_API_KEY", "zai/glm-5.3-flash": "ZAI_API_KEY"}
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
+
+
+def default_model(agent, provider):
+    if provider == "openrouter":
+        return "anthropic/claude-opus-5.5" if agent == "claude-code" else DEFAULTS["AGENT_MODEL"]
+    if agent == "pi":
+        return "deepseek/deepseek-flash"
+    return ""
+
+
+def saved_setting(values):
+    agent = values.get("SEARCH_SWE_AGENT") or "codex"
+    provider = values.get("SEARCH_SWE_PROVIDER") or ("direct" if agent == "pi" else "openrouter")
+    model = values.get("AGENT_MODEL") or default_model(agent, provider)
+    effort = values.get("PI_THINKING" if agent == "pi" else "AGENT_REASONING_EFFORT")
+    if not effort:
+        effort = "max" if (agent, provider, model) == ("codex", "openrouter", DEFAULTS["AGENT_MODEL"]) else "default"
+    return Setting(agent, provider, model, effort)
+
+
+def resolve_setting(current, args):
+    agent = args.agent or current.agent
+    provider = args.provider or (current.provider if agent == current.agent else
+                                 "direct" if agent == "pi" else "openrouter")
+    same_route = (agent, provider) == (current.agent, current.provider)
+    model = args.model or (current.model if same_route else default_model(agent, provider))
+    effort = args.reasoning_effort or (current.effort if same_route and model == current.model else "default")
+    return Setting(agent, provider, model, effort).validate()
 
 
 def bindings(path):
@@ -99,27 +127,26 @@ class Setting:
             args.extend(["--thinking" if self.agent == "pi" else "--reasoning-effort", self.effort])
         return args
 
-    def required(self):
+    def required(self, env=None):
         if self.provider == "openrouter":
             return {"AGENT_OPENROUTER_API_KEY"}
         if self.agent == "codex":
             return {"AGENT_OPENAI_API_KEY", "AGENT_OPENAI_BASE_URL"}
         if self.agent == "claude-code":
             return {"AGENT_ANTHROPIC_API_KEY"}
-        if self.model not in PI_KEYS:
-            raise ValueError("Pi direct models: " + ", ".join(PI_KEYS))
-        return {PI_KEYS[self.model]}
+        return pi_models.required_variables(self.model, env)
 
     def validate(self):
         if self.agent not in ("codex", "claude-code", "pi") or self.provider not in ("openrouter", "direct"):
             raise ValueError("Unsupported harness/provider")
-        if self.agent == "pi" and self.provider != "direct":
-            raise ValueError("Pi currently uses the supported direct-provider adapters")
+        if not self.model or not self.model.strip() or self.model != self.model.strip() or any(c.isspace() for c in self.model):
+            raise ValueError("Provide a model ID with --model or choose one in the interactive wizard")
         if self.provider == "openrouter":
-            if "/" not in self.model:
+            from .model_catalog import MODEL_ID
+            if not MODEL_ID.fullmatch(self.model):
                 raise ValueError("OpenRouter requires a complete provider/model slug")
-            if self.agent == "claude-code" and not self.model.startswith("anthropic/"):
-                raise ValueError("Claude Code on OpenRouter requires an anthropic/ model")
+        if self.agent == "pi":
+            pi_models.selection(pi_models.native_model(self.model, self.provider))
         levels = ["default", "off", "minimal", *EFFORTS] if self.agent == "pi" else ["default", *EFFORTS]
         if self.effort and self.effort not in levels:
             raise ValueError("Unsupported reasoning/thinking level: " + self.effort)

@@ -43,9 +43,9 @@ An earlier author-only local A100 run substituted local BGE embeddings for the A
 
 ### Validation
 
-From the repository root, restore inputs with `python scripts/download_assets.py --task code-reranker-finetuning`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
+From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
 
-Use `python scripts/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which preserves real Compose GPU reservations with the documented Harbor override.
+Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which preserves real Compose GPU reservations with the documented Harbor override.
 
 #### Historical 6-hour coding-model evaluation (v0.3.1)
 
@@ -53,7 +53,7 @@ The October 17 trial evaluated **v0.3.1 with the current 6-hour budget**, using 
 
 On all 200 hidden questions, baseline Accuracy@5 was **0.015 (3/200)**, submitted Accuracy@5 **0.09 (18/200)**, candidate ceiling **0.235 (47/200)**, and final reward **0.3409090909**. The checkpoint loaded offline and passed the fixed-backbone/tokenizer checks. The task has no semantic or trajectory judge. The model reported 56.6% Accuracy@5 on its own 500-query training holdout; that local measure is separate from the hidden result above. No task constraints or scoring were changed in response to the result.
 
-The run used the README's `bash scripts/run_task.sh` entry directly in the right-hand Herdr pane. Results are in `jobs/code-reranker-finetuning-codex-openrouter-luna-max-20261017-6h-attempt3/2026-10-17__01-32-07/`; author records are in `contributing/dev/code-reranker-finetuning/2026-10-17-6h/`. The evaluated instruction SHA-256 is `d62f93219ce821e2ebe23510f5983e984af7ff567cc74cec6649fda7868a9e81`. Both temporary GPU UUID bindings were restored to portable one-GPU reservations after completion, and the GPU 3 reservation was released. At that point all other runtime files matched the prelaunch review snapshot; v0.3.2 subsequently fixes tokenizer loading as described above.
+The run used the README's `bash scripts/evaluation/run_task.sh` entry directly in the right-hand Herdr pane. Results are in `jobs/code-reranker-finetuning-codex-openrouter-luna-max-20261017-6h-attempt3/2026-10-17__01-32-07/`; author records are in `contributing/dev/code-reranker-finetuning/2026-10-17-6h/`. The evaluated instruction SHA-256 is `d62f93219ce821e2ebe23510f5983e984af7ff567cc74cec6649fda7868a9e81`. Both temporary GPU UUID bindings were restored to portable one-GPU reservations after completion, and the GPU 3 reservation was released. At that point all other runtime files matched the prelaunch review snapshot; v0.3.2 subsequently fixes tokenizer loading as described above.
 
 On October 17, against `ac7dcc1`, merge-ready and release checks, all 19 asset hashes, 25 task tests and the 174-test shared suite passed. The 5,000 training queries and 200 hidden query texts have no exact overlap. The earlier offline encoder smoke check also passed. The consolidated author review is `contributing/dev/contribution-readiness/2026-10-17/REVIEW.md`.
 
@@ -96,7 +96,7 @@ was run: the existing trained checkpoint and unchanged agent instructions are
 reused, while the corrected tokenizer path is covered by the new regressions
 and this complete regrade.
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

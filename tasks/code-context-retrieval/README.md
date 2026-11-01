@@ -79,11 +79,11 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health,
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task code-context-retrieval
-bash scripts/run_task.sh --task code-context-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task code-context-retrieval
+bash scripts/evaluation/run_task.sh --task code-context-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 
@@ -97,6 +97,6 @@ Dataset revision: `bdb0ae45d7c337d9e1dc3ebfe2a0af6bc7c1fbd9`; release SHA-256: `
 
 The authoring directory is `task_development/code-bug-localization`, adjacent to this Search-SWE checkout. It contains source downloads, the frozen selection, per-query baseline traces, review notes, export scripts, source hashes and author-only runtime fixtures. None is mounted into the solver environment. Reproduce the export with `python task_development/code-bug-localization/package_task.py` from the parent workspace; its input is the already frozen `selection/`.
 
-Run `python scripts/download_assets.py --task code-context-retrieval --verify-only` from this checkout to verify local asset hashes, and `python -m unittest discover -s tasks/code-context-retrieval/tests -p test_contract.py` for scoring regression checks. `VALIDATION.md` records actual runtime checks and remaining validation layers.
+Run `python scripts/assets/download_assets.py --task code-context-retrieval --verify-only` from this checkout to verify local asset hashes, and `python -m unittest discover -s tasks/code-context-retrieval/tests -p test_contract.py` for scoring regression checks. `VALIDATION.md` records actual runtime checks and remaining validation layers.
 
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.

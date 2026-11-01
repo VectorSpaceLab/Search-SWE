@@ -62,13 +62,13 @@ honored. No reference engine, answer table or authoring script is shipped.
 | Layer | Evidence | Result |
 | --- | --- | --- |
 | Deterministic contract | `python -m unittest discover -s tasks/methodology-inspiration-retrieval/tests -p 'test_*.py'` | 11 passed |
-| Shared hardware/network/audit integration | `python -m unittest scripts.tests.test_task_images scripts.tests.test_network_policies scripts.tests.test_rewardkit_deepseek` | 21 tests, 19 passed, 2 optional dependency skips |
-| Fixed inputs | `python scripts/download_assets.py --task methodology-inspiration-retrieval --verify-only` | All 17 files verified, 1.68 GiB |
+| Shared hardware/network/audit integration | `python -m unittest tests.unit.test_task_images tests.unit.test_network_policies tests.unit.test_rewardkit_deepseek` | 21 tests, 19 passed, 2 optional dependency skips |
+| Fixed inputs | `python scripts/assets/download_assets.py --task methodology-inspiration-retrieval --verify-only` | All 17 files verified, 1.68 GiB |
 | Local staged release | `check_release(..., hf_data=..., verify_data=True, allow_unpublished=True, packages=[task])` | No errors; expected unpublished-assets warning |
-| Normal task checker | `python scripts/check_tasks.py tasks/methodology-inspiration-retrieval` | Only the two unpublished dataset revisions rejected |
+| Normal task checker | `python scripts/validation/check_tasks.py tasks/methodology-inspiration-retrieval` | Only the two unpublished dataset revisions rejected |
 | Compose overlays | `docker compose ... config -q` for both phases | Passed |
 | Syntax/whitespace | `bash -n`, Python compilation, `git diff --check` | Passed |
-| Launcher preview | `python scripts/run_task.py --task methodology-inspiration-retrieval --agent codex --openrouter --dry-run` | Passed; no model invoked |
+| Launcher preview | `python scripts/evaluation/run_task.py --task methodology-inspiration-retrieval --agent codex --openrouter --dry-run` | Passed; no model invoked |
 | Docker images | Builds of both task contexts | Passed |
 | Agent inputs | Networkless agent container with the declared mounts | Corpus/examples/model/docs visible, hidden tests absent |
 | Model usability | Native SentenceTransformer load and backward pass in the actual agent image | Shape `[2, 1024]`; 270 finite gradient tensors, nonzero gradients |

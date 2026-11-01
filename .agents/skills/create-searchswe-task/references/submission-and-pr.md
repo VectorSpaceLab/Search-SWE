@@ -76,7 +76,7 @@ required for public upstream inputs. When official hosting is needed, follow
 `tasks/<task-name>/...` paths, merge the HF change, then pin its official SHA in
 `assets.json` and verify clean downloads. Preserve original model pins.
 
-Run release checks, applicable tests and `python scripts/check_tasks.py
+Run release checks, applicable tests and `python scripts/validation/check_tasks.py
 --merge-ready --base FULL_PR_BASE_SHA`. Commit the reviewed changes in the same
 PR. Re-review each changed head and verify required checks against the current
 base before an authorized **merge commit**.

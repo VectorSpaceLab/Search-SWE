@@ -29,8 +29,8 @@ class RelocatedSkill(unittest.TestCase):
         (self.repo / "tasks").mkdir(parents=True)
         (self.repo / "docker").mkdir()
         (self.repo / "docker/README.md").write_text("# Project fixture\n")
-        (self.repo / "scripts").mkdir()
-        (self.repo / "scripts/harness_versions.py").write_text(
+        (self.repo / "scripts/evaluation").mkdir(parents=True)
+        (self.repo / "scripts/evaluation/harness_versions.py").write_text(
             'CODEX_VERSION="0.164.0"\nCLAUDE_CODE_VERSION="2.1.309"\nPI_VERSION="1.4.0"\n')
 
     def scaffold(self, name, *args, authors=True):
@@ -121,7 +121,7 @@ class RelocatedSkill(unittest.TestCase):
     def test_resources_pins_and_budget_propagate(self):
         # Change the target pin to prove generation uses the target, not the
         # installed skill's original version or execution of a Python module.
-        pins = self.repo / "scripts/harness_versions.py"
+        pins = self.repo / "scripts/evaluation/harness_versions.py"
         pins.write_text('CODEX_VERSION="9.8.7"\nCLAUDE_CODE_VERSION="8.7.6"\nPI_VERSION="7.6.5"\n'
                         'raise RuntimeError("must not execute target code")\n')
         result = self.scaffold("custom-search", "--hardware", "gpu", "--cpus", "16",
@@ -222,7 +222,7 @@ class RelocatedSkill(unittest.TestCase):
         for flag in ("--cpus", "--memory-mb", "--storage-mb", "--agent-timeout-sec",
                      "--grader-timeout-sec", "--judge-timeout-sec"):
             self.assertNotEqual(self.scaffold("invalid-search", flag, "0").returncode, 0)
-        (self.repo / "scripts/harness_versions.py").unlink()
+        (self.repo / "scripts/evaluation/harness_versions.py").unlink()
         self.assertNotEqual(self.scaffold("invalid-search").returncode, 0)
         self.assertFalse((self.repo / "tasks/invalid-search").exists())
 

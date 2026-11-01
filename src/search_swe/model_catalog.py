@@ -1,6 +1,7 @@
 """Public OpenRouter metadata, cached locally and searched without API keys."""
 
 import json
+import math
 from http.client import HTTPException
 import os
 from pathlib import Path
@@ -34,10 +35,28 @@ def parse_models(document):
             if isinstance(row.get(key), list) and all(isinstance(value, str) for value in row[key]):
                 model[key] = row[key]
         architecture = row.get("architecture")
-        if isinstance(architecture, dict) and isinstance(architecture.get("output_modalities"), list):
-            model["output_modalities"] = architecture["output_modalities"]
+        if isinstance(architecture, dict):
+            for key in ("input_modalities", "output_modalities"):
+                if isinstance(architecture.get(key), list):
+                    model[key] = architecture[key]
         if isinstance(row.get("context_length"), int) and row["context_length"] > 0:
             model["context_length"] = row["context_length"]
+        top = row.get("top_provider") or {}
+        if isinstance(top, dict) and isinstance(top.get("max_completion_tokens"), int) and top["max_completion_tokens"] > 0:
+            model["max_output_tokens"] = top["max_completion_tokens"]
+        pricing = row.get("pricing") or {}
+        if isinstance(pricing, dict) and "prompt" in pricing and "completion" in pricing:
+            cost = {}
+            for target, source in (("input", "prompt"), ("output", "completion"),
+                                   ("cacheRead", "input_cache_read"), ("cacheWrite", "input_cache_write")):
+                try:
+                    value = float(pricing.get(source, 0)) * 1_000_000
+                    if math.isfinite(value) and value >= 0:
+                        cost[target] = value
+                except (TypeError, ValueError):
+                    pass
+            if len(cost) == 4:
+                model["cost"] = cost
         result[model["id"]] = model
     if not result:
         raise ValueError("Empty model catalog")
@@ -87,13 +106,11 @@ def load_models(*, offline=False, refresh=False, cache=None):
 
 
 def eligible(model, agent):
-    if agent == "claude-code" and not model["id"].startswith("anthropic/"):
-        return False
     if "output_modalities" in model and "text" not in model["output_modalities"]:
         return False
     if "supported_parameters" in model and "tools" not in model["supported_parameters"]:
         return False
-    endpoint = "/api/v1/messages" if agent == "claude-code" else "/api/v1/responses"
+    endpoint = {"claude-code": "/api/v1/messages", "pi": "/api/v1/chat/completions", "codex": "/api/v1/responses"}[agent]
     return "endpoints" not in model or endpoint in model["endpoints"]
 
 

@@ -11,6 +11,10 @@ dataset = "DocLensDatasets: MMLongBench-Doc and FinRAGBench-V"
 primary_metric = "SourceMacroAnswerAccuracy"
 public_query_count = 5
 hidden_query_count = 2471
+[metadata.configuration.VERIFIER_OPENAI_API_KEY]
+description = "OpenRouter key for trajectory auditing and trusted document answer grading."
+guidance = "Allow deepseek/deepseek-v4.1-flash for the trajectory judge and google/gemini-2.5-flash for the fixed DOCUMENT_JUDGE_MODEL. Submission keys are configured independently."
+
 [agent]
 timeout_sec = 7200.0
 user = "root"

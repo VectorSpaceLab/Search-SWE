@@ -65,9 +65,9 @@ remain verifier-only. No author solutions or screening traces are supplied.
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ```bash
-python scripts/download_assets.py --task biomedical-graph-retrieval --verify-only
+python scripts/assets/download_assets.py --task biomedical-graph-retrieval --verify-only
 python -m unittest discover -s tasks/biomedical-graph-retrieval/tests -p 'test_*.py' -v
-python scripts/run_task.py --task biomedical-graph-retrieval --agent codex --openrouter \
+python scripts/evaluation/run_task.py --task biomedical-graph-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --dry-run
 ```
 

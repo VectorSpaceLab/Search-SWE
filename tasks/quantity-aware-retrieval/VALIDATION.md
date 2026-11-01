@@ -121,7 +121,7 @@ missing `AGENT_OPENAI_BASE_URL`. The existing OpenRouter configuration was used
 for the successful preview. No shared `.env` values were changed or printed.
 A preview does not authenticate any model endpoint or exercise Harbor execution.
 
-A broader `python -m unittest discover -s scripts/tests -p 'test_*.py' -q`
+A broader `python -m unittest discover -s tests/unit -p 'test_*.py' -q`
 attempt did **not** finish. The host Python 3.13 runner reported that its async
 executor failed to join threads within 300 seconds; the author stopped only that
 test worker with SIGINT and preserved the traceback in `repository-tests.log`.
@@ -232,8 +232,8 @@ ablations were performed. These are explicit measurement limits.
 Reproduction commands, from the Search-SWE root:
 
 ```bash
-python scripts/download_assets.py --task quantity-aware-retrieval --verify-only
+python scripts/assets/download_assets.py --task quantity-aware-retrieval --verify-only
 python -m unittest discover -s tasks/quantity-aware-retrieval/tests -p 'test_*.py'
-python scripts/run_task.py --task quantity-aware-retrieval --agent codex --openrouter --dry-run
+python scripts/evaluation/run_task.py --task quantity-aware-retrieval --agent codex --openrouter --dry-run
 python ../task_development/quantity-aware-retrieval/scripts/validate_task_runtime.py --gpu 2
 ```

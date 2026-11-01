@@ -107,7 +107,7 @@ retained, including their actual rejection reasons.
 Commands run from the evaluation repository unless otherwise indicated:
 
 ```bash
-python scripts/check_tasks.py tasks/reasoning-query-rewriting
+python scripts/validation/check_tasks.py tasks/reasoning-query-rewriting
 git diff --check
 ```
 

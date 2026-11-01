@@ -25,9 +25,9 @@ Result: 45 tests passed.
 Additional checks passed:
 
 ```bash
-python scripts/check_tasks.py tasks/visual-document-qa
-python scripts/check_release.py
-python scripts/check_tasks.py --merge-ready --base bb0ddbaf105c25cc53e3598c37e0428c943a7098
+python scripts/validation/check_tasks.py tasks/visual-document-qa
+python scripts/validation/check_release.py
+python scripts/validation/check_tasks.py --merge-ready --base bb0ddbaf105c25cc53e3598c37e0428c943a7098
 git diff --check
 ```
 

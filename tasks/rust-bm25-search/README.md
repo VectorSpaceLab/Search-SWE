@@ -85,11 +85,11 @@ bypassing the measured index-file bytes.
 From the repository root, with the host dependencies documented by the repo:
 
 ```bash
-python scripts/download_assets.py --task rust-bm25-search
-python scripts/download_assets.py --task rust-bm25-search --verify-only
+python scripts/assets/download_assets.py --task rust-bm25-search
+python scripts/assets/download_assets.py --task rust-bm25-search --verify-only
 python -m unittest discover -s tasks/rust-bm25-search/authoring -p 'test_*.py'
-python scripts/check_tasks.py tasks/rust-bm25-search
-python scripts/check_release.py
+python scripts/validation/check_tasks.py tasks/rust-bm25-search
+python scripts/validation/check_release.py
 docker build -t search-swe-local:rust-bm25-agent tasks/rust-bm25-search/environment
 docker build -t search-swe-local:rust-bm25-verifier tasks/rust-bm25-search/tests
 docker run --rm --network none --cpus 4 --memory 16g --memory-swap 16g --pids-limit 256 \
@@ -158,11 +158,11 @@ they are not included in the agent image or a public solution directory.
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task rust-bm25-search
-bash scripts/run_task.sh --task rust-bm25-search --agent codex --openrouter \
+python scripts/assets/download_assets.py --task rust-bm25-search
+bash scripts/evaluation/run_task.sh --task rust-bm25-search --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

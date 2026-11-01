@@ -1,4 +1,4 @@
-# Use scripts/build_egress_gateway.py; it stages and verifies pinned APKs.
+# Use scripts/egress/build_egress_gateway.py; it stages and verifies pinned APKs.
 ARG COMPONENT_IMAGE=searchswe-egress-component:build-required
 FROM ${COMPONENT_IMAGE}
 ARG GATEWAY_SOURCE_SHA

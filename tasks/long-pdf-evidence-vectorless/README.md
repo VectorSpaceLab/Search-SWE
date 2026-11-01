@@ -61,11 +61,11 @@ Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the codi
 From the repository root, using the configured Python environment:
 
 ```bash
-python scripts/download_assets.py --task long-pdf-evidence-vectorless
-python scripts/download_assets.py --task long-pdf-evidence-vectorless --verify-only
-python scripts/check_tasks.py tasks/long-pdf-evidence-vectorless
+python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless
+python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless --verify-only
+python scripts/validation/check_tasks.py tasks/long-pdf-evidence-vectorless
 python -B -m unittest discover -s tasks/long-pdf-evidence-vectorless/tests -p 'test_*.py' -v
-bash scripts/run_task.sh --task long-pdf-evidence-vectorless --agent codex --openrouter \
+bash scripts/evaluation/run_task.sh --task long-pdf-evidence-vectorless --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
   --output jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-RUN_ID
 ```

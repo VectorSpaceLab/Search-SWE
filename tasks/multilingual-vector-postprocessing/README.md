@@ -40,8 +40,8 @@ The verifier normalizes transformed vectors, ranks by FP32 cosine and computes b
 Run from the repository root using the repository's existing Python environment:
 
 ```bash
-python scripts/download_assets.py --task multilingual-vector-postprocessing
-python scripts/download_assets.py --task multilingual-vector-postprocessing --verify-only
+python scripts/assets/download_assets.py --task multilingual-vector-postprocessing
+python scripts/assets/download_assets.py --task multilingual-vector-postprocessing --verify-only
 ```
 
 [assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
@@ -68,7 +68,7 @@ are not submission inputs.
 Invoke the standard entrypoint directly:
 
 ```bash
-bash scripts/run_task.sh --task multilingual-vector-postprocessing --gpu-device 0 --agent codex --openrouter \
+bash scripts/evaluation/run_task.sh --task multilingual-vector-postprocessing --gpu-device 0 --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
   --output "jobs/multilingual-vector-postprocessing-codex-openrouter-luna-max-RUN_ID"
 ```
@@ -80,8 +80,8 @@ an infrastructure error.
 ### Validate the package
 
 ```bash
-python scripts/check_tasks.py tasks/multilingual-vector-postprocessing
-python scripts/download_assets.py --task multilingual-vector-postprocessing --verify-only
+python scripts/validation/check_tasks.py tasks/multilingual-vector-postprocessing
+python scripts/assets/download_assets.py --task multilingual-vector-postprocessing --verify-only
 ```
 
 Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
@@ -89,7 +89,7 @@ directories as build contexts. Run the public helper and verifier with the task'
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

@@ -352,9 +352,9 @@ revision introduces no new shared runtime or API profile.
 Executed checks:
 
 - `python -m unittest discover -s tasks/negative-constraint-retrieval/tests -p 'test_*.py'`: 11 passed, including per-query deadlines, stopping after timeout and rejecting stale output.
-- `python scripts/download_assets.py --task negative-constraint-retrieval --verify-only`: all 3 runtime assets passed.
+- `python scripts/assets/download_assets.py --task negative-constraint-retrieval --verify-only`: all 3 runtime assets passed.
 - Task-scoped `check_release(..., allow_unpublished=True, verify_data=True)` against the existing local HF staging: zero errors, one expected unpublished-assets warning.
-- `python scripts/check_tasks.py tasks/negative-constraint-retrieval`: exactly the same 3 pre-existing unpublished-revision errors; no fabricated HF pins.
+- `python scripts/validation/check_tasks.py tasks/negative-constraint-retrieval`: exactly the same 3 pre-existing unpublished-revision errors; no fabricated HF pins.
 - Repository image test: 1 passed; network-policy tests: 14 passed; RewardKit tests: 4 passed, 2 host dependency skips. These targeted checks supplement the earlier full-suite record below.
 - Shell syntax, modified Python syntax, instruction/interface review, asset invariants and whitespace checks passed.
 - `docker build -t search-swe-local:nc-v020-verifier tasks/negative-constraint-retrieval/tests`: succeeded from the actual Dockerfile, reusing pinned dependency layers. Image config digest: `sha256:d610bf31dde4f5dfe2c094ce9b8b469764fd862db40d146114b93a0edb04f652`. An initial `--network=none` build missed the dependency cache and was stopped after offline DNS retries; the normal build reused the cache. No dependency or image definition was changed. The Agent image/build context is unchanged.
@@ -476,7 +476,7 @@ within the retriever Top-100 union. No full-corpus reranker or latency benchmark
 is claimed. Semantic uniqueness remains author-reviewed annotation, not an
 independent human audit.
 
-`python scripts/download_assets.py --task negative-constraint-retrieval --verify-only`
+`python scripts/assets/download_assets.py --task negative-constraint-retrieval --verify-only`
 verified all three runtime files. `--dry-run` reports their sizes and unpublished
 status. The scoped `check_release` function with the task's local staging,
 `verify_data=True, allow_unpublished=True, packages=[task]` returns zero errors
@@ -538,7 +538,7 @@ state and uses container init. These were fixture issues, not task label edits.
 
 ## Repository regression
 
-The final `python -m unittest discover -s scripts/tests -p 'test_*.py'` reports
+The final `python -m unittest discover -s tests/unit -p 'test_*.py'` reports
 171 tests, OK with two host skips because RewardKit 0.2.0 is not installed in the
 host interpreter. It ran with a 180-second bound outside the network sandbox;
 the first sandboxed run stalled during tests using local networking and was
@@ -556,7 +556,7 @@ requires: “The configured coding-model trial is a required validation layer,
 separate from known-good and negative-case grading.” See its
 [validation reference](../../.agents/skills/create-searchswe-task/references/validation.md).
 That layer remains unperformed. The launcher preview
-`bash scripts/run_task.sh --task negative-constraint-retrieval --dry-run`
+`bash scripts/evaluation/run_task.sh --task negative-constraint-retrieval --dry-run`
 stops with `Set --model or AGENT_MODEL`. No selected model/effort, real trajectory,
 completed trial score, valid online judge response, API cost or model feedback
 exists for this instruction revision. Task APIs are also unprobed.

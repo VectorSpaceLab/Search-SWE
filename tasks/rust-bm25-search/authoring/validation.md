@@ -58,12 +58,12 @@ Search uses both root-owned read-only artifacts and Landlock confinement.
   disappears while workspace usage is measured. A non-table Cargo `package`
   value is also rejected as an invalid submission rather than an infrastructure
   error; that case passed in a fresh final-image container with reward zero.
-- `.venv/bin/python -m unittest discover -s scripts/tests -p 'test_*.py'`:
+- `.venv/bin/python -m unittest discover -s tests/unit -p 'test_*.py'`:
   171 discovered, 169 passed, 2 skipped because host `harbor-rewardkit==0.2.0`
   is absent. Those two tests concern other tasks' model-judge backend; this
   task has no judge dependency. No failing test was disabled.
-- `.venv/bin/python scripts/check_tasks.py tasks/rust-bm25-search`: zero errors.
-  `.venv/bin/python scripts/check_release.py`: zero errors and warnings.
+- `.venv/bin/python scripts/validation/check_tasks.py tasks/rust-bm25-search`: zero errors.
+  `.venv/bin/python scripts/validation/check_release.py`: zero errors and warnings.
 - Asset downloader `--verify-only`: both files verified against pinned hashes.
   Both Compose overlays rendered against a temporary base service; shell
   syntax, Python compilation and `git diff --check` passed.

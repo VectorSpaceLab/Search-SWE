@@ -2,7 +2,7 @@
 
 For normal task runs, the launcher pulls the published gateway if it is missing
 locally. Follow the
-[direct/proxy configuration guide](../../docs/network-policy.md).
+[direct/proxy configuration guide](../../docs/evaluation/network.md).
 
 The image is shared by CPU/GPU tasks; it contains the network controller and
 patched GOST, not the task runtime. The following instructions are for maintainers
@@ -24,14 +24,14 @@ Build the patched component, then the gateway. Use fresh output directories and
 new tags for each build; the builders reject overwriting an existing image.
 
 ```bash
-python scripts/build_egress_component.py \
+python scripts/egress/build_egress_component.py \
   --go /path/to/go1.26.8/bin/go \
   --base-image searchswe-egress-harbor:0.22.0 \
   --work-dir jobs/egress-build/component-local1 \
   --cache-dir jobs/egress-build/cache \
   --tag searchswe-egress-component:local1
 
-python scripts/build_egress_gateway.py \
+python scripts/egress/build_egress_gateway.py \
   --component-image searchswe-egress-component:local1 \
   --tag searchswe-egress:local1 \
   --work-dir jobs/egress-build/gateway-local1 \
@@ -55,8 +55,7 @@ Host regressions include launcher selection, configuration, Harbor phase hooks,
 Compose restrictions, credential handling, build inputs and ownership recovery:
 
 ```bash
-python -B -m unittest discover -s scripts/tests -v
-python -B -m unittest scripts.test_pi_trajectory -v
+python -B -m unittest discover -s tests/unit -v
 ```
 
 For a pulled published image, a bounded direct TLS check uses a local HTTPS/DNS
@@ -64,7 +63,7 @@ fixture and verifies both successful allowed requests and receiving-end denials:
 
 ```bash
 docker pull --platform linux/amd64 python:3.13-slim
-python scripts/tests/egress_direct_transport.py \
+python tests/integration/egress_direct_transport.py \
   --gateway-image hanhainebula/search-swe-egress:1.0.0 \
   --output jobs/egress-checks/direct-tls-01
 ```
@@ -73,7 +72,7 @@ For changes to network enforcement, run the relevant Docker regressions below.
 Each command requires a fresh `--output jobs/egress-checks/NAME` directory and
 `--gateway-image hanhainebula/search-swe-egress:1.0.0` (or your matching build):
 
-| Script under `scripts/tests/` | Coverage / additional arguments |
+| Script under `tests/integration/` | Coverage / additional arguments |
 | --- | --- |
 | `egress_lifecycle/run.py` | Filtering, phase changes, old connections, frozen-controller leases; run with `--transport direct` and `--transport proxy` |
 | `egress_isolation/run.py` | Raw sockets, DNS and IPv6 bypass attempts; run both transports |

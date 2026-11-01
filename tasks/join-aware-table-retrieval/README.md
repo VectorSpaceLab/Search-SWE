@@ -102,8 +102,8 @@ The audit includes SQL, scorer, split, local asset and package checks. Author-on
 From the repository root:
 
 ```bash
-python scripts/download_assets.py --task join-aware-table-retrieval --verify-only
-python scripts/check_tasks.py tasks/join-aware-table-retrieval
+python scripts/assets/download_assets.py --task join-aware-table-retrieval --verify-only
+python scripts/validation/check_tasks.py tasks/join-aware-table-retrieval
 ```
 
 Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
@@ -112,11 +112,11 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health,
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task join-aware-table-retrieval
-bash scripts/run_task.sh --task join-aware-table-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task join-aware-table-retrieval
+bash scripts/evaluation/run_task.sh --task join-aware-table-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

@@ -18,7 +18,7 @@ from .resources import gpu_inventory
 
 
 def backend(root, name):
-    key = "_search_swe_backend_" + name
+    key = "_search_swe_backend_" + name.replace("/", "_")
     spec = importlib.util.spec_from_file_location(key, root / "scripts" / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     sys.modules[key] = module
@@ -26,8 +26,8 @@ def backend(root, name):
     return module
 
 
-def launch_command(root, task, setting, output=None, allocation=None):
-    command = [sys.executable, str(root / "scripts/run_task.py"), "--task", task.name,
+def launch_command(root, task, setting, output=None, allocation=None, model_config=None):
+    command = [sys.executable, str(root / "scripts/evaluation/run_task.py"), "--task", task.name,
                "--no-env-file", *setting.flags()]
     if output is not None:
         command += ["--output", str(output)]
@@ -35,16 +35,27 @@ def launch_command(root, task, setting, output=None, allocation=None):
         command += ["--cpu-set", allocation.cpu_set]
         if allocation.gpu:
             command += ["--gpu-device", allocation.gpu]
+    if model_config is not None:
+        command += ["--pi-model-config", json.dumps(model_config)]
     return command
 
 
-def preflight(root, tasks, setting, env):
+def preflight(root, tasks, setting, env, model_config=None):
     for task in tasks:
-        result = subprocess.run([*launch_command(root, task, setting), "--check"],
+        result = subprocess.run([*launch_command(root, task, setting, model_config=model_config), "--check"],
                                 env=env, cwd=root, capture_output=True, text=True)
         if result.returncode:
             # The backend reports variable names, never credential values.
             raise ValueError(f"Configuration for {task.name}:\n{result.stderr.strip()}")
+
+
+def asset_plan(root, tasks, env):
+    result = subprocess.run([sys.executable, str(root / "scripts/assets/download_assets.py"),
+                             "--task", *[task.name for task in tasks], "--plan"],
+                            env=env, cwd=root, capture_output=True, text=True)
+    if result.returncode:
+        raise ValueError("Cannot estimate asset storage: " + result.stderr.strip())
+    return json.loads(result.stdout)
 
 
 def doctor(root, tasks=(), env=None):
@@ -53,27 +64,32 @@ def doctor(root, tasks=(), env=None):
     env = dict(os.environ) if env is None else env
     if platform.system() != "Linux" or platform.machine() not in ("x86_64", "amd64"):
         raise ValueError("Evaluation requires a native Linux x86_64 Docker host")
-    missing = [name for name in ("docker", "harbor") if shutil.which(name) is None]
+    missing = [name for name in ("docker", "harbor") if shutil.which(name, path=env.get("PATH")) is None]
     if missing:
         raise ValueError("Missing executables: " + ", ".join(missing) + "; install the package and Docker Engine")
-    context = subprocess.run(["docker", "context", "inspect"], env=env,
-                             check=True, capture_output=True, text=True, timeout=30)
+    def docker_check(arguments, remedy):
+        try:
+            return subprocess.run(["docker", *arguments], env=env, check=True,
+                                  capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError) as error:
+            raise ValueError(f"Docker check failed ({' '.join(arguments)}). {remedy}") from error
+
+    context = docker_check(["context", "inspect"], "Check DOCKER_CONTEXT and run docker context inspect.")
     endpoint = ((None if env.get("DOCKER_CONTEXT") else env.get("DOCKER_HOST"))
                 or json.loads(context.stdout)[0]["Endpoints"]["docker"]["Host"])
     if not endpoint.startswith("unix://"):
         raise ValueError("Evaluation requires a local Unix-socket Docker daemon")
-    response = subprocess.run(["docker", "info", "--format", "{{json .}}"], env=env,
-                              check=True, capture_output=True, text=True, timeout=30)
+    response = docker_check(["info", "--format", "{{json .}}"],
+                            "Start Docker Engine and check your socket permissions with docker info.")
     info = json.loads(response.stdout)
     security = " ".join(info.get("SecurityOptions", []))
     if (info.get("OSType") != "linux" or "rootless" in security or "userns" in security
             or "desktop" in info.get("OperatingSystem", "").lower()
             or info.get("KernelVersion") != platform.release()):
         raise ValueError("Evaluation requires native Linux rootful Docker sharing the host kernel")
-    subprocess.run(["docker", "compose", "version", "--short"], env=env, check=True,
-                   capture_output=True, text=True, timeout=15)
+    docker_check(["compose", "version", "--short"], "Install the Docker Compose v2 plugin and run docker compose version.")
     if any(task.bounded for task in tasks):
-        backend(root, "task_storage").check_host(env)
+        backend(root, "evaluation/task_storage").check_host(env)
         if os.getuid() and shutil.which("sudo") is None:
             raise ValueError("Selected tasks need root or sudo for bounded storage")
     return {"checkout": str(root), "docker": info.get("ServerVersion"),
@@ -113,9 +129,9 @@ def wait_cancelled(processes):
             process.wait()
 
 
-def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline=False):
+def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline=False, model_config=None):
     batch_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
-    output = Path(output).resolve() if output else root / "jobs/evaluations" / batch_id
+    output = Path(output).expanduser().resolve() if output else root / "jobs/evaluations" / batch_id
     output.mkdir(parents=True, mode=0o700, exist_ok=False)
     logs = output / "logs"
     logs.mkdir(mode=0o700)
@@ -124,7 +140,8 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
         dirty = bool(subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True))
     except (OSError, subprocess.SubprocessError):
         revision, dirty = None, None
-    report = {"cli_version": __version__, "setting": setting.public(), "git_revision": revision, "working_tree_dirty": dirty,
+    report = {"cli_version": __version__, "setting": setting.public(), "pi_model_config": model_config,
+              "git_revision": revision, "working_tree_dirty": dirty,
               "concurrency": concurrency, "tasks": {}, "status": "preparing"}
     for task in tasks:
         report["tasks"][task.name] = {"status": "pending", "log": str(logs / f"{task.name}.log"),
@@ -134,7 +151,7 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
     record()
     print(f"Evaluation batch: {output}", flush=True)
     active = []
-    storage = backend(root, "task_storage") if any(task.bounded for task in tasks) else None
+    storage = backend(root, "evaluation/task_storage") if any(task.bounded for task in tasks) else None
     pending = list(tasks)
     authorized_sudo = False
     refreshed = 0
@@ -149,7 +166,7 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
         for task in tasks:
             path = logs / f"{task.name}.assets.log"
             print(f"Checking/restoring assets: {task.name} ({task.asset_bytes / 2**30:.2f} GiB manifest); {path}", flush=True)
-            command = [sys.executable, str(root / "scripts/download_assets.py"), "--task", task.name, "--force"]
+            command = [sys.executable, str(root / "scripts/assets/download_assets.py"), "--task", task.name, "--force"]
             if offline:
                 command.append("--local-files-only")
             with path.open("w") as stream:
@@ -198,7 +215,7 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
                         row["storage_root"] = child_env[plan.variable]
                     stream = Path(row["log"]).open("w")
                     os.fchmod(stream.fileno(), 0o600)
-                    command = launch_command(root, task, setting, row["output"], allocation)
+                    command = launch_command(root, task, setting, row["output"], allocation, model_config)
                     process = subprocess.Popen(command, cwd=root, env=child_env, stdout=stream,
                                                stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                                start_new_session=True, umask=0o077)
@@ -230,6 +247,8 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
                     context.__exit__(None, None, None)
                 except Exception as error:
                     row.update(status="cleanup-error", error=str(error))
+                    raise RuntimeError(f"Cleanup failed for {task.name}; batch stopped before reusing its resources. "
+                                       f"Inspect {output / 'run.json'} and the storage recovery instructions.") from error
                 pool.release(allocation)
                 print(f"{task.name}: {row['status']}; output: {row['output']}", flush=True)
                 record()

@@ -118,11 +118,11 @@ Current task identity and execution settings are recorded in `task.toml`.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 This task needs both `ANSWER_JUDGE_*` settings for answer scoring and
 `VERIFIER_OPENAI_*` settings for the trajectory audit. Optional submission APIs
@@ -130,8 +130,8 @@ use shared `OPENROUTER_API_KEY` and `JINA_API_KEY`. The evaluation guide explain
 the separate credential groups and their API requirements.
 
 ```bash
-python scripts/download_assets.py --task scientific-paper-qa
-bash scripts/run_task.sh --task scientific-paper-qa --agent codex --openrouter \
+python scripts/assets/download_assets.py --task scientific-paper-qa
+bash scripts/evaluation/run_task.sh --task scientific-paper-qa --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

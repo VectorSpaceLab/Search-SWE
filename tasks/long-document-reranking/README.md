@@ -117,19 +117,19 @@ The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter t
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Download both data and model assets with the command below. Configure the
 verifier's integrity judge separately from the coding agent. The submission
 uses the local reranker and does not need external reranking-service credentials.
 
 ```bash
-python scripts/download_assets.py --task long-document-reranking
-bash scripts/run_task.sh --task long-document-reranking --agent codex --openrouter \
+python scripts/assets/download_assets.py --task long-document-reranking
+bash scripts/evaluation/run_task.sh --task long-document-reranking --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

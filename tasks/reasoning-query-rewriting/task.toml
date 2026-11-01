@@ -22,6 +22,17 @@ all_hidden_queries_required = false
 corpus_document_count = 57359
 data_status = "10 public and 10 disjoint hidden BRIGHT biology queries, all missed at Top-3 by BM25, BM25+Qwen3-Reranker-8B, and Qwen3-Embedding-8B; opaque random document IDs and shuffled corpus"
 
+[metadata.configuration.REASONING_QUERY_REWRITING_OPENROUTER_API_KEY]
+description = "Task-specific OpenRouter key for the submitted retrieval system."
+guidance = """
+This task's enabled OpenRouter key requires the fixed 17-model allowlist (3 generation, 9 embedding, 5 rerank).
+Allow generation only with qwen/qwen3.6-35b-a3b, qwen/qwen3.5-35b-a3b and qwen/qwen3.5-9b.
+Use search-swe submission-models --profile reasoning-query-rewriting --json for the complete allowed_models list.
+The list excludes qwen/qwen3-reranker-8b for cost. Follow environment/docs/available_resources.md for permitted uses.
+Setup: docs/evaluation/submission-models.md. Keep coding-agent and judge keys independent of this submission allowlist.
+The CLI requires three out-of-list model-access checks before saving configuration or starting an evaluation.
+"""
+
 [agent]
 timeout_sec = 7200.0
 user = "root"

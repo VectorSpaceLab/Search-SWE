@@ -25,12 +25,15 @@ unattended execution, prepare the checkout first and pass `--repo PATH`.
 
 Use a Python 3.12+ host environment with the Search-SWE package installed. Check
 `search-swe --version` and `search-swe run --help`. Install the distribution with
-`python -m pip install search-swe`. For local CLI development, use
+`python -m pip install --upgrade 'search-swe>=0.2,<0.3'`. For local CLI development, use
 `python -m pip install -e /path/to/Search-SWE`. An installed skill provides
 instructions; the package supplies the executable.
 
-Read `docs/cli.md` in the selected checkout for its supported flags. Read
-`docs/evaluation.md` only for provider, network or bounded-storage setup details.
+Use CLI 0.2.x and a checkout from the same release series. Resolve a version
+mismatch before configuration; preserve checkout changes when updating it.
+
+Read `docs/evaluation/cli.md` in the selected checkout for its supported flags. Read
+`docs/evaluation/runtime.md` only for provider, network or bounded-storage setup details.
 These paths are relative to the benchmark checkout, not this installed skill.
 
 ## Resolve the requested experiment
@@ -40,9 +43,11 @@ These paths are relative to the benchmark checkout, not this installed skill.
   for omitted values, and identify material ambiguities before launching.
 - Discover names/resources with `search-swe --repo /path/to/Search-SWE list --json`.
   Inspect the selected task READMEs and `task.toml` for runtime and service needs.
-- Codex supports OpenRouter or a direct endpoint; Claude Code supports its direct
-  Anthropic endpoint and Anthropic models through OpenRouter; Pi uses the
-  checkout's supported direct adapters. For an ambiguous OpenRouter name, consult
+- Use `docs/evaluation/agents.md` for the harness/provider/model matrix. All three harnesses
+  support OpenRouter; Claude Code requires Messages/tool compatibility. Pi direct
+  uses its bundled API-key provider catalog: `search-swe pi-models` lists providers,
+  and `search-swe pi-models --provider NAME` lists model IDs. Configure only that
+  provider's key and endpoint settings. For an ambiguous OpenRouter name, consult
   `https://openrouter.ai/api/v1/models` or cached catalog metadata described in
   the checkout's CLI guide, and resolve the full ID.
   Directory metadata alone is not proof of harness compatibility.
@@ -60,8 +65,17 @@ the command preview without launching an evaluation.
 
 ## Prepare configuration and resources
 
+Review the CLI's asset storage estimate for the selected tasks before downloading.
+Task copies belong to the checkout; the HF cache can be moved with `HF_HUB_CACHE`
+in the selected environment. Account for their combined usage on a shared
+filesystem and leave room for Docker builds, task scratch files and results.
+The downloader reuses valid cache entries and verifies every restored file.
+Use `configure TASK --edit-credentials` and **Disable / clear** to turn off a
+saved optional service. Required task services remain required.
+
 For execution, run `search-swe --repo /path/to/Search-SWE doctor --json` and inspect
-available host resources. Configuration can be prepared before runtime host
+available host resources. Pass the same `--env-file` as the planned run when using
+a custom environment file. Configuration can be prepared before runtime host
 requirements are satisfied; report what remains before an actual launch.
 Choose a dedicated pool on shared machines with `--cpu-set`,
 `--gpu-devices` and `--memory-gb` when appropriate. `--concurrency` is a maximum;
@@ -72,16 +86,43 @@ Reuse the ignored checkout `.env`, an explicitly selected `--env-file`, or
 exported variables. Explicit CLI options override saved settings; exported
 variables override file values. Inspect credential presence through the CLI's
 validation errors or boolean checks, keeping values out of chat and tool output.
+Derive service needs from the selected tasks' environment mappings and
+`metadata.configuration` guidance. Reuse configured values and request only
+missing required services or optional APIs the user wants to enable. Shared
+variables need one value per batch; preserve unrelated saved configuration.
+Read each selected task's resource policy before enabling a submission API.
+For OpenRouter submission keys, use `search-swe submission-models --profile shared
+--json` for the shared 47-model key or `--profile reasoning-query-rewriting` for
+that task's dedicated 17-model key. Both profiles exclude `qwen/qwen3-reranker-8b`
+for cost. Give the user the exact list and key-specific guardrail setup from
+`docs/evaluation/submission-models.md`; retain separate coding-agent and judge model access.
+These profiles are mandatory for every enabled submission key and stay fixed
+across catalog refreshes. After confirmation, `configure` and `run` check each
+enabled key with three out-of-list requests capped at one output token. Accepted
+requests or inconclusive failures stop the operation. This also applies to saved
+keys and `--yes`/`--offline`; `--dry-run` only previews. Explain the reported issue
+and have the user correct the provider configuration before retrying. Keep this
+check enabled; never substitute an unrestricted agent/judge key to get past it.
+For restricted keys, give the contributor the exact model/endpoint policy and
+provider setup steps from the task guidance. Keep coding-agent, judge and
+submission model restrictions in their respective roles. The sampled check
+does not audit all models or embedding/rerank endpoints; the full profile must
+be assigned in OpenRouter.
 
 When a required key is missing, name the variable and its purpose, and ask the
 user to configure it locally. Give them `search-swe --repo /path/to/Search-SWE
 configure` with the requested task/setting flags so they can use hidden input,
-or identify the private env file to edit. Resume after configuration is available.
+or identify the private env file to edit. Include `--env-file` when a custom file
+is selected. Use `configure --edit-credentials` to replace existing values.
+Resume after configuration is available.
 Keep agent, trajectory-judge, answer-judge and submission-resource credentials in
 their declared roles; reuse a key across roles only when the user has selected it.
 
 Use `configure ... --yes` to validate and save specified defaults when the needed
-credentials are already available. It makes no model calls. Keep environment files
+credentials are already available. Configuration validates local settings and
+performs the required submission-key checks. Task arguments select service credentials to
+configure; supply the intended task names again when running. Resource-pool and
+output flags belong to `run`. Keep environment files
 Git-ignored and mode `0600`; the CLI preserves unrelated settings. Optional task
 APIs follow the task's resource documentation and the user's choices.
 
@@ -98,13 +139,14 @@ search-swe run agentic-search agentic-search-vectorless \
 
 After configuration and resources are ready, replace `--dry-run` with `--yes` for
 the authorized run. The preview does not validate credentials, assets or API
-connectivity. Runtime preflight checks the configuration before data restoration
-and startup; it is not a paid model probe. Use the normal runner for evaluation
+connectivity. Runtime preflight checks the configuration and submission-key
+restrictions before data restoration and startup. Use the normal runner for evaluation
 and retain its asset checks and phase isolation.
 
 The CLI restores verified assets, prepares bounded storage where needed, and
 launches the task harness/verifier. `--offline` uses cached assets and model
-metadata; evaluation still needs its configured model APIs. Use a fresh `--output`
+selection metadata; submission-key checks and evaluation still need network
+access. Use a fresh `--output`
 path or the generated `jobs/evaluations/<unique-run>/` directory. Output paths are
 relative to the invoking directory when supplied; use absolute paths for handoffs.
 

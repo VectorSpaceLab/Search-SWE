@@ -54,7 +54,7 @@ request. The environment document matches `docker/gpu/environment.md` exactly.
 
 ## Executed checks
 
-- `python scripts/download_assets.py --task chunqiu-temporal-retrieval --verify-only`:
+- `python scripts/assets/download_assets.py --task chunqiu-temporal-retrieval --verify-only`:
   all 13 files verified, zero failures (1.13 GiB).
 - `python -m unittest discover -s tasks/chunqiu-temporal-retrieval/tests -p 'test_*.py' -v`:
   10 tests passed, including the nDCG ideal denominator, complete-batch coverage,

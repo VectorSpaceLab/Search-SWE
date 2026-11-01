@@ -145,20 +145,20 @@ verifier-only DeepSeek endpoint and key settings.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Prepare the GPU runtime and configure the independent integrity judge. Download
 as a host user distinct from submission UID 10001, following the asset guide,
 so the reference model's private file permissions retain their intended effect.
 
 ```bash
-python scripts/download_assets.py --task query-encoder-alignment
-python scripts/download_assets.py --task query-encoder-alignment --verify-only
-bash scripts/run_task.sh --task query-encoder-alignment --gpu-device 0 --agent codex --openrouter \
+python scripts/assets/download_assets.py --task query-encoder-alignment
+python scripts/assets/download_assets.py --task query-encoder-alignment --verify-only
+bash scripts/evaluation/run_task.sh --task query-encoder-alignment --gpu-device 0 --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --output jobs/query-encoder-alignment-UNIQUE_RUN_ID
 ```
 
@@ -197,7 +197,7 @@ sizes and hashes; public split and hidden split remain unchanged.
 
 ```bash
 python -m unittest discover -s tasks/query-encoder-alignment/tests -p test_contract.py -v
-python scripts/check_tasks.py tasks/query-encoder-alignment
+python scripts/validation/check_tasks.py tasks/query-encoder-alignment
 ```
 
 Author calibration records and runtime evidence are kept under
@@ -230,7 +230,7 @@ solution achieving 100% hidden accuracy has not been demonstrated; synthetic
 grader tests establish the full-score numeric boundary only. Model-run evidence
 for the six-hour budget will come from the release evaluations.
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

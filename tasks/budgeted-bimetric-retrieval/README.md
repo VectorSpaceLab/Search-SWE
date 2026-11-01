@@ -39,8 +39,8 @@ The verifier averages nDCG@10 over all 3,452 hidden queries, including failed qu
 Run from the repository root using the repository's existing Python environment:
 
 ```bash
-python scripts/download_assets.py --task budgeted-bimetric-retrieval
-python scripts/download_assets.py --task budgeted-bimetric-retrieval --verify-only
+python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval
+python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval --verify-only
 ```
 
 [assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
@@ -64,7 +64,7 @@ bounded agent/verifier storage and the oracle socket directory, chooses
 run's containers exit. Backing images remain under
 `jobs/.task-storage/budgeted-bimetric-retrieval/`.
 Set `BIMETRIC_CPUSET` to preserve a particular 16-CPU allocation when reproducing
-a run. See [bounded task storage](../../docs/evaluation.md#bounded-task-storage)
+a run. See [bounded task storage](../../docs/evaluation/runtime.md#bounded-task-storage)
 for host setup, permissions, recovery and caller-managed storage.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
@@ -81,7 +81,7 @@ healthy passing integrity audit. See `audit-status.json` for audit health.
 Invoke the standard entrypoint directly:
 
 ```bash
-bash scripts/run_task.sh --task budgeted-bimetric-retrieval --agent codex --openrouter \
+bash scripts/evaluation/run_task.sh --task budgeted-bimetric-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
   --output "jobs/budgeted-bimetric-retrieval-codex-openrouter-luna-max"
 ```
@@ -93,8 +93,8 @@ an infrastructure error.
 ### Validate the package
 
 ```bash
-python scripts/check_tasks.py tasks/budgeted-bimetric-retrieval
-python scripts/download_assets.py --task budgeted-bimetric-retrieval --verify-only
+python scripts/validation/check_tasks.py tasks/budgeted-bimetric-retrieval
+python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval --verify-only
 ```
 
 Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective

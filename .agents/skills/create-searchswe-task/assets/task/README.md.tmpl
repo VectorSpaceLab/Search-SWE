@@ -48,9 +48,9 @@ The trajectory judge uses RewardKit 0.2.0 and
 `deepseek/deepseek-v4.1-flash`; adapt its rubric to this task.
 
 ```bash
-python scripts/check_tasks.py tasks/@@TASK_NAME@@
-python scripts/download_assets.py --task @@TASK_NAME@@ --verify-only
-bash scripts/run_task.sh --task @@TASK_NAME@@ --agent codex --openrouter \
+python scripts/validation/check_tasks.py tasks/@@TASK_NAME@@
+python scripts/assets/download_assets.py --task @@TASK_NAME@@ --verify-only
+bash scripts/evaluation/run_task.sh --task @@TASK_NAME@@ --agent codex --openrouter \
   --model YOUR_MODEL --reasoning-effort YOUR_SUPPORTED_EFFORT --dry-run
 ```
 

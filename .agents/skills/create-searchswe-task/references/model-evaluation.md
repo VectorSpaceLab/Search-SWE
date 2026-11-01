@@ -17,7 +17,7 @@ not assume `max` and `xhigh` are interchangeable. Verify the effective setting
 in the generated config and trajectory. Never substitute a different model
 silently.
 
-Inspect `scripts/run_task.py`, the selected task's `task.toml`, and the current
+Inspect `scripts/evaluation/run_task.py`, the selected task's `task.toml`, and the current
 evaluation documentation. Agent credentials, submission API resources,
 trajectory judge and any answer judge are separate configuration groups.
 Reuse session-authorized keys from an ignored `.env` without printing them or
@@ -27,7 +27,7 @@ overrides. Restrict it to its owner and remove temporary secret copies afterward
 
 Check only whether required variables are configured; never display their
 values. Determine the required groups from the selected agent/provider, task
-and judges, using the target checkout's `.env.example`, `docs/evaluation.md`
+and judges, using the target checkout's `.env.example`, `docs/evaluation/runtime.md`
 and task configuration. Optional task APIs need keys only when used. If keys
 are missing, explicitly remind the contributor to configure them and provide:
 
@@ -63,9 +63,9 @@ For example, replacing placeholders with the actual agreed task and effort:
 
 ```bash
 task_name=example-search  # Use the task being evaluated.
-bash scripts/run_task.sh --task "$task_name" --agent codex \
+bash scripts/evaluation/run_task.sh --task "$task_name" --agent codex \
   --openrouter --model "$model_id" --reasoning-effort "$effort" --dry-run
-bash scripts/run_task.sh --task "$task_name" --agent codex \
+bash scripts/evaluation/run_task.sh --task "$task_name" --agent codex \
   --openrouter --model "$model_id" --reasoning-effort "$effort" \
   --output "$fresh_output"
 ```

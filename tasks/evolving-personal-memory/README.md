@@ -153,9 +153,9 @@ where used, are distinct from trajectory auditing.
 
 ### Running This Task
 
-Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
-and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
-credential configuration, and the [asset guide](../../docs/assets.md) for
+Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor
+and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and
+credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for
 restoring fixed inputs.
 
 Optional task APIs use `OPENROUTER_API_KEY` and `JINA_API_KEY` where the
@@ -170,8 +170,8 @@ The commands below apply in a checkout with this package installed at
 `tasks/evolving-personal-memory/`:
 
 ```bash
-python scripts/download_assets.py --task evolving-personal-memory
-bash scripts/run_task.sh --task evolving-personal-memory --agent codex --openrouter \
+python scripts/assets/download_assets.py --task evolving-personal-memory
+bash scripts/evaluation/run_task.sh --task evolving-personal-memory --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

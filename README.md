@@ -25,107 +25,73 @@
 ## 📖 Overview
 
 Search-SWE evaluates whether coding agents can **implement and optimize** real
-search systems under fixed resource constraints. Agents inspect an environment,
-write and run code, test their systems, and iterate toward an executable
-submission. Evaluation measures the behavior of the resulting system, including
-retrieval quality, functional correctness, and resource use.
+search systems under fixed resource constraints. Tasks span query understanding,
+indexing, retrieval, ranking, and representation learning, with applications
+ranging from document and code search to multimodal retrieval.
 
-Tasks cover reasoning-assisted retrieval, memory-constrained vector search,
-long-document reranking, embedding fine-tuning, and query-encoder alignment.
+Agents work with fixed inputs in reproducible environments, write and test code,
+and iterate on executable systems. A separate verifier evaluates functionality,
+retrieval quality, efficiency, and compliance with task rules on held-out queries.
+Each task defines a submission interface and resource budget, making practical
+trade-offs between search quality, latency, and resource use part of the work.
 
-Each task specifies its inputs, submission interface, evaluation criteria, and
-resource budget. See the [benchmark design](docs/benchmark.md) for how
-evaluation works, how the repository is organized, and where fixed data and
-models come from.
+See the [benchmark design](docs/benchmark.md) for evaluation details and data provenance.
 
 ## 🚀 Quick Start
 
-Install the `search-swe` CLI from PyPI in a Python 3.12+ environment:
-
-```bash
-python -m pip install search-swe
-```
+Use a native Linux x86_64 host with **Python 3.12+, Git, and Docker**, plus the
+CPU/RAM and optional GPU resources required by your chosen tasks.
 
 ### Run with the CLI
 
+Use CLI **0.2.x** with a checkout from the same release series.
+
 ```bash
+python -m pip install --upgrade 'search-swe>=0.2,<0.3'
 search-swe run
 ```
 
-On first use, choose where to keep the task repository: accept `~/Search-SWE`,
-enter a custom clone path, or select an existing checkout. Git is needed for
-cloning. The CLI remembers the selected path for later commands; task assets and
-results are stored in that checkout. An existing checkout in the current
-directory is used directly.
+Follow the prompts to choose a repository location, harness/provider/model,
+API keys, tasks, and sequential or parallel execution. The default setting is
+**Codex + OpenRouter + GPT-6 Luna (max)**. The CLI downloads the selected tasks'
+assets as needed and saves logs and results under `jobs/evaluations/` in the checkout.
+Before downloading, it shows the task/cache locations and required disk space;
+see the [asset guide](docs/evaluation/assets.md) to choose a cache on another disk.
 
-The wizard guides you through harness, provider, searchable model selection,
-reasoning level and API keys, followed by tasks and sequential or parallel execution. Its
-default setting is **Codex + OpenRouter + GPT-6 Luna (max)**. Keys use hidden
-input; configuration is saved to the ignored `.env` only after confirmation.
-You can also keep entered credentials only for the current run.
-
-Use a native Linux x86_64 Docker host with enough CPU, RAM, disk and optional GPU
-capacity. The CLI restores and checks selected task assets, assigns resources,
-and prepares bounded task storage when needed. Those tasks require root/sudo
-and FUSE; see [host setup](docs/evaluation.md#bounded-task-storage).
-
-After configuration, scripted runs are short:
-
-```bash
-search-swe run reasoning-query-rewriting --yes
-search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
-search-swe run code-embedding-finetuning --gpu-devices 0 --yes
-```
-
-Parallel tasks receive separate CPU sets and GPUs within the selected resource
-pool. Results, per-task logs and a `run.json` summary are written to a fresh
-`jobs/evaluations/` directory. Use `search-swe list` to browse tasks,
-`search-swe configure` to save settings without running, and `--dry-run` to
-preview. Task definitions remain in the checkout; use `--repo PATH` when running
-an installed CLI from elsewhere.
-
-See the [quick start](docs/quickstart.md), [CLI reference](docs/cli.md), and
-[full evaluation guide](docs/evaluation.md) for custom providers, resource pools,
-network configuration and the underlying single-task launcher.
-For local CLI development, use `python -m pip install -e .` from the repository root.
+Submission API keys require fixed [OpenRouter model allowlists](docs/evaluation/submission-models.md):
+**47 models** for the shared key and **17** for `reasoning-query-rewriting`.
+The CLI checks enabled keys before a run and stops if restrictions fail validation.
+Coding-agent and judge keys use separate model access.
 
 ### Run through your agent
 
 Install [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) into
-your coding agent, then tell it which settings and tasks to run. Use either
-installer (Codex shown here):
+your coding agent using either installer (Codex shown here):
 
 ```bash
 npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex
-```
 
-```bash
+# Or, with GitHub CLI:
 gh skill install VectorSpaceLab/Search-SWE skills/run-searchswe-evaluation --agent codex
 ```
 
 Then ask your agent:
 
-> Use run-searchswe-evaluation with my Search-SWE checkout. Run agentic-search
-> and agentic-search-vectorless with Codex + OpenRouter + openai/gpt-6-luna,
-> max reasoning and concurrency 2. Reuse my .env, monitor the runs and report
-> scores, verifier health and result paths.
+> Use run-searchswe-evaluation to run agentic-search with Codex + OpenRouter +
+> openai/gpt-6-luna and max reasoning. Help me configure missing keys locally,
+> monitor the run, and report the results.
 
-The skill guides setup, resource checks, execution and monitoring through the
-same CLI. It prompts you to configure missing keys locally. The
-[agent evaluation guide](docs/agent-evaluations.md) covers local checkout
-installation, other agents, user-wide installation and installer prerequisites.
+See [CLI options](docs/evaluation/cli.md), [agent setup](docs/evaluation/quickstart.md#run-with-your-agent), and
+[host and credential configuration](docs/evaluation/runtime.md) for details.
 
 ## 📚 Documentation
 
-| Document | Contents |
-| --- | --- |
-| [Quick start guide](docs/quickstart.md) | A first CPU evaluation, end to end |
-| [Run with your agent](docs/agent-evaluations.md) | Install the evaluation skill and describe settings/tasks |
-| [Evaluation guide](docs/evaluation.md) | Credential setup, coding agents, GPU, network policy, and custom providers |
-| [Network policy](docs/network-policy.md) | Phase-specific allowlists, default direct gateway, and optional proxy egress |
-| [Asset guide](docs/assets.md) | Downloading, verifying, and restoring fixed data and models |
-| [Benchmark design](docs/benchmark.md) | Evaluation, repository layout, and data provenance |
-| [Contributing guide](docs/contributing.md) | Task-authoring workflow, validation, and PR expectations |
+Start at the [documentation index](docs/README.md). Common reading paths:
+
+- **Run your first evaluation:** [quick start](docs/evaluation/quickstart.md), with CLI and agent workflows.
+- **Choose a setting:** [supported agents and providers](docs/evaluation/agents.md).
+- **Configure the host:** [credentials, GPU and native launcher](docs/evaluation/runtime.md).
+- **Contribute a task:** [authoring, model feedback and review](docs/contributing/tasks.md).
 
 For task descriptions and results, visit the
 [project website](https://search-swe.github.io/), maintained in a
@@ -138,7 +104,7 @@ the workflow and skills in [`.agents/`](.agents/AGENTS.md), including
 [`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md) for task authoring
 and [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md) for
 PR review and publication. See the
-[contribution entry](CONTRIBUTING.md) and [guide](docs/contributing.md) for validation and PR requirements.
+[contribution entry](CONTRIBUTING.md) and [guide](docs/contributing/tasks.md) for validation and PR requirements.
 
 Task authoring includes running a configured coding model, inspecting its
 trajectory and evaluation results, and using that feedback to refine the task

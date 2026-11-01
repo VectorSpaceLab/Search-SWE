@@ -46,8 +46,8 @@ remains mandatory, and a recorded memory violation still makes the score zero.
 Run from the repository root using the repository's existing Python environment:
 
 ```bash
-python scripts/download_assets.py --task large-scale-formula-retrieval
-python scripts/download_assets.py --task large-scale-formula-retrieval --verify-only
+python scripts/assets/download_assets.py --task large-scale-formula-retrieval
+python scripts/assets/download_assets.py --task large-scale-formula-retrieval --verify-only
 ```
 
 [assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
@@ -71,7 +71,7 @@ bounded agent, verifier and serving storage, chooses 2 logical CPUs from its
 available affinity, and unmounts storage after the run's containers exit.
 Backing images remain under `jobs/.task-storage/large-scale-formula-retrieval/`.
 Set `FORMULA_CPUSET` to preserve a particular 2-CPU allocation when reproducing
-a run. See [bounded task storage](../../docs/evaluation.md#bounded-task-storage)
+a run. See [bounded task storage](../../docs/evaluation/runtime.md#bounded-task-storage)
 for host setup, permissions, recovery and caller-managed storage.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
@@ -88,7 +88,7 @@ deterministic report; missing or unhealthy audits cannot produce a positive rewa
 Invoke the standard entrypoint directly:
 
 ```bash
-bash scripts/run_task.sh --task large-scale-formula-retrieval --agent codex --openrouter \
+bash scripts/evaluation/run_task.sh --task large-scale-formula-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max \
   --output "jobs/large-scale-formula-retrieval-codex-openrouter-luna-max"
 ```
@@ -100,8 +100,8 @@ an infrastructure error.
 ### Validate the package
 
 ```bash
-python scripts/check_tasks.py tasks/large-scale-formula-retrieval
-python scripts/download_assets.py --task large-scale-formula-retrieval --verify-only
+python scripts/validation/check_tasks.py tasks/large-scale-formula-retrieval
+python scripts/assets/download_assets.py --task large-scale-formula-retrieval --verify-only
 ```
 
 Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
@@ -115,7 +115,7 @@ From `tasks/large-scale-formula-retrieval/tests`,
 `python -m unittest test_development test_scoring test_ipc_cleanup test_integrity_gate -v`
 passed all 25 tests. These cover development-gate acceptance without agent completion logs, retained
 OOM rejection, missing/malformed/private memory evidence, scoring and integrity
-gates. `scripts/check_tasks.py tasks/large-scale-formula-retrieval`, shell syntax
+gates. `scripts/validation/check_tasks.py tasks/large-scale-formula-retrieval`, shell syntax
 and diff whitespace checks also passed. The instruction, input assets and
 numeric scoring are unchanged.
 

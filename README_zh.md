@@ -24,95 +24,68 @@
 ## 📖 概述
 
 Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化**真实的搜索系统。
-智能体需要检查环境、编写并运行代码、测试系统，最终提交可执行的实现。评测关注
-系统的实际表现，包括检索质量、功能正确性和资源消耗。
+任务涵盖查询理解、索引、检索、排序和表示学习，应用场景包括文档搜索、代码搜索
+和多模态检索。
 
-任务涵盖推理辅助检索、内存受限的向量搜索、长文档重排序、嵌入模型微调和
-查询编码器对齐等问题。
+智能体在可复现的环境中使用固定输入，编写和测试代码，迭代出可执行的系统。
+独立的 verifier 使用隐藏查询评估功能、检索质量、效率及任务规则的遵守情况。
+每个任务都明确提交接口和资源预算，使搜索质量、延迟和资源消耗之间的权衡成为
+解题过程的一部分。
 
-每个任务都明确规定输入、提交接口、评测标准和资源预算。评测方式、仓库结构和
-固定数据与模型的来源见[基准设计](docs/benchmark.md)。
+评测细节与数据来源见[基准设计](docs/benchmark.md)。
 
 ## 🚀 快速开始
 
-在 Python 3.12+ 环境中从 PyPI 安装 `search-swe` CLI：
-
-```bash
-python -m pip install search-swe
-```
+使用安装了 **Python 3.12+、Git 和 Docker** 的原生 Linux x86_64 主机，并为所选任务
+准备所需的 CPU、内存，以及 GPU（如需）。
 
 ### 通过 CLI 运行
 
+使用 **0.2.x** 版本的 CLI 和同一版本系列的 checkout。
+
 ```bash
+python -m pip install --upgrade 'search-swe>=0.2,<0.3'
 search-swe run
 ```
 
-首次使用时，选择任务仓库的位置：接受默认的 `~/Search-SWE`、自定义克隆路径，
-或选择已有 checkout。克隆需要安装 Git。CLI 会记住所选路径，后续命令可直接复用；
-任务数据和评测结果保存在该 checkout 中。如果当前目录已位于仓库内，则直接使用它。
+按提示选择仓库路径、harness/provider/model、API key、任务及顺序或并行运行方式。
+默认 setting 为 **Codex + OpenRouter + GPT-6 Luna（max）**。CLI 会按需下载所选任务
+的数据和模型，并将日志与结果保存在 checkout 下的 `jobs/evaluations/`。
+下载前会展示任务数据、缓存的位置及所需磁盘空间；将缓存放到其他磁盘的方法见[资源说明](docs/evaluation/assets.md)。
 
-向导会依次引导选择 harness、provider、搜索并选择模型、推理强度和配置 API key，然后多选
-任务，选择顺序或并行运行。默认 setting 是 **Codex + OpenRouter + GPT-6 Luna
-（max）**。Key 使用隐藏输入；确认后才将配置保存到被 Git 忽略的 `.env`，也可以
-选择仅在本次运行使用输入的凭证。
-
-主机需为原生 Linux x86_64 Docker 环境，并具有足够的 CPU、RAM、磁盘和任务所需
-GPU。CLI 会自动恢复并校验所选任务的数据、分配资源，以及准备需要的限额存储。
-使用限额文件系统的任务需要 root/sudo 和 FUSE，详见
-[主机配置](docs/evaluation.md#bounded-task-storage)。
-
-配置完成后，可以直接启动：
-
-```bash
-search-swe run reasoning-query-rewriting --yes
-search-swe run agentic-search agentic-search-vectorless --concurrency 2 --yes
-search-swe run code-embedding-finetuning --gpu-devices 0 --yes
-```
-
-并行任务会在所选资源池内分配不同的 CPU 集合和 GPU。结果、各任务日志与
-`run.json` 摘要保存在新建的 `jobs/evaluations/` 目录下。使用 `search-swe list`
-浏览任务，`search-swe configure` 只保存配置，`--dry-run` 预览配置与命令。
-任务定义仍从 checkout 加载；在其他目录运行安装好的 CLI 时可指定 `--repo PATH`。
-
-[快速开始](docs/quickstart.md)、[CLI 文档](docs/cli.md)及
-[完整评测指南](docs/evaluation.md)介绍自定义 provider、资源池、网络配置和底层单任务入口。
-本地开发 CLI 时，在仓库根目录执行 `python -m pip install -e .`。
+Submission API key **必须配置**固定的 [OpenRouter 模型白名单](docs/evaluation/submission-models.md)：
+共享 key 为 **47 个模型**，`reasoning-query-rewriting` 专用 key 为 **17 个模型**。
+CLI 会在运行前检查已启用的 key，限制未通过验证时停止运行。
+Coding agent 和 judge 的 key 使用各自独立的模型权限。
 
 ### 通过自己的 agent 运行
 
 将 [run-searchswe-evaluation](skills/run-searchswe-evaluation/SKILL.md) 安装到
-自己的 coding agent，再告诉它要用什么 setting 跑哪些 tasks。可任选一种方式安装
-（以下以 Codex 为例）：
+自己的 coding agent，任选一种安装方式（以下以 Codex 为例）：
 
 ```bash
 npx skills add VectorSpaceLab/Search-SWE --skill run-searchswe-evaluation -a codex
-```
 
-```bash
+# 或使用 GitHub CLI：
 gh skill install VectorSpaceLab/Search-SWE skills/run-searchswe-evaluation --agent codex
 ```
 
 然后告诉 agent：
 
-> 使用 run-searchswe-evaluation 和我的 Search-SWE checkout，以 Codex + OpenRouter +
-> openai/gpt-6-luna、max 推理强度，运行 agentic-search 和 agentic-search-vectorless，
-> 并发上限为 2。复用我的 .env，跟踪运行进展，最后汇报得分、verifier 状态和结果路径。
+> 使用 run-searchswe-evaluation，以 Codex + OpenRouter + openai/gpt-6-luna、
+> max 推理强度运行 agentic-search。协助我在本地配置缺少的 key，跟踪运行并汇报结果。
 
-Skill 会指导 agent 使用同一个 CLI 完成配置、资源检查、启动和监控；缺少 key 时，
-会提醒你在本地配置。[Agent 评测指南](docs/agent-evaluations.md)提供从本地 checkout
-安装、选择其他 agent、用户级安装及安装工具的环境要求。
+详细说明见 [CLI 参数](docs/evaluation/cli.md)、[agent 配置](docs/evaluation/quickstart.md#run-with-your-agent)及
+[主机与凭证配置](docs/evaluation/runtime.md)。
 
 ## 📚 文档索引
 
-| 文档 | 内容 |
-| --- | --- |
-| [快速开始指南](docs/quickstart.md) | 完整的一次 CPU 评测流程 |
-| [通过 agent 运行](docs/agent-evaluations.md) | 安装评测 skill，并指定 settings 和 tasks |
-| [评测指南](docs/evaluation.md) | 凭证配置、编码智能体、GPU、网络策略和自定义模型服务 |
-| [网络权限](docs/network-policy.md) | 各阶段的 host allowlist、默认直连网关与可选代理出口 |
-| [资源说明](docs/assets.md) | 固定数据与模型的下载、校验和恢复 |
-| [基准设计](docs/benchmark.md) | 评测方式、仓库结构和数据来源 |
-| [贡献指南](docs/contributing.md) | 任务创作流程、验证要求和 PR 说明 |
+从[文档首页](docs/README.md)选择阅读路径：
+
+- **首次运行评测：**[快速开始](docs/evaluation/quickstart.md)，包含 CLI 与 agent 两种方式。
+- **选择评测 setting：**[支持的智能体与 provider](docs/evaluation/agents.md)。
+- **配置运行主机：**[凭证、GPU 与原生启动器](docs/evaluation/runtime.md)。
+- **贡献任务：**[任务构建、模型反馈与审查](docs/contributing/tasks.md)。
 
 任务介绍和评测结果可在[项目主页](https://search-swe.github.io/)查看，主页由
 [独立仓库](https://github.com/search-swe/search-swe.github.io)维护。
@@ -123,7 +96,7 @@ Skill 会指导 agent 使用同一个 CLI 完成配置、资源检查、启动�
 中的工作流和 skills，包括
 [`create-searchswe-task`](.agents/skills/create-searchswe-task/SKILL.md)（任务投稿）和
 [`maintain-searchswe-task`](.agents/skills/maintain-searchswe-task/SKILL.md)（PR 审查与发布）。验证要求和
-PR 说明见[贡献入口](CONTRIBUTING.md)与[贡献指南](docs/contributing.md)。
+PR 说明见[贡献入口](CONTRIBUTING.md)与[贡献指南](docs/contributing/tasks.md)。
 
 任务构建还包括使用配置好的编码模型试跑，检查执行轨迹和评测结果，并根据反馈
 完善任务设定。影响任务要求或评分的修改需要重新验证，并记录最终测试的版本。

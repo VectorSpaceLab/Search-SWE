@@ -71,8 +71,8 @@ and `all` are reserved. Check uniqueness against the current base and active PRs
 A PR may contain multiple tasks. Review each package and verify its pinned
 upstream or official assets; publish official inputs only when needed. Complete
 validation, then merge with a merge commit to preserve authors.
-Revise existing tasks in place. `scripts/check_tasks.py` reuses
-`scripts/check_release.py`, which requires these non-empty files:
+Revise existing tasks in place. `scripts/validation/check_tasks.py` reuses
+`scripts/validation/check_release.py`, which requires these non-empty files:
 
 ```text
 tasks/<task-name>/
@@ -187,7 +187,7 @@ For a local GPU trial, use the shared launcher's optional
 phases using per-run Compose copies. Keep the package's default `count: 1`
 requests and document any task-specific GPU capacity requirement in its README.
 Install the target checkout's pinned coding-agent CLIs in the agent Dockerfile;
-the current versions are defined in `scripts/harness_versions.py`.
+the current versions are defined in `scripts/evaluation/harness_versions.py`.
 
 Choose resources from the task workload. Keep CPU/RAM values in TOML, both
 Compose overlays and resource docs consistent, including explicit swap limits

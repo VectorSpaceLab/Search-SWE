@@ -172,12 +172,14 @@ writes confined to audit state and output directories.
 
 ### Running This Task
 
-Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
-and Docker, the [evaluation guide](../../docs/evaluation.md) for model
-configuration, and the [asset guide](../../docs/assets.md) for fixed inputs.
+Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor
+and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for model
+configuration, and the [asset guide](../../docs/evaluation/assets.md) for fixed inputs.
 
-Optional retrieval calls use `JINA_API_KEY`, and the submitted answerer uses
-`OPENROUTER_API_KEY`. Evidence and answer grading use `ANSWER_JUDGE_MODEL_NAME`;
+Optional retrieval calls use `JINA_API_KEY`. The verifier's answerer gateway
+requires `OPENROUTER_API_KEY`; configure it even for local-only retrieval.
+The CLI and native launcher check this requirement before starting.
+Evidence and answer grading use `ANSWER_JUDGE_MODEL_NAME`;
 the current configuration routes those calls through OpenRouter with
 `VERIFIER_OPENAI_API_KEY`. Trajectory auditing uses `VERIFIER_OPENAI_BASE_URL`
 and `VERIFIER_OPENAI_API_KEY`. These are verifier-only credentials and must not
@@ -186,8 +188,8 @@ be exposed to submitted programs.
 The commands below run the package at `tasks/icsi-meeting-memory/`.
 
 ```bash
-python scripts/download_assets.py --task icsi-meeting-memory
-bash scripts/run_task.sh --task icsi-meeting-memory --agent codex --openrouter \
+python scripts/assets/download_assets.py --task icsi-meeting-memory
+bash scripts/evaluation/run_task.sh --task icsi-meeting-memory --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

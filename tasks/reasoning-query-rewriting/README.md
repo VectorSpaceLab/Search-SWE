@@ -121,19 +121,32 @@ verifier-only DeepSeek endpoint and key as described in the evaluation guide.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Configure the verifier's integrity-judge credentials independently of the coding
 agent. If the submission uses permitted APIs, `reasoning-query-rewriting` uses
 `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY` and the shared `JINA_API_KEY`.
+The OpenRouter key is dedicated to this task's submission API. Assign it a
+[model-allowlist guardrail](https://openrouter.ai/docs/guides/features/guardrails)
+with this task's **required 17 models: 3 generation, 9 embedding and 5 rerank**.
+The [complete model-ID list and setup guide](../../docs/evaluation/submission-models.md#reasoning-query-rewriting-17-models)
+also provide a JSON export command. This list excludes `qwen/qwen3-reranker-8b`
+for cost. Save the guardrail and assign it to this key; check its effective model
+restrictions in OpenRouter. Keep coding-agent and judge keys independent of this
+allowlist. The [resource policy](environment/docs/available_resources.md) defines
+the permitted uses. The CLI checks this enabled key with three out-of-list
+requests (`max_tokens=1`) before saving configuration or starting a batch;
+accepted requests or inconclusive responses stop the operation. Run
+`search-swe configure reasoning-query-rewriting` before using the native commands
+below. See the [check details](../../docs/evaluation/submission-models.md#required-cli-checks).
 
 ```bash
-python scripts/download_assets.py --task reasoning-query-rewriting
-bash scripts/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
+python scripts/assets/download_assets.py --task reasoning-query-rewriting
+bash scripts/evaluation/run_task.sh --task reasoning-query-rewriting --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

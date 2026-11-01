@@ -1,6 +1,7 @@
 """Resource accounting for evaluations owned by one CLI invocation."""
 
 from dataclasses import dataclass
+import math
 import os
 import re
 import subprocess
@@ -11,6 +12,7 @@ import psutil
 def cpu_ids(value):
     result = set()
     for item in value.split(","):
+        item = item.strip()
         if not re.fullmatch(r"\d+(?:-\d+)?", item):
             raise ValueError("CPU pool must contain IDs/ranges such as 0-15,32-47")
         bounds = list(map(int, item.split("-")))
@@ -65,14 +67,14 @@ class Pool:
             raise ValueError("CPU pool includes unavailable logical CPUs")
         memory = max(0, psutil.virtual_memory().available // 2**20 - 2048)
         if memory_gb is not None:
-            if memory_gb <= 0:
-                raise ValueError("--memory-gb must be positive")
+            if not math.isfinite(memory_gb) or memory_gb <= 0:
+                raise ValueError("--memory-gb must be finite and positive")
             memory = min(memory, int(memory_gb * 1024))
         gpus = []
         if any(task.gpus for task in tasks):
             inventory = gpu_inventory()
             if gpu_devices:
-                requested = gpu_devices.split(",")
+                requested = [value.strip() for value in gpu_devices.split(",")]
                 for value in requested:
                     matches = [gpu for gpu in inventory if value in (gpu["index"], gpu["uuid"])]
                     if not matches or not matches[0]["idle"]:

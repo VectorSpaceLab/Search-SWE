@@ -80,11 +80,11 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health.
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task long-pdf-evidence
-bash scripts/run_task.sh --task long-pdf-evidence --agent codex --openrouter \
+python scripts/assets/download_assets.py --task long-pdf-evidence
+bash scripts/evaluation/run_task.sh --task long-pdf-evidence --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

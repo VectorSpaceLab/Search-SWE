@@ -33,7 +33,7 @@ The outer allowance was already 13200 in the base revision and remains unchanged
 Local checks used the existing `search_swe_cpu` Python environment:
 
 - `python -m unittest discover -s tasks/long-document-reranking/tests -p 'test_*.py' -v`: 8 tests passed. Temporary synthetic fixtures exercise the real grader with mocked submission execution: valid formatting/score/ranking differences, unchanged first-run quality, invalid first or second output, missing query coverage, invalid IDs/counts/scores/order, malformed JSON, command failure, cleanup and budget coverage.
-- `python scripts/check_tasks.py tasks/long-document-reranking`: 0 errors.
+- `python scripts/validation/check_tasks.py tasks/long-document-reranking`: 0 errors.
 - `bash -n tasks/long-document-reranking/tests/test.sh`: passed.
 - `git diff --check -- tasks/long-document-reranking`: passed.
 

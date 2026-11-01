@@ -147,15 +147,15 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health,
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task methodology-inspiration-retrieval
-bash scripts/run_task.sh --task methodology-inspiration-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task methodology-inspiration-retrieval
+bash scripts/evaluation/run_task.sh --task methodology-inspiration-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

@@ -1,0 +1,248 @@
+import argparse
+import hashlib
+import importlib.util
+import os
+from pathlib import Path
+import ssl
+import stat
+import tempfile
+import unittest
+from unittest.mock import patch
+
+
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts/assets/download_assets.py"
+spec = importlib.util.spec_from_file_location("download_assets", SCRIPT)
+assets = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(assets)
+
+
+class Downloads(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.task = self.root / "package"
+        self.task.mkdir()
+        self.output = self.root / "output"
+        self.content = b"frozen model metadata\n"
+        (self.task / "metadata.json").write_bytes(self.content)
+        self.entry = {
+            "path": "models/example/config.json",
+            "size_bytes": len(self.content),
+            "sha256": hashlib.sha256(self.content).hexdigest(),
+            "source": {"local_path": "metadata.json"},
+        }
+        self.args = argparse.Namespace(verify_only=False, force=False, local_files_only=False, cache_dir=None)
+
+    def restore(self, **kwargs):
+        return assets.restore(self.task, self.output, kwargs.get("entry", self.entry), kwargs.get("modes", {}), self.args)
+
+    def test_bundled_metadata_restored_and_repeated_run_skips_source(self):
+        self.assertEqual(self.restore(), "restored metadata")
+        target = self.output / self.entry["path"]
+        self.assertEqual(target.read_bytes(), self.content)
+        with patch.object(assets, "obtain_source", side_effect=AssertionError("must skip")):
+            self.assertEqual(self.restore(), "verified")
+
+    def test_valid_download_uses_exact_revision(self):
+        source = {"repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json"}
+        self.entry["source"] = source
+        with patch.dict(os.environ, {}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", return_value=str(self.task / "metadata.json")) as download:
+            self.assertEqual(self.restore(), "downloaded")
+        for key, value in source.items():
+            self.assertEqual(download.call_args.kwargs[key], value)
+
+    def test_proxy_tls_eof_retries_with_tls12(self):
+        source = {"repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json"}
+        self.entry["source"] = source
+        error = RuntimeError("metadata request failed")
+        error.__cause__ = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=[error, str(self.task / "metadata.json")]) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            self.assertEqual(self.restore(), "downloaded")
+            self.assertEqual(os.environ["HF_HUB_DISABLE_XET"], "1")
+        self.assertEqual(download.call_count, 2)
+        configure.assert_called_once_with()
+
+    def test_non_tls_download_error_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=RuntimeError("unrelated failure")) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaisesRegex(RuntimeError, "unrelated failure"):
+                self.restore()
+        download.assert_called_once_with(
+            repo_id="owner/model", repo_type="model", revision="a" * 40, filename="config.json",
+            cache_dir=None, local_files_only=False, force_download=False,
+        )
+        configure.assert_not_called()
+
+    def test_tls_error_without_proxy_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        error = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=error) as download, \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaises(ssl.SSLEOFError):
+                self.restore()
+        download.assert_called_once()
+        configure.assert_not_called()
+
+    def test_local_files_only_tls_error_is_not_retried(self):
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        self.args.local_files_only = True
+        error = ssl.SSLEOFError(8, "EOF occurred in violation of protocol")
+        with patch.dict(os.environ, {"https_proxy": "http://127.0.0.1:7890"}, clear=True), \
+                patch("huggingface_hub.hf_hub_download", side_effect=error) as download, \
+                patch("huggingface_hub.constants.HF_HUB_DISABLE_XET", False), \
+                patch.object(assets, "configure_hf_tls12") as configure:
+            with self.assertRaises(ssl.SSLEOFError):
+                self.restore()
+        download.assert_called_once()
+        configure.assert_not_called()
+
+    def test_no_proxy_bypasses_hugging_face_proxy_workaround(self):
+        for no_proxy, expected in (("*", False), ("huggingface.co", False), (".huggingface.co", False),
+                                   ("example.com", True)):
+            with self.subTest(no_proxy=no_proxy), patch.dict(os.environ, {
+                    "HTTPS_PROXY": "http://127.0.0.1:7890", "NO_PROXY": no_proxy,
+            }, clear=True):
+                self.assertEqual(assets.proxy_configured(), expected)
+
+    def test_proxy_xet_setting_honors_user_override_after_hf_import(self):
+        from huggingface_hub import constants
+
+        self.entry["source"] = {
+            "repo_id": "owner/model", "repo_type": "model", "revision": "a" * 40, "filename": "config.json",
+        }
+        for value, expected in (("0", False), ("YES", True)):
+            with self.subTest(value=value), \
+                    patch.dict(os.environ, {
+                        "https_proxy": "http://127.0.0.1:7890", "HF_HUB_DISABLE_XET": value,
+                    }, clear=True), \
+                    patch.object(constants, "HF_HUB_DISABLE_XET", not expected), \
+                    patch("huggingface_hub.hf_hub_download", return_value=str(self.task / "metadata.json")):
+                assets.obtain_source(self.task, self.entry, self.args)
+                self.assertEqual(os.environ["HF_HUB_DISABLE_XET"], value)
+                self.assertEqual(constants.HF_HUB_DISABLE_XET, expected)
+
+    def test_tls12_client_preserves_hugging_face_request_hook(self):
+        import httpx
+        from huggingface_hub.utils._http import hf_request_event_hook
+
+        context = httpx.create_ssl_context()
+        with patch("httpx.create_ssl_context", return_value=context), \
+                patch("huggingface_hub.set_client_factory") as set_factory, \
+                patch("httpx.Client") as client:
+            assets.configure_hf_tls12()
+            factory = set_factory.call_args.args[0]
+            factory()
+        self.assertEqual(context.maximum_version, ssl.TLSVersion.TLSv1_2)
+        client.assert_called_once_with(
+            verify=context, event_hooks={"request": [hf_request_event_hook]},
+            follow_redirects=True, timeout=None,
+        )
+
+    def test_unpublished_revision_never_uses_main(self):
+        self.entry["source"] = {"repo_id": "owner/data", "repo_type": "dataset", "revision": None, "filename": "data.json"}
+        with patch("huggingface_hub.hf_hub_download") as download:
+            with self.assertRaisesRegex(ValueError, "No published fixed revision"):
+                self.restore()
+        download.assert_not_called()
+
+    def test_unpublished_data_restores_from_checked_local_staging_without_network(self):
+        self.entry["source"] = {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": None,
+                                "filename": "tasks/package/corpus.jsonl"}
+        self.entry["path"] = "data/corpus.jsonl"
+        self.args.local_data_dir = self.root / "hf-data"
+        source = self.args.local_data_dir / self.entry["source"]["filename"]
+        source.parent.mkdir(parents=True)
+        source.write_bytes(self.content)
+        with patch("huggingface_hub.hf_hub_download") as download:
+            self.assertEqual(self.restore(), "restored local data")
+        self.assertEqual((self.output / self.entry["path"]).read_bytes(), self.content)
+        download.assert_not_called()
+
+    def test_invalid_local_staging_cannot_replace_an_existing_asset(self):
+        self.restore()
+        target = self.output / self.entry["path"]
+        target.write_bytes(b"keep the existing output")
+        self.args.force = True
+        self.args.local_data_dir = self.root / "hf-data"
+        self.args.local_data_dir.mkdir()
+        self.entry["source"] = {"repo_id": "search-swe/Search-SWE", "repo_type": "dataset", "revision": None,
+                                "filename": "data.json"}
+        source = self.args.local_data_dir / "data.json"
+        source.write_bytes(b"invalid content")
+        with self.assertRaisesRegex(ValueError, "missing or invalid"):
+            self.restore()
+        source.unlink()
+        source.symlink_to(self.task / "metadata.json")
+        with self.assertRaisesRegex(ValueError, "missing or invalid"):
+            self.restore()
+        self.assertEqual(target.read_bytes(), b"keep the existing output")
+
+    def test_corrupt_download_preserves_existing_file_and_cleans_temporary(self):
+        self.restore()
+        target = self.output / self.entry["path"]
+        target.write_bytes(b"existing data")
+        bad = self.task / "bad"
+        bad.write_bytes(b"corrupt network content")
+        self.args.force = True
+        with patch.object(assets, "obtain_source", return_value=bad):
+            with self.assertRaisesRegex(ValueError, "verification"):
+                self.restore()
+        self.assertEqual(target.read_bytes(), b"existing data")
+        self.assertEqual(list(target.parent.glob(".download-*")), [])
+
+    def test_changed_existing_file_requires_force(self):
+        self.restore()
+        target = self.output / self.entry["path"]
+        target.write_bytes(b"different")
+        with self.assertRaisesRegex(ValueError, "--force"):
+            self.restore()
+        self.args.force = True
+        self.restore()
+        self.assertEqual(target.read_bytes(), self.content)
+
+    def test_verify_only_never_downloads_or_changes_permissions(self):
+        self.restore()
+        target = self.output / self.entry["path"]
+        target.chmod(0o600)
+        self.args.verify_only = True
+        with patch.object(assets, "obtain_source", side_effect=AssertionError("offline")):
+            self.assertEqual(self.restore(), "verified")
+            self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o600)
+            target.unlink()
+            with self.assertRaisesRegex(ValueError, "Missing or invalid"):
+                self.restore()
+
+    def test_private_reference_model_permissions(self):
+        self.entry["mode"] = "0600"
+        self.restore(modes={"models/example": "0700"})
+        target = self.output / self.entry["path"]
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(target.parent.stat().st_mode), 0o700)
+
+    def test_path_traversal_and_external_symlinks_are_rejected(self):
+        for value in ("../outside", "/absolute", "data/../../outside"):
+            with self.assertRaises(ValueError):
+                assets.relative_path(value)
+        (self.output / "models").mkdir(parents=True)
+        (self.output / "models/example").symlink_to(self.task, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "inside"):
+            self.restore()
+
+
+if __name__ == "__main__":
+    unittest.main()

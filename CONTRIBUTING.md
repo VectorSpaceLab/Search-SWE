@@ -1,6 +1,6 @@
 # Contributing to Search-SWE
 
-Start with the [contribution guide](docs/contributing.md) for task design,
+Start with the [contribution guide](docs/contributing/tasks.md) for task design,
 validation, asset publication, and maintainer review. For agent-assisted
 authoring, use the [create-searchswe-task skill](.agents/skills/create-searchswe-task/SKILL.md).
 

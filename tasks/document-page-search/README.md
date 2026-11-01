@@ -134,9 +134,9 @@ the agent environment and protected from submitted programs.
 
 ### Running This Task
 
-Follow the repository [quick start](../../docs/quickstart.md) to prepare Harbor
-and Docker, the [evaluation guide](../../docs/evaluation.md) for agent and
-credential configuration, and the [asset guide](../../docs/assets.md) for
+Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor
+and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and
+credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for
 restoring fixed inputs.
 
 Optional task APIs use `OPENROUTER_API_KEY` and `JINA_API_KEY` where the
@@ -147,8 +147,8 @@ The commands below apply in a checkout with this package installed at
 `tasks/document-page-search/`:
 
 ```bash
-python scripts/download_assets.py --task document-page-search
-bash scripts/run_task.sh --task document-page-search --agent codex --openrouter \
+python scripts/assets/download_assets.py --task document-page-search
+bash scripts/evaluation/run_task.sh --task document-page-search --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
@@ -172,7 +172,7 @@ credentials or hardware. Results are written under `jobs/document-page-search/`.
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

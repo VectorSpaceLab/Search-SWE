@@ -43,9 +43,9 @@ Optional submission resources are OpenRouter/Jina retrieval operations and gener
 Public assets are published in [`search-swe/Search-SWE`](https://huggingface.co/datasets/search-swe/Search-SWE/tree/8ee1f03ffe70dd7eb57b0bcd8627730fc4232dd3/tasks/paper-metadata-retrieval) at immutable revision `8ee1f03ffe70dd7eb57b0bcd8627730fc4232dd3`. `assets.json` pins their exact paths, sizes and SHA-256 hashes. The [HF publication](https://huggingface.co/datasets/search-swe/Search-SWE/discussions/6) includes source attribution and per-record licensing qualifications; the contributor confirmed additional redistribution authorization. Author-only construction records, baseline results and mechanics fixtures remain outside the task package.
 
 ```bash
-python scripts/download_assets.py --task paper-metadata-retrieval --verify-only
+python scripts/assets/download_assets.py --task paper-metadata-retrieval --verify-only
 python -m unittest discover -s tasks/paper-metadata-retrieval/tests -p 'test_*.py' -v
-python scripts/check_tasks.py tasks/paper-metadata-retrieval
+python scripts/validation/check_tasks.py tasks/paper-metadata-retrieval
 ```
 
 Completed checks and unrun validation layers are recorded in `VALIDATION.md`. Oracle mechanics checks are not coding-agent solutions or live trajectory-judge evidence.
@@ -56,11 +56,11 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health,
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task paper-metadata-retrieval
-bash scripts/run_task.sh --task paper-metadata-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task paper-metadata-retrieval
+bash scripts/evaluation/run_task.sh --task paper-metadata-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

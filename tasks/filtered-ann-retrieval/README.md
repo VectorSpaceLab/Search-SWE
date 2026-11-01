@@ -33,9 +33,9 @@ scored cases.
 The corpus and small example retain their published official pins. The two updated public validation files are published under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/` at immutable revision `234406eb7e304478e48905829fc0d3233f5a9f1f`. Earlier public files remain available. See [SOURCES.md](SOURCES.md) for attribution and source terms.
 
 ```bash
-python scripts/download_assets.py --task filtered-ann-retrieval
-python scripts/download_assets.py --task filtered-ann-retrieval --verify-only
-python scripts/check_tasks.py tasks/filtered-ann-retrieval
+python scripts/assets/download_assets.py --task filtered-ann-retrieval
+python scripts/assets/download_assets.py --task filtered-ann-retrieval --verify-only
+python scripts/validation/check_tasks.py tasks/filtered-ann-retrieval
 ```
 
 Runtime `data/` is ignored by Git. The agent receives corpus, public examples and
@@ -136,11 +136,11 @@ See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health,
 
 ### Running the task
 
-From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation.md), then run:
+From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
 ```bash
-python scripts/download_assets.py --task filtered-ann-retrieval
-bash scripts/run_task.sh --task filtered-ann-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task filtered-ann-retrieval
+bash scripts/evaluation/run_task.sh --task filtered-ann-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

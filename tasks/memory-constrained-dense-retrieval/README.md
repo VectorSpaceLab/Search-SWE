@@ -133,19 +133,19 @@ DeepSeek endpoint and key only in the verifier.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Configure the verifier's integrity-judge credentials using the evaluation guide.
 The candidate search system uses supplied vectors and does not require
 external model-service credentials.
 
 ```bash
-python scripts/download_assets.py --task memory-constrained-dense-retrieval
-bash scripts/run_task.sh --task memory-constrained-dense-retrieval --agent codex --openrouter \
+python scripts/assets/download_assets.py --task memory-constrained-dense-retrieval
+bash scripts/evaluation/run_task.sh --task memory-constrained-dense-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 

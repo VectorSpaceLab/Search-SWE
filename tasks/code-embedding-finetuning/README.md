@@ -123,19 +123,19 @@ verifier-only DeepSeek endpoint and key settings.
 
 ### Running This Task
 
-From the repository root, follow the [quick start](../../docs/quickstart.md)
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
 to install the pinned Harbor dependencies and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation.md) to configure the selected agent and
+[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
-[asset guide](../../docs/assets.md) covers downloads, checksums, and cache options.
+[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
 Prepare an NVIDIA-capable Docker host and the GPU base image referenced by the
 Dockerfiles. Configure the integrity judge as well as the coding agent.
 The asset downloader restores both training data and the fixed backbone.
 
 ```bash
-python scripts/download_assets.py --task code-embedding-finetuning
-bash scripts/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
+python scripts/assets/download_assets.py --task code-embedding-finetuning
+bash scripts/evaluation/run_task.sh --task code-embedding-finetuning --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
@@ -159,7 +159,7 @@ assets, credentials, or hardware.
 | [Training starter](environment/starter/train.sh) | Initial training entry point |
 | [Resource policy](environment/docs/available_resources.md) | Offline development restrictions |
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

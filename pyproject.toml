@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "search-swe"
-version = "0.1.0"
+version = "0.2.0"
 description = "Configure and run Search-SWE coding-agent evaluations"
-readme = "docs/cli.md"
+readme = "docs/evaluation/cli.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -29,9 +29,13 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/VectorSpaceLab/Search-SWE"
 Homepage = "https://search-swe.github.io/"
+Documentation = "https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/README.md"
 
 [project.scripts]
 search-swe = "search_swe.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+search_swe = ["data/*.json"]
