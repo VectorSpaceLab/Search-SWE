@@ -53,6 +53,9 @@ search-swe run
 的数据和模型，并将日志与结果保存在 checkout 下的 `jobs/evaluations/`。
 下载前会展示任务数据、缓存的位置及所需磁盘空间；将缓存放到其他磁盘的方法见[资源说明](docs/evaluation/assets.md)。
 
+在两批评测之间使用 `search-swe update` 获取新贡献的任务；
+`search-swe info` 可查看当前使用的仓库路径、版本和任务数。
+
 Submission API key **必须配置**固定的 [OpenRouter 模型白名单](docs/evaluation/submission-models.md)：
 共享 key 为 **47 个模型**，`reasoning-query-rewriting` 专用 key 为 **17 个模型**。
 CLI 会在运行前检查已启用的 key，限制未通过验证时停止运行。

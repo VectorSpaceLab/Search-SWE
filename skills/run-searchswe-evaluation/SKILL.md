@@ -32,6 +32,12 @@ instructions; the package supplies the executable.
 Use CLI 0.2.x and a checkout from the same release series. Resolve a version
 mismatch before configuration; preserve checkout changes when updating it.
 
+With CLI 0.2.1+, use `search-swe info --json` to inspect the selected checkout
+and task count offline. To obtain new tasks, use `search-swe update --check
+--json`, then `search-swe update` between batches within the requested scope.
+Updates follow the current branch's upstream and require a clean fast-forward
+to a compatible release series; resolve local changes or history with the user.
+
 Read `docs/evaluation/cli.md` in the selected checkout for its supported flags. Read
 `docs/evaluation/runtime.md` only for provider, network or bounded-storage setup details.
 These paths are relative to the benchmark checkout, not this installed skill.

@@ -19,6 +19,10 @@ interactive use, choose an existing checkout or clone to `~/Search-SWE` or a
 custom path. The CLI remembers it. CLI and checkout must use the same release
 series, currently 0.2.x.
 
+Use `search-swe info` to inspect that checkout. Between evaluation batches,
+`search-swe update --check` previews new tasks and `search-swe update` applies
+compatible upstream updates. Ordinary task additions need no CLI release.
+
 ## Run with the CLI
 
 ```bash

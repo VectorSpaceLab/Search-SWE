@@ -30,15 +30,25 @@ def is_repo(root):
         return False
 
 
-def check_compatibility(root):
-    """Patch releases share a CLI/checkout contract within their release series."""
+def checkout_version(root):
     try:
         project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
-        version = project["version"] if project.get("name") == "search-swe" else "unknown"
+        value = project["version"] if project.get("name") == "search-swe" else "unknown"
+        return value if isinstance(value, str) else "unknown"
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        version = "unknown"
+        return "unknown"
+
+
+def compatible_version(version):
     series = ".".join(__version__.split(".")[:2])
-    if not isinstance(version, str) or not re.fullmatch(re.escape(series) + r"\.\d+", version):
+    return isinstance(version, str) and re.fullmatch(re.escape(series) + r"\.\d+", version) is not None
+
+
+def check_compatibility(root):
+    """Patch releases share a CLI/checkout contract within their release series."""
+    version = checkout_version(root)
+    series = ".".join(__version__.split(".")[:2])
+    if not compatible_version(version):
         raise ValueError(f"Search-SWE CLI {__version__} needs a {series}.x checkout; "
                          f"{root} declares {version}. Update this checkout to the {series}.x release series "
                          "(preserve local changes), or use --repo to select a compatible checkout. "

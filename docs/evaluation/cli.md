@@ -34,6 +34,31 @@ Use `search-swe --repo /path/to/Search-SWE run` to select one explicitly.
 offers existing checkouts only. Update the package and checkout together when
 changing release series, preserving local work.
 
+## Update tasks and inspect the checkout
+
+CLI 0.2.1+ provides repository updates and offline diagnostics:
+
+```bash
+search-swe info
+search-swe update --check
+search-swe update
+```
+
+`info` shows the CLI/checkout versions, path, task count, compatibility and local
+Git state. `update --check` fetches the current branch's configured upstream
+(normally `origin/main`) and reports commits and added/removed tasks, leaving
+checkout files unchanged. `update` applies a compatible fast-forward. Use
+`--repo PATH` to select a checkout; both commands support `--json` for agents.
+
+Update between evaluation batches with a clean working tree. Local changes,
+unfinished Git operations, detached HEAD and diverged histories produce an
+actionable error. Ignored credentials, downloaded assets and job outputs are
+preserved; an upstream file that would overwrite them blocks the update.
+
+New tasks are discovered from the checkout and normally need no CLI upgrade.
+The target checkout must match the installed CLI's release series. `update`
+updates repository files; package upgrades remain separate Python installations.
+
 ## Interactive setup
 
 `search-swe` or `search-swe run` opens the wizard:

@@ -16,6 +16,7 @@ from .submission_models import PROFILES, display_profile, model_ids, policy_summ
 from .submission_checks import verify_submission_keys
 from . import runner
 from . import pi_models
+from . import updates
 
 
 def positive_int(value):
@@ -48,6 +49,8 @@ def parser():
         "configure": "Save model settings, API keys and default concurrency to .env. Select optional tasks to configure their services and check submission-key restrictions.",
         "list": "List available tasks and their resource requirements.",
         "doctor": "Check the local Docker host and evaluation prerequisites.",
+        "info": "Show the selected checkout, versions, task count and local Git state; works offline.",
+        "update": "Fetch the current branch's upstream and apply a compatible fast-forward update.",
         "submission-models": "Show the fixed OpenRouter submission-key allowlists; works offline without a checkout.",
         "pi-models": "List Pi's supported API-key providers or their models; works offline without a checkout.",
     }
@@ -60,7 +63,7 @@ def parser():
                                       epilog=examples.get(name), formatter_class=argparse.RawDescriptionHelpFormatter)
         if name not in ("submission-models", "pi-models"):
             command.add_argument("--repo", type=Path, default=argparse.SUPPRESS, help="Search-SWE checkout (or SEARCH_SWE_REPO)")
-        if name in ("list", "doctor", "submission-models", "pi-models"):
+        if name in ("list", "doctor", "info", "update", "submission-models", "pi-models"):
             command.add_argument("--json", action="store_true", help="Print the result as JSON")
         if name == "submission-models":
             command.add_argument("--profile", choices=tuple(PROFILES), default="shared", help="Submission-key profile; default shared")
@@ -70,6 +73,8 @@ def parser():
             command.add_argument("--hardware", choices=("cpu", "gpu"), help="Show only CPU or GPU tasks")
         if name == "doctor":
             command.add_argument("--env-file", type=Path, help="Environment file; defaults to the checkout .env")
+        if name == "update":
+            command.add_argument("--check", action="store_true", help="Fetch and report available updates without changing checkout files")
         if name not in ("run", "configure"):
             continue
         command.set_defaults(cpu_set=None, gpu_devices=None, memory_gb=None, output=None, edit_credentials=False)
@@ -258,6 +263,15 @@ def main(argv=None):
                 raise
             from .wizard import select_repository
             root = select_repository(offline=args.offline)
+        if args.command in ("info", "update"):
+            if args.command == "update" and not args.json:
+                print(f"Checking upstream updates: {root}", flush=True)
+            result = updates.info(root) if args.command == "info" else updates.update(root, check=args.check)
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                updates.display(result, checking=args.command == "update" and args.check)
+            return 0
         if args.command == "list":
             rows = [{"name": task.name, "cpus": task.cpus, "ram_gib": task.memory_mb / 1024,
                      "gpus": task.gpus, "asset_gib": round(task.asset_bytes / 2**30, 2)}
