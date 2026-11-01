@@ -12,6 +12,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -158,12 +159,15 @@ def run_query(
     index_dir: Path,
     results: Path,
     timeout: float | None,
+    query_io: Path | None = None,
 ) -> tuple[dict[str, Any] | None, dict[str, Any], list[str]]:
     query_id = str(query["query_id"])
     stem = f"query-{position:03d}"
-    input_path = results / "query_inputs" / f"{stem}.jsonl"
-    output_path = results / "query_outputs" / f"{stem}.jsonl"
+    query_io = results if query_io is None else query_io
+    input_path = query_io / "query_inputs" / f"{stem}.jsonl"
+    output_path = query_io / "query_outputs" / f"{stem}.jsonl"
     write_jsonl(input_path, [query])
+    input_path.chmod(0o444)
     command = [
         str(submission / "run.sh"), "--index-dir", str(index_dir),
         "--queries", str(input_path), "--output", str(output_path),
@@ -277,9 +281,14 @@ def main() -> int:
         write_json(results / "run_manifest.json", manifest)
         return 1
 
-    query_inputs = results / "query_inputs"
-    query_outputs = results / "query_outputs"
+    # /logs/verifier stays private; only the documented query I/O is accessible
+    # to the submission UID through this separate, root-owned temporary tree.
+    query_io = Path(tempfile.mkdtemp(prefix="agentic-search-query-io-"))
+    query_io.chmod(0o755)
+    query_inputs = query_io / "query_inputs"
+    query_outputs = query_io / "query_outputs"
     query_inputs.mkdir(parents=True, exist_ok=True)
+    query_inputs.chmod(0o755)
     query_outputs.mkdir(parents=True, exist_ok=True)
     os.chown(query_outputs, UNTRUSTED_UID, UNTRUSTED_GID)
     query_outputs.chmod(0o700)
@@ -289,7 +298,7 @@ def main() -> int:
     run_started = time.monotonic()
     with ThreadPoolExecutor(max_workers=args.query_concurrency) as executor:
         futures = [
-            executor.submit(run_query, position, query, submission, index_dir, results, args.per_query_timeout)
+            executor.submit(run_query, position, query, submission, index_dir, results, args.per_query_timeout, query_io)
             for position, query in enumerate(queries, 1)
         ]
         # Collect in input order even when queries finish out of order.
@@ -299,6 +308,9 @@ def main() -> int:
             errors.extend(query_errors)
             if record is not None:
                 merged.append(record)
+    for directory in (query_inputs, query_outputs):
+        shutil.copytree(directory, results / directory.name, dirs_exist_ok=True, symlinks=True)
+    shutil.rmtree(query_io)
     run_elapsed = time.monotonic() - run_started
     for stream in ("stdout", "stderr"):
         with (results / f"run.{stream}.log").open("w", encoding="utf-8") as combined:

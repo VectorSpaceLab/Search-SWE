@@ -33,7 +33,7 @@ def child_env():
         "LANG": "C.UTF-8",
         "PYTHONUNBUFFERED": "1",
         "PYTHONDONTWRITEBYTECODE": "1",
-        "LD_LIBRARY_PATH": "/usr/local/cuda/compat:/usr/local/nvidia/lib:/usr/local/nvidia/lib64",
+        "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH", "/usr/local/nvidia/lib:/usr/local/nvidia/lib64"),
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
         "TMPDIR": "/work/index/tmp",

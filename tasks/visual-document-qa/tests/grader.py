@@ -111,19 +111,20 @@ def llm(system, payload, kind):
         "temperature": 0,
         "max_tokens": 10000,
     }
-    if kind == "semantic":
+    if kind in ("semantic", "answer"):
+        explanation_key = "reason" if kind == "semantic" else "reasoning"
         body["response_format"] = {
             "type": "json_schema",
             "json_schema": {
-                "name": "mmlong_answer_judgment",
+                "name": "mmlong_answer_judgment" if kind == "semantic" else "finrag_answer_judgment",
                 "strict": True,
                 "schema": {
                     "type": "object",
                     "properties": {
                         "score": {"type": "integer", "enum": [0, 1]},
-                        "reason": {"type": "string"},
+                        explanation_key: {"type": "string"},
                     },
-                    "required": ["score", "reason"],
+                    "required": ["score", explanation_key],
                     "additionalProperties": False,
                 },
             },

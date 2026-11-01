@@ -39,6 +39,8 @@ class JudgeRequestTests(unittest.TestCase):
                 self.assertEqual(body['model'], g.MODEL)
                 self.assertEqual(body['reasoning'], {'effort': g.EFFORT, 'exclude': True})
                 self.assertEqual(body['temperature'], 0)
+                self.assertEqual(body['max_tokens'], 8192)
+                self.assertEqual(body['response_format'], {'type': 'json_object'})
                 self.assertIs(result['supported'], case['expected_supported'])
                 self.assertEqual(result['attempts'], 1)
                 post.assert_called_once()

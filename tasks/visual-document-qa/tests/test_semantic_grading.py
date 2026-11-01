@@ -194,7 +194,24 @@ class JudgeResponseTests(unittest.TestCase):
         self.post.return_value = self.response(
             '{"score":1.0,"reasoning":"Correct answer."}')
         self.assertEqual(grader.llm("system", "payload", "answer"), 1.0)
-        self.assertNotIn("response_format", self.post.call_args.kwargs["json"])
+        schema = self.post.call_args.kwargs["json"]["response_format"]["json_schema"]
+        self.assertTrue(schema["strict"])
+        self.assertEqual(schema["name"], "finrag_answer_judgment")
+        self.assertEqual(schema["schema"]["properties"]["score"]["type"], "integer")
+        self.assertEqual(schema["schema"]["properties"]["score"]["enum"], [0, 1])
+        self.assertEqual(schema["schema"]["required"], ["score", "reasoning"])
+        self.assertEqual(schema["schema"]["properties"]["reasoning"], {"type": "string"})
+        self.assertFalse(schema["schema"]["additionalProperties"])
+
+
+    def test_finrag_fractional_score_fails_without_rounding(self):
+        for score in (0.01, 0.5, 0.66, 0.99, 1.01, -0.01, True, "1"):
+            with self.subTest(score=score):
+                self.post.reset_mock()
+                self.post.return_value = self.response(json.dumps({"score": score, "reasoning": "Fixture judgment."}))
+                with self.assertRaisesRegex(RuntimeError, "after three attempts"):
+                    grader.llm(grader.PROMPTS["JUDGE_SYSTEM_PROMPT"], "generic multi-fact answer", "answer")
+                self.assertEqual(self.post.call_count, 3)
 
 
 if __name__ == "__main__":
