@@ -1,7 +1,7 @@
 # Contributing to Search-SWE
 
 Start with the [contribution guide](docs/contributing/tasks.md) for task design,
-validation, asset publication, and maintainer review. For agent-assisted
+input preparation, model validation, and PR submission. For agent-assisted
 authoring, use the [create-searchswe-task skill](.agents/skills/create-searchswe-task/SKILL.md).
 
 New tasks belong at `tasks/<task-name>`. Choose a descriptive name of

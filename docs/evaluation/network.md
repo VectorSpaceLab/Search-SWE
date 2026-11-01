@@ -2,32 +2,24 @@
 
 [Documentation index](../README.md)
 
-Search-SWE uses Harbor 0.22.0's `network_mode` and `allowed_hosts` fields.
-Allowlists contain exact lowercase hostnames, not URLs, ports or paths, and
-apply separately to each task and execution phase. Restricted tasks use an
-independent trusted gateway for each agent/verifier environment, including when
-an upstream proxy is configured. CPU/GPU task images remain unchanged.
+Task `network_mode` and `allowed_hosts` settings apply independently to the
+agent and verifier. Restricted environments use a trusted gateway to enforce
+exact allowed hostnames. Normal evaluation needs no extra network configuration.
 
 ## Default: direct access
 
-No extra setup is required. The launcher uses
-`hanhainebula/search-swe-egress:1.0.0`, pulls it if missing locally, and reuses it
-on later runs. Leave `EGRESS_IMAGE` and `EGRESS_CONFIG` empty. `EGRESS_IMAGE` or
-`--egress-image` can select a matching local build or repository digest.
-Images are validated against this checkout before task containers start;
-pull failures or incompatible images stop startup. Downloads use the Docker
-daemon's network/proxy settings, not the task's proxy configuration.
+Leave `EGRESS_CONFIG` and `EGRESS_IMAGE` empty. The launcher pulls
+`hanhainebula/search-swe-egress:1.0.0` when needed and checks compatibility before
+starting task containers. Docker's network settings control image downloads.
 
-Direct mode uses Docker DNS through the trusted gateway. If needed, set
-`CONTAINER_DNS` (or `--container-dns`) to comma-separated reachable IPv4 DNS
-servers. Only allowed host queries are forwarded; task processes cannot query
-upstream or Docker DNS directly. Changing DNS does not repair TLS or API errors.
+Direct mode uses Docker DNS through the gateway. If a different resolver is
+needed, set `CONTAINER_DNS` to comma-separated reachable IPv4 servers. Only
+allowed queries are forwarded; DNS changes do not fix TLS or API errors.
 
 ## Networks requiring a proxy
 
-Use an HTTP(S) proxy with CONNECT support and an HTTPS DNS-over-HTTPS (DoH)
-endpoint accessible through it. Create a JSON file outside task mounts and
-build contexts, replacing the example address and hostname below:
+Use an HTTP(S) proxy supporting CONNECT and an HTTPS DNS-over-HTTPS endpoint
+reachable through it. Create a JSON file outside task mounts/build contexts:
 
 ```json
 {
@@ -39,7 +31,7 @@ build contexts, replacing the example address and hostname below:
 }
 ```
 
-Point `.env` to the file, leaving other overrides empty:
+Replace the example addresses, then set the checkout `.env`:
 
 ```dotenv
 EGRESS_CONFIG=/absolute/path/to/egress.json
@@ -48,55 +40,71 @@ CONTAINER_DNS=
 CONTAINER_PROXY=
 ```
 
-`--egress-config PATH` overrides `EGRESS_CONFIG`. Relative CLI paths resolve
-from the current directory; environment-variable paths resolve from the checkout.
-Explicit config requires `image` and cannot be combined with image, DNS or general
-container-proxy overrides. Do not add the proxy to task allowlists.
+The proxy must be reachable **from Docker**. Host `127.0.0.1` refers to the
+container itself. Use a reachable IPv4 address; for a hostname URL such as
+`https://proxy.example:8443`, also set `upstream.address` to that address.
+TLS certificates are checked against the URL hostname.
 
-The proxy must be reachable **from Docker**; host `127.0.0.1` is not the host
-inside a container. Set the proxy URL explicitly in `upstream.url`.
-SOCKS-only and TUN-only endpoints are not supported by this configuration.
-For a hostname URL such as `https://proxy.example:8443`, also set
-`upstream.address` to its reachable IPv4 address. Certificates are validated
-against the URL hostname; custom CAs and client certificates are unsupported.
-Loopback, link-local and task-local endpoints are rejected. Proxy URLs cannot
-contain credentials, queries or fragments; DoH URLs cannot contain query parameters.
+| Setting | Requirement |
+| --- | --- |
+| Explicit config | `version` and `image` are required; leave image, DNS and general container-proxy overrides empty |
+| Proxy endpoint | HTTP(S) CONNECT; SOCKS/TUN-only endpoints, custom CAs and client certificates are unsupported |
+| Proxy URL | No embedded credentials, query or fragment; loopback, link-local and task-local endpoints are rejected |
+| DoH URL | HTTPS, without query parameters |
+| Proxy authentication | Optional `upstream.auth_file`, described below |
 
-For proxy authentication, set `upstream.auth_file` to a JSON file containing
-`{"username": "...", "password": "..."}`. Keep it outside task mounts/build
-contexts, owned by the launcher user, with mode `0600` and parent mode `0700`.
-Relative auth paths resolve from the config file; symlinks/hard links are rejected.
-Only the trusted gateway receives these credentials.
+For authentication, use a separate JSON file with
+`{"username": "...", "password": "..."}`, owned by the launcher user with mode
+`0600` and parent mode `0700`. Keep it outside task mounts/build contexts;
+symlinks and hard links are rejected. Relative auth paths resolve from the
+config file. Only the gateway receives these credentials.
 
-Explicit direct config uses `"mode": "direct"`, no `upstream`, and
-`"dns": {"servers": ["192.0.2.53"]}` with a reachable resolver (an optional UDP
-port is accepted). An empty `dns` object selects Docker DNS. `version` and
-`image` are still required. The launcher's `--dry-run` checks policy/config
-compatibility without pulling images, reading proxy credentials or calling APIs.
+`EGRESS_CONFIG` paths resolve from the checkout. The native launcher's
+`--egress-config PATH` overrides it and resolves from the current directory.
+Its `--dry-run` checks policy/config compatibility without pulling images or
+reading proxy credentials. Configure image pulls and builds at the Docker
+layer; runtime proxy settings apply to task traffic.
 
 ## Supported runtime
 
-- Native Linux amd64, local rootful Docker through a Unix socket, Harbor 0.22.0,
-  and IPv4. Docker Desktop, remote/rootless Docker and userns remapping are unsupported.
-- Direct mode supports public and restricted phases. **Proxy mode rejects any
-  public phase**.
-- Custom network topologies, extra capabilities/devices, host/control mounts,
-  external/shared volumes and kept containers are rejected. Named volumes must
-  be project-local plain Docker volumes.
-- Authorization checks HTTP destinations and TLS SNI, not encrypted paths,
-  bodies or Host headers/domain fronting at an approved origin.
+- Native Linux amd64, IPv4, Harbor 0.22.0 and local rootful Docker through a
+  Unix socket, without user namespace remapping. Docker Desktop and remote or
+  rootless Docker are unsupported.
+- Direct mode supports public and restricted phases. **Proxy mode supports
+  `allowlist` and `no-network` phases.**
+- Task services use the enforced topology and project-local plain Docker volumes.
+  Extra capabilities/devices, host/control mounts, external/shared volumes,
+  custom networks and kept containers are rejected.
+- Filtering checks HTTP destinations and TLS SNI; it does not inspect encrypted
+  paths, bodies or domain fronting at an allowed origin.
+
+## Task-owned phase policies
+
+Each task's `task.toml` declares its policy; its resource document explains
+submission permissions. Allowlists use exact lowercase hostnames, without URLs,
+ports or paths.
+
+| Configuration | Scope |
+| --- | --- |
+| `[environment]` | Baseline network policy |
+| `[agent]` | Agent-phase override, plus the launcher-selected coding-model host |
+| `[verifier]` | Separate verifier policy, including its required judge endpoints |
+
+The coding-model host comes from the selected direct endpoint, or `openrouter.ai`
+for OpenRouter. Agent tools are preinstalled in task images. A verifier's judge
+access does not grant the submitted program that access; task-local confinement
+and separate credentials enforce submission permissions. Leave `CONTAINER_PROXY`
+unset and route proxies through the gateway configuration above.
 
 ## Isolation and recovery
 
-The gateway starts in no-network mode, applies the phase baseline, then allows
-task services to start. Task services cannot modify the firewall or forge trusted
-traffic marks. Policy changes revoke old connections. Proxy, DNS or control
-failure closes egress; there is no unrestricted fallback. A 30-second host-renewed
-lease bounds revocation after loss of host control; trusted host clocks are required.
-An already accepted upstream API operation cannot be undone by revocation.
+Each environment has an independent gateway. Policy changes revoke old
+connections; proxy, DNS or control failures close egress. A 30-second host-renewed
+lease bounds revocation after host-control loss and requires trustworthy host
+clocks. An API operation already accepted upstream may still finish.
 
-Normal teardown removes each environment's owned resources and private settings,
-while preserving images and host datasets. For leftovers after a failed cleanup:
+Normal cleanup removes owned resources and private settings, preserving images
+and datasets. For leftovers, list instances, preview one, then remove it:
 
 ```bash
 python scripts/egress/egress_cleanup.py
@@ -104,101 +112,19 @@ python scripts/egress/egress_cleanup.py --directory /path/from/list
 python scripts/egress/egress_cleanup.py --directory /path/from/list --remove
 ```
 
-These list, preview and remove one verified inactive instance respectively.
-Recovery refuses active owners, foreign resources or a different Docker daemon.
-Host logs under `egress/<instance>.log` record policies and kernel counters;
-these counters are not HTTP request counts.
+Recovery refuses active owners, foreign resources or another Docker daemon.
+Host `egress/<instance>.log` files record policies and kernel counters, rather
+than HTTP request counts.
 
-## Task-owned phase policies
+## Advanced configuration
 
-The launcher selects one coding-model hostname: the hostname in `AGENT_OPENAI_BASE_URL`
-for direct Codex, the selected Pi provider/model endpoint, or the fixed
-`api.anthropic.com` host for direct Claude Code. With `--openrouter`, all three
-harnesses use `openrouter.ai`. See the [supported agent matrix](agents.md) for
-provider-specific endpoint configuration. The launcher passes the selected host through
-Harbor's `--allow-agent-host`, which augments only the `agent.run()` phase.
-Codex 0.164.0, Pi 1.4.0, and Claude Code 2.1.309 are preinstalled in every
-agent image, so agent setup does not need package-registry or general internet
-access.
+An explicit direct config uses `"mode": "direct"`, `version`, `image`, no
+`upstream`, and `"dns": {"servers": ["192.0.2.53"]}` (optional UDP port).
+An empty `dns` object selects Docker DNS. For a matching local gateway build,
+use `EGRESS_IMAGE` or the native `--egress-image`; explicit configs select their
+image inside the JSON file.
 
-Each task declares its policy in `tasks/<task-name>/task.toml`, with the
-submission-facing restrictions explained in its own
-`environment/docs/available_resources.md`. No central task matrix is maintained.
-
-| Configuration | Scope |
-| --- | --- |
-| `[environment]` | Baseline policy for the task environment |
-| `[agent]` | Agent-phase override; the launcher adds only its coding-model host |
-| `[verifier]` | Separate verifier policy, including any required judge endpoints |
-
-Verifiers that use the trajectory judge permit `openrouter.ai` for it.
-That permission does not authorize the submitted program to call it. Offline
-submissions must remain offline inside the verifier using task-local process
-confinement; other submissions receive only their documented API credentials.
-Always exclude trajectory and answer-judge credentials from submitted processes.
-The task README documents required host environment variables and its confinement.
-
-## Direct Harbor runs
-
-The repository launcher derives and supplies the coding-model host. When
-invoking Harbor directly on a non-public task, add the matching hostname:
-
-```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
-  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
-  --agent scripts.evaluation.harbor_agents:PreinstalledCodex --model MODEL_ID \
-  --ak version=0.164.0 \
-  --allow-agent-host MODEL_API_HOST
-```
-
-For the supported official-Anthropic Claude Code mode, use the pinned wrapper,
-an environment reference rather than a literal secret, and the fixed host:
-
-```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
-  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
-  --agent scripts.evaluation.harbor_agents:PreinstalledClaudeCode \
-  --model ANTHROPIC_MODEL_ID \
-  --ak version=2.1.309 \
-  --ae 'ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}' \
-  --allow-agent-host api.anthropic.com
-```
-
-The repository launcher additionally removes inherited gateway, OAuth, and
-Bedrock selectors. Reproduce that sanitization when bypassing it; custom
-Anthropic endpoints and alternate Claude authentication modes are not part of
-the supported configuration.
-
-These commands use the default direct gateway image and pull it if missing locally.
-To select another matching image, add `--environment-kwarg egress_image=YOUR_IMAGE`. Manually using
-`--env docker` selects installed Harbor and does not receive this checkout's
-capability restrictions or connection revocation when policies change.
-
-Do not use `--allow-environment-host` for a coding-model endpoint: that changes
-the environment baseline rather than only the agent phase. Do not add package
-registries, source-code hosts, wildcard domains, or a general HTTP proxy to a
-task allowlist. A general proxy reduces destination filtering to the proxy
-itself, so `scripts/evaluation/run_task.py` rejects `CONTAINER_PROXY` for the current
-restricted task policies.
-
-Image pulls and Docker build downloads happen before untrusted task execution
-and are configured at the Docker daemon/build layer; they are not task runtime
-egress permissions.
-
-## Regression requirements
-
-The [build and regression guide](../../environments/egress/README.md#verification)
-covers these enforcement requirements:
-
-- Untrusted services cannot forge the gateway's firewall exemption marks or
-  modify its rules; capabilities and namespace boundaries must enforce this.
-- Tightening a policy terminates previously authorized tunnels and pooled
-  connections, not merely rejects new connections.
-- Agent, verifier, baseline, public, and no-network transitions are tested;
-  phase allowlists must not be replaced with their union.
-- Destination resolution works through the intended upstream path, including
-  when local DNS returns NXDOMAIN, times out, or gives an incorrect address.
-- Failure of the proxy, resolver, or policy update fails closed, without a
-  direct/unfiltered fallback. TLS certificate validation remains enabled.
-- The upstream endpoint is operator-configured, with no machine-specific IP,
-  port, VPN product, or public DNS provider required by task packages.
+For [direct Harbor calls](../../environments/egress/README.md#direct-harbor-runs),
+[image builds](../../environments/egress/README.md#build-from-source), or
+[enforcement regressions](../../environments/egress/README.md#verification), use
+the gateway developer guide.

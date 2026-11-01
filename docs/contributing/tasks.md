@@ -1,341 +1,131 @@
-# Contributing to Search-SWE
+# Contribute a task
 
 [Documentation index](../README.md)
 
-Task packages, shared images, tools, tests, and documentation contributions are
-welcome. Keep changes focused. For task authoring, read the
-[create-searchswe-task skill](../../.agents/skills/create-searchswe-task/SKILL.md)
-(or invoke `$create-searchswe-task`) and the [agent workflow](../../.agents/AGENTS.md).
-Reuse the [shared CPU/GPU images](../../docker/README.md). Keep the English and
-Chinese README overviews aligned. Publication, remote configuration, and merges
-require separate authorization; local task creation does not authorize them.
+This guide takes a new task from an idea to a reviewable PR. For agent-assisted
+work, invoke `$create-searchswe-task` or ask your agent to follow the
+[task-authoring skill](../../.agents/skills/create-searchswe-task/SKILL.md).
+To run existing tasks, start with the [evaluation quick start](../evaluation/quickstart.md).
 
-For maintainers releasing the CLI to PyPI, see [package publication](cli-release.md).
+## 1. Create the task package
 
-## 1. Start tasks with descriptive names
+Fork the repository, clone your fork, and create a contribution branch.
+Before scaffolding, inspect one or two similar reviewed tasks under `tasks/` for
+structure. Record their paths and relevance in `VALIDATION.md`, and establish
+your own task's data, metrics and resource limits. The
+[authoring contract](../../.agents/skills/create-searchswe-task/references/task-authoring.md)
+provides the detailed package requirements.
 
-Fork the repository, clone your fork, and create a task branch. From the checkout
-root, use Python 3.12+ and install the host tools and static-test dependencies:
+Use a Python 3.12+ environment and run these commands from the checkout root:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
+pip install -e .
 python .agents/skills/create-searchswe-task/scripts/scaffold_task.py example-search \
   --author 'Alice Example' --hardware cpu
 ```
 
-Create each package directly at `tasks/<task-name>/` in your contribution branch.
-Choose a concise description with at most five lowercase hyphen-separated words,
-starting with an ASCII letter and otherwise using letters/digits. The `task-`
-prefix and `all` are reserved. Check `tasks/` on the current base and active PRs
-for name collisions. Set `task.name` to `search-swe/<task-name>`. A PR may contain
-multiple uniquely named tasks.
+Create each task at `tasks/<task-name>/`. Choose a unique name of at most five
+lowercase hyphen-separated words, starting with a letter and otherwise using
+letters/digits. The `task-` prefix and `all` are reserved. Check current tasks
+and active PRs for collisions. A PR may include multiple tasks.
 
-Use the task title as the README's level-one heading and these level-two sections
-in order: `Task Metadata`, `Change Log`, `Difficulty Explanation`,
-`Verification Explanation`, and `References`. Include dated versions and concise
-changes in the changelog; new tasks start at `1.0.0` with `Added initial task`.
-Keep the current README version aligned with `task.toml`. Describe difficulty,
-scoring and runtime validation, and list existing paper/data/method references
-or `None`. Setup commands and detailed explanations can use level-three headings.
+Use `--hardware gpu` when execution needs a GPU, and repeat `--author` for
+coauthors. Record actual authors in `task.toml` and use a Git email linked to
+your GitHub account. The scaffold sets `task.name` to `search-swe/<task-name>`;
+complete its prompts and verifier before running the task.
 
-Describe the task's goal, starting state and measured outcomes.
-CPU is the default; choose `--hardware gpu` for actual GPU execution. Repeat
-`--author` for coauthors. Use actual authors in `task.toml`, not only “Search-SWE”,
-and a Git email associated with your GitHub account (or its noreply address).
-Co-authored-by trailers supplement original commits and task authors.
+## 2. Complete the task and its inputs
 
-The scaffold provides the package structure, writing prompts and a verifier that
-fails closed. Complete the instructions, assets, environment and grader before
-runtime validation. Revise existing tasks in place. Keep credentials, downloaded
-inputs/models, job outputs and author-only solutions outside Git, and isolate
-verifier inputs from agents.
+Define a concrete engineering goal, starting inputs, submission interface,
+measurable outcomes and resource budget. Keep an ordinary task contribution
+within its package and reuse the [shared CPU/GPU images](../../docker/README.md).
 
-## 2. Develop, evaluate and refine
+| File or directory | What to provide |
+| --- | --- |
+| `raw-instruction.md`, `instruction.md` | The task specification and a clear agent-facing request covering its requirements |
+| `task.toml` | Name, authors, version, resource limits, artifact paths and service configuration |
+| `assets.json` | Fixed input paths, sources, immutable revisions, sizes and SHA-256 hashes |
+| `environment/` | Reproducible agent setup, starter code and resource documentation |
+| `tests/` | A separate verifier, task-specific grader, trajectory integrity audit and protected evaluation inputs |
+| `README.md` | Task metadata, difficulty, verification and references |
+| `VALIDATION.md` | Design decisions, checks, model feedback, revisions and evidence for the final setting |
 
-### Define inputs and setup
+Keep the README sections generated by the scaffold: `Task Metadata`,
+`Change Log`, `Difficulty Explanation`, `Verification Explanation`, and
+`References`, under the task title. New tasks start at `1.0.0` with a dated
+`Added initial task` entry; keep the README and `task.toml` versions aligned.
+List the papers, datasets or methods used, or `None`.
 
-Fixed data may use an existing public upstream HF dataset directly. Record its
-provenance and usage terms, and pin its immutable 40-character commit SHA, exact
-filename, size and SHA-256 in `assets.json`. New development assets may use a
-personal public HF dataset with redistribution permission. Official data uses
-`tasks/<task-name>/...`; model files retain their original repository pins.
-See [asset contribution and publication](#asset-contribution-and-publication).
+Keep credentials, downloaded inputs/models, job outputs and author-only
+solutions outside Git. Isolate verifier inputs and grading code from the
+coding agent and submitted program. Declare permitted external services in the
+task's resource documentation. Use
+[`metadata.configuration`](../../.agents/skills/create-searchswe-task/references/assets-and-resources.md)
+in `task.toml` to give the CLI setup descriptions, guidance and required flags
+for task-specific environment variables.
 
-Task authors can add `[metadata.configuration.HOST_VARIABLE]` to `task.toml`
-for a variable referenced in that task's environment mappings. `description`
-names its purpose, `guidance` provides setup instructions, and `required = true`
-declares a service needed at startup. Judge variables referenced by the verifier
-are already required by the standard mappings. This metadata adds host setup
-guidance while the task's resource document defines submission permissions.
+Fixed inputs can reference public upstream Hugging Face datasets directly.
+Record provenance and usage terms, then pin the exact filename, full immutable
+40-character commit SHA, size and SHA-256 in `assets.json`. Model files retain
+their original repository pins. For new redistributable inputs, use a personal
+public dataset following the [development-data guide](../../.agents/skills/create-searchswe-task/references/publication.md#development-personal-temporary-dataset).
+Keep referenced files available throughout review and while released tasks
+still depend on them. Coordinate any official hosting with the maintainer in
+the PR.
 
-### Validate the package
+## 3. Validate, run a model and refine
+
+Start with the package checks:
 
 ```bash
 python scripts/validation/check_tasks.py tasks/example-search
-python scripts/validation/check_release.py
-python -m unittest discover -s tests/unit -p 'test_*.py'
-python .agents/skills/create-searchswe-task/scripts/test_scaffold_task.py
 git diff --check
-python scripts/assets/download_assets.py --task example-search --dry-run
-# After approving the download budget:
-python scripts/assets/download_assets.py --task example-search
-python scripts/assets/download_assets.py --task example-search --verify-only
-python scripts/evaluation/run_task.py --task example-search \
-  --agent codex --openrouter --model openai/gpt-6-luna \
-  --reasoning-effort max --dry-run
 ```
 
-Use `--task <task-name>` for downloads and local trials. The downloader's
-`--task all` selects every package under `tasks/` in the current checkout.
-`--task-path tasks/<task-name>` also accepts a canonical repository-relative
-path. Jobs default to `jobs/<task-name>`; alternate asset output roots contain
-`<task-name>/`. The launcher reads the package's local assets.
-For GPU trials, add `--gpu-device <host-index-or-UUID>` to select the same device
-for the agent and verifier. Choose an available GPU with the task's required
-capacity and a separate output directory for each simultaneous run.
+Follow the [validation steps](../../.agents/skills/create-searchswe-task/references/validation.md)
+to check Compose configuration, container builds, and verifier known-good and
+negative cases. Run task-specific regressions; changes to shared tools also
+need the applicable [repository tests](../../tests/README.md).
 
-New task packages include a task-specific grader, a verifier-side trajectory
-integrity audit and a task-root `VALIDATION.md` evidence index. The latter
-records grader checks, configured-model feedback, resulting task revisions and
-validation of the final setting. The create-task helper generates this layout.
+Then run a coding-model trial with the CLI:
 
-Follow the skill's [validation layers](../../.agents/skills/create-searchswe-task/references/validation.md):
-Compose rendering, builds, verifier known-good and negative cases, and an
-end-to-end trial with a configured coding model when authorized. Use a fresh
-`--output` for each trial. Inspect the model's trajectory, submitted artifacts,
-scores and judge health, then use that feedback to refine ambiguous instructions,
-missing resources, inconsistent limits or grading defects. Recheck affected
-validation layers and rerun the model when changes affect its task or scoring,
-within the agreed budget. A valid low score alone does not justify easing the
-task or rerunning an unchanged setting. Record findings, resulting changes (or
-why none were needed), and the final evaluated revision. The skill's
+```bash
+search-swe run example-search
+```
+
+Choose the harness, provider, model and reasoning setting within your resource
+and API budget. The CLI guides credential setup, restores fixed inputs
+and verifies their checksums. For GPU trials, use `--gpu-devices` to select an
+available device. Each trial needs a fresh output directory.
+
+If required keys are missing, the authoring agent must identify their variable
+names, purpose and local configuration steps before the dependent run. Enter
+keys locally through the CLI or `.env`; keep their values out of chat and PRs.
+See the [service access rules](../evaluation/submission-models.md) when enabling
+OpenRouter submission APIs.
+
+Inspect the trajectory, artifacts, scores and judge health. Use that feedback
+to fix ambiguous instructions, missing resources or grading defects while
+preserving the intended difficulty. Revalidate affected checks and repeat the
+model trial when changes affect the task or scoring. Record the model settings,
+final tested revision, results, feedback and resulting changes in `VALIDATION.md`,
+along with any unrun checks and their blockers. The
 [model-evaluation workflow](../../.agents/skills/create-searchswe-task/references/model-evaluation.md)
-defines this feedback loop and its stopping conditions.
+describes the feedback loop in detail.
 
-Before the trial, the authoring agent checks which credentials the chosen model,
-task APIs and judges require. If any are missing, it must tell the contributor
-the exact variable names, their purpose, and where to configure them locally,
-using [`.env.example`](../../.env.example) and the [evaluation guide](../evaluation/runtime.md).
-Reuse existing authorized credentials; never ask for key values in chat or a
-PR. Wait for configuration before starting the dependent run, while continuing
-independent checks. Report unavailable runtime evidence explicitly.
+## 4. Submit the PR
 
-Static checks cover package structure and source syntax. Record runtime
-commands, results, resource requirements and any unrun validation layers. Enable
-**Allow edits from maintainers** on the PR where available; otherwise agree on
-contributor-applied review fixes in the same PR.
+Open a PR from your contribution branch to `main`. Include:
 
-### Validate local assets
+- The task name, objective and CPU/GPU requirements.
+- Input sources, immutable revisions and applicable usage terms.
+- A link to `VALIDATION.md`, with grader checks, model-trial results and the final
+  tested revision; identify outstanding checks explicitly.
+- Any hosting or setup help needed from maintainers.
 
-From a Git checkout, `scripts/validation/check_release.py` checks package structure, fixed
-asset sources, bundled metadata, Git exclusions, accidental large files and
-common credential patterns. If you maintain a local HF staging directory, check
-its inventory against the manifests and verify its checksums:
+Enable **Allow edits from maintainers** where available so review fixes and
+asset pins can be updated in the same PR. Otherwise, apply agreed review changes
+in your branch. Keep validation evidence current as the task changes.
 
-```bash
-python scripts/validation/check_release.py --hf-data ../hf-data --verify-data
-```
-
-For unpublished development data, add `--allow-unpublished` with `--hf-data` to
-check mappings and file sizes; include `--verify-data` for SHA-256 verification.
-Before publishing the code, upload the files, pin their immutable HF commit in
-`assets.json`, and run the check without `--allow-unpublished`. Remote downloads
-require a pinned revision. See [local restoration](../evaluation/assets.md#restoring-from-a-local-data-directory)
-to copy staged files into task packages.
-
-These are static file checks. Record container builds and configured-model
-validation separately, following the feedback loop above.
-
-### CI and trust boundaries
-
-The unprivileged `pull_request` and `push` workflow checks every package under
-`tasks/`, including incomplete or malformed directories. `check_tasks.py` reuses
-release structure, asset pin/hash, secret, file-size and Git-ignore checks, and
-parses Python, shell and Compose YAML without running task code. With `--base`,
-it additionally requires actual authors for newly added tasks while preserving
-existing author records, including reviewed package renames.
-
-Both `review-stage` and `python scripts/validation/check_tasks.py --merge-ready` accept
-upstream or official HF datasets with immutable commit SHAs, file paths, sizes
-and SHA-256 hashes. Merge-ready additionally requires files hosted in
-`search-swe/Search-SWE` to use `tasks/<source-task-name>/` paths. A task may reuse
-another task's published inputs at their original paths and immutable pins;
-it does not need duplicate files under its own name. New official uploads must
-use the publishing task's namespace. Upstream filenames remain unchanged.
-Model files retain their original repository pins. Static
-checks validate the manifest without network access. Before merging, maintainers
-verify downloads and hashes, review provenance and usage terms, and confirm that
-runtime evidence covers the final revision. Official mirroring is optional;
-when used, its HF change must merge before the final pin is accepted. Install
-PyYAML for static Compose parsing; render Compose separately.
-
-CI runs static checks and repository tests with read-only permissions and no
-secrets or persisted checkout credentials. Repository tests are PR-controlled
-code. Review and separately authorize credentialed runtime tests in a disposable
-trusted environment; run GPU/API/container trials there.
-
-## 3. Review, publish and merge
-
-Use [maintain-searchswe-task](../../.agents/skills/maintain-searchswe-task/SKILL.md)
-for gh review, task audit and merge checks. Finish design, provenance/license,
-environment, verifier-isolation and runtime review. Update against current main
-while preserving author history, and check task names against the base and queued
-PRs. Apply review fixes, asset pins and directly necessary documentation or
-configuration changes to the task package in the same PR. Ordinary task
-contributions stay under `tasks/<task-name>/`; shared docs and tests discover
-tasks rather than maintain task lists. Document credentials, hardware, network
-policies and validation in the task README and `task.toml`.
-
-Retain verified upstream pins; no official re-upload is required. When official
-publication is needed, use the [asset workflow](#asset-contribution-and-publication),
-then pin the merged HF SHA and verify downloads. `scripts/assets/prepare_hf_upload.py`
-delegates to the portable maintainer skill; a separately installed skill uses its own helper with
-`--repo-root /path/to/checkout`.
-
-```bash
-python scripts/validation/check_release.py
-python scripts/validation/check_tasks.py --merge-ready --base FULL_PR_BASE_SHA
-python -m unittest discover -s tests/unit -p 'test_*.py'
-git diff --check
-git log --follow -- tasks/example-search/instruction.md
-git blame tasks/example-search/instruction.md
-```
-
-Use a **merge commit** to preserve original author commits and unmodified lines'
-attribution. Re-review each changed head and verify required checks for the
-current head and base. Repository owners configure required reviews, resolved
-conversations, current-base/queue checks and `review-stage`/`merge-ready` statuses.
-After the merge, verify the resulting tree, asset pins and author
-history. GitHub contributor statistics also depend on account-linked email and
-reachability from the default branch.
-
-## Asset contribution and publication
-
-### Reuse published upstream data
-
-Existing public HF datasets may remain the final source in `assets.json`,
-including another task's published files in `search-swe/Search-SWE`.
-Document provenance and applicable usage terms, pin the full 40-hex commit SHA
-and exact filename, and verify actual downloads against the recorded size and
-SHA-256 before merging. An upstream pin does not require a copy in
-`search-swe/Search-SWE`. Keep sources referenced by released tasks available;
-immutable pins fix content but still depend on the source host retaining it.
-
-Use official publication when needed for newly generated or processed inputs,
-or when maintainers choose to archive an upstream asset. Review redistribution
-rights before any upload. Tasks using only verified published inputs can proceed
-directly to final validation; the publication procedures below are conditional.
-
-### Development: personal temporary dataset
-
-Only upload redistributable public inputs, never private hidden answers or
-secrets. Prepare a dataset folder containing `README.md` with license metadata,
-`SOURCES.md`, `.gitattributes`, `manifest.json`, and new data. The dataset manifest
-uses `{"schema_version": 1, "files": [{"path": "...", "size_bytes": 123,
-"sha256": "..."}]}` with hashes of actual files. Document how each source was
-obtained and its redistribution terms; do not invent a license.
-
-The following are **operator-run publishing commands**, not part of local
-validation. Authenticate with your own personal HF account/token using
-`hf auth login`, after publication is authorized. Replace example paths/repos.
-
-```bash
-python - <<'PY'
-from huggingface_hub import HfApi
-api = HfApi()
-repo = 'YOUR_ACCOUNT/search-swe-development'
-api.create_repo(repo_id=repo, repo_type='dataset', private=False, exist_ok=True)
-commit = api.upload_folder(repo_id=repo, repo_type='dataset', folder_path='/path/to/dev-data',
-                           commit_message='Add temporary task development inputs')
-print(commit.oid)  # Pin this full SHA in task assets.json.
-PY
-```
-
-Use this personal repo, its dataset-relative filenames, size/hash, and printed
-immutable SHA in `assets.json`. Select the task by name with the downloader and
-launcher for development validation. Keep the temporary repo accessible through
-review and any publication; retire it only after no released task depends on it
-and replacement pinned downloads are verified.
-
-### Official publication, then GitHub merge
-
-After task and asset review, verify and retain existing upstream and official pins.
-For files selected for official publication, map their source repo/filename to
-`search-swe/Search-SWE` and `tasks/<task-name>/...`, preserving original model
-pins and bundled metadata.
-Prepare **only new data files** in `/path/to/new-data/tasks/<task-name>/...`, at
-the exact asset sizes/hashes. Changed bytes use a new official filename, keeping
-earlier published assets available. Tasks whose data is already published can
-proceed directly to final validation.
-
-Fetch the small current official manifest snapshot and metadata, not the whole
-dataset. Run this in a trusted publication workspace with your personal login:
-
-```bash
-python - <<'PY'
-from pathlib import Path
-import shutil
-from huggingface_hub import HfApi, hf_hub_download
-repo = 'search-swe/Search-SWE'
-sha = HfApi().repo_info(repo_id=repo, repo_type='dataset').sha
-out = Path('/path/to/official-snapshot'); out.mkdir(parents=True, exist_ok=True)
-(out / 'BASE_SHA').write_text(sha)
-for name in ('manifest.json', 'README.md', 'SOURCES.md', '.gitattributes'):
-    shutil.copyfile(hf_hub_download(repo_id=repo, repo_type='dataset', revision=sha, filename=name), out / name)
-print(sha)
-PY
-python scripts/assets/prepare_hf_upload.py \
-  --official-manifest /path/to/official-snapshot/manifest.json \
-  --task-path tasks/example-search --new-data /path/to/new-data \
-  --output /path/to/upload-staging
-```
-
-Stage assets from the reviewed package at `tasks/<task-name>`.
-
-The offline helper verifies hashes and safe paths for new files and preserves
-all existing manifest records. References to published files must match their
-recorded sizes and hashes; only additions are copied to staging. Conflicting
-paths, duplicate references and symlinks fail validation. Supply a trusted
-current manifest snapshot and only the new data files locally. Uploading is a
-separate step.
-For a full dataset audit, `check_release.py --hf-data` checks the complete
-inventory against a local dataset copy.
-
-Copy the snapshot `README.md`, `SOURCES.md`, and `.gitattributes` into staging,
-then **append** provenance, license/redistribution information, and any required
-LFS patterns for the new files without discarding existing entries. Update or
-add applicable license files. Review this metadata and the generated manifest.
-No delete patterns, sync deletion, or uploads of entire task code directories.
-
-Submit a Hugging Face **community PR**, authenticated with your own account:
-
-```bash
-python - <<'PY'
-from pathlib import Path
-from huggingface_hub import HfApi
-result = HfApi().upload_folder(
-    repo_id='search-swe/Search-SWE', repo_type='dataset',
-    folder_path='/path/to/upload-staging',
-    parent_commit=Path('/path/to/official-snapshot/BASE_SHA').read_text().strip(),
-    create_pr=True, commit_message='Add example-search inputs and provenance',
-)
-print(result.pr_url)
-PY
-```
-
-If community contributions are unavailable, ask a maintainer to mirror the
-reviewed files from your personal public dataset using their own authorized
-account. **Never request, grant or share the official dataset token.** Link the
-HF PR and GitHub task PR. A maintainer must review merged-manifest preservation,
-hashes, sources and licensing. If official HEAD changes, refresh the snapshot,
-regenerate/review the merged manifest and coordinate the HF PR update; never
-replace a newer manifest with a stale one.
-
-**Merge the official HF change first.** Only then pin the resulting official
-40-hex commit SHA (not the community PR/head SHA or `main`) in the finalized
-GitHub task's `assets.json`. Verify downloads using a fresh output directory or
-cache and run release and merge-ready checks. Commit the verified asset pins
-in the task PR, then merge the GitHub contribution. Preserve existing tasks'
-pinned revisions and published assets.
+Maintainers use the [task-review skill](../../.agents/skills/maintain-searchswe-task/SKILL.md)
+for asset publication and merge checks.

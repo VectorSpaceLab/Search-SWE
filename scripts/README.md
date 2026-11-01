@@ -34,7 +34,7 @@ python scripts/evaluation/run_task.py --task example-search \
 
 Use each command's `--help` for its options. The [contribution guide](../docs/contributing/tasks.md)
 covers task validation and model feedback. HF staging is documented in the
-[asset publication workflow](../docs/contributing/tasks.md#asset-contribution-and-publication);
+[maintainer asset publication workflow](../.agents/skills/maintain-searchswe-task/references/publication.md);
 gateway builds and Docker checks are in the [egress guide](../environments/egress/README.md).
 
 ## Tests and maintenance
@@ -47,3 +47,16 @@ When changing a tool path or import, update its CLI caller, Harbor import string
 CI, tests, docs and skill references together. Keep the package and checkout's
 version contract aligned; checkout tools are provided by the repository, while
 `src/search_swe/` supplies the installed CLI.
+
+### Update the Pi catalog
+
+Align `scripts/evaluation/harness_versions.py` and the task-image Pi version,
+then regenerate the catalog from the matching installed package:
+
+```bash
+node scripts/evaluation/update_pi_catalog.mjs /path/to/@earendil-works/pi-ai
+```
+
+The script verifies the package version and reads public model metadata. Review
+`src/search_swe/data/pi-models.json` and update the counts in the
+[provider guide](../docs/evaluation/agents.md) together.

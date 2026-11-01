@@ -29,11 +29,8 @@ dependent on that model and provider.
 
 ## Pi API-key providers
 
-The catalog follows the **Pi version pinned in the task images**: currently
-1.4.0, with **40 API-key providers and 1,592 chat models**. It includes OpenAI,
-Anthropic, Google, DeepSeek, Z.ai, xAI, Mistral, MiniMax, Moonshot, Xiaomi, NVIDIA,
-OpenRouter and the other API-key providers in that release. List the full range
-and exact IDs offline, without installing Pi on the host:
+Pi 1.4.0 is pinned in the task images, with **40 API-key providers and 1,592 chat
+models**. List providers and exact IDs offline, without installing Pi on the host:
 
 ```bash
 search-swe pi-models
@@ -61,15 +58,11 @@ only for that provider's missing configuration. Pi's `OPENAI_API_KEY`,
 | Amazon Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` |
 | Google Vertex AI | `GOOGLE_CLOUD_API_KEY` for express/API-key mode |
 
-This workflow uses API keys or provider tokens. Subscription OAuth, ambient
-AWS/GCP identities and custom Pi extensions are outside this API-key workflow.
-Pi's pinned native providers perform the requests; the selected endpoint is
-added only to the coding-agent phase's network permissions. New OpenRouter
-models use the native Pi Chat Completions adapter when absent from the pinned
-catalog. Their required metadata is resolved during configure/run preflight,
-using the selected cache/offline policy, then passed to the adapter. The adapter
-uses that fixed metadata throughout the run. Direct-provider model selection
-follows the pinned catalog.
+Authentication uses API keys or provider tokens; subscription OAuth, ambient
+AWS/GCP identities and custom Pi extensions are outside this workflow. Direct
+models come from the pinned catalog. New OpenRouter models use the native Pi
+Chat Completions adapter with live/cached metadata resolved before the run.
+Only the coding-agent phase gains access to the selected endpoint.
 
 ## Examples
 
@@ -86,8 +79,3 @@ Coding-agent credentials are independent of verifier credentials and the
 [47/17-model submission-key profiles](submission-models.md). See
 [CLI configuration](cli.md) for the wizard and [evaluation setup](runtime.md)
 for the native launcher and host requirements.
-
-Maintainers refresh the Pi catalog with `node scripts/evaluation/update_pi_catalog.mjs
-/path/to/@earendil-works/pi-ai` after aligning `scripts/evaluation/harness_versions.py` and
-the task-image pin. The script reads only public package metadata and verifies
-the version; it does not read credentials or fetch models at evaluation time.

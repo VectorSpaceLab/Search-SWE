@@ -51,6 +51,21 @@ builder's `--download`. Missing or changed inputs fail the build.
 
 ## Verification
 
+Network changes must preserve these enforcement requirements:
+
+- Untrusted services cannot forge the gateway's firewall exemption marks or
+  modify its rules; capabilities and namespace boundaries must enforce this.
+- Tightening a policy terminates previously authorized tunnels and pooled
+  connections, not merely rejects new connections.
+- Agent, verifier, baseline, public, and no-network transitions are tested;
+  phase allowlists must not be replaced with their union.
+- Destination resolution works through the intended upstream path, including
+  when local DNS returns NXDOMAIN, times out, or gives an incorrect address.
+- Failure of the proxy, resolver, or policy update fails closed, without a
+  direct/unfiltered fallback. TLS certificate validation remains enabled.
+- The upstream endpoint is operator-configured, with no machine-specific IP,
+  port, VPN product, or public DNS provider required by task packages.
+
 Host regressions include launcher selection, configuration, Harbor phase hooks,
 Compose restrictions, credential handling, build inputs and ownership recovery:
 
@@ -85,3 +100,50 @@ Each command requires a fresh `--output jobs/egress-checks/NAME` directory and
 `--gost-image YOUR_COMPONENT_IMAGE --output jobs/egress-checks/component-01`.
 Fixtures use local receivers and synthetic credentials, with no paid API calls.
 Host tests alone do not establish network enforcement.
+
+## Direct Harbor runs
+
+The repository launcher derives and supplies the coding-model host. When
+invoking Harbor directly on a non-public task, add the matching hostname:
+
+```bash
+PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
+  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
+  --agent scripts.evaluation.harbor_agents:PreinstalledCodex --model MODEL_ID \
+  --ak version=0.164.0 \
+  --allow-agent-host MODEL_API_HOST
+```
+
+For the supported official-Anthropic Claude Code mode, use the pinned wrapper,
+an environment reference rather than a literal secret, and the fixed host:
+
+```bash
+PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
+  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
+  --agent scripts.evaluation.harbor_agents:PreinstalledClaudeCode \
+  --model ANTHROPIC_MODEL_ID \
+  --ak version=2.1.309 \
+  --ae 'ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}' \
+  --allow-agent-host api.anthropic.com
+```
+
+The repository launcher additionally removes inherited gateway, OAuth, and
+Bedrock selectors. Reproduce that sanitization when bypassing it; custom
+Anthropic endpoints and alternate Claude authentication modes are not part of
+the supported configuration.
+
+These commands use the default direct gateway image and pull it if missing locally.
+To select another matching image, add `--environment-kwarg egress_image=YOUR_IMAGE`. Manually using
+`--env docker` selects installed Harbor and does not receive this checkout's
+capability restrictions or connection revocation when policies change.
+
+Do not use `--allow-environment-host` for a coding-model endpoint: that changes
+the environment baseline rather than only the agent phase. Do not add package
+registries, source-code hosts, wildcard domains, or a general HTTP proxy to a
+task allowlist. A general proxy reduces destination filtering to the proxy
+itself, so `scripts/evaluation/run_task.py` rejects `CONTAINER_PROXY` for the current
+restricted task policies.
+
+Image pulls and Docker build downloads happen before untrusted task execution
+and are configured at the Docker daemon/build layer; they are not task runtime
+egress permissions.

@@ -2,95 +2,67 @@
 
 [Documentation index](../README.md)
 
-**Model allowlists are mandatory for every enabled submission API key. Use its exact profile:**
+**Every enabled OpenRouter submission key must use its exact model profile:**
 
 | Host variable | Profile | Generation | Embedding | Rerank | Total |
 | --- | --- | ---: | ---: | ---: | ---: |
 | `OPENROUTER_API_KEY` | Shared | 4 | 35 | 8 | **47** |
 | `REASONING_QUERY_REWRITING_OPENROUTER_API_KEY` | Reasoning query rewriting | 3 | 9 | 5 | **17** |
 
-These profiles keep a small set of lightweight generation models and a broad
-selection of embedding and rerank models. **`qwen/qwen3-reranker-8b` is deliberately
-excluded from both profiles to control API cost.** The lists are fixed benchmark
-configuration; new OpenRouter releases are added only through an explicit profile
-update. The reasoning-query-rewriting list is a strict subset of the shared list.
+The profiles allow a few lightweight generation models and a broad selection of
+embeddings/rerankers. **Both exclude `qwen/qwen3-reranker-8b` for cost.** These are
+fixed benchmark lists; task resource documents may further restrict their use.
 
-The profiles describe the APIs available to **submitted search programs**.
-Coding-agent keys (`AGENT_OPENROUTER_API_KEY`) and verifier/answer-judge keys use
-separate model access. Each task's `environment/docs/available_resources.md`
-defines the permitted models, endpoints and operations within the key's available
-resources. A key's allowlist is an upper bound; task-specific restrictions still
-apply. Jina services use their independently configured `JINA_API_KEY`.
+These keys serve submitted search programs. Coding-agent
+`AGENT_OPENROUTER_API_KEY` and judge keys need separate model access. Jina uses
+its own `JINA_API_KEY`.
 
 ## Configure the keys
 
-1. Create a submission key for the shared profile and, when running
-   reasoning-query-rewriting with OpenRouter resources, a separate key for its
-   dedicated profile.
-2. In the OpenRouter workspace's **Guardrails** page, create a guardrail with
-   exactly the corresponding **Allowed Models** below. Save it and assign it
-   under **API Keys** to the matching submission key. An empty model allowlist
+1. Create a shared submission key and, if enabling OpenRouter resources for
+   reasoning-query-rewriting, a separate key for its 17-model profile.
+2. In OpenRouter **Guardrails**, create the exact **Allowed Models** list below,
+   save it, and assign it to the matching key under **API Keys**. An empty list
    allows all models. Check the effective restrictions after assignment.
-3. Enter the key through `search-swe configure TASK`, or put it in the matching
-   variable in the ignored `.env`. Existing values are reused; new tasks request
-   only missing variables. Use `--edit-credentials` to replace an existing key.
+3. Enter the key with `search-swe configure TASK`, or set its host variable in
+   your ignored `.env`. Use `--edit-credentials` to replace an existing key.
 
-See [OpenRouter's guardrail setup and assignment documentation](https://openrouter.ai/docs/guides/features/guardrails).
-Guardrails assigned directly to submission keys preserve separate coding-agent
-and judge access; their keys must allow the models their roles use.
+Assign guardrails directly to submission keys so coding-agent and judge keys
+retain their required access. See [OpenRouter's setup guide](https://openrouter.ai/docs/guides/features/guardrails).
 
 ## Required CLI checks
 
-After configuration is confirmed, and before each evaluation batch starts,
-`search-swe configure` and `search-swe run` check the submission keys used by the
-selected tasks. Existing keys are checked again; optional services left unset
-and keys belonging only to other tasks need no check.
+Before saving configuration or starting a batch, the CLI checks enabled
+submission keys used by the selected tasks, including previously saved keys.
+Each key receives three distinct out-of-list Chat Completions requests with
+`max_tokens=1`; accepted requests may incur small charges.
 
-For each enabled key, the CLI sends three short Chat Completions requests with
-`max_tokens=1` to distinct out-of-list models. It chooses candidates using system
-randomness from a fresh public OpenRouter catalog, across different model
-vendors, with at least 25 eligible candidates. For reasoning-query-rewriting,
-one request checks the shared-only Qwen generation model to catch accidental
-assignment of the wider profile; the other two are random. Accepted requests
-may incur small API charges. Correct model-allowlist denials stop at OpenRouter.
+Candidates are randomly drawn across vendors from a fresh catalog with at least
+25 eligible models. Reasoning-query-rewriting also probes the shared-only Qwen
+generation model to detect an incorrectly assigned wider profile.
 
-All three requests must return explicit model-access restrictions. An accepted
-request, or an inconclusive result such as invalid credentials, insufficient
-credits, rate limiting, generic `403`, provider downtime or a network failure,
-stops configuration and evaluation with a corrective error. The CLI completes
-these checks before saving new settings, downloading assets or launching tasks.
-Fix the reported issue and repeat the command. This applies to `--yes` and
-`--offline` too: the latter caches asset/model selection, while these checks
-need connectivity. `--dry-run` previews the required checks without making
-requests or starting evaluations.
+**All three requests must return explicit model-access restrictions.** Accepted
+requests, invalid keys, insufficient credit, rate limits, generic `403` responses,
+provider outages or network failures block saving and launch. Fix the reported
+issue and retry. The same checks apply to `--yes` and `--offline`; `--dry-run`
+makes no requests. See OpenRouter's [error reference](https://openrouter.ai/docs/api_reference/errors-and-debugging).
 
-These sampled generation requests catch configuration mistakes; they do not
-audit every model or the embedding/rerank endpoints. Assigning the exact full
-profile remains required, including the `qwen/qwen3-reranker-8b` exclusion. The
-CLI gate is a local setup check, not a tamper-proof verifier. Native launcher
-users also need the same profiles; run `search-swe configure TASK` to check their
-keys before using the lower-level launcher.
-
-OpenRouter documents the distinction between model restrictions and other
-failures in its [guardrail guide](https://openrouter.ai/docs/guides/features/guardrails)
-and [error reference](https://openrouter.ai/docs/api_reference/errors-and-debugging).
+The probes sample generation models; they cannot certify every model or the
+embedding/rerank endpoints. Assigning the full exact profile remains required.
+Native-launcher users should run `search-swe configure TASK` to check keys first.
+The CLI gate is a local configuration check.
 
 ## View or export a profile
-
-The wizard shows the applicable profile and its model count once per key,
-including for existing keys, without adding another confirmation prompt. List
-all IDs or export the `allowed_models` JSON object on demand:
 
 ```bash
 search-swe submission-models
 search-swe submission-models --profile reasoning-query-rewriting
 search-swe submission-models --profile shared --json
-search-swe submission-models --profile reasoning-query-rewriting --json
 ```
 
-These commands work offline, without a checkout or credentials. Exporting a
-profile produces data for guardrail setup; assignment takes place in OpenRouter.
-The `:batch` and `:free` suffixes below are part of the model IDs.
+These commands work offline without a checkout or credentials. `--json` exports
+an `allowed_models` object for guardrail setup; assign it in OpenRouter.
+The `:batch` and `:free` suffixes are part of the model IDs.
 
 ## Shared: 47 models
 
@@ -184,19 +156,12 @@ The `:batch` and `:free` suffixes below are part of the model IDs.
 - `cohere/rerank-4-fast`
 - `cohere/rerank-v3.5`
 
-## Sources and maintenance
+## Sources
 
-IDs were checked on **2026-11-01** against the [generation catalog](https://openrouter.ai/api/v1/models),
-[embedding catalog](https://openrouter.ai/api/v1/embeddings/models),
-[rerank model pages](https://openrouter.ai/collections/rerank-models), and the
-individual pages linked above. The batch variants have their own model pages:
-[Text Embedding 3 Large (batch)](https://openrouter.ai/openai/text-embedding-3-large:batch)
-and [Text Embedding Ada 002 (batch)](https://openrouter.ai/openai/text-embedding-ada-002:batch).
-Availability remains provider-dependent; the fixed allowlist is not a connectivity
-or availability test.
-
-The CLI profiles are maintained in
-[`src/search_swe/submission_models.py`](../../src/search_swe/submission_models.py).
-Update this guide alongside intentional profile changes. CLI regression tests
-check profile counts, subset membership, exclusions, suffixes, and consistency
-between the documented IDs and exported data.
+IDs were checked on **2026-11-01** against OpenRouter's
+[generation catalog](https://openrouter.ai/api/v1/models),
+[embedding catalog](https://openrouter.ai/api/v1/embeddings/models) and
+[rerank listings](https://openrouter.ai/collections/rerank-models), including the
+individual model pages above. Availability remains provider-dependent.
+The CLI's fixed profiles live in
+[`submission_models.py`](../../src/search_swe/submission_models.py).
