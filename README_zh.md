@@ -44,7 +44,7 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 使用 **0.2.x** 版本的 CLI 和同一版本系列的 checkout。
 
 ```bash
-python -m pip install --upgrade 'search-swe>=0.2,<0.3'
+pip install search-swe
 search-swe run
 ```
 

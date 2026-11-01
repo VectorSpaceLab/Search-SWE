@@ -25,7 +25,7 @@ unattended execution, prepare the checkout first and pass `--repo PATH`.
 
 Use a Python 3.12+ host environment with the Search-SWE package installed. Check
 `search-swe --version` and `search-swe run --help`. Install the distribution with
-`python -m pip install --upgrade 'search-swe>=0.2,<0.3'`. For local CLI development, use
+`pip install search-swe`. For local CLI development, use
 `python -m pip install -e /path/to/Search-SWE`. An installed skill provides
 instructions; the package supplies the executable.
 

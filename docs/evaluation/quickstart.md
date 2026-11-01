@@ -16,7 +16,7 @@ Use an isolated Python environment and a CLI and checkout from the **0.2.x**
 series:
 
 ```bash
-python -m pip install --upgrade 'search-swe>=0.2,<0.3'
+pip install search-swe
 ```
 
 Task definitions, assets and results live in a separate repository checkout.

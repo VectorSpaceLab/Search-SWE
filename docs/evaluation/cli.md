@@ -14,7 +14,7 @@ versions within that series are compatible. The distribution and command are
 both `search-swe`. Install from PyPI:
 
 ```bash
-python -m pip install --upgrade 'search-swe>=0.2,<0.3'
+pip install search-swe
 ```
 
 For local CLI development, install from the repository root:

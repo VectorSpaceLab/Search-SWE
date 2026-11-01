@@ -47,7 +47,7 @@ CPU/RAM and optional GPU resources required by your chosen tasks.
 Use CLI **0.2.x** with a checkout from the same release series.
 
 ```bash
-python -m pip install --upgrade 'search-swe>=0.2,<0.3'
+pip install search-swe
 search-swe run
 ```
 

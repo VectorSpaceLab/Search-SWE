@@ -9,7 +9,7 @@ start with the [quick start](quickstart.md).
 The [CLI](cli.md) provides interactive configuration and resource-aware batches:
 `search-swe run` opens the wizard, while `search-swe run TASK --yes` uses saved
 settings. It restores assets and invokes the single-task backend documented below.
-Install the CLI with `python -m pip install --upgrade 'search-swe>=0.2,<0.3'`. For local CLI development,
+Install the CLI with `pip install search-swe`. For local CLI development,
 use `python -m pip install -e .` from the checkout.
 
 Run commands from the Search-SWE repository root unless a section says
@@ -42,7 +42,7 @@ variables. `search-swe configure TASK --edit-credentials` reviews existing value
 Install the host-side tools in any existing Python 3.12+ environment:
 
 ```bash
-python -m pip install --upgrade 'search-swe>=0.2,<0.3'
+pip install search-swe
 ```
 
 An isolated venv or Conda environment is recommended if needed, but no
