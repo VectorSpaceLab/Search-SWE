@@ -34,6 +34,11 @@ def denial(status=403, message="Model is not allowed by your guardrail", metadat
     return HTTPError(checks.CHAT_URL, status, "fixture", {}, io.BytesIO(json.dumps(body).encode()))
 
 
+def guardrail_metadata():
+    return {"failed_routing_step": "Filter by Guardrails", "input_endpoint_count": 2,
+            "ineligibility_reasons": [{"reason": "model-ignored-by-guardrail", "endpoint_count": 2}]}
+
+
 class SubmissionModelTests(unittest.TestCase):
     def test_exact_profile_counts_and_documented_ids(self):
         shared, rewriting = model_ids("shared"), model_ids("reasoning-query-rewriting")
@@ -91,6 +96,70 @@ class SubmissionModelTests(unittest.TestCase):
             self.assertTrue(checks.model_access_denied(403, {"error": {"code": 403, "message": message}}))
         for malformed in ([], None, {"error": "Model not allowed"}, {"error": {"code": 403, "message": []}}):
             self.assertFalse(checks.model_access_denied(403, malformed))
+
+    def test_explicit_model_guardrail_404_is_recognized(self):
+        for count in (1, 2, 12):
+            metadata = guardrail_metadata()
+            metadata["input_endpoint_count"] = count
+            metadata["ineligibility_reasons"][0]["endpoint_count"] = count
+            for message in ("Model blocked by guardrail", "MODEL BLOCKED BY GUARDRAIL."):
+                with self.subTest(count=count, message=message):
+                    self.assertTrue(checks.model_access_denied(
+                        404, {"error": {"code": 404, "message": message, "metadata": metadata}}))
+
+    def test_guardrail_404_requires_complete_model_only_endpoint_exclusion(self):
+        valid = guardrail_metadata()
+        invalid = [None, {}, [], "guardrail",
+                   {**valid, "failed_routing_step": "Filter by Provider"},
+                   {**valid, "ineligibility_reasons": []},
+                   {**valid, "ineligibility_reasons": [None]},
+                   {**valid, "ineligibility_reasons": valid["ineligibility_reasons"] * 2}]
+        for count in (None, 0, -1, True, "2", 2.0):
+            invalid.append({**valid, "input_endpoint_count": count})
+        for count in (None, 0, 1, True, "2", 2.0):
+            invalid.append({**valid, "ineligibility_reasons": [
+                {"reason": "model-ignored-by-guardrail", "endpoint_count": count}]})
+        for reason in ("provider-ignored-by-guardrail", "zdr-required", "budget-exceeded"):
+            invalid.append({**valid, "ineligibility_reasons": [{"reason": reason, "endpoint_count": 2}]})
+        for key in ("raw", "provider_name", "limit_source", "reasons", "flagged_input", "patterns"):
+            invalid.append({**valid, key: "fixture"})
+        for metadata in invalid:
+            with self.subTest(metadata=metadata):
+                self.assertFalse(checks.model_access_denied(404, {"error": {
+                    "code": 404, "message": "Model blocked by guardrail", "metadata": metadata}}))
+
+    def test_guardrail_404_requires_consistent_status_and_explicit_message(self):
+        for status, code, message in (
+            (403, 404, "Model blocked by guardrail"), (404, 403, "Model blocked by guardrail"),
+            (404, "404", "Model blocked by guardrail"), (404, None, "Model blocked by guardrail"),
+            (401, 401, "Model blocked by guardrail"), (500, 500, "Model blocked by guardrail"),
+            (404, 404, "No endpoints found"), (404, 404, "Guardrail blocked request"),
+            (404, 404, "Model blocked by guardrail: provider restriction"),
+            (404, 404, "Model blocked by guardrail: insufficient credits"), (404, 404, []),
+        ):
+            with self.subTest(status=status, code=code, message=message):
+                self.assertFalse(checks.model_access_denied(status, {"error": {
+                    "code": code, "message": message, "metadata": guardrail_metadata()}}))
+
+    def test_guardrail_404_completes_three_probes_for_each_selected_profile(self):
+        task = Mock()
+        task.variables.return_value = {"OPENROUTER_API_KEY", "REASONING_QUERY_REWRITING_OPENROUTER_API_KEY"}
+        env = {"OPENROUTER_API_KEY": "shared-private", "REASONING_QUERY_REWRITING_OPENROUTER_API_KEY": "rqr-private"}
+        opener = Mock()
+        opener.open.side_effect = lambda *a, **kw: denial(404, "Model blocked by guardrail", guardrail_metadata())
+        with patch.object(checks, "load_models", return_value=(catalog(), "live")), \
+                patch.object(checks, "build_opener", return_value=opener), redirect_stdout(io.StringIO()) as output:
+            checks.verify_submission_keys([task], env)
+        self.assertEqual(opener.open.call_count, 6)
+        self.assertEqual(output.getvalue().count("all 3 sampled models were denied"), 2)
+        self.assertNotIn("-private", output.getvalue())
+        for key in env.values():
+            requests = [call.args[0] for call in opener.open.call_args_list
+                        if call.args[0].get_header("Authorization") == f"Bearer {key}"]
+            self.assertEqual(len(requests), 3)
+            payloads = [json.loads(request.data) for request in requests]
+            self.assertEqual(len({payload["model"] for payload in payloads}), 3)
+            self.assertTrue(all(payload["max_tokens"] == 1 for payload in payloads))
 
     def test_probe_is_one_token_fixed_endpoint_and_hides_secret(self):
         opener = Mock()

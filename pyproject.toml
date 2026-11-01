@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "search-swe"
-version = "0.2.1"
+version = "0.2.2"
 description = "Configure and run Search-SWE coding-agent evaluations"
 readme = "docs/evaluation/cli.md"
 requires-python = ">=3.12"

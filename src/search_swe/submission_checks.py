@@ -50,11 +50,11 @@ def probe_models(profile, catalog):
 
 
 def model_access_denied(status, body):
-    """Accept explicit model-access denials, not generic 403s or provider failures."""
-    if status != 403 or not isinstance(body, dict):
+    """Recognize explicit 403/404 model-access denials with unambiguous evidence."""
+    if status not in (403, 404) or not isinstance(body, dict):
         return False
     error = body.get("error")
-    if not isinstance(error, dict) or error.get("code") != 403:
+    if not isinstance(error, dict) or error.get("code") != status:
         return False
     metadata = error.get("metadata") or {}
     if not isinstance(metadata, dict) or any(key in metadata for key in (
@@ -67,6 +67,18 @@ def model_access_denied(status, body):
     if any(word in message for word in ("budget", "credit", "quota", "rate limit", "moderation", "content filter",
                                         "prompt injection", "region", "provider", "disabled key", "invalid key")):
         return False
+    if status == 404:
+        # Guardrail routing errors must account for every candidate endpoint.
+        count = metadata.get("input_endpoint_count")
+        reasons = metadata.get("ineligibility_reasons")
+        return ("model blocked by guardrail" in message
+                and metadata.get("failed_routing_step") == "Filter by Guardrails"
+                and type(count) is int and count > 0
+                and isinstance(reasons, list) and len(reasons) == 1
+                and isinstance(reasons[0], dict)
+                and reasons[0].get("reason") == "model-ignored-by-guardrail"
+                and type(reasons[0].get("endpoint_count")) is int
+                and reasons[0]["endpoint_count"] == count)
     return bool(re.search(r"\bmodels?\b.{0,250}\b(?:not allowed|not permitted|not authorized|not enabled|"
                           r"access denied|access restricted|not in (?:the |your )?(?:allowlist|allowed)|"
                           r"blocked by (?:the |your )?guardrail)", message))
@@ -101,7 +113,7 @@ def check_probe(opener, key, profile, model):
         return
     reasons = {400: "invalid request or unsupported parameters", 401: "invalid or disabled API key",
                402: "insufficient credits", 403: "denial not identified as a model-access restriction",
-               404: "model or routing endpoint unavailable", 429: "rate limit"}
+               404: "model restriction not established or routing endpoint unavailable", 429: "rate limit"}
     reason = reasons.get(status, "unexpected provider response")
     raise ValueError(f"Cannot verify {name}: HTTP {status} ({reason}) for {model}. "
                      f"This does not establish a model allowlist; evaluation was not started. "

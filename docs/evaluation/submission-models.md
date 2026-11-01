@@ -41,9 +41,11 @@ Candidates are randomly drawn across vendors from a fresh catalog with at least
 25 eligible models. Reasoning-query-rewriting also probes the shared-only Qwen
 generation model to detect an incorrectly assigned wider profile.
 
-**All three requests must return explicit model-access restrictions.** Accepted
-requests, invalid keys, insufficient credit, rate limits, generic `403` responses,
-provider outages or network failures block saving and launch. Fix the reported
+**All three requests must return explicit model-access restrictions.** The CLI
+recognizes model-access denials returned as `403`, and `404` guardrail responses
+whose routing metadata confirms that the model policy excluded every candidate
+endpoint. Accepted requests, invalid keys, insufficient credit, rate limits,
+generic `403` responses, provider outages or network failures block saving and launch. Fix the reported
 issue and retry. The same checks apply to `--yes` and `--offline`; `--dry-run`
 makes no requests. See OpenRouter's [error reference](https://openrouter.ai/docs/api_reference/errors-and-debugging).
 
