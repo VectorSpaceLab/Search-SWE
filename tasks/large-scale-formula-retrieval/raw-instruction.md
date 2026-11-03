@@ -9,21 +9,13 @@ candidate list. No required training, architecture or starter.
 
 ## Requirements
 
-Optional public models may be downloaded from permitted Hugging Face hosts during development,
-pinned to an immutable commit, with repository/revision and file hashes documented in
-`/app/submission/README.md`. Include needed weights in the submission, counted against storage.
-Final build/query processes have no network or credentials. Use installed libraries/system tools; no
-extra packages are downloaded. Formula normalization, structural matching, representation learning,
-recall, reranking, lexical retrieval and CPU models are all permitted. Use only supplied corpus/dev
-data and pinned public model weights; do not download historical test queries/qrels, precomputed
-rankings or additional datasets. No hard-coded query answers, grader access/modification or resource
-bypass. The coding agent's model transport grants no submission API access.
+During development and the timed final build, embedding, reranking and generative API calls are permitted only under the provider/model rules in `/task/docs/available_resources.md`, through `openrouter.ai` and `api.jina.ai`. The submission uses the injected `OPENROUTER_API_KEY` and `JINA_API_KEY`; coding-agent and judge credentials remain separate. No model-weight, additional-dataset or extra-package downloads are permitted. Use installed libraries/system tools. Formula normalization, structural matching, representation learning, recall, reranking, lexical retrieval and CPU models are permitted. Use only supplied corpus/dev data and authorized API outputs; do not download historical test queries/qrels or precomputed rankings. No hard-coded query answers, grader access/modification or resource bypass. API waiting/retries count toward the relevant phase deadline; stored API outputs count toward storage limits. Loading, warmup and serving have no network or API credentials. The coding agent's model transport grants no submission API access.
 
 ### Build interface
 
 The verifier invokes `/app/submission/build.sh --data-dir /task/data/public --index-dir /work/index`
 in a fresh environment. It must exit zero within 3600 seconds, including preprocessing, optional
-training, compilation, full-corpus encoding, index construction and subprocess work. The index
+training, compilation, full-corpus encoding, index construction, API waiting/retries and subprocess work. The index
 directory starts empty. `/app/submission` and inputs are read-only. Persistent output goes into the
 supplied index directory; temporary files go under `/work/runtime` via `TMPDIR`/`HOME`. Build
 descendants are terminated before query serving. No build process is carried over. The verifier
@@ -89,8 +81,7 @@ and reports timing; only the isolated verifier enforces all final resource and f
 
 Develop for at most 7200 seconds. Read `/task/docs/environment.md` and
 `/task/docs/available_resources.md`. Only `/app/submission` transfers to the verifier. Put
-executable `build.sh` and `serve.sh` there, along with required source and optional pinned public
-model weights. Regular files/directories only, no symlinks or special files. Keep development
+executable `build.sh` and `serve.sh` there, along with required source files. Regular files/directories only, no symlinks or special files. Keep development
 indexes outside `/app/submission`. Do not submit precomputed corpus indexes, formula embeddings,
 answer mappings or corpus-trained parameters that bypass the timed build; regenerate all
 corpus-dependent artifacts in the build. Hyperparameters/algorithms may be tuned on the development
@@ -100,7 +91,7 @@ set.
 
 ### Integrity review
 
-The coding trajectory is also transferred to the separate verifier and protected before submission execution. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. Only the verifier's judge has its separate API credentials and network access; these are unavailable to submitted programs.
+The coding trajectory is also transferred to the separate verifier and protected before submission execution. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. The verifier's judge has separate API credentials that are unavailable to submitted programs; only the documented submission API credentials are passed to the build process.
 
 ### Metrics and failure handling
 
@@ -133,7 +124,7 @@ diagnostics; immutable installed software and private verifier inputs are exclud
 and verification use these limits. Bounded writable filesystems enforce actual available capacity,
 reserving 512 MiB for logs and 40 MiB for the independent serving volume, plus filesystem metadata;
 use `df` for remaining writable space. Writes outside supplied writable directories are forbidden.
-No GPU or external model API.
+No GPU. API access is limited to development and the timed final build.
 
 The allocated submission/model files and completed index together must be at most **34 MiB
 (35,651,584 bytes)**, counting max(logical size, allocated blocks) per regular file and shared
@@ -157,7 +148,7 @@ permitted solver inputs.
 Before implementing the system, read the following read-only task documents:
 
 - `/task/docs/environment.md` — installed runtime, paths, permissions and public execution tools.
-- `/task/docs/available_resources.md` — supplied data/models, use restrictions, sources and license notices.
+- `/task/docs/available_resources.md` — permitted APIs, model IDs, credentials and use restrictions.
 
 The coding agent's provider connection does not grant task-program API access.
 Follow this task's resource permissions; only the declared artifacts transfer

@@ -132,9 +132,14 @@ print(json.dumps([group.name for group in layout.groups]))
             self.skipTest('Repository metadata is not installed in verifier images')
         config = tomllib.loads((tests.parent/'task.toml').read_text())
         self.assertIn('/logs/agent/trajectory.json', config['artifacts'])
-        self.assertEqual(config['verifier']['allowed_hosts'], ['openrouter.ai'])
-        self.assertEqual(config['verifier']['network_mode'], 'allowlist')
+        for phase in ('agent', 'verifier', 'environment'):
+            self.assertEqual(config[phase]['allowed_hosts'], ['openrouter.ai', 'api.jina.ai'])
+            self.assertEqual(config[phase]['network_mode'], 'allowlist')
+        for phase in ('environment', 'verifier'):
+            for variable in ('OPENROUTER_API_KEY', 'JINA_API_KEY'):
+                self.assertEqual(config[phase]['env'][variable], '${' + variable + ':-}')
         self.assertNotIn('OPENAI_API_KEY', config['agent'].get('env', {}))
+        self.assertNotIn('OPENAI_API_KEY', config['environment'].get('env', {}))
         for variable in ('OPENAI_API_KEY', 'OPENAI_BASE_URL'):
             self.assertIn('VERIFIER_', config['verifier']['env'][variable])
         entry = (tests/'test.sh').read_text()

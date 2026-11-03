@@ -66,13 +66,13 @@ The verifier normalizes outputs, uses FP32 cosine over each complete dataset poo
 descending with ascending document ID breaking ties, and retrieves Top-20. Each query has all 10 or
 6 aligned cross-language positive passages. Binary nDCG@20 uses the full positive set for IDCG.
 Average queries within each language, then languages equally per dataset, then the two datasets
-equally to obtain Q. B=0.9127469497437668 and U=0.9353486724891793 give Score = 100 *
-clip((Q-B)/(U-B),0,1); the framework reward is Score/100. Configurations for identity, language
+equally to obtain Q. B=0.9127469497437668 and U=1 give Score = 100 *
+clip((Q-B)/(1-B),0,1); the framework reward is Score/100. Configurations for identity, language
 centering, global principal-component removal and regularized whitening are selected/frozen using
-public development data; B is the maximum hidden Q across those four fixed configurations; U is a
-fixed quality reference from the original task calibration, not a theoretical upper bound.
-Reusing the baseline is legal and earns zero without improvement. Ideal nDCG=1 is diagnostic,
-and extra speed/GPU savings/language count do not earn extra points.
+public development data; B is the maximum hidden Q across those four fixed configurations; U is
+the ideal nDCG@20 value, so full score requires Q=1.
+Reusing the baseline is legal and earns zero without improvement.
+Extra speed/GPU savings/language count do not earn extra points.
 
 A single query error, timeout, wrong shape, nonfinite or unnormalizable output earns zero for that
 query and remains in its language denominator. Document preparation failure/timeout, total resource

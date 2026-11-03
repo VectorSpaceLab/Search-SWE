@@ -10,7 +10,7 @@ keywords = ["information-retrieval", "multilingual", "vector-postprocessing", "r
 
 [metadata]
 objective = "Improve equal-dataset, equal-query-language nDCG@20 over frozen simple vector transformations."
-primary_metric = "clip((Q-B)/(U-B),0,1), with B and U frozen before agent evaluation"
+primary_metric = "clip((Q-B)/(1-B),0,1), with B frozen before agent evaluation and full score at Q=1"
 dataset = "Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition"
 encoder = "intfloat/multilingual-e5-large"
 encoder_revision = "3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3"
