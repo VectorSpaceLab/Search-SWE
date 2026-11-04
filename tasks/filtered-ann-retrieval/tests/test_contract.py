@@ -68,19 +68,19 @@ class ResultContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check(self.result)
 
-    def test_scores_average_over_all_25_cases(self):
-        for passed in [0, 1, 5, 7, 24, 25]:
+    def test_scores_average_over_all_30_cases(self):
+        for passed in [0, 1, 5, 7, 29, 30]:
             with self.subTest(passed=passed):
-                cases = [{"query_id": str(i), "score": int(i < passed)} for i in range(25)]
-                self.assertEqual(check_quality({"queries": cases}), passed / 25)
+                cases = [{"query_id": str(i), "score": int(i < passed)} for i in range(30)]
+                self.assertEqual(check_quality({"queries": cases}), passed / 30)
 
     def test_missing_or_duplicate_case_fails(self):
-        for count in [10, 24, 25, 26]:
+        for count in [10, 29, 30, 31]:
             with self.subTest(count=count), self.assertRaises(ValueError):
                 check_quality({"queries": [{"query_id": "same", "score": 1}] * count})
 
     def test_old_or_incomplete_query_sets_fail(self):
-        for count in [10, 24, 26]:
+        for count in [10, 25, 29, 31]:
             with self.subTest(count=count), self.assertRaises(ValueError):
                 check_quality({"queries": [{"query_id": str(i), "score": 1} for i in range(count)]})
 
@@ -95,7 +95,7 @@ class IndependentQueryTests(unittest.TestCase):
                 corpus = root / "corpus"
                 corpus.mkdir()
                 queries = [{"query_id": str(i), "vector": [0], "filter": {"all": [0]}, "k": 2}
-                           for i in range(25)]
+                           for i in range(30)]
                 gold = [{"query_id": q["query_id"], "eligible_count": 3,
                          "distances": [0.0, 1.0], "group": "synthetic"} for q in queries]
                 (root / "queries.jsonl").write_text("\n".join(map(json.dumps, queries)))
@@ -145,11 +145,11 @@ class IndependentQueryTests(unittest.TestCase):
                         patch("grader.inspect_faiss", return_value={}):
                     report = run_stage(args, "retrieval", corpus, root / "queries.jsonl",
                                        root / "gold.jsonl")
-                expected = 1.0 if failure is None else 0.0 if failure == "all" else 24 / 25
+                expected = 1.0 if failure is None else 0.0 if failure == "all" else 29 / 30
                 self.assertEqual(check_quality(report), expected)
                 self.assertEqual(report["mean_score"], expected)
-                self.assertEqual(len(attempts), 50)
-                self.assertEqual(len(set(attempts)), 50)
+                self.assertEqual(len(attempts), 60)
+                self.assertEqual(len(set(attempts)), 60)
                 self.assertTrue(all(p.closed for p in processes))
                 self.assertTrue(startup_timeouts)
                 self.assertTrue(all(timeout is None for timeout in startup_timeouts))
@@ -262,21 +262,22 @@ class IndexAndDeadlineTests(unittest.TestCase):
 class FinalGateTests(unittest.TestCase):
     def test_retrieval_trajectory_and_audit_are_all_required(self):
         cases = [
-            (True, 25, 1.0, 1.0, "0", True, 1.0),
-            (True, 25, 0.2, 1.0, "0", True, 0.2),
-            (True, 25, 0.28, 1.0, "0", True, 0.28),
-            (True, 25, 0.0, 1.0, "0", True, 0.0),
-            (False, 25, 0.28, 1.0, "0", True, 0.0),
+            (True, 30, 1.0, 1.0, "0", True, 1.0),
+            (True, 30, 0.2, 1.0, "0", True, 0.2),
+            (True, 30, 0.3, 1.0, "0", True, 0.3),
+            (True, 30, 0.0, 1.0, "0", True, 0.0),
+            (False, 30, 0.3, 1.0, "0", True, 0.0),
             (True, 10, 1.0, 1.0, "0", True, 0.0),
-            (True, 24, 1.0, 1.0, "0", True, 0.0),
-            (True, 26, 1.0, 1.0, "0", True, 0.0),
-            (True, 25, 0.28, 0.0, "0", True, 0.0),
-            (True, 25, 0.28, 1.0, "1", True, 0.0),
-            (True, 25, 0.28, 1.0, "0", False, 0.0),
-            (True, 25, float("nan"), 1.0, "0", True, 0.0),
-            (True, 25, float("inf"), 1.0, "0", True, 0.0),
-            (True, 25, 1.1, 1.0, "0", True, 0.0),
-            (True, 25, 0.28, float("nan"), "0", True, 0.0),
+            (True, 25, 1.0, 1.0, "0", True, 0.0),
+            (True, 29, 1.0, 1.0, "0", True, 0.0),
+            (True, 31, 1.0, 1.0, "0", True, 0.0),
+            (True, 30, 0.3, 0.0, "0", True, 0.0),
+            (True, 30, 0.3, 1.0, "1", True, 0.0),
+            (True, 30, 0.3, 1.0, "0", False, 0.0),
+            (True, 30, float("nan"), 1.0, "0", True, 0.0),
+            (True, 30, float("inf"), 1.0, "0", True, 0.0),
+            (True, 30, 1.1, 1.0, "0", True, 0.0),
+            (True, 30, 0.3, float("nan"), "0", True, 0.0),
         ]
         for valid, count, metric, judged, status, trajectory, expected in cases:
             with self.subTest(valid=valid, count=count, metric=metric, judged=judged, status=status,

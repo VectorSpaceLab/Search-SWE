@@ -16,6 +16,23 @@ organizers; upstream references and original filenames are preserved below.
 | `data/validation/ground_truth.jsonl` | Task-author computation from the corpus and public queries | Exact filtered Top-10 with original-vector squared L2 |
 | `data/example/*` | Task-authored small synthetic example | 64 documents and 17 functional queries, independent of the scored corpus |
 
+## Hidden split update — 2026-11-04
+
+The hidden split contains 30 cases: ten unfiltered, ten single-tag and ten
+two-tag queries. The ten public validation cases and their published pins are
+retained. Public and hidden query vectors and IDs are disjoint.
+
+All hidden vectors are unchanged rows from the official 100K query-vector file.
+Candidate vectors were selected using nearest-neighbor distances against fixed
+corpus samples. Filter predicates were assigned from the supplied metadata;
+unfiltered queries use an empty tag list. The final cases and their order were
+frozen before the final repeated validation. Exact Top-10 answers were computed
+by exhaustive squared-L2 evaluation over every eligible original vector and
+checked with the task's result validator. Author-side provenance retains source
+row IDs, filter assignments and exact-label checks.
+
+## Earlier split construction
+
 The original query sources are `query.public.100K.u8bin` and
 `query.metadata.public.100K.spmat` under the same upstream URL prefix. Query
 selection originated in the original task's authoring workspace. Version 0.8.0

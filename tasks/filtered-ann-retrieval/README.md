@@ -12,7 +12,7 @@
 | Agent / verifier time limits | 7200 s / 5400 s |
 | Dataset | NeurIPS 2023 Big-ANN Filter Track / YFCC-10M |
 | Public queries | 10 |
-| Hidden queries | 25 |
+| Hidden queries | 30 |
 
 Author: **bingyu**. version: **1.0.0**. Migrated from
 `search_swe_bingyu/task-submissions/bingyu/1-x-1` version 0.8.1.
@@ -23,12 +23,10 @@ to conjunctions of metadata tags. CPU only; no embedding model or retrieval API.
 ### Data and provenance
 
 The corpus has 10,000,000 192-dimensional uint8 vectors and CSR metadata with
-200,386 tag columns. The public split has ten queries (five retained and five
-new); the hidden split has 25 queries (five retained and twenty new). All 35
-query vectors are distinct. Each split retains two single-tag, two two-tag and
-one three-tag case; the additions exercise broad single-tag filtering. A separate
-64-document, 17-query example supports functional development without adding
-scored cases.
+200,386 tag columns. The public split has ten queries. The hidden split has
+30 queries: ten unfiltered, ten single-tag and ten two-tag cases. All 40 public
+and hidden query vectors are distinct. A separate 64-document, 17-query example
+supports functional development without adding scored cases.
 
 The corpus and small example retain their published official pins. The two updated public validation files are published under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/` at immutable revision `234406eb7e304478e48905829fc0d3233f5a9f1f`. Earlier public files remain available. See [SOURCES.md](SOURCES.md) for attribution and source terms.
 
@@ -46,6 +44,7 @@ image. Reference implementations remain outside the task package.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-11-04 | 1.0.0 | Adjusted hidden-test difficulty and composition to 30 queries; synchronized case-count checks |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -68,7 +67,7 @@ See [instruction.md](instruction.md) and its structured source
   Output contains document IDs; the verifier computes distances independently.
 - Each hidden query is checked before and after index relocation. It earns one
   only if both responses are correct, timely and identical. The retrieval score
-  is the mean of 25 binary query scores; the two service passes make 50 requests.
+  is the mean of 30 binary query scores; the two service passes make 60 requests.
 - Request failures affect only that query. Protocol failures trigger a restart
   so late replies cannot contaminate later queries. Build, index or service-load
   failures invalidate retrieval. The required trajectory audit gates final
