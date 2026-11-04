@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `budgeted-bimetric-retrieval` |
-| Version | 1.1.0 |
+| Version | 1.0.0 |
 | Authors | jianlyu |
 | Primary metric | baseline-normalized mean nDCG@10 |
 | Compute | 16 CPUs; 32 GiB RAM; 64 GiB storage; 0 GPUs |
@@ -24,7 +24,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-11-04 | 1.1.0 | Added a public two-round feedback baseline and updated the frozen baseline reference. |
+| 2026-11-04 | 1.0.0 | Added a public two-round feedback baseline and updated the frozen baseline reference. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
