@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import signal
+from statistics import median
 import subprocess
 import time
 
@@ -73,6 +74,7 @@ def main():
     baseline = private / "quality.jsonl"
     results = private / "candidate.jsonl"
     timer = {}
+    samples = {"starter": [], "candidate": []}
     try:
         if not submission.is_dir() or submission.is_symlink():
             raise ValueError("submission must be a regular directory")
@@ -93,20 +95,28 @@ def main():
         query.chmod(0o444)
         common = ["--doc-vectors", "/task/data/doc.npy", "--queries", str(query), "--top-k", "1"]
         error_kind = "infrastructure"
-        quality_command = [PYTHON, "/tests/quality_baseline/baseline.py", "--fit",
+        quality_command = [PYTHON, "/tests/quality_reference/baseline.py", "--fit",
                            "--projection", str(private / "ridge.npz"), *common,
                            "--output", str(baseline)]
         phases["quality_baseline"] = run_timed(quality_command, LOG / "quality.stdout.log", LOG / "quality.stderr.log")
         if phases["quality_baseline"]["status"]:
             raise RuntimeError("quality baseline failed or timed out")
-        phases["time_reference"] = run_timed(
-            ["/tests/starter/run.sh", *common, "--output", str(starter), "--report", str(private / "starter-report.json")],
-            LOG / "starter.stdout.log", LOG / "starter.stderr.log")
-        if phases["time_reference"]["status"]:
-            raise RuntimeError("4B time reference failed or timed out")
-        timer["starter"] = phases["time_reference"]["elapsed_seconds"]
-        error_kind = "candidate"
-        for index in range(2):
+        for index in range(5):
+            error_kind = "infrastructure"
+            reference_output = private / f"starter-{index}.jsonl"
+            phase = f"time-reference-{index}"
+            phases[phase] = run_timed(
+                ["/tests/time_reference/run.sh", *common, "--output", str(reference_output),
+                 "--report", str(private / "starter-report.json")],
+                LOG / f"{phase}.stdout.log", LOG / f"{phase}.stderr.log")
+            if phases[phase]["status"]:
+                raise RuntimeError("4B time reference failed or timed out")
+            if index == 0:
+                shutil.copyfile(reference_output, starter)
+            elif reference_output.read_bytes() != starter.read_bytes():
+                raise RuntimeError("4B time reference output is not deterministic")
+            samples["starter"].append(phases[phase]["elapsed_seconds"])
+            error_kind = "candidate"
             scratch = WORK / f"candidate-{index}"
             scratch.mkdir(mode=0o700)
             os.chown(scratch, 10001, 10001)
@@ -129,16 +139,18 @@ def main():
             if not output.is_file() or output.is_symlink():
                 raise ValueError("candidate did not produce a regular output file")
             if index == 0:
-                timer["candidate"] = phases[phase]["elapsed_seconds"]
                 shutil.copyfile(output, results)
             elif output.read_bytes() != results.read_bytes():
                 raise ValueError("candidate output is not deterministic")
+            samples["candidate"].append(phases[phase]["elapsed_seconds"])
             shutil.rmtree(scratch)
+        timer = {name: median(values) for name, values in samples.items()}
     except Exception as exc:
         error = str(exc)
     finally:
         stop_submission()
     (LOG / "phases.json").write_text(json.dumps(phases, indent=2) + "\n")
+    (LOG / "timing-samples.json").write_text(json.dumps(samples, indent=2) + "\n")
     for name, seconds in timer.items():
         (private / f"{name}-time.txt").write_text(str(seconds))
     # Preserve raw predictions and fitted-parameter provenance in protected logs.

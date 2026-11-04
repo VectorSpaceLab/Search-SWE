@@ -13,7 +13,7 @@ public_query_count = 5
 hidden_query_count = 2471
 [metadata.configuration.VERIFIER_OPENAI_API_KEY]
 description = "OpenRouter key for trajectory auditing and trusted document answer grading."
-guidance = "Allow deepseek/deepseek-v4.1-flash for the trajectory judge and google/gemini-2.5-flash for the fixed DOCUMENT_JUDGE_MODEL. Submission keys are configured independently."
+guidance = "Allow deepseek/deepseek-v4.1-flash for the trajectory judge and deepseek/deepseek-v4.1-flash-1017 for the fixed DOCUMENT_JUDGE_MODEL. Submission keys are configured independently."
 
 [agent]
 timeout_sec = 7200.0
@@ -21,7 +21,7 @@ user = "root"
 network_mode = "allowlist"
 allowed_hosts = ["openrouter.ai", "api.jina.ai"]
 [verifier]
-timeout_sec = 45000.0
+timeout_sec = 59400.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"
@@ -40,7 +40,8 @@ os = "linux"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 JINA_API_KEY = "${JINA_API_KEY:-}"
 [verifier.env]
-DOCUMENT_JUDGE_MODEL = "google/gemini-2.5-flash"
+DOCUMENT_JUDGE_MODEL = "deepseek/deepseek-v4.1-flash-1017"
+JUDGE_MAX_CONCURRENCY = "${JUDGE_MAX_CONCURRENCY:-32}"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 JINA_API_KEY = "${JINA_API_KEY:-}"
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"

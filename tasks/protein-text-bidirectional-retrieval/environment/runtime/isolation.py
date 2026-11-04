@@ -7,6 +7,7 @@ import resource
 import shutil
 import signal
 import stat
+import subprocess
 import time
 import psutil
 
@@ -65,6 +66,21 @@ def isolate(work):
         if sec.seccomp_load(ctx):raise RuntimeError('seccomp_load')
     finally:sec.seccomp_release(ctx)
     os.setgroups([]);os.setgid(UID);os.setuid(UID);os.chdir(work)
+    # setuid clears dumpability. Restore normal nonroot procfs visibility so
+    # the supervisor can inspect open files using matching filesystem IDs.
+    if libc.prctl(4,1,0,0,0):raise OSError('submission procfs visibility')
+
+
+def submission_sysv_ipc():
+    objects = []
+    for kind, identifier in [('shm', 'shmid'), ('msg', 'msqid'), ('sem', 'semid')]:
+        lines = Path('/proc/sysvipc', kind).read_text().splitlines()
+        columns = lines[0].split()
+        for line in lines[1:]:
+            row = dict(zip(columns, line.split(), strict=True))
+            if UID in (int(row['uid']), int(row['cuid'])):
+                objects.append((kind, int(row[identifier])))
+    return objects
 
 
 def cleanup():
@@ -74,6 +90,22 @@ def cleanup():
                 if p.info['uids'].real==UID:p.send_signal(sig)
             except (psutil.NoSuchProcess,psutil.AccessDenied):pass
         time.sleep(.1)
+    deadline = time.monotonic() + 1.0
+    while any(p.info['uids'].real == UID and p.info['status'] != psutil.STATUS_ZOMBIE
+              for p in psutil.process_iter(['uids', 'status'])):
+        if time.monotonic() >= deadline:
+            raise RuntimeError('Submission processes survived cleanup')
+        time.sleep(.01)
+    # SysV objects outlive their creators and do not appear under /dev/shm.
+    # Remove as their owner; container root need not have CAP_IPC_OWNER.
+    flags = {'shm': '-m', 'msg': '-q', 'sem': '-s'}
+    for kind, identifier in submission_sysv_ipc():
+        subprocess.run(['/usr/bin/ipcrm', flags[kind], str(identifier)],
+                       user=UID, group=UID, extra_groups=[], cwd='/',
+                       env={'PATH': '/usr/bin:/bin'}, capture_output=True,
+                       check=True, timeout=5)
+    if submission_sysv_ipc():
+        raise RuntimeError('Submission System V IPC survived cleanup')
     # This is a private container with one active group. No submitted process
     # survives the signals above, so remove its named IPC state before reload.
     if Path('/dev/shm').is_dir():

@@ -184,7 +184,7 @@ def reference_run():
     for args in commands:
         with (LOG / f"reference-{args[0]}.log").open("wb") as stream:
             subprocess.run([sys.executable, str(TESTS / "reference.py"), *args], env=common_env,
-                           stdout=stream, stderr=subprocess.STDOUT, timeout=7500, check=True)
+                           stdout=stream, stderr=subprocess.STDOUT, timeout=7500 if args[0] == "build" else 37200, check=True)
     result = json.loads((LOG / "reference/reference.json").read_text())
     # Validate the exact quality floor independently of the current timing run.
     pinned = json.loads((TESTS / "reference-quality.json").read_text())

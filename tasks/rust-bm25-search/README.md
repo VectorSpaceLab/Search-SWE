@@ -9,7 +9,7 @@
 | Authors | MXueguang |
 | Primary metric | quality-gated BM25 quality/time/disk tradeoff |
 | Compute | 4 CPUs; 16 GiB RAM; 64 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 10800 s / 18000 s |
+| Agent / verifier time limits | 10800 s / 93600 s |
 
 This CPU task asks an agent to implement a complete Rust inverted index and
 BM25 searcher from the 8,841,823 raw MS MARCO Passage v1 passages. Generic crates
@@ -21,7 +21,7 @@ verifier recompiles the source, rebuilds an empty index, and evaluates all
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -68,6 +68,7 @@ individual requests 120 seconds and each warmup/measured batch 1 hour. These
 are engineering budgets to validate with a real model, not universal claims
 about hardware performance. The host needs Linux Landlock ABI 1 or newer and
 seccomp filters; root-owned files additionally enforce read-only search on older ABIs.
+Reference or environment failures invalidate the run and must not be interpreted as model failures.
 
 Only `/app/submission` transfers to the verifier. Candidate code runs as UID
 10001, separate from root-owned tests, qrels and reward files. Search is
@@ -165,6 +166,10 @@ python scripts/assets/download_assets.py --task rust-bm25-search
 bash scripts/evaluation/run_task.sh --task rust-bm25-search --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max
 ```
+
+### Repeated verifier measurements
+
+Each index is built once. Candidate and reference each run five warm batches in fresh processes with the existing disjoint query warmup. The score uses the median of each system's five complete batch times; all repeated rankings must agree. The five cold-start samples remain diagnostics. Raw warm samples are saved in metrics.json. The reference measurement subprocess allows 37,200 seconds: five warmups and batches at up to 3,600 seconds each, five cold probes at up to 120 seconds each, and 600 seconds for cleanup. Its 7,500-second build limit is separate. The verifier has 93,600 seconds to cover both systems, candidate compilation/indexing and corpus preparation; preparation stages still run once.
 
 ## References
 

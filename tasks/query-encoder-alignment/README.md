@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | Accuracy@1 error reduction above frozen 0.6B ridge, after runtime gate |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 5700 s |
+| Agent / verifier time limits | 21600 s / 22200 s |
 | Dataset | local frozen retrieval corpus |
 | Public queries | 100 |
 | Hidden queries | 100 |
@@ -38,8 +38,8 @@ pipeline must stay within the relative runtime budget.
 | `data/corpus.jsonl` | The document identities corresponding to vector rows |
 | `data/validation/` | 100 public queries and labels |
 | `models/Qwen3-Embedding-0.6B/` | The required query-side backbone |
-| `environment/starter/` | 4B time reference runner and validation notes |
-| `environment/quality_baseline/` | Frozen 0.6B ridge baseline, fit/inference code and configuration |
+| `environment/time_reference/` | 4B time reference runner and validation notes |
+| `environment/quality_reference/` | Frozen 0.6B ridge baseline, fit/inference code and configuration |
 
 The manifest also restores the Qwen3-Embedding-4B reference assets.
 The development root user can read the 4B reference, including for teacher
@@ -64,8 +64,8 @@ with a filesystem quota; the completed calibration stayed well below it.
 Both Compose configurations and `task.toml` request **one
 NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
-The agent has 6 hours. Task-specific verification has 70 minutes inside
-the 95-minute Harbor verifier phase, with the integrity check bounded separately.
+The agent has 6 hours. Task-specific verification has 220 minutes inside
+the 250-minute Harbor verifier phase, with the integrity check bounded separately to 20 minutes.
 The candidate must finish within **60% of the measured reference runtime**.
 The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
@@ -73,7 +73,7 @@ The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Clarified required 0.6B inference checks in the trajectory audit |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -100,7 +100,7 @@ complete interface; no separate submitted build step is required.
 
 The public quality reference freezes Qwen3-Embedding-0.6B and fits centered
 ridge once on all public corpus/text-vector pairs. Its fixed settings and
-reproduction commands are in [the baseline README](environment/quality_baseline/README.md).
+reproduction commands are in [the baseline README](environment/quality_reference/README.md).
 The verifier independently fits the same version and measures A0 on the same
 hidden queries and vectors. It never trains on hidden queries or labels.
 
@@ -123,21 +123,14 @@ then refill; ties use corpus row order. The grader rejects excluded results.
 
 #### Correctness and Resource Gates
 
-Candidate wall time must be at most `0.60 × starter wall time`, measured on the
-same hidden workload. Missing the gate makes reward zero even if accuracy is
-high. Timing is external and monotonic, including process/import/model/vector
-loading, query encoding, search, output and exit. No warmup or file-cache flush;
-run quality reference, time reference, then candidate. The first candidate run
-sets time and a second fresh process checks byte-identical results. Timeout
-cleanup time is logged separately. Vector checksums and shape, query coverage/order, result validity, and
-clean process termination are also checked.
+Candidate wall time must be at most `0.60 × time reference wall time`, measured on the same hidden workload. Missing the gate makes reward zero even if accuracy is high. Timing is external and monotonic with event-driven exit waiting, including process/import/model/vector loading, query encoding, search, output and exit. No warmup or file-cache flush; fit the quality reference once, then run five time-reference/candidate pairs. Each system's median wall time is used for the relative runtime gate; every candidate output must be byte-identical. The time reference must also remain deterministic. Timeout cleanup time is logged separately. Vector checksums and shape, query coverage/order, result validity, and clean process termination are also checked.
 
 #### Integrity Checks and Final Reward
 
 The normalized quality reward is accepted only after runtime and validity gates
 and the independent trajectory audit pass. Failure at any gate produces zero.
-Judge failures are marked `measurement_valid=false`, not reported as evidence
-of model difficulty. Submitted processes run as UID 10001 with no credentials,
+Judge and reference failures leave zero in the fail-closed reward artifact and are marked `measurement_valid=false`, not reported as evidence of model difficulty. Task-verification or integrity-judge timeouts also yield zero. Hidden baseline predictions, projection provenance and metrics stay in protected verifier logs.
+Submitted processes run as UID 10001 with no credentials,
 read-only runtime, protected reference/log directories and inherited seccomp
 network denial.
 The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
@@ -180,7 +173,7 @@ assets, credentials, or hardware.
 | [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
-| [Starter notes](environment/starter/README.md) | Teacher-side baseline and public validation |
+| [Time reference notes](environment/time_reference/README.md) | 4B timing reference and public validation |
 | [Resource policy](environment/docs/available_resources.md) | Development access and offline submission rules |
 
 ### Data provenance and local checks
@@ -196,7 +189,7 @@ The manifest pins 30 files totaling 8.72 GiB at immutable revisions, exact
 sizes and hashes; public split and hidden split remain unchanged.
 
 ```bash
-python -m unittest discover -s tasks/query-encoder-alignment/tests -p test_contract.py -v
+python -m unittest discover -s tasks/query-encoder-alignment/authoring/tests -p test_contract.py -v
 python scripts/validation/check_tasks.py tasks/query-encoder-alignment
 ```
 
@@ -231,6 +224,10 @@ grader tests establish the full-score numeric boundary only. Model-run evidence
 for the six-hour budget will come from the release evaluations.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
+
+### Repeated verifier measurements
+
+The primary supervisor allows 20,400 seconds: one quality fit/run plus five reference and five candidate calls at up to 1,800 seconds each (19,800 seconds), with 600 seconds for setup and cleanup. The 22,200-second verifier envelope also covers the unchanged 1,200-second integrity audit and finalization.
 
 ## References
 

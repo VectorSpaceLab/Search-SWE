@@ -81,7 +81,7 @@ The hidden test set contains queries with private relevance judgments. Hidden qu
 
 ## Environment and available resources
 
-The runtime provides one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and 100 GiB storage. Read-only model files are available at `/task/models/Qwen3-Embedding-0.6B`.
+The runtime provides one GPU, 16 CPU cores, 32 GiB RAM and 100 GiB storage. Read-only model files are available at `/task/models/Qwen3-Embedding-0.6B`.
 
 Read the following task-provided documents:
 

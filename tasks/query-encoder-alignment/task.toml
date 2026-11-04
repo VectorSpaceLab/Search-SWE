@@ -33,7 +33,7 @@ allowed_hosts = [
 ]
 
 [verifier]
-timeout_sec = 5700.0
+timeout_sec = 22200.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

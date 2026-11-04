@@ -8,7 +8,7 @@ An image search request may contain a rough sketch of only part of the desired c
 
 ### Resource limits and workload
 
-- You have six hours, 8 CPU cores, 32 GiB RAM, 100 GiB storage and one 40 GiB GPU.
+- You have six hours, 8 CPU cores, 32 GiB RAM, 100 GiB storage and one GPU.
 - The supplied encoders are fixed; scoring or fusion components may use up to 30 minutes of adaptation.
 - The build command has 3,600 seconds.
 - The system must handle up to 1,260 requests in three calls of at most 420 requests, with an independent 1,800-second allowance for each call.
@@ -20,7 +20,7 @@ An image search request may contain a rough sketch of only part of the desired c
 - Include required runtime files and learned weights under `/app` so the system works after a fresh start with the supplied gallery, model and current queries.
 - Training and validation labels are not runtime indexing inputs.
 - Use the local resources described in `/task/docs/available_resources.md` and read `/task/docs/environment.md`.
-- Aim to place the matching artwork among the first three results, especially first, for both broad and detailed descriptions.
+- Only the first three results contribute to retrieval quality, with more credit for ranking the matching artwork first. Quality is averaged within each of the three description levels, then the levels receive equal weight.
 
 ### Execution and file permissions
 
@@ -64,10 +64,10 @@ The gallery is at `/task/data/corpus/`. Each row of `records.jsonl` contains `im
 
 Training pairs and their relevance labels are in `/task/data/training/queries.jsonl` and `/task/data/training/labels.jsonl`. Public validation pairs are at the corresponding paths under `/task/data/validation/`. Labels contain `query_id` and `qrels`, a mapping of gallery image IDs to relevance labels. You may use these inputs to develop and check the system.
 
-A development-only permissions check is available at `/task/docs/check_runtime.py`; it runs your scripts under these permissions without scoring or reading labels. For example, use:
+A development-only permissions check is available at `/task/tools/check_runtime.py`; it runs your scripts under these permissions without scoring or reading labels. Run this check from the development root shell. It changes ownership and permissions in `/app` and the check directories in place and does not restore them afterward; the root shell can still edit your files. Keep the writable output directory separate from the index directory; neither directory may contain the other. For example, use:
 
 ```bash
-/opt/conda/bin/python /task/docs/check_runtime.py build \
+/opt/conda/bin/python /task/tools/check_runtime.py build \
   --corpus /task/data/corpus \
   --index-dir /work/runtime-check/index
 ```

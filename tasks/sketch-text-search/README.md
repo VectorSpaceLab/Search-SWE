@@ -70,7 +70,7 @@ has 1,800 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -79,6 +79,8 @@ has 1,800 seconds.
 - Maintaining quality across broad and detailed descriptions.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/sketch-text-search/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 
@@ -90,7 +92,7 @@ Commands run as a non-root user with code and inputs read-only. The supplied
 index directory is writable during build, but its parent is not writable.
 Retrieval sees a read-only index and uses the supplied writable output and
 temporary paths. A development-only permissions helper is available at
-`/task/docs/check_runtime.py`; it performs no scoring.
+`/task/tools/check_runtime.py`; it performs no scoring.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
@@ -177,7 +179,7 @@ credentials or hardware. Results are written under `jobs/sketch-text-search/`.
 | [environment/docker-compose.yaml](environment/docker-compose.yaml) | Public read-only mounts and hardware requests |
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
-| [environment/docs/check_runtime.py](environment/docs/check_runtime.py) | Development-only check of build and query filesystem permissions |
+| [environment/tools/check_runtime.py](environment/tools/check_runtime.py) | Development-only check of build and query filesystem permissions |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.

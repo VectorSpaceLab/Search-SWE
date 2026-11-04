@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from quality_baseline.retrieval import exclusions, read_jsonl as read_rows
+from quality_reference.retrieval import exclusions, read_jsonl as read_rows
 
 
 CORPUS_PATH = Path("/task/data/corpus.jsonl")
@@ -36,8 +36,8 @@ def verify_baseline_lock(accuracy: float, output: Path) -> dict:
         "vectors_sha256": sha256(VECTOR_PATH),
         "queries_sha256": sha256(QUERIES_PATH),
         "labels_sha256": sha256(GROUND_TRUTH_PATH),
-        "implementation_sha256": sha256(Path(__file__).parent / "quality_baseline/baseline.py"),
-        "retrieval_sha256": sha256(Path(__file__).parent / "quality_baseline/retrieval.py"),
+        "implementation_sha256": sha256(Path(__file__).parent / "quality_reference/baseline.py"),
+        "retrieval_sha256": sha256(Path(__file__).parent / "quality_reference/retrieval.py"),
     }
     if any(lock.get(key) != value for key, value in fingerprints.items()):
         raise ValueError("frozen quality baseline version/data fingerprint mismatch")
@@ -301,8 +301,8 @@ def main() -> int:
                 "fixed_corpus_sha256": EXPECTED_CORPUS_SHA256,
                 "queries_sha256": sha256(QUERIES_PATH),
                 "labels_sha256": sha256(GROUND_TRUTH_PATH),
-                "quality_implementation_sha256": sha256(Path(__file__).parent / "quality_baseline/baseline.py"),
-                "retrieval_semantics_sha256": sha256(Path(__file__).parent / "quality_baseline/retrieval.py"),
+                "quality_implementation_sha256": sha256(Path(__file__).parent / "quality_reference/baseline.py"),
+                "retrieval_semantics_sha256": sha256(Path(__file__).parent / "quality_reference/retrieval.py"),
             }
         )
         if not time_passed:

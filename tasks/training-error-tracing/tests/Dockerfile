@@ -27,9 +27,6 @@ RUN set -eux; \
 
 RUN useradd --create-home --uid 10001 --user-group submission
 COPY . /tests/
-COPY control/ /control/
-RUN chmod 0755 /control /control/prepare.sh /control/run.sh \
-    && chmod 0644 /control/submission.json
 COPY jailbreak_judge/ /audit/jailbreak_judge/
 RUN mkdir -p /work \
     && chmod 0755 /work \

@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 from fractions import Fraction
 from pathlib import Path
+from statistics import median
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 from benchmark import SearchProcess, index_bytes, measure
@@ -97,6 +98,53 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(len(metrics["cold_start_to_first_result_seconds"]), 2)
         self.assertGreater(metrics["warm_seconds"], 0)
         self.assertAlmostEqual(metrics["warm_qps"] * metrics["warm_seconds"], 3)
+        self.assertEqual(metrics["warm_repetitions"], 5)
+        self.assertEqual(len(metrics["warm_seconds_samples"]), 5)
+        self.assertEqual(metrics["warm_seconds"], median(metrics["warm_seconds_samples"]))
+        self.assertEqual(len(list((self.directory / "measurement").glob("warm-*.stderr.log"))), 5)
+
+    def test_complete_batch_median_is_not_the_mean_or_a_trimmed_mean(self):
+        clock = [0.]
+        durations = iter([1., 2., 3., 7., 30.])
+
+        class Worker:
+            def __init__(self, command, *, stderr, **kwargs):
+                self.started = clock[0]
+                self.peak_rss_kib = 1
+                self.duration = next(durations) if stderr.name.startswith('warm-') else .1
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                pass
+
+            def request(self, query, **kwargs):
+                duration = .1 if query['query_id'] == 'w' else self.duration
+                clock[0] += duration
+                return response(query['query_id'], [0]), duration
+
+        with patch('benchmark.SearchProcess', Worker), patch('benchmark.time.monotonic', side_effect=lambda: clock[0]):
+            metrics, _ = measure(['fixture'], queries=[{'query_id': 'a', 'text': 'query'}],
+                                 warmup=[{'query_id': 'w', 'text': 'warmup'}],
+                                 directory=self.directory / 'median', document_count=2,
+                                 cold_samples=1, timeout=60, batch_timeout=120)
+        self.assertEqual(len(metrics['warm_seconds_samples']), 5)
+        self.assertAlmostEqual(metrics['warm_seconds'], 3.)
+
+    def test_later_warm_result_changes_are_rejected(self):
+        counter = self.directory / "counter"
+        code = ("import sys,json\nfrom pathlib import Path\n"
+                f"p=Path({str(counter)!r})\n"
+                "n=int(p.read_text())+1 if p.exists() else 1\np.write_text(str(n))\n"
+                "for line in sys.stdin:\n"
+                " q=json.loads(line); print(json.dumps({'query_id':q['query_id'],"
+                "'results':[{'doc_id':'0','score':1 if n<6 else 2}]}),flush=True)\n")
+        with self.assertRaisesRegex(InvalidSubmission, "Repeated warm"):
+            measure(self.worker(code), queries=[{"query_id": "a", "text": "apple"}],
+                    warmup=[{"query_id": "w", "text": "warmup"}],
+                    directory=self.directory / "changing", document_count=2,
+                    cold_samples=1, timeout=3, batch_timeout=10)
 
     def test_timeout_kills_worker(self):
         worker = SearchProcess(self.worker("import time; time.sleep(30)"), stderr=self.directory / "timeout.log")

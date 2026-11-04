@@ -1,74 +1,25 @@
-# Runtime and hardware
+# GPU Docker Environment
 
-The task uses the shared GPU image `docker.io/hanhainebula/search-swe-base:gpu-cu13.0-py3.12-1.0.0` in both phases. Both Compose overlays request one GPU with `count: 1`; the allocated device must be an A10040GB. The verifier discovers its UUID inside the container. Limits are16CPU quota,16GiB RAM, no swap,4GiB shared memory and2048PIDs. CPU-only retrieval is permitted within the assigned container. Model/data/tool mounts are read-only.
+This image provides a Conda-managed Python 3.12 environment with CUDA-enabled PyTorch, TorchVision, TorchCodec, and FAISS GPU, together with the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `Pillow`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-gpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, `pydantic-settings`, `bitsandbytes`, `gemlite`, `hqq`, and `termcolor`.
 
-Use `/opt/conda/bin/python`, with torch2.9.0+cu130, transformers5.15.1, peft0.20.0, accelerate1.15.0, bitsandbytes0.50.2, numpy2.5.3, sklearn1.9.1, joblib1.6.0, rank-bm250.2.2 and safetensors0.8.0. The image also has cc/c++ for native code. No model downloads are needed; all permitted fixed inputs are under `/task/data` and `/task/models`. Optional modules under `/task/tools` need that directory added to `sys.path` from custom Python entry points.
+Python and pip are available at `/opt/conda/bin/python` and `/opt/conda/bin/pip`.
 
-The agent has14400seconds. Fresh verifier preparation has1800seconds once; each query execution has10seconds, concurrency1, three shuffled repetitions. Work must be transferred in `/app/submission`. Read the task instruction and `available_resources.md` for submission and resource rules. The verifier uses an unprivileged UID/GID10001 for submitted commands, checks one visible physical GPU, CPU/RAM/no-swap, and measures its own wall time and NVML GPU memory. The independent immutable control runs after candidate processes exit on that same device. Its overhead is separate from candidate time.
+The image also includes the CUDA 13.0 toolkit and runtime, Java 21 runtime, Node.js and npm, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
 
-The coding agent's authorized OpenRouter transport and the independent verifier audit have network access only to openrouter.ai. Retrieval code may not use external models, corpora or APIs. Judge credentials are never passed to submitted commands. Fixed-model inference components, dtype/quantization transformations and CPU offloading are permitted; do not alter canonical model/tokenizer files or fine-tune the supplied language model. Retrieval-ranker fitting is allowed only during development.
+## Task resources and tools
 
+The task provides one GPU, 16 CPU cores, 16 GiB RAM, no swap, 4 GiB shared memory and a limit of 2,048 processes/threads. Shared memory counts toward the RAM limit. The total task storage allowance is 64 GiB. CPU-only retrieval is permitted.
 
-The delivered model is the compact fixed diagnostic probe described in
-available_resources.md. Training arrays are NPZ
-archives; no runtime model download or omitted full checkpoint is required.
+Data, models and tools are read-only under `/task/data`, `/task/models` and `/task/runtime`. Work under `/app`; only `/app/submission` transfers to final evaluation. Add `/task/runtime` to the Python import path to use its modules. The task instruction defines submission interfaces, timing, storage accounting and scoring.
 
-The default submission includes retriever_service.py in addition to the three
-required interface files. Its all28-layer streamed inference and training-only
-offset cache are already part of the immutable paired control.
-
+The working submission is installed under `/app/submission`. A read-only original is available at `/task/starter/` and may be copied to a new working directory. Keep its `retriever_service.py` when using the supplied `prepare.sh`. `/opt/conda/bin/python /task/runtime/score_dev.py --predictions FILE` checks public predictions containing `query_id`, `ids` and `elapsed_sec`; it reports development quality using self-reported times, not final efficiency.
 
 ## Fixed-probe API
 
-Load /task/models/base through compact_probe.load_probe, available on /task/tools.
-The returned object has model (a standard Qwen2Model decoder), config,
-cpu_embedding (complete BF16 input rows), output_token_ids (sorted original IDs),
-and output_rows(token_ids), returning the matching original BF16 head rows.
-embed(input_ids) creates current-request GPU embeddings from the fixed CPU table.
-Output matrix row numbers are internal indices; output_rows accepts original
-opaque tokenizer IDs and checks membership. Use config.hidden_size dynamically.
+`compact_probe.load_probe('/task/models/base')` returns a probe with `model` (a Qwen2Model decoder), `config`, `cpu_embedding`, `output_token_ids`, `embed(input_ids)` and `output_rows(token_ids)`. `embed` returns GPU embeddings from the fixed input table. `output_rows` accepts original tokenizer IDs and returns their original BF16 head rows on CPU; matrix row positions are not tokenizer IDs. Read dimensions from `config`.
 
-All28 decoder layers use the serialized bitsandbytes NF4/double-quantized state,
-with BF16 computation. Loading restores the serialized parameters without quantizing them again. The complete input
-vocabulary is retained. The64439 output rows are the union of public training
-text token IDs, training alternative-token IDs, and every vocabulary token sharing
-a nonempty token_surface with those alternatives. No error queries, labels or
-source-target group mappings select these rows. The fixed head covers every
-delivered marked target token. probe.json records exact provenance and files.
+The serialized decoder uses bitsandbytes NF4/double quantization and BF16 computation. The complete input vocabulary is retained, while the output head is a diagnostic subset covering every delivered marked target token. It supports selected-token logits and comparisons, not full-vocabulary cross-entropy or unrestricted generation.
 
-The output head is a diagnostic subset. It supports selected source-token logits
-and comparisons, rather than full-vocabulary normalized language-model loss or
-unrestricted generation. The provided starting method compares source-candidate
-logit masses; its denominator cancels. When multiple positions are marked, it
-selects the largest candidate-source logsumexp minus the erroneous token logit,
-using every supplied position. This is a retrieval feature, not full-vocabulary CE.
+For probe inference, the supplied token embeddings can be passed as `inputs_embeds` with `attention_mask` and `use_cache=False`. The hidden state at `j-1` predicts marked position `j`; the corresponding output rows must be on the same device for logit computation. Preserve all marked positions and synchronize GPU work before returning a response.
 
-For a forward pass, embed the exact supplied input_ids, call model with
-inputs_embeds, attention_mask and use_cache=False, then select hidden states at
-j-1 for each marked position j. output_rows returns CPU weights; transfer the
-needed rows to the assigned GPU and use torch.nn.functional.linear. Synchronize
-before finishing the response. Current-request scores and hidden states may live
-in memory but cannot be reused across requests or repetitions.
-
-Fixed-weight gradients are permitted. For example, detach the current embedded
-input, enable requires_grad, compute a selected diagnostic logit and backpropagate
-to that input. The supplied probe supports this input-gradient operation. Other fixed-probe diagnostic
-gradients may be implemented; no optimizer updates to the probe/tokenizer are
-allowed. A separate retrieval ranker may be trained during development.
-
-
-
-For self-built feature caches, record projection parameters, precision and
-artifact hashes in `submission.json`. Training-only computation uses the stated
-development or preparation budget; ranker fitting is development-only.
-Current-query features, gradients and rankings must be recomputed on every
-execution, including repeated query IDs. Use `score_dev.py --predictions FILE`
-for public JSONL predictions with `query_id`, `ids`, `elapsed_sec`; these times
-are self-reported and do not replace verifier measurements.
-
-Keep `retriever_service.py` with the supplied `prepare.sh`. The helper's
-training-only offset/source caches and token-NLL tie-break are already part
-of the paired control. When altering inference or ranking, compare outputs
-against the starting implementation as well as checking development quality.
-
-The verifier requires Linux support for `SYS_PTRACE` and `CHECKPOINT_RESTORE`, granted only to its trusted supervisor for inspecting candidate file descriptors and file-backed mappings. Submitted commands run without any effective, inherited, ambient or bounding capabilities. Open-unlinked files and mappings held by preparation services count toward the same 64 GiB logical-storage limit; repeated references count once per inode.
+Fixed-weight gradients are permitted, but optimizer updates to the probe/tokenizer are not. Query-dependent features, gradients and rankings must be recomputed for each execution, including repeated query IDs. Only training-derived state may persist across requests. Record self-built frozen artifacts and their generation settings in `submission.json` as specified in the task instruction.

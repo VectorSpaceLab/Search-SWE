@@ -77,7 +77,7 @@ query calls has 1,350 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -86,6 +86,8 @@ query calls has 1,350 seconds.
 - Maintaining retrieval quality under different acoustic conditions.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/spoken-query-search/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 
@@ -127,6 +129,8 @@ This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and
 auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
+
+The reference quality and score anchor are fixed task-design parameters. This package does not include a reproducible calibration record tying the reference value to a specific implementation, run and output fingerprint; that evidence remains to be supplied before claiming empirical calibration.
 
 #### Correctness and Resource Gates
 

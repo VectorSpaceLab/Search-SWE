@@ -246,7 +246,7 @@ stop_submission_processes
 
 SEARCH_SWE_EXECUTION_ERROR="$execution_error" \
     /usr/bin/env -u OPENAI_API_KEY -u OPENAI_BASE_URL \
-    /usr/bin/timeout --signal=TERM --kill-after=30s 1800s /opt/conda/bin/python /tests/grader.py
+    /usr/bin/timeout --signal=TERM --kill-after=30s 2700s /opt/conda/bin/python /tests/grader.py
 grader_status=$?
 
 # Root-side second Codex AgentJudge. Its credentials are intentionally not in

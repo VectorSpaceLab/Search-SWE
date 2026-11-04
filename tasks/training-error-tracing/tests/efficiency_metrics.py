@@ -5,9 +5,9 @@ from statistics import median
 
 
 def latency_metric(passes):
-    """Equal group weights; median repetitions for every expected query."""
-    if not passes:
-        raise ValueError("No measured passes")
+    """Median of five timings per query, then equal query/group weighting."""
+    if len(passes) != 5:
+        raise ValueError("Expected five complete measured passes")
     first = {row["id"]: row["group_id"] for row in passes[0]}
     if len(first) != len(passes[0]) or not first:
         raise ValueError("Missing or duplicate query IDs")
@@ -47,7 +47,7 @@ def efficiency_score(quality_passes, latency, memory_bytes, control_latency,
 
     C=(T/T_control)*(M/M_control). Ten-percent cost changes are treated as noise.
     CPU-only systems use the stated one-GiB accounting floor. All queries and
-    repetitions remain in quality/latency denominators. No model identity enters
+    repetitions must be present, and quality gates apply to every pass. No model identity enters
     this function. The reference ratio must be frozen before a coding-model run.
     """
     numeric = [latency, control_latency, memory_bytes, control_memory_bytes,

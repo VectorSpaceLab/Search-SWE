@@ -14,6 +14,7 @@ import os
 import selectors
 import select
 import signal
+from statistics import median
 import subprocess
 import time
 from pathlib import Path
@@ -221,26 +222,35 @@ def measure(command: list[str], *, queries: list[dict], warmup: list[dict],
             cold_times.append(time.monotonic() - worker.started)
             cold_rows.append(row)
             rss = max(rss, worker.peak_rss_kib)
-    responses, latencies = [], []
-    with SearchProcess(command, stderr=directory / "warm.stderr.log", cwd=cwd, env=env,
-                       cleanup=cleanup) as worker:
-        warmup_started = time.monotonic()
-        for query in warmup:
-            remaining = batch_timeout - (time.monotonic() - warmup_started)
-            if remaining <= 0:
-                raise TimeoutError("Warmup exceeded its time budget")
-            worker.request(query, timeout=min(timeout, remaining), document_count=document_count)
-        started = time.monotonic()
-        for query in queries:
-            remaining = batch_timeout - (time.monotonic() - started)
-            if remaining <= 0:
-                raise TimeoutError("Complete measured batch exceeded its time budget")
-            row, elapsed = worker.request(query, timeout=min(timeout, remaining),
-                                          document_count=document_count)
-            responses.append(row)
-            latencies.append(elapsed)
-        wall = time.monotonic() - started
-        rss = max(rss, worker.peak_rss_kib)
+    responses, latencies, warm_samples = [], [], []
+    first_responses = None
+    for repetition in range(5):
+        responses = []
+        with SearchProcess(command, stderr=directory / f"warm-{repetition}.stderr.log", cwd=cwd, env=env,
+                           cleanup=cleanup) as worker:
+            warmup_started = time.monotonic()
+            for query in warmup:
+                remaining = batch_timeout - (time.monotonic() - warmup_started)
+                if remaining <= 0:
+                    raise TimeoutError("Warmup exceeded its time budget")
+                worker.request(query, timeout=min(timeout, remaining), document_count=document_count)
+            started = time.monotonic()
+            for query in queries:
+                remaining = batch_timeout - (time.monotonic() - started)
+                if remaining <= 0:
+                    raise TimeoutError("Complete measured batch exceeded its time budget")
+                row, elapsed = worker.request(query, timeout=min(timeout, remaining),
+                                              document_count=document_count)
+                responses.append(row)
+                latencies.append(elapsed)
+            wall = time.monotonic() - started
+            rss = max(rss, worker.peak_rss_kib)
+        warm_samples.append(wall)
+        if first_responses is None:
+            first_responses = responses
+        elif responses != first_responses:
+            raise InvalidSubmission("Repeated warm retrieval results disagree")
+    wall = median(warm_samples)
     by_id = {row["query_id"]: row for row in responses}
     for row in cold_rows:
         if row != by_id[row["query_id"]]:
@@ -251,6 +261,8 @@ def measure(command: list[str], *, queries: list[dict], warmup: list[dict],
     metrics = {
         "query_count": len(queries), "warmup_query_count": len(warmup),
         "warm_seconds": wall, "warm_qps": len(queries) / wall,
+        "warm_seconds_samples": warm_samples, "warm_repetitions": 5,
+        "warm_aggregation": "median of five complete warm batch seconds",
         "warm_latency_p50_seconds": percentile(latencies, .50),
         "warm_latency_p95_seconds": percentile(latencies, .95),
         "cold_start_to_first_result_seconds": cold_times,

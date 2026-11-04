@@ -26,7 +26,7 @@ RUN claude --help | grep -F "(low, medium, high, xhigh, max)" >/dev/null
 
 ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
 RUN useradd --create-home --uid 10001 --user-group submission
-COPY initial_submission/ /app/submission/
+COPY starter/ /app/submission/
 RUN chmod 0755 /app/submission /app/submission/prepare.sh /app/submission/run.sh \
     && chmod 0644 /app/submission/submission.json
 WORKDIR /app

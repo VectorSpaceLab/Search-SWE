@@ -2,9 +2,8 @@ services:
   main:
     mem_limit: 16g
     pids_limit: 512
-    tmpfs:
-    - /app:rw,exec,nosuid,nodev,size=95g,mode=0755
-    - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
+    cap_add:
+    - CHECKPOINT_RESTORE
     deploy:
       resources:
         reservations:

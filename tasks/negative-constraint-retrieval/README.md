@@ -61,13 +61,13 @@ Generation factual review was sampled, with source corrections recorded in the
 author ledger. These are assistant annotations, not independent human adjudication
 or exhaustive certification of every generated factual detail.
 
-The upstream dataset redistribution-license question remains unresolved. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+The upstream dataset redistribution-license question remains unresolved. Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [recorded run evidence](VALIDATION.md#run-evidence-reconciled-on-2026-10-23) for historical run outcomes and publication status. Existing source terms and attribution remain applicable.
 
 ## Change Log
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -139,7 +139,7 @@ RewardKit retried an already completed audit after a recovered stream event and
 exhausted its audit deadline. v0.2.3 fixes that transport handling, with unchanged
 queries, retrieval scoring and budgets. These are historical trial records.
 The reconciled v0.3.0 verifier-only run scored 1/10 with a passing audit;
-see [RUN_RESULTS.md](RUN_RESULTS.md) for that saved-submission measurement.
+see [recorded run evidence](VALIDATION.md#run-evidence-reconciled-on-2026-10-23) for that saved-submission measurement.
 
 The Agent implements the search engine under `/app` from the documented interfaces.
 Author construction evidence lives outside this task package at
@@ -183,14 +183,14 @@ From the Search-SWE root:
 ```bash
 python scripts/assets/download_assets.py --task negative-constraint-retrieval --verify-only
 python scripts/validation/check_tasks.py tasks/negative-constraint-retrieval
-python -m unittest discover -s tasks/negative-constraint-retrieval/tests -p 'test_*.py'
+python -m unittest discover -s tasks/negative-constraint-retrieval/authoring/tests -p 'test_*.py'
 docker build -t search-swe-local:nc-agent tasks/negative-constraint-retrieval/environment
 docker build -t search-swe-local:nc-verifier tasks/negative-constraint-retrieval/tests
 ```
 
 Public inputs use the immutable revisions, exact sizes and hashes in
 `assets.json`. [VALIDATION.md](VALIDATION.md) retains the original development
-checks; [RUN_RESULTS.md](RUN_RESULTS.md) records the reconciled verifier result.
+checks and the reconciled verifier result.
 
 For a future configured trial, preserve any existing ignored checkout `.env`
 and set the chosen coding model/provider and its credential, for example
@@ -216,7 +216,7 @@ inventories and the network-policy table were extended with this task's network
 profile and RewardKit use.
 Existing unrelated network-policy and join-aware task changes were preserved.
 
-See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+See [VALIDATION.md](VALIDATION.md) for recorded run outcomes, judge health and validation evidence.
 
 ## References
 

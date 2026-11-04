@@ -69,7 +69,7 @@ each of two query calls has 2,700 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -78,6 +78,8 @@ each of two query calls has 2,700 seconds.
 - Respecting per-query exclusions and the source relevance protocol.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/same-place-image-search/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 

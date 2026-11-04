@@ -58,9 +58,11 @@ Each output line must be a JSON object with this shape:
 For every valid query:
 
 - `query_id` must preserve the identifier of the corresponding input query;
-- `answer` must be a non-empty string that directly answers the question;
+- `answer` must directly answer the question, contain non-whitespace text, and be at most 20,000 characters after JSON decoding, including all whitespace;
 - every result must contain a `answer` for the query and a `evidence` identifying the document for the answer from the supplied corpus.
 - `evidence` must be the PDF filename with the `.pdf` extension removed, e.g. `document-id.pdf` → `document-id`.
+
+Each per-query output must be a regular file of at most 64 MiB; the combined results must also fit within 64 MiB. An over-length answer or oversized output invalidates the entire submission and gives score `0`.
 
 ## Available Validation Data
 
@@ -87,12 +89,12 @@ The finalized submission must contain executable `build.sh` and `run.sh` files u
 After the Agent phase, Harbor transfers `/app` to a separate verifier with the same runtime and the private test split. `build.sh` must restart the service. The verifier checks the following items:
 
 1. **Retrieval and answer integrity.** Answer questions using the supplied PDFs. Do not use hidden labels, hard-coded evaluation answers, or unauthorized datasets or services.
-2. **Resource compliance.** Follow `/task/docs/available_resources.md`. The verifier allows 3,600 seconds for `build.sh` and 900 seconds per query, running up to five queries concurrently, within a 14,400-second verifier phase.
-3. **Executable and output validity.** `build.sh` and `run.sh` must be executable and follow the specified interfaces. Each query must produce exactly one result with its `query_id`, a non-empty `answer`, and a valid corpus document ID in `evidence`. Failed execution or invalid output receives a score of `0` for the entire submission.
-4. **Final answer score.** The metric is LLMJudgeAccuracy, averaged equally across all hidden queries. The LLM judge evaluates an answer only when its evidence document matches the reference; the answer must be semantically equivalent to the reference answer.
+2. **Resource compliance.** Follow `/task/docs/available_resources.md`. The verifier allows 3,600 seconds for `build.sh` and 900 seconds per query, running up to five queries concurrently.
+3. **Executable and output validity.** `build.sh` and `run.sh` must be executable and follow the specified interfaces. Each query must produce exactly one result with its `query_id`, an `answer` satisfying the output contract's content and length requirements, and a valid corpus document ID in `evidence`. Failed execution or invalid output, including exceeding the answer or file-size limits, receives a score of `0` for the entire submission.
+4. **Final answer score.** The metric is LLMJudgeAccuracy, averaged equally across all hidden queries. A query earns credit only when its evidence document matches the reference and the LLM judge accepts its answer as semantically equivalent to the reference answer.
 
 ```text
-LLMJudgeAccuracy(q) = 1 if evidence matches and the judge accepts the answer, else 0
+LLMJudgeAccuracy(q) = evidence_match(q) * semantic_answer_credit(q)
 reward = mean_q LLMJudgeAccuracy(q)
 score = 100 * reward
 ```
@@ -110,4 +112,4 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/environment.md`](/task/docs/environment.md) — a concise description of the installed Python environment, system runtime, and commonly available packages and tools.
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — the available retrieval and generative API resources, runtime environment-variable handling, model allowlist, provider and endpoint restrictions, and jailbreak penalty rules.
 
-These documents are part of the Agent-visible task data and should be treated as read-only. Follow the resource and model restrictions in `available_resources.md`; do not infer permission to use an unlisted provider, model, or endpoint. The credentials described there are injected by Harbor at runtime and must not be placed in the task package or Docker image.
+These documents are read-only task data. API use is optional; follow the resource permissions, usage restrictions and credential-handling rules in `available_resources.md`.

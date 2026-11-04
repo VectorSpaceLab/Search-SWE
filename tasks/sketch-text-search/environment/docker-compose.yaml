@@ -33,6 +33,12 @@ services:
       bind:
         create_host_path: false
     - type: bind
+      source: ./tools
+      target: /task/tools
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
       source: ../data/queries
       target: /task/data/queries
       read_only: true

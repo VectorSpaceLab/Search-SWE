@@ -33,20 +33,20 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ../tools
-        target: /task/tools
+        source: ../environment/runtime
+        target: /task/runtime
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../environment/starter
+        target: /task/starter
         read_only: true
         bind:
           create_host_path: false
       - type: bind
         source: ../environment/docs
         target: /task/docs
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ../environment/licenses
-        target: /task/licenses
         read_only: true
         bind:
           create_host_path: false

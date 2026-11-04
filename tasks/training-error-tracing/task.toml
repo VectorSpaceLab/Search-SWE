@@ -26,7 +26,7 @@ network_mode = "allowlist"
 allowed_hosts = ["openrouter.ai"]
 
 [verifier]
-timeout_sec = 8400.0
+timeout_sec = 11400.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

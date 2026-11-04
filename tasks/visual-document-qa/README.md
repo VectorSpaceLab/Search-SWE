@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | SourceMacroAnswerAccuracy |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 45000 s |
+| Agent / verifier time limits | 7200 s / 59400 s |
 | Dataset | DocLensDatasets: MMLongBench-Doc and FinRAGBench-V |
 | Public queries | 5 |
 | Hidden queries | 2471 |
@@ -62,14 +62,14 @@ Optional OpenRouter and Jina resources follow the
 The CPU environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and
 no GPU. Development has two hours. Build has 14,400 seconds; each of two
 query calls has an independent 10,800-second allowance. These limits remain
-inside the 45,000-second overall verifier budget.
+inside the 59,400-second overall verifier budget.
 
 ## Change Log
 
 | Date | Version | Description |
 | --- | --- | --- |
 | 2026-10-28 | 1.0.0 | Judge MMLongBench-Doc text, list and unanswerable answers by semantic correctness |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -78,6 +78,8 @@ inside the 45,000-second overall verifier budget.
 - Handling numeric, list and unanswerable questions.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/visual-document-qa/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 
@@ -102,8 +104,21 @@ a binary semantic judgment directly from the question, reference and full
 submitted answer. Equivalent wording receives credit;
 incorrect entities, comparisons, missing list items or unsupported claims do
 not. Each semantic judgment records a short reason.
-FinRAGBench-V uses its original binary answer judge. Trusted model calls use
-`google/gemini-2.5-flash` through OpenRouter.
+FinRAGBench-V uses its original binary answer-judging prompt. Trusted model calls use `deepseek/deepseek-v4.1-flash-1017` through OpenRouter, with reasoning disabled and a 512-token output limit for the concise extraction or judgment. Routing requires support for the requested parameters; truncated outputs are retried and invalidate the measurement if retries are exhausted. Semantic judgments use `score`/`reason`; FinRAGBench-V uses `score`/`analysis`, matching its prompt. Each answer is judged three times and the results are averaged before source aggregation.
+
+Answer judging runs up to 32 questions concurrently, with each question's three calls kept sequential. Maintainers can set the positive integer `JUDGE_MAX_CONCURRENCY` before launching the verifier to adjust this limit. Higher concurrency does not reduce the request count, and its latency and error-rate effects depend on provider capacity.
+
+Requests first use three local attempts with exponential backoff and jitter. Connection failures, timeouts, HTTP 408/429/5xx and temporary HTTP 402 responses with a valid `Retry-After` remain recoverable after those attempts: unfinished questions are deferred for 60/120/240/300 seconds plus jitter and retried within the existing verifier time budget. Workers share a cooldown, including the server's `Retry-After`, to pause new traffic during an outage. Credential/configuration errors stop promptly; persistently invalid judgments also require correction. No missing judgment is converted to an incorrect answer or omitted from the denominator.
+
+Each successful sample, including score 0, is atomically saved under the protected verifier logs before the next sample starts. Checkpoints bind the model, judge code/prompts, evaluation data, submitted answer and sample index; changing the grading context cannot silently reuse older judgments. The verifier records concurrency, judging duration, deferred jobs and saved-sample counts. Normal execution stops scheduling before its 57,600-second process timeout, leaving time to save the failure report and stop outstanding requests. A persistent outage leaves an incomplete measurement with its saved progress.
+
+Within the same trusted verifier trial, maintainers can resume the frozen answers after restoring service or restarting the judge process:
+
+```bash
+/opt/conda/bin/python /tests/grader.py --resume-judging
+```
+
+This command requires the original protected log directory and matching evaluation data/judge configuration. It skips build and answer generation, reuses saved samples, and allows up to six hours for the missing judgments. It updates `evaluation.json`; it does not rerun the independent trajectory audit or finalize the overall reward. Retain the original submission and audit artifacts when completing that trial. Deleting the trial logs also deletes its recovery state.
 
 Average answers within each source, then give the two sources equal weight.
 
@@ -126,13 +141,14 @@ auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
 
+The score-mapping anchor is a fixed task-design parameter. This package does not include a baseline measurement record tied to the current semantic answer-grading revision. Revalidate the anchor against that revision before claiming that it remains empirically calibrated.
+
 #### Correctness and Resource Gates
 
 The verifier checks execution, output structure, document/page validity and
 stage limits. Completed valid rows survive query-call timeout; missing or invalid
 rows receive zero. Other query-command failures invalidate that call.
-Trusted answer-extraction or judge transport failures invalidate the measurement
-rather than establishing a low baseline or model score.
+Unrecovered answer-extraction or judge failures leave the measurement incomplete, with completed samples retained for recovery, rather than establishing a low baseline or model score.
 
 #### Integrity Checks and Final Reward
 
@@ -188,6 +204,10 @@ credentials or hardware. Results are written under `jobs/visual-document-qa/`.
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+
+### Repeated verifier measurements
+
+The submitted answer is held fixed while its source-specific answer evaluation runs three times. This includes the LLM extraction step for numeric answers, whose output can vary; its deterministic numeric comparator is applied to each extracted value. Semantic and FinRAG binary judgments are likewise averaged arithmetically, without majority voting. Citation diagnostics run once and source weighting and final score mapping stay unchanged. Any failed trusted call invalidates the measurement; transport retries are not independent votes. The primary supervisor allows 57,600 seconds (14,400 build + 21,600 query execution + 21,600 answer judging/setup); the overall verifier allows 59,400 seconds including the unchanged 1,200-second integrity audit and finalization. This triples the former answer-judging allowance; an unavailable/slow service can still exhaust it and invalidate the run.
 
 ## References
 

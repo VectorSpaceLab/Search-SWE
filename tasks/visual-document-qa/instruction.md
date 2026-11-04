@@ -3,9 +3,23 @@ Build a system that answers questions using the supplied long documents. Relevan
 The collection is at `/task/data/corpus/`. Its `records.jsonl` contains `doc_id`, `pdf_path`, `text_path` and `page_count`. Paths are relative to that directory. The PDFs are the original documents; the text files contain uniformly extracted text for each page. You may render and read the PDFs directly.
 
 Create executable `/app/build.sh` and `/app/run.sh`, with the code and files they need under `/app`:
-`/app/build.sh --corpus /task/data/corpus --index-dir /work/index` `/app/run.sh --index-dir /work/index --queries /work/input/queries.jsonl --output /work/output/answers.jsonl`
 
-Each input JSONL row contains `query_id`, `doc_id` and `question`. Return one JSONL row for each query, with the same `query_id`, an `answer` string and a `pages` list of the supporting document's page numbers. Page numbers start at one. Give the final answer directly, including units where applicable; a list answer may be expressed as a list in the string. Use an empty `pages` list when no supporting page exists. Write diagnostics to stderr.
+```bash
+/app/build.sh \
+  --corpus /task/data/corpus \
+  --index-dir /work/index
+```
+
+```bash
+/app/run.sh \
+  --index-dir /work/index \
+  --queries /work/input/queries.jsonl \
+  --output /work/output/answers.jsonl
+```
+
+Each input JSONL row contains `query_id`, `doc_id` and `question`. Return one JSONL row for each query, with the same `query_id`, a non-empty `answer` string and a `pages` list of supporting page numbers. Page numbers must be distinct integers from one through the document's `page_count`. Give the final answer directly, including units where applicable; a list answer may be expressed as a list in the string. Use an empty `pages` list when no supporting page exists. Write diagnostics to stderr.
+
+The primary quality measure is answer correctness, averaged within each of the two sources and then equally across sources. Answers must be correct in meaning, including numerical values, complete lists and statements that the requested information is absent. Citation accuracy is reported separately and does not contribute to the answer score. You must still provide supporting pages in the required format; an invalid page list makes that query's output invalid.
 
 Public requests and reference answers are at `/task/data/validation/queries.jsonl` and `/task/data/validation/labels.jsonl`. The remaining questions are not provided. The original corpus and public examples are read-only.
 

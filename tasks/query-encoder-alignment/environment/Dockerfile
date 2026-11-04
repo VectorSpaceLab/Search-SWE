@@ -15,6 +15,6 @@ RUN npm install --global --ignore-scripts \
     && test "$(claude --version)" = "${SEARCH_SWE_CLAUDE_CODE_VERSION} (Claude Code)"
 RUN claude --help | grep -F "(low, medium, high, xhigh, max)" >/dev/null
 
-COPY starter/ /app/starter/
+COPY time_reference/ /app/time_reference/
 
-COPY quality_baseline/ /app/quality_baseline/
+COPY quality_reference/ /app/quality_reference/
