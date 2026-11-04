@@ -16,7 +16,7 @@
     {
       "path": "data/public/config.json",
       "size_bytes": 1367,
-      "sha256": "1f21c2da82aa07edb72a33e8f15eed3cf90d73297d252e079428cb8cefb92c44",
+      "sha256": "4fba947d9ec7c8056c0337f8913394cfca309de5901e2b98ca111c1c4fa17f53",
       "mode": "0644",
       "source": {
         "local_path": "environment/config/public.json"

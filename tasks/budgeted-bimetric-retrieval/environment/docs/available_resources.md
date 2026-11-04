@@ -26,7 +26,8 @@ The expensive representation is private: do not access its files, bypass current
 the verifier's labels, queries or reward files.
 
 Public simple baseline programs are under `/task/baseline`. They implement dense
-retrieval plus reranking, direct dense retrieval and lexical/dense fusion. Their
+retrieval plus reranking, direct dense retrieval, lexical/dense fusion and
+two-round feedback retrieval. Their
 highest measured resource-valid quality defines the zero-credit reference B.
 The hybrid uses lexical weight 0.5, RRF k=60, top-1000 lexical/dense lists and a
 fixed 10,000,000 SQLite VM-step lexical limit, then scores at most 20 documents.
@@ -35,6 +36,28 @@ These parameters were selected or timed using public development/training data.
 `/task/tools/evaluate.py` exercises the public service and protocol;
 its output is diagnostic and does not replace final resource enforcement.
 
+
+
+The feedback baseline uses ten features from the supplied cheap vectors and a
+local lexical index. A small tree ranker is fitted using the 500 public development
+questions and labels. Prepare its submission during development:
+
+```bash
+python /task/baseline/train_feedback.py --data-dir /task/public --output-dir /app/feedback-baseline
+```
+
+The output directory must be empty. The command writes `model.pkl`,
+`feedback_baseline.py` and an executable `search.sh`. This script accepts the
+same `--data-dir`, `--index-dir` and `--mode build|load` arguments as your
+submission. Final build/load only builds the local index and loads the fitted
+parameters; model fitting happens during development.
+
+Alternatively, invoke the common baseline entrypoint with `--method feedback` and
+`--model-path /app/feedback-baseline/model.pkl`. The baseline scores ten candidates,
+uses their expensive distances to adjust cheap-vector scores with feedback weight
+80, and scores ten additional candidates. It returns the ten best expensive-distance
+results. The tree settings and feedback weight were selected on the public
+development set using five-fold validation.
 
 ## Input representation and sources
 

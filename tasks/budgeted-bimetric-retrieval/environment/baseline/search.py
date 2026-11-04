@@ -13,13 +13,24 @@ p = argparse.ArgumentParser()
 p.add_argument('--data-dir', type=Path, required=True)
 p.add_argument('--index-dir', type=Path, required=True)
 p.add_argument('--mode', choices=['build', 'load'], required=True)
-p.add_argument('--method', choices=['vector', 'direct', 'hybrid'], default='vector')
+p.add_argument('--method', choices=['vector', 'direct', 'hybrid', 'feedback'], default='vector')
 p.add_argument('--budget', type=int)
 p.add_argument('--lexical-weight', type=float, default=.5)
+p.add_argument('--model-path', type=Path)
 a = p.parse_args()
 config = json.loads((a.data_dir/'config.json').read_text())
 if a.budget is None:
     a.budget = config['score_budget']
+if a.method == 'feedback':
+    if a.budget != 20:
+        raise ValueError('The feedback baseline uses a budget of 20')
+    from feedback_baseline import main as feedback_main
+    arguments = ['--data-dir', str(a.data_dir), '--index-dir', str(a.index_dir), '--mode', a.mode]
+    if a.model_path is not None:
+        arguments += ['--model-path', str(a.model_path)]
+    feedback_main(arguments)
+    raise SystemExit(0)
+
 n, d = config['documents'], config['cheap_dimension']
 vectors = np.memmap(a.data_dir/'cheap.f32', dtype='<f4', mode='r', shape=(n, d))
 index = faiss.IndexFlatIP(d)

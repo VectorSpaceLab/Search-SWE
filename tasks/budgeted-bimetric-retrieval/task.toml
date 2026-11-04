@@ -3,20 +3,13 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 
 [task]
 name = "search-swe/budgeted-bimetric-retrieval"
-version = "1.0.0"
+version = "1.1.0"
 description = "Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query."
 authors = [{name = "jianlyu"}]
 keywords = ["retrieval", "bimetric", "nq", "query-budget", "cpu"]
 
 [metadata]
 primary_metric = "baseline-normalized mean nDCG@10"
-evaluation_status = "graded at7200s agent deadline:3452valid, AgentTimeoutError; not normal agent completion"
-evaluation_score = 21.811824612956148
-evaluation_raw_ndcg10 = 0.8603742358529618
-evaluation_agent_exception = "AgentTimeoutError"
-evaluation_job = "jobs/budgeted-bimetric-retrieval-codex-openrouter-luna-max-20261021-v020-r1/2026-10-21__19-48-26"
-evaluation_model = "openai/gpt-6-luna"
-evaluation_reasoning_effort = "max"
 corpus_documents = 250000
 source_corpus_documents = 2681468
 asset_ceiling_bytes = 5000000000
