@@ -21,7 +21,7 @@ base_model = "Qwen/Qwen3-Embedding-0.6B"
 baseline_ndcg_at_10 = 0.1847
 query_timeout_seconds = 5.0
 index_build_timeout_seconds = 1200.0
-gpu_hardware = "1 x NVIDIA A100 40GB"
+gpu_hardware = "1 GPU"
 data_status = "Published public data; 209 private questions retained after removing one query with invalid positives; corpus and remaining qrels unchanged; 80000 synthetic labeled examples."
 
 [agent]

@@ -64,7 +64,7 @@ as stages inside its overall budget. Stage limits do not extend that budget.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -74,6 +74,8 @@ as stages inside its overall budget. Stage limits do not extend that budget.
 - Sharing a retrieval service safely across concurrent query processes.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/scientific-paper-qa/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 
@@ -93,13 +95,11 @@ A question scores one only when **both** conditions hold: the evidence document
 matches the reference, and an answer judge accepts the answer as semantically
 equivalent to the reference. LLMJudgeAccuracy is the mean of these binary
 outcomes over 10 hidden questions. The report's 0–100 score is 100 times the
-normalized reward.
+normalized reward. The answer judge is called only after the evidence document matches the reference.
 
 #### Correctness and Resource Gates
 
-Execution, complete query coverage, non-empty answers, valid document IDs, and
-runtime limits must pass. A failed query process or structurally invalid output
-invalidates the submission, rather than merely counting as an incorrect answer.
+Execution, complete query coverage, valid answers and document IDs, and runtime limits must pass. Each answer must contain non-whitespace text and be at most 20,000 characters after JSON decoding, including whitespace. Per-query output must be a regular file of at most 64 MiB, and the combined results have the same size limit. A failed query process or invalid output, including an exceeded length or size limit, invalidates the entire submission.
 
 #### Integrity Checks and Final Reward
 
@@ -153,6 +153,10 @@ assets, credentials, or hardware.
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Resource policy](environment/docs/available_resources.md) | Allowed submission APIs and model restrictions |
+
+### Repeated verifier measurements
+
+After evidence matching, the fixed submitted answer is judged independently three times and the binary decisions are averaged arithmetically. Query values are then averaged equally. Retrieval, answer generation and evidence comparison run once. Each decision retains its own response/reason; transport or malformed-decision failures invalidate the measurement and leave zero reward, rather than averaging fewer decisions. Three valid decisions are distinct from the existing bounded transport retries. The answer-grader supervisor is 2,700 seconds: up to 30 judgments in five workers, each with three 120-second attempts and retry backoff, plus overhead. The overall 14,400-second verifier budget and single trajectory audit remain unchanged.
 
 ## References
 

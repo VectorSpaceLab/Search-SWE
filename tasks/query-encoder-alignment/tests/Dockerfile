@@ -24,7 +24,7 @@ RUN useradd --create-home --uid 10001 --shell /bin/bash submission
 # One source layer avoids repeated snapshots of the large shared GPU image.
 COPY . /tests/
 RUN chmod 755 /tests/test.sh /tests/run_evaluation.sh /tests/finalize_reward.py \
-        /tests/starter/run.sh /tests/quality_baseline/run.sh \
+        /tests/time_reference/run.sh /tests/quality_reference/run.sh \
     && mkdir -p /audit \
     && cp -a /tests/jailbreak_judge /audit/ \
     && chmod 600 /tests/data/queries.jsonl /tests/data/ground_truth.jsonl \

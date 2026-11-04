@@ -53,7 +53,7 @@ part of the package.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Removed one query with invalid positives and recalculated the 209-query baseline |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -100,11 +100,11 @@ The GPU environment document is copied from `docker/gpu/environment.md`.
 
 ### Local operation and validation
 
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [recorded run evidence](VALIDATION.md#run-evidence-reconciled-on-2026-10-23) for historical run outcomes and publication status. Existing source terms and attribution remain applicable.
 
 ```bash
 python scripts/assets/download_assets.py --task quantity-aware-retrieval --verify-only
-python -m unittest discover -s tasks/quantity-aware-retrieval/tests -p 'test_*.py'
+python -m unittest discover -s tasks/quantity-aware-retrieval/authoring/tests -p 'test_*.py'
 python scripts/evaluation/run_task.py --task quantity-aware-retrieval --agent codex --openrouter \
   --model openai/gpt-6-luna --reasoning-effort max --dry-run
 ```
@@ -116,9 +116,13 @@ The verifier judge requires `VERIFIER_OPENAI_BASE_URL` and
 are separate from package/unit/container smoke tests. See `VALIDATION.md` for
 commands actually run, observed results, and unperformed release/evaluation steps.
 
-See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+See [VALIDATION.md](VALIDATION.md) for recorded run outcomes, judge health and validation evidence.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
+
+### Verifier query order
+
+The verifier shuffles the private query list with a fixed local seed for reproducible request ordering. Each invocation still assigns fresh opaque request IDs; IDs must be echoed without assuming a relationship to document labels. Building and retrieval are not repeated. This removes unnecessary order variation while preserving the original per-query deadline and normalized nDCG metric.
 
 ## References
 

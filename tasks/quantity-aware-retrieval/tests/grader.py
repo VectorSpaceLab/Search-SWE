@@ -180,7 +180,7 @@ def evaluate():
                        "--index-dir", str(INDEX)], BUILD_TIMEOUT_SECONDS, "build")
     if build["timed_out"] or build["returncode"] != 0:
         raise VerificationError(f"Build failed: {build}")
-    random.SystemRandom().shuffle(queries)
+    random.Random(0).shuffle(queries)
     details = []
     for position, query in enumerate(queries):
         qid = query["query_id"]

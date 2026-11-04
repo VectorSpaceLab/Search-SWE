@@ -1,4 +1,4 @@
-"""Draft isolated vector adapter; each invocation has exactly one phase."""
+"""Isolated encoder adapter; each invocation has exactly one phase."""
 import contextlib
 import importlib.util
 import json

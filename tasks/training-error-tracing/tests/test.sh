@@ -21,7 +21,7 @@ interrupted() {
 }
 trap interrupted TERM INT HUP
 
-timeout --signal=TERM --kill-after=10s 6900s /opt/conda/bin/python /tests/efficiency_grade.py
+timeout --signal=TERM --kill-after=10s 9900s /opt/conda/bin/python /tests/efficiency_grade.py
 primary_status=$?
 cleanup
 

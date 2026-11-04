@@ -1,0 +1,8 @@
+
+# Development tests and local caches are not verifier runtime inputs.
+**/__pycache__
+**/*.py[cod]
+.pytest_cache/
+.coverage*
+test_*.py
+**/test_*.py

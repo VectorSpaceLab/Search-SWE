@@ -3,11 +3,19 @@
 import argparse
 import json
 import math
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
 import grade
 from efficiency_metrics import efficiency_score, latency_metric, quality_gate
+
+
+def prepare_control(work):
+    """Copy the immutable public starter before the runner freezes its files."""
+    control = work / "control-submission"
+    shutil.copytree("/task/starter", control)
+    return control
 
 
 def run_phase(args, config, name, submission, *, control=False):
@@ -43,7 +51,7 @@ def main():
     try:
         config = json.loads((args.private / "evaluation-config.json").read_text())
         reference = config["reference_cost_ratio"]
-        if (config["score_kind"] != "quality-gated-efficiency-v1" or config["repetitions"] != 3
+        if (config["score_kind"] != "quality-gated-efficiency-v1" or config["repetitions"] != 5
                 or (reference is None and not config.get("author_calibration"))
                 or (reference is not None and (isinstance(reference, bool)
                     or not isinstance(reference, (int, float)) or not math.isfinite(reference)
@@ -51,13 +59,14 @@ def main():
             raise ValueError("Invalid or uncalibrated efficiency configuration")
         args.work.mkdir(parents=True, mode=0o755)
         args.work.chmod(0o755)
+        control_submission = prepare_control(args.work)
         candidate = run_phase(args, config, "candidate", args.submission)
         result.update(valid_task_inputs=candidate["valid_task_inputs"],
                       submission_valid=candidate["submission_valid"])
         if not candidate["submission_valid"]:
             result["submission_error"] = candidate.get("submission_error", "Invalid candidate")
         else:
-            control = run_phase(args, config, "control", Path("/control"), control=True)
+            control = run_phase(args, config, "control", control_submission, control=True)
             if not control["submission_valid"]:
                 raise RuntimeError("Immutable control failed preparation/execution")
             control_time, control_memory = measured(control)

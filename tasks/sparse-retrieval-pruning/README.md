@@ -39,7 +39,7 @@ passing submissions receive `clip((speedup - 4) / 12, 0, 1)`: 4× starts scoring
 | `data/corpus.jsonl` | One million documents represented by opaque term sets |
 | `data/validation/` | 200 public queries, qrels, statistics, and reference Top-100 results |
 | `environment/starter/` | Unpruned retrieval starter |
-| `environment/docs/index_format.md` | Starter dictionary, posting, and metadata layout |
+| `environment/starter/README.md` | Starter dictionary, posting, and metadata layout |
 
 The verifier has 1,000 hidden queries, relevance labels, and reference data,
 isolated from the agent environment. It runs its own unpruned reference starter
@@ -77,7 +77,7 @@ downloads. The private integrity judge's API access is a separate concern.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -97,7 +97,7 @@ The verifier runs submission commands unprivileged with the submission tree
 read-only.
 
 The exact fields and CLI are in [instruction.md](instruction.md). The
-[index format guide](environment/docs/index_format.md) explains the starter,
+[starter reference](environment/starter/README.md) explains the starter,
 but that particular storage format is not a required output artifact.
 
 ### Evaluation
@@ -109,35 +109,11 @@ minimums are **0.89** and **0.99** respectively.
 
 #### Correctness and Latency Reward
 
-The fixed corpus contains 1,000,000 documents. Each formal search invocation
-processes the same 1,000 hidden queries; the public development set contains
-200 queries. The verifier runs five measurement rounds with fresh processes. Odd rounds run
-starter then candidate; even rounds run candidate then starter. It uses the
-median of each system's five complete search wall times and divides the starter
-median by the candidate median. Timing includes process launch, Python imports,
-index loading, reading all queries, retrieval, output writing and process exit.
-There is no separate warmup and the OS file cache is retained between calls.
-Each round uses a fresh private output directory and temporary HOME/TMPDIR; the
-built index and submission source are read-only during search. Do not write to
-the index, reuse answers across invocations, or rely on files from earlier runs.
-All required persistent state must be built from public inputs. The verifier
-isolates accessible paths and clears temporary state between invocations.
-Every candidate round must meet both quality floors; reported aggregate quality
-is the arithmetic mean across rounds. Outputs are validated in every round.
-Both positive finite timing medians are required; failures yield zero reward.
+The fixed corpus contains 1,000,000 documents. Each formal search invocation processes the same 1,000 hidden queries; the public development set contains 200 queries. The verifier runs five measurement rounds with fresh processes. Odd rounds run starter then candidate; even rounds run candidate then starter. It uses the median of each system's five complete search wall times and divides the starter median by the candidate median. Timing includes process launch, Python imports, index loading, reading all queries, retrieval, output writing and process exit. There is no separate warmup and the OS file cache is retained between calls. Each round uses a fresh private output directory and temporary HOME/TMPDIR; the built index and submission source are read-only during search. Do not write to the index, reuse answers across invocations, or rely on files from earlier runs. All required persistent state must be built from public inputs. The verifier isolates accessible paths and clears temporary state between invocations. Every candidate round must meet both quality floors; reported aggregate quality is the arithmetic mean across rounds. Outputs are validated in every round. Both positive finite timing medians are required; failures yield zero reward.
 
-The candidate build is limited to 3,600 seconds, the reference build to 1,800
-seconds, and each complete search invocation to 900 seconds. The overall
-verifier budget is 16,200 seconds, covering builds, ten searches and the
-integrity judge. Both systems use the same one-CPU affinity, 32 GiB memory
-limit, one-thread library settings and isolation. New threads are blocked;
-Python worker processes are monitored and the trajectory is audited. Thin
-serial shell launch wrappers remain allowed. This protocol does not grant
-permission to run additional workers.
+The candidate build is limited to 3,600 seconds, the reference build to 1,800 seconds, and each complete search invocation to 900 seconds. The overall verifier budget is 16,200 seconds, covering builds, ten searches and the integrity judge. Both systems use the same one-CPU affinity, 32 GiB memory limit, one-thread library settings and isolation. New threads are blocked; Python worker processes are monitored and the trajectory is audited. Thin serial shell launch wrappers remain allowed. This protocol does not grant permission to run additional workers.
 
-Let `s = median(starter wall time) / median(candidate wall time)`. If every
-round meets both quality gates and all execution/output/integrity checks pass,
-reward is `max(0, min(1, (s - 4) / 12))`, and score is 100 times reward.
+Let `s = median(starter wall time) / median(candidate wall time)`. If every round meets both quality gates and all execution/output/integrity checks pass, reward is `max(0, min(1, (s - 4) / 12))`, and score is 100 times reward.
 
 #### Integrity Checks and Final Reward
 
@@ -183,21 +159,12 @@ assets, credentials, or hardware.
 | [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
-| [Index format guide](environment/docs/index_format.md) | Starter layout and consistency relationships |
+| [Starter reference](environment/starter/README.md) | Starter layout and consistency relationships |
 | [Resource policy](environment/docs/available_resources.md) | Python dependency and execution restrictions |
 
 ### Revision 0.5.2 validation
 
-This revision implements the approved 4×–16× speedup calibration and five-round
-alternating protocol. Linux x86_64 Landlock and seccomp are required by the
-verifier (missing kernel support fails closed). Submission temporary writes
-are confined to the current output and scratch directories; source and built
-index are read-only in search. Metrics, hidden labels and prior round results
-are inaccessible. Shell-wrapper subprocesses are permitted only for serial
-launching; Python workers are sampled during execution and the existing judge
-audits the full single-process policy. The single-thread policy is also enforced
-by a kernel filter and library environment settings. The 80 GiB storage value
-is a declared harness budget, not a kernel filesystem quota.
+This revision implements the fixed 4×–16× reward range and five-round alternating protocol. Linux x86_64 Landlock and seccomp are required by the verifier (missing kernel support fails closed). Submission temporary writes are confined to the current output and scratch directories; source and built index are read-only in search. Metrics, hidden labels and prior round results are inaccessible. Shell-wrapper subprocesses are permitted only for serial launching; Python workers are sampled during execution and the existing judge audits the full single-process policy. The single-thread policy is also enforced by a kernel filter and library environment settings. The 80 GiB storage value is a declared harness budget, not a kernel filesystem quota.
 
 On verifier exit, build/search metrics, stdout/stderr and each round's result
 file are retained under `verifier/runner-artifacts/` in the job. This diagnostic
@@ -205,9 +172,11 @@ copy runs after measurement and also preserves logs when a build/search fails.
 Indexes and temporary scratch files are not exported.
 
 Run task-local regression tests with
-`python -m unittest discover -s tasks/sparse-retrieval-pruning/tests -p 'test_*.py'`.
+`python -m unittest discover -s tasks/sparse-retrieval-pruning/authoring/tests -p 'test_*.py'`.
 Runtime evidence and full-score feasibility are recorded by the author in the
 calibration delivery report; they are not established by static validation.
+
+That external report is not included in this package. The quality floors and 4×–16× reward range remain fixed task-design parameters; a complete, reproducible record for the current five-round protocol, including reference/candidate measurements and full-score feasibility, is still needed for independent calibration review.
 
 Revision 0.5.1 also unifies login-shell Python aliases with `/opt/conda` and
 sets single-thread library defaults in both images. This repairs the 0.5.0
@@ -217,6 +186,10 @@ Revision 0.5.2 removes a per-UID `RLIMIT_NPROC` that incorrectly counted
 unrelated containers on the host and could block the starter's serial shell
 launch. The container PID limit, kernel thread prohibition, worker monitoring,
 quality gates and scoring are unchanged.
+
+### Repeated verifier measurements
+
+The build remains single-pass for each system. Five alternating measurement rounds use the ratio of median wall times to determine speedup. Every round must pass both quality gates; failed or timed-out rounds cannot be dropped. The existing 16,200-second verifier budget covers 5,400 seconds of builds, 9,000 seconds of searches, the 1,200-second integrity audit and 600 seconds of overhead.
 
 ## References
 

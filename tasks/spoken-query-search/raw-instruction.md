@@ -8,7 +8,7 @@ Build a document search system for spoken requests whose transcription may conta
 
 ### Resource limits and workload
 
-- The environment has 8 CPU cores, 32 GiB RAM and 100 GiB storage and one 40 GiB GPU.
+- The environment has 8 CPU cores, 32 GiB RAM and 100 GiB storage and one GPU.
 - Development has a two-hour budget, index construction up to 180 minutes, and query calls follow the workload below.
 - Calls may be repeated with different input files.
 - Use at most five retrieval formulations and at most 50 query-document pairs for further reranking per request.
@@ -80,7 +80,7 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. The failure and timeout behavior follows the contracts above.
-4. **Search quality.** Raw quality is graded nDCG@10, averaged within each collection and acoustic condition and then equally across the six collections and four conditions.
+4. **Search quality.** Optimize graded nDCG@10 by placing more relevant documents earlier in the top ten. Relevance grades are used directly as gains. Query scores are averaged within each combination of document collection and acoustic condition, then all such groups receive equal weight.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
 

@@ -47,7 +47,7 @@ Create executable `/app/build.sh` and `/app/run.sh`, with the code and files the
 
 ### Input and output contract
 
-Each input JSONL row contains `query_id`, `doc_id` and `question`. Return one JSONL row for each query, with the same `query_id`, an `answer` string and a `pages` list of the supporting document's page numbers. Page numbers start at one. Give the final answer directly, including units where applicable; a list answer may be expressed as a list in the string. Use an empty `pages` list when no supporting page exists. Write diagnostics to stderr.
+Each input JSONL row contains `query_id`, `doc_id` and `question`. Return one JSONL row for each query, with the same `query_id`, a non-empty `answer` string and a `pages` list of supporting page numbers. Page numbers must be distinct integers from one through the document's `page_count`. Give the final answer directly, including units where applicable; a list answer may be expressed as a list in the string. Use an empty `pages` list when no supporting page exists. Write diagnostics to stderr.
 
 ## Available Validation Data
 
@@ -74,7 +74,7 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. The failure and timeout behavior follows the contracts above.
-4. **Search quality.** Raw quality measures answer correctness against the reference answers, including numeric, list and unanswerable questions. The answer-comparison rules and grouping used for the final average are defined in [README.md — Search Quality](README.md#search-quality). Evidence-page precision, recall and F1 are reported separately and do not affect the answer score.
+4. **Search quality.** The primary quality measure is answer correctness, averaged within each of the two sources and then equally across sources. Answers must be correct in meaning, including numerical values, complete lists and statements that the requested information is absent. Citation accuracy is reported separately and does not contribute to the answer score. You must still provide supporting pages in the required format; an invalid page list makes that query's output invalid.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
 

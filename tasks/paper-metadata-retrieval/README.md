@@ -22,7 +22,7 @@ The public database is `data/corpus.sqlite`, with a single raw `documents` table
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -44,7 +44,7 @@ Public assets are published in [`search-swe/Search-SWE`](https://huggingface.co/
 
 ```bash
 python scripts/assets/download_assets.py --task paper-metadata-retrieval --verify-only
-python -m unittest discover -s tasks/paper-metadata-retrieval/tests -p 'test_*.py' -v
+python -m unittest discover -s tasks/paper-metadata-retrieval/authoring/tests -p 'test_*.py' -v
 python scripts/validation/check_tasks.py tasks/paper-metadata-retrieval
 ```
 
@@ -52,7 +52,7 @@ Completed checks and unrun validation layers are recorded in `VALIDATION.md`. Or
 
 The executable contract is in [instruction.md](instruction.md); [raw-instruction.md](raw-instruction.md) records the structured specification. See [tests/](tests/) for the separate verifier and [task.toml](task.toml) for phase budgets.
 
-See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+See [VALIDATION.md](VALIDATION.md) for recorded run outcomes, judge health and validation evidence.
 
 ### Running the task
 

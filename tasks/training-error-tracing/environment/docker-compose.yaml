@@ -30,20 +30,20 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ../tools
-        target: /task/tools
+        source: ./runtime
+        target: /task/runtime
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./starter
+        target: /task/starter
         read_only: true
         bind:
           create_host_path: false
       - type: bind
         source: ./docs
         target: /task/docs
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./licenses
-        target: /task/licenses
         read_only: true
         bind:
           create_host_path: false

@@ -8,7 +8,7 @@ Build a search system that locates the time interval matching a natural-language
 
 ### Resource limits and workload
 
-- The environment has 8 CPU cores, 32 GiB RAM, 100 GiB storage and one 40 GiB GPU.
+- The environment has 8 CPU cores, 32 GiB RAM, 100 GiB storage and one GPU.
 - Development has a six-hour budget.
 - The supplied encoders are fixed.
 - An optional temporal/scoring component may have up to 5 million trainable parameters and use up to 45 minutes of training.
@@ -83,7 +83,7 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. The failure and timeout behavior follows the contracts above.
-4. **Search quality.** Let x be the best IoU between the predicted interval and the acceptable reference intervals. Its utility is u(x) = 0.7 * mean(I[x >= 0.5], I[x >= 0.7], I[x >= 0.9]) + 0.3 * x. Divide that utility by the best utility attainable with one legal interval on the supplied time grid. Average within each source, then equally across sources.
+4. **Search quality.** Quality uses the best temporal intersection-over-union (IoU) with any acceptable reference interval. Higher IoU earns more credit, with additional credit for reaching 0.5, 0.7 and 0.9. Each query's quality is normalized by the best quality attainable with a legal interval on its supplied time grid, accounting for the grid's boundary precision. Scores are averaged within each source, then sources receive equal weight.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
 

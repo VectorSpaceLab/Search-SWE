@@ -3,13 +3,27 @@ Build a search system that locates the time interval matching a natural-language
 The supplied videos are represented by frozen frame vectors at `/task/data/corpus/`. Its `records.jsonl` contains `video_id`, `duration` in seconds, `feature_path` and `grid_path`. Paths are relative to that directory. Each feature row corresponds to one successive interval between adjacent time-grid endpoints. The video vectors were generated with CLIP ViT-B/32. The same fixed image and text encoder is available at `/task/models/clip/`; raw video files are not supplied.
 
 Create executable `/app/build.sh` and `/app/run.sh` and their supporting files under `/app`:
-`/app/build.sh --corpus /task/data/corpus --index-dir /work/index` `/app/run.sh --index-dir /work/index --queries /work/input/queries.jsonl --output /work/output/results.jsonl`
+
+```bash
+/app/build.sh \
+  --corpus /task/data/corpus \
+  --index-dir /work/index
+```
+
+```bash
+/app/run.sh \
+  --index-dir /work/index \
+  --queries /work/input/queries.jsonl \
+  --output /work/output/results.jsonl
+```
 
 Each input JSONL row contains `query_id`, `video_id` and `description`, the original natural-language description. For each input row return the same `query_id` and numeric `start` and `end` values in seconds. Return exactly one nonempty interval whose endpoints belong to that video's supplied grid. Write diagnostics to stderr.
 
 Public training requests and interval labels are at `/task/data/training/queries.jsonl` and `/task/data/training/labels.jsonl`. Five validation requests and their labels are at the corresponding paths under `/task/data/validation/`. Labels contain `query_id`, `video_id` and `windows`, a list of acceptable start/end pairs. The remaining requests and labels are not provided.
 
-The environment has 8 CPU cores, 32 GiB RAM, 100 GiB storage and one 40 GiB GPU. Development has a six-hour budget. The supplied encoders are fixed. An optional temporal/scoring component may have up to 5 million trainable parameters and use up to 45 minutes of training. Per request, at most 64 candidate intervals may receive learned or token-level fine scoring; inexpensive frame-level screening and boundary proposals are allowed. Index construction has up to 60 minutes, and query calls follow the workload below. Calls may be repeated with different input files.
+Quality uses the best temporal intersection-over-union (IoU) with any acceptable reference interval. Higher IoU earns more credit, with additional credit for reaching 0.5, 0.7 and 0.9. Each query's quality is normalized by the best quality attainable with a legal interval on its supplied time grid, accounting for the grid's boundary precision. Scores are averaged within each source, then sources receive equal weight.
+
+The environment has 8 CPU cores, 32 GiB RAM, 100 GiB storage and one GPU. Development has a six-hour budget. The supplied encoders are fixed. An optional temporal/scoring component may have up to 5 million trainable parameters and use up to 45 minutes of training. Per request, at most 64 candidate intervals may receive learned or token-level fine scoring; inexpensive frame-level screening and boundary proposals are allowed. Index construction has up to 60 minutes, and query calls follow the workload below. Calls may be repeated with different input files.
 
 Process each request independently. Data, models and documentation are read-only. Put all other required runtime files under `/app`. Read `/task/docs/environment.md` and `/task/docs/available_resources.md`.
 

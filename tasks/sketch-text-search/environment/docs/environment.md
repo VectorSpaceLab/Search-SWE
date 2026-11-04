@@ -1,7 +1,13 @@
-# Environment
+# GPU Docker Environment
 
-The task uses Python 3.12 at `/opt/conda/bin/python` with CUDA-enabled PyTorch, Transformers, SentenceTransformers, FlagEmbedding, NumPy, and FAISS GPU. One NVIDIA GPU is available.
+This image provides a Conda-managed Python 3.12 environment with CUDA-enabled PyTorch, TorchVision, TorchCodec, and FAISS GPU, together with the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `Pillow`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-gpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, and `pydantic-settings`.
 
-Task data and model weights are mounted read-only at `/task/data` and `/task/models`. Work under `/app`.
+Python and pip are available at `/opt/conda/bin/python` and `/opt/conda/bin/pip`.
 
-Development uses a root shell; submission commands use a non-root user. The permissions and public check command are described in the task instruction.
+The image also includes the CUDA 13.0 toolkit and runtime, Java 21 runtime, Node.js and npm, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
+
+## Task resources
+
+The task provides 8 CPU cores, 32 GiB RAM, 100 GiB storage and one GPU. Inputs and models are read-only under `/task/data` and `/task/models`; develop under `/app`.
+
+The gallery is at `/task/data/corpus/` and fixed image/text encoders are at `/task/models/clip/`. Development uses a root shell; final submission commands run as a non-root user. The task instruction defines writable paths and documents the public permissions check at `/task/tools/check_runtime.py`, including its changes to file ownership and permissions. Resource permissions are in `available_resources.md`.

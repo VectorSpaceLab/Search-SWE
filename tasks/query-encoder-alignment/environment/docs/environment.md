@@ -1,30 +1,17 @@
-# Environment
+# GPU Docker Environment
 
-Python 3.12 is at /opt/conda/bin/python. The shared GPU image contains CUDA
-PyTorch, Transformers, SentenceTransformers, FlagEmbedding, NumPy and FAISS.
-Both stages have 8 CPU cores, 32 GiB RAM, 100 GiB storage and one NVIDIA GPU.
-Development lasts at most 6 hours; task verification at most 70 minutes,
-within a 95-minute verifier including an independently bounded integrity judge.
+This image provides a Conda-managed Python 3.12 environment with CUDA-enabled PyTorch, TorchVision, TorchCodec, and FAISS GPU, together with the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `Pillow`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-gpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, and `pydantic-settings`.
 
-/task/data and /task/models are read-only. data/doc.npy contains 8,674 by 2,560
-float32 vectors; corpus.jsonl supplies the matching row identities and texts.
-Public queries and labels are in data/validation. Hidden queries and labels
-are never mounted into the agent environment. Do not alter document vectors.
+Python and pip are available at `/opt/conda/bin/python` and `/opt/conda/bin/pip`.
 
-/app/quality_baseline contains the frozen 0.6B ridge quality baseline and its
-reproduction instructions. /app/starter contains the 4B time reference. The
-4B model is readable during development but not by the unprivileged final
-submission; the final backbone must derive from the supplied 0.6B model.
-All custom files needed at inference must be under /app/submission. Its copied
-runtime is read-only; use the writable output directory or TMPDIR for scratch.
+The image also includes the CUDA 13.0 toolkit and runtime, Java 21 runtime, Node.js and npm, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
 
-Each reference or candidate process has an 1,800-second hard timeout. Reference
-and candidate timing includes interpreter/imports, model loading, all query
-encoding, fixed-vector loading/search, filtering, output and exit. The verifier
-measures with a monotonic external clock and event-driven exit waiting. It
-runs the quality reference first, then the 4B time reference, then the candidate.
-There is no query or model warmup. OS file caches are not flushed; private
-reference predictions are inaccessible. The first candidate run sets its time;
-a fresh second process checks byte-identical output, with separate scratch.
-The candidate must take at most 60% of the 4B reference's elapsed time.
-Both references and candidate use the same GPU and outer CPU/RAM limits.
+## Task resources
+
+The task provides 8 CPU cores, 32 GiB RAM, 100 GiB storage and one GPU.
+
+Inputs are read-only under `/task/data` and `/task/models`. `/task/data/doc.npy` contains 8,674 × 2,560 float32 vectors, with matching identities and texts in `corpus.jsonl`; public queries and labels are under `/task/data/validation`. Preserve the fixed vectors and row correspondence.
+
+`/app/quality_reference` provides the frozen 0.6B ridge quality baseline and reproduction commands. `/app/time_reference` provides the 4B timing reference. The final backbone must derive from the supplied 0.6B model; the 4B model is available during development but inaccessible to the unprivileged final process.
+
+Only `/app/submission` transfers to the verifier. Its runtime copy is read-only; use the supplied output directory or `TMPDIR` for scratch. The task instruction defines time limits, full wall-time measurement and deterministic repetition requirements.

@@ -43,8 +43,8 @@ def verify_runtime_limits():
     if len(rows) != 1 or len(rows[0]) != 3:
         raise ValueError("Verifier must expose exactly one physical GPU")
     uuid, name, total = [value.strip() for value in rows[0]]
-    if not uuid.startswith("GPU-") or "A100" not in name or "40GB" not in name or not 39000 <= int(total) <= 42000:
-        raise ValueError("Verifier requires one physical A100 40GB")
+    if not uuid.startswith("GPU-") or not name or int(total) <= 0:
+        raise ValueError("Verifier requires one physical GPU with valid device metadata")
     return {"cpu_quota_cores": 16, "memory_max_bytes": int(memory), "memory_swap_max_bytes": 0,
             "gpu_uuid": uuid, "gpu_name": name, "gpu_memory_total_mib": int(total),
             "storage_enforcement": "logical-byte audit; not a kernel filesystem quota"}
@@ -377,8 +377,9 @@ def main(phase_args=None, phase_config=None):
                 raise ValueError("Invalid frozen query tokens or target positions")
         report["valid_task_inputs"] = True
         public_roots = [args.data, args.models]
-        if Path("/task/tools").exists():
-            public_roots.append(Path("/task/tools"))
+        for root in (Path("/task/runtime"), Path("/task/starter")):
+            if root.exists():
+                public_roots.append(root)
         verify_public_readability(public_roots)
         lock_submission(args.submission)
         validate_submission_metadata(args.submission)
@@ -420,7 +421,7 @@ def main(phase_args=None, phase_config=None):
         signal_services(user_processes(), signal.SIGSTOP)
         report["passes"] = []
         repetitions = config.get("repetitions", 1)
-        if type(repetitions) is not int or not 1 <= repetitions <= 3:
+        if type(repetitions) is not int or not 1 <= repetitions <= 5:
             raise ValueError("Invalid query repetition count")
         for repetition in range(repetitions):
             query_results = {}

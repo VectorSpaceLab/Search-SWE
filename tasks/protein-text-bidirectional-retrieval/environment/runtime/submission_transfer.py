@@ -1,4 +1,4 @@
-"""Snapshot a live tmpfs submission; safely restore it in the separate verifier."""
+"""Freeze and validate a submission; safely restore it in the separate verifier."""
 import os
 from pathlib import Path, PurePosixPath
 import stat

@@ -77,7 +77,7 @@ Build has 3,600 seconds; each of two query calls has 2,700 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -86,6 +86,8 @@ Build has 3,600 seconds; each of two query calls has 2,700 seconds.
 - Using labeled intervals within a bounded adaptation budget.
 
 ## Verification Explanation
+
+Author-side regressions are in `authoring/tests/` and are excluded from the verifier image. Run `python -m unittest discover -s tasks/video-moment-search/authoring/tests -p 'test_*.py'` from the repository root. Container-specific cases require a disposable verifier environment.
 
 ### Submission Contract
 
@@ -133,6 +135,8 @@ This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and
 auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
 Correctness and trajectory-audit gates take precedence over this conversion.
+
+The utility weights, IoU thresholds and score-mapping anchor are fixed task-design parameters. This package does not include a complete calibration record for the 0.7/0.3 weighting or the reference-quality measurement. Keep those evidence gaps separate from the agent-facing optimization objective.
 
 #### Correctness and Resource Gates
 

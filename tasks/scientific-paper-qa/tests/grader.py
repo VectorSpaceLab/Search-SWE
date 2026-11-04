@@ -346,28 +346,38 @@ def main() -> int:
 
     def judge_one(row: dict[str, str]) -> tuple[str, dict[str, Any]]:
         query_id = row["query_id"]
+        samples = []
+        calls = 0
         try:
             assert config is not None
-            response = call_judge(
-                config,
-                question=row["question"],
-                candidate_answer=predictions[query_id]["answer"],
-                reference_answer=references[query_id]["answer"],
-            )
-            correct, parse_error, reason = parse_judgement(response)
+            for _ in range(3):
+                calls += 1
+                response = call_judge(
+                    config,
+                    question=row["question"],
+                    candidate_answer=predictions[query_id]["answer"],
+                    reference_answer=references[query_id]["answer"],
+                )
+                correct, parse_error, reason = parse_judgement(response)
+                samples.append({"correct": correct, "parse_error": parse_error, "reason": reason,
+                                "judge_response": response[:5000]})
+                if parse_error:
+                    raise ValueError("answer judge returned a malformed decision")
             return query_id, {
-                "answer_correct": correct,
-                "parse_error": parse_error,
-                "reason": reason,
-                "judge_response": response[:5000],
+                "answer_correct": sum(sample["correct"] for sample in samples) / len(samples),
+                "parse_error": False,
+                "judge_samples": samples,
+                "judge_call_count": calls,
                 "error": None,
             }
         except Exception as error:
             return query_id, {
-                "answer_correct": False,
+                "answer_correct": 0.0,
                 "parse_error": True,
                 "reason": "",
                 "judge_response": "",
+                "judge_samples": samples,
+                "judge_call_count": calls,
                 "error": str(error),
             }
 
@@ -389,19 +399,17 @@ def main() -> int:
         query_id = row["query_id"]
         evidence_match = evidence_matches[query_id]
         judge_result = judge_results.get(query_id)
-        answer_correct = bool(
-            evidence_match
-            and judge_result
-            and judge_result.get("answer_correct", False)
-        )
+        answer_correct = judge_result["answer_correct"] if evidence_match and judge_result else 0.0
         per_query.append(
             {
                 "query_id": query_id,
                 "predicted_evidence": predictions[query_id]["evidence"],
                 "evidence_match": evidence_match,
                 "answer_judged": evidence_match,
+                "judge_call_count": judge_result["judge_call_count"] if judge_result else 0,
                 "answer_correct": answer_correct,
-                "correct": evidence_match and answer_correct,
+                "correct": answer_correct,
+                "judge_samples": judge_result.get("judge_samples", []) if judge_result else [],
                 "parse_error": (
                     judge_result.get("parse_error", False) if judge_result else False
                 ),
@@ -413,31 +421,32 @@ def main() -> int:
             }
         )
 
-    correct_count = sum(bool(item["correct"]) for item in per_query)
+    correct_count = sum(item["correct"] for item in per_query)
     evidence_count = sum(bool(item["evidence_match"]) for item in per_query)
     judge_error_count = sum(bool(item["error"]) for item in per_query)
-    accuracy = correct_count / len(per_query)
+    accuracy = correct_count / len(per_query) if not judge_error_count else 0.0
     evidence_accuracy = evidence_count / len(per_query)
     report = {
         "task_id": "scientific-paper-qa",
-        "valid": True,
+        "valid": judge_error_count == 0,
         "score": 100.0 * accuracy,
         "query_count": len(per_query),
         "primary_metric": {"name": "LLMJudgeAccuracy", "value": accuracy},
         "evidence_accuracy": evidence_accuracy,
         "evidence_match_count": evidence_count,
-        "answer_judge_call_count": len(rows_to_judge),
+        "answer_judge_call_count": sum(item["judge_call_count"] for item in per_query),
+        "answer_judge_repetitions": 3,
         "judge_error_count": judge_error_count,
         "judge_model": config.model if config else None,
         "per_query_metrics": per_query,
-        "errors": [],
+        "errors": [item["error"] for item in per_query if item["error"]],
         "scoring_rule": (
-            "per-query score is 1 only when evidence matches first and the "
-            "LLM judge then marks the answer semantically correct"
+            "per-query score is zero for wrong evidence; otherwise the arithmetic "
+            "mean of three independent binary answer judgments"
         ),
     }
     write_report(report)
-    return 0
+    return int(judge_error_count > 0)
 
 
 if __name__ == "__main__":

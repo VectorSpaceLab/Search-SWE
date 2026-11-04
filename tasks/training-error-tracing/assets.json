@@ -17,7 +17,7 @@
       "size_bytes": 2162,
       "sha256": "91abc8c7569d22d39b4afe0aba4a482144da68619822049f59e2894ebf0044d5",
       "source": {
-        "local_path": "model-metadata/compact-base/config.json"
+        "local_path": "assets/model/config.json"
       }
     },
     {
@@ -58,7 +58,7 @@
       "size_bytes": 2122,
       "sha256": "37a3baeb6f89e36edb2f7eed508db85615c99f666fc5627581a7644cca41a3a3",
       "source": {
-        "local_path": "model-metadata/compact-base/probe.json"
+        "local_path": "assets/model/probe.json"
       }
     },
     {
@@ -88,7 +88,7 @@
       "size_bytes": 4028,
       "sha256": "11356a4a1dc686b96ebdb90ea540ad1357266765fcf1e35790b48b41bfd4d114",
       "source": {
-        "local_path": "model-metadata/base/verified-manifest.json"
+        "local_path": "assets/model/verified-manifest.json"
       }
     },
     {
@@ -118,7 +118,7 @@
       "size_bytes": 815,
       "sha256": "8b561b8020d36d948dad8d1066d25b01da25b227b4194d8f53f643d487b4ebd6",
       "source": {
-        "local_path": "environment/input-metadata/base-alternatives/complete.json"
+        "local_path": "assets/diagnostics/base-alternatives.json"
       }
     },
     {
@@ -148,7 +148,7 @@
       "size_bytes": 647,
       "sha256": "4acec65694d8cf4cbc25fa799ca54794f20a4c9d5794700704c77d2a684a4b1c",
       "source": {
-        "local_path": "environment/input-metadata/base-nll/complete.json"
+        "local_path": "assets/diagnostics/base-nll.json"
       }
     },
     {

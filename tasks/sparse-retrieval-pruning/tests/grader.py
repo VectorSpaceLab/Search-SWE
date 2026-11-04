@@ -203,7 +203,7 @@ def grade_rounds(rounds, ids, valid_docs, qrels, reference):
                     "speedup": speedup, "ratio": candidate_seconds / starter_seconds,
                     "zero_reward_speedup": ZERO_REWARD_SPEEDUP,
                     "full_reward_speedup": FULL_REWARD_SPEEDUP, "reward": latency_score,
-                    "aggregation": "ratio of medians from five rounds, not median of ratios",
+                    "aggregation": "ratio of median wall times from five rounds",
                     "warmup": "none; OS file cache retained; fresh process and scratch each invocation"},
         "rounds": measured,
     }

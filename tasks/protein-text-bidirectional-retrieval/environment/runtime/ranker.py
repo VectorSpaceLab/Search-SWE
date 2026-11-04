@@ -1,4 +1,4 @@
-"""Author-only draft trusted ranking core; no task-package change."""
+"""Fixed cosine ranking for the public self-check and separate verifier."""
 import numpy as np
 
 DIMENSION = 64

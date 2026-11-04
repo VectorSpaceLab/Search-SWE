@@ -15,4 +15,4 @@ RUN npm install --global --ignore-scripts \
     && test "$(claude --version)" = "${SEARCH_SWE_CLAUDE_CODE_VERSION} (Claude Code)"
 RUN claude --help | grep -F "(low, medium, high, xhigh, max)" >/dev/null
 
-RUN mkdir -p /app/submission /task/data /task/models /task/docs
+RUN mkdir -p /app/submission /task/data /task/models /task/docs /task/tools

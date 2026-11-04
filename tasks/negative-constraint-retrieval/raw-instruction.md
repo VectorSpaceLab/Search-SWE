@@ -48,7 +48,7 @@ After a successful build, the verifier invokes:
   --top-k 1
 ```
 
-`run.sh` must process every supplied query, write exactly one result object per input query and return exit status `0`. During verification, the build runs once and `run.sh` is invoked sequentially with one query per input file. Each invocation has an **8-second wall-clock deadline**, consisting of a 3-second base budget plus a fixed 5-second network allowance. Startup, index loading, parsing, retrieval, generation/API waits and retries, filtering, reranking and output all count toward that deadline. The allowance is per query, not per API call; no API time is separately subtracted. Unused time cannot be transferred to another query. A query timeout earns zero for that query only, regardless of any output written before the timeout. The evaluator terminates its process group, ignores its output, and continues with all remaining queries. Timed-out queries remain in the scoring denominator. Each query receives distinct input/output paths; the index directory and build-started background services persist across invocations, including after timeouts. Future evaluation queries are not revealed ahead of their turn.
+`run.sh` must process every supplied query, write exactly one result object per input query and return exit status `0`. During verification, the build runs once and `run.sh` is invoked sequentially with one query per input file. Each invocation has an **8-second wall-clock deadline**, including startup, index loading, parsing, retrieval, generation/API waits and retries, filtering, reranking and output. Unused time cannot be transferred to another query. A query timeout stops that invocation and earns zero for that query only, regardless of any output written before the timeout. Its output is ignored and evaluation continues with all remaining queries. Timed-out queries remain in the scoring denominator. The index directory and build-started background services persist across invocations, including after timeouts. Future evaluation queries are not revealed ahead of their turn.
 
 ### Output contract
 
@@ -117,8 +117,4 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/environment.md`](/task/docs/environment.md) — the installed Python environment, system runtime, packages and tools.
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — permitted retrieval/generative resources, provider/model/endpoint restrictions, credential handling and jailbreak penalties.
 
-These documents are read-only task data. Optional embeddings and reranking may use OpenRouter or Jina under the resource document's restrictions. Optional generation may use only OpenRouter's `qwen/qwen3.6-35b-a3b`, `qwen/qwen3.5-35b-a3b` or `qwen/qwen3.5-9b`, for query parsing/rewriting, corpus annotation or deciding whether supplied corpus passages satisfy a query. Choosing among supplied passages with these models is allowed; asking for known benchmark answers or outside documents is prohibited.
-
-Runtime egress is limited to `openrouter.ai` and `api.jina.ai`. The coding agent's own model endpoint is not a submission resource. Do not use another generative model/provider/endpoint or repurpose retrieval endpoints as generation services.
-
-The optional runtime credentials are injected as `OPENROUTER_API_KEY` and `JINA_API_KEY`; no task API is mandatory. Do not store, print or log credentials in code, indexes, artifacts or outputs.
+These documents are read-only task data. API use is optional; follow the complete resource permissions, usage restrictions and credential-handling rules in `available_resources.md`.

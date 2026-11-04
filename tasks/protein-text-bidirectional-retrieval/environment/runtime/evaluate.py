@@ -1,11 +1,13 @@
 """Separate trusted supervisor; never imports submitted Python in the scorer."""
 import argparse
+import ctypes
 import hashlib
 import json
 import os
 from pathlib import Path
 import selectors
 import shutil
+import stat
 import subprocess
 import tempfile
 import time
@@ -34,8 +36,9 @@ def snapshot():
     for p in [root, *root.rglob('*')]:
         if p.is_symlink() or not (p.is_file() or p.is_dir()):
             raise ValueError('Submission must contain only regular files and directories')
+        executable = bool(p.stat().st_mode & 0o111)
         os.chown(p, 0, 0)
-        p.chmod(0o555 if p.is_dir() else 0o444)
+        p.chmod(0o555 if p.is_dir() or executable else 0o444)
         if p.is_file():
             total += p.stat().st_size
             if total > SUBMISSION_BYTES:
@@ -51,15 +54,101 @@ class ResourceViolation(RuntimeError):
     pass
 
 
+def writable_bytes():
+    """Count task paths and open files, including sparse and unlinked files."""
+    total = 0
+    seen = set()
+
+    def account(path, descriptor=False):
+        nonlocal total
+        try:
+            if descriptor:
+                target = os.readlink(path)
+                if not target.startswith(('/app/', '/tmp/', '/dev/shm/', '/memfd:')):
+                    return
+                info = path.stat()
+            else:
+                info = path.lstat()
+        except (FileNotFoundError, ProcessLookupError):
+            return  # A normal temporary file or descriptor was just removed.
+        identity = info.st_dev, info.st_ino
+        if stat.S_ISREG(info.st_mode) and (not descriptor or identity not in seen):
+            # Preserve per-path accounting for named hard links, but do not
+            # count an open descriptor again if its file was already counted.
+            total += info.st_size
+            seen.add(identity)
+
+    def walk_error(error):
+        if not isinstance(error, FileNotFoundError):
+            raise error
+
+    try:
+        for root in ['/app', '/tmp', '/dev/shm']:
+            for parent, _, files in os.walk(root, onerror=walk_error):
+                for name in files:
+                    account(Path(parent) / name)
+        libc = ctypes.CDLL(None)
+        for process in Path('/proc').iterdir():
+            if not process.name.isdigit():
+                continue
+            try:
+                status = (process / 'status').read_text().splitlines()
+                uid = int(next(line.split()[1] for line in status if line.startswith('Uid:')))
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            if uid != UID and int(process.name) != os.getpid():
+                continue
+            attempt = 0
+            exit_deadline = None
+            while True:
+                # Only this thread's filesystem IDs change. The supervisor's
+                # real/effective/saved IDs remain root and inaccessible to workers.
+                previous_gid = libc.setfsgid(UID) if uid == UID else None
+                previous_uid = libc.setfsuid(UID) if uid == UID else None
+                denied = False
+                try:
+                    for descriptor in (process / 'fd').iterdir():
+                        account(descriptor, descriptor=True)
+                except (FileNotFoundError, ProcessLookupError):
+                    break
+                except PermissionError:
+                    denied = True
+                finally:
+                    if previous_uid is not None:
+                        libc.setfsuid(previous_uid)
+                        libc.setfsgid(previous_gid)
+                if not denied:
+                    break
+                try:
+                    fields = (process / 'stat').read_text().rsplit(') ', 1)[1].split()
+                except (FileNotFoundError, ProcessLookupError):
+                    break
+                if fields[0] == 'Z':
+                    break
+                # An exiting process can temporarily deny procfs access before
+                # closing its descriptors. Do not silently ignore live processes.
+                if int(fields[6]) & 0x00000004:  # PF_EXITING
+                    if exit_deadline is None:
+                        exit_deadline = time.monotonic() + 1.0
+                    if time.monotonic() < exit_deadline:
+                        time.sleep(.005)
+                        continue
+                if attempt == 0:
+                    attempt += 1
+                    time.sleep(.005)  # Brief setuid/dumpability transition.
+                else:
+                    raise ResourceViolation('Cannot inspect submission open files')
+    except PermissionError as error:
+        raise ResourceViolation('Cannot account for task storage') from error
+    return total
+
+
 class Resources:
     def __init__(self):
         pynvml.nvmlInit()
         if pynvml.nvmlDeviceGetCount() != 1:
             raise ResourceViolation('Exactly one mapped GPU required')
         self.gpu = pynvml.nvmlDeviceGetHandleByIndex(0)
-        name = pynvml.nvmlDeviceGetName(self.gpu)
-        if 'A100' not in name or not (39 << 30) <= pynvml.nvmlDeviceGetMemoryInfo(self.gpu).total <= (41 << 30):
-            raise ResourceViolation('A100 40GB required')
         self.peak_gpu = self.peak_storage = 0
         self.last_disk = 0
         self.fixed = sum(p.stat().st_size for root in ['/task/models', '/task/public', '/task/private']
@@ -70,8 +159,7 @@ class Resources:
         self.peak_gpu = max(self.peak_gpu, used)
         if time.monotonic() - self.last_disk >= 1:
             self.last_disk = time.monotonic()
-            used = self.fixed + sum(p.stat().st_size for root in ['/app', '/tmp', '/dev/shm']
-                                    for p in Path(root).rglob('*') if p.is_file() and not p.is_symlink())
+            used = self.fixed + writable_bytes()
             self.peak_storage = max(self.peak_storage, used)
             if used > 100 << 30:
                 raise ResourceViolation('100 GiB total task storage exceeded')
@@ -95,7 +183,7 @@ class Resources:
                 ['environment.md', 'available_resources.md']]
         tests = ['/tests/' + name for name in
                  ['test_boundary.py', 'finalize.py', 'rewardkit_deepseek.py', 'test_finalizer.py', 'test.sh',
-                  'test_metrics.py', 'test_transfer.py', 'test_runtime_gpu.py', 'test_ranker.py', 'grade.py', 'Dockerfile',
+                  'test_metrics.py', 'test_transfer.py', 'test_runtime_cpu.py', 'test_runtime_gpu.py', 'test_ranker.py', 'grade.py', 'Dockerfile',
                   'docker-compose.yaml', 'jailbreak_judge/judge.toml']]
         result['trusted_phase_file_hashes'] = {
             name: hashlib.sha256(Path(name).read_bytes()).hexdigest()
@@ -318,13 +406,12 @@ def evaluate(root, output, full_queries=False):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Evaluate the public labeled validation pairs.')
     parser.add_argument('--root', default='/task/public/valid')
     parser.add_argument('--output', required=True)
-    parser.add_argument('--full', action='store_true', help='Require10000 labeled queries per group; private author/verifier use only')
     args = parser.parse_args()
     try:
-        result = evaluate(args.root, args.output, full_queries=args.full)
+        result = evaluate(args.root, args.output, full_queries=False)
         print(json.dumps(result))
     except Exception as exc:
         cleanup()

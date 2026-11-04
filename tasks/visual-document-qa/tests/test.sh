@@ -23,7 +23,7 @@ for p in /tmp /var/tmp /run/lock; do [[ ! -d "$p" ]] || chmod 0755 "$p"; done
 cleanup() { pkill -TERM -u submission 2>/dev/null || true; sleep .2; pkill -KILL -u submission 2>/dev/null || true; pkill -TERM -u audit 2>/dev/null || true; }
 trap cleanup EXIT
 trap 'exit 143' INT TERM HUP
-SEARCH_SWE_EXECUTION_ERROR="$execution_error" timeout --signal=TERM --kill-after=15s 43200s /opt/conda/bin/python /tests/grader.py
+SEARCH_SWE_EXECUTION_ERROR="$execution_error" timeout --signal=TERM --kill-after=15s 57600s /opt/conda/bin/python /tests/grader.py
 grader_status=$?
 cleanup
 judge_status=78

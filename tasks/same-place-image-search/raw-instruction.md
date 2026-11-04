@@ -8,7 +8,7 @@ A cropped architectural photograph may show only a small part of a building. Bui
 
 ### Resource limits and workload
 
-- You have two hours, 8 CPU cores, 32 GiB RAM, 100 GiB working storage and one 40 GiB GPU.
+- You have two hours, 8 CPU cores, 32 GiB RAM, 100 GiB working storage and one GPU.
 - The encoder is fixed.
 - The build command has 3,600 seconds.
 - The system must handle up to 140 requests in two calls of at most 70 requests, with an independent 2,700-second allowance per call.
@@ -83,7 +83,7 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. The failure and timeout behavior follows the contracts above.
-4. **Search quality.** Raw quality is binary nDCG@5, which rewards placing labeled matching images near the top of the ranking. Query scores are averaged within each gallery collection, then equally across the two collections. Excluded images are not valid retrieval results. The relevance-label protocol is described in [README.md — Search Quality](README.md#search-quality).
+4. **Search quality.** Public and held-out relevance labels follow the Revisited Oxford/Paris Hard protocol: images labeled Hard are positives. Original Easy and Junk images are listed in each request's `exclude_image_ids`, not treated as negatives. Returning an excluded ID invalidates that query's result and gives it zero quality. Raw quality is binary nDCG@5, which rewards placing Hard positives near the top. Query scores are averaged within Oxford and Paris separately, then the two collection means receive equal weight.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
 

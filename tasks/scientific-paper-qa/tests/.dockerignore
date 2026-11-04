@@ -8,3 +8,9 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage*
+
+# Development tests and local caches are not verifier runtime inputs.
+**/__pycache__
+**/*.py[cod]
+test_*.py
+**/test_*.py

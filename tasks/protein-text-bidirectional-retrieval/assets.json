@@ -69,13 +69,10 @@
     },
     {
       "path": "models/BiomedNLP-BiomedBERT-base-uncased-abstract/LICENSE.md",
-      "size_bytes": 1072,
-      "sha256": "8542b3a65414366ae3228e8f1658e538ec95f9b8855599c9c6e36751d592be66",
+      "size_bytes": 1073,
+      "sha256": "3de58addceb320c440de8d4742f011341b3b9092cd86ce0cb80c7858b8fbdf51",
       "source": {
-        "repo_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract",
-        "repo_type": "model",
-        "revision": "d673b8835373c6fa116d6d8006b33d48734e305d",
-        "filename": "LICENSE.md"
+        "local_path": "tests/bundled-assets/models/BiomedNLP-BiomedBERT-base-uncased-abstract/LICENSE.md"
       }
     },
     {
