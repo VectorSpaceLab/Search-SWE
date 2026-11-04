@@ -34,7 +34,7 @@ corpus.
 
 - `/task/public/config.json` exposes the frozen aggregate grading references B and U; individual hidden query labels/results remain private.
 
-- Read `/task/docs/environment.md` and `/task/docs/available_resources.md`. `/task/baseline/search.py` and `/task/baseline/search.sh` provide the simple vector/direct/hybrid baselines, not an optimized solution.
+- Read `/task/docs/environment.md` and `/task/docs/available_resources.md`. `/task/baseline` provides vector, direct-vector, hybrid and two-round feedback baselines. The resource document describes development-stage preparation and invocation.
 
 - The separate development service only accepts public query IDs. `/task/tools/oracle_client.py` provides `call('/begin', {'query_id': ...})` and `call('/score', request)` over `/run/oracle/oracle.sock`. Each begin establishes a fresh timed 20-call development session; there is no such reset interface in final verification.
 
@@ -50,11 +50,11 @@ corpus.
 
 - Each valid test query uses BEIR nDCG@10 with IDCG from all its official qrels, not its candidates. Over-20 calls, over-2-second duration, execution/protocol failure, duplicate/unknown IDs or more than 10 results give that query nDCG=0. Build/startup failure, memory/storage excess or integrity violations give final score=0.
 
-- Let Q be the mean over all 3452 test queries, including failures. B is the highest fixed resource-valid simple baseline mean (dense 20 + expensive rerank, hybrid 20 + expensive rerank, and direct cheap top-10). U is offline exact expensive-vector full-corpus top-10 quality on those same queries. Baseline implementations/parameters are development-selected, and B/U are frozen before evaluation.
+- Let Q be the mean over all 3452 test queries, including failures. B is the highest fixed resource-valid simple baseline mean (dense 20 + expensive rerank, hybrid 20 + expensive rerank, direct cheap top-10, and two-round retrieval with a development-trained tree ranker and expensive-distance feedback). U is offline exact expensive-vector full-corpus top-10 quality on those same queries. Baseline implementations/parameters are development-selected, and B/U are frozen before evaluation.
 
 - Displayed score = 100 * clip((Q-B)/(U-B),0,1), with Harbor reward equal to score/100. The full-test mean is computed before normalization. Matching B earns zero; reaching/exceeding U earns 100. U is a reference, not a theoretical relevance upper bound. Fewer calls and faster queries do not independently earn credit. Raw Q/B/U, call counts, latency, startup time, memory and index/storage use are reported.
 
-B=0.8460412084949013 and U=0.9117533972383719.
+B=0.8863201879062371 and U=0.9117533972383719.
 
 The coding trajectory is transferred separately and protected before submitted code runs. An independent integrity review checks the trajectory and submitted files for forbidden test-answer mappings, hidden-label use and other stated violations. The numeric score is published only after that review passes; missing, failed or malformed review evidence cannot yield a positive reward and is reported separately from an ordinary low score. Zero expensive-distance or model calls are allowed. General indexes, caches and parameters derived from permitted inputs remain allowed.
 

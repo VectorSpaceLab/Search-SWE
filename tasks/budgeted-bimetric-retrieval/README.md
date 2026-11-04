@@ -24,6 +24,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-11-04 | 1.0.0 | Added a public two-round feedback baseline and updated the frozen baseline reference. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -33,6 +34,27 @@ A large candidate corpus must be searched with only 20 expensive distance calls 
 ## Verification Explanation
 
 The verifier averages nDCG@10 over all 3,452 hidden queries, including failed queries as zero, then normalizes improvement between the frozen baseline and full-corpus expensive-vector reference. Per-query oracle-call and time limits are enforced; build, resource and integrity failures give zero final reward. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+### Reference baseline
+
+The frozen baseline reference is B = 0.8863201879062371. The full-corpus
+expensive-vector reference remains U = 0.9117533972383719. B is the highest
+resource-valid mean among the public vector, direct-vector, hybrid and two-round
+feedback baselines.
+
+The feedback baseline uses ten cheap-vector and lexical features, a small tree
+ranker, and two batches of ten expensive scores. Its parameters were selected
+using five-fold validation on the 500 public development questions. Prepare its
+submission in the development container:
+
+```bash
+python /task/baseline/train_feedback.py --data-dir /task/public --output-dir /app/feedback-baseline
+```
+
+The generated `search.sh` implements the standard build/load interface. The
+preparation step fits the model; final build/load only builds the index and loads
+those parameters. See [available resources](environment/docs/available_resources.md)
+for the invocation details.
 
 ### Restore inputs
 
