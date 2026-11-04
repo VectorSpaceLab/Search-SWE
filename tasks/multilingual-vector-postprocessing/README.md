@@ -7,7 +7,7 @@
 | Task | `multilingual-vector-postprocessing` |
 | Version | 1.0.0 |
 | Authors | jianlyu |
-| Primary metric | clip((Q-B)/(U-B),0,1), with B and U frozen before agent evaluation |
+| Primary metric | clip((Q-B)/(1-B),0,1), with B frozen before agent evaluation and full score at Q=1 |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 21600 s / 10800 s |
 | Dataset | Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition |
@@ -33,7 +33,7 @@ Only transformations of frozen vectors are available. Improvements must transfer
 
 ## Verification Explanation
 
-The verifier normalizes transformed vectors, ranks by FP32 cosine and computes binary nDCG@20 using the full positive sets. It averages equally across query languages and datasets, then normalizes improvement over frozen baseline/reference anchors. Query failures retain their denominator; preparation, resource and integrity failures invalidate the submission. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+The verifier normalizes transformed vectors, ranks by FP32 cosine and computes binary nDCG@20 using the full positive sets. It averages equally across query languages and datasets, then linearly normalizes improvement from the fixed baseline B=0.9127469497437668 to the full-score point Q=1. Query failures retain their denominator; preparation, resource and integrity failures invalidate the submission. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
 
 ### Restore inputs
 

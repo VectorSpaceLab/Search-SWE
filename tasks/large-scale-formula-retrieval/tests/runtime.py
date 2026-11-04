@@ -1,4 +1,4 @@
-"""Privileged supervisor for a credential-free, stopped-between-phases worker."""
+"""Privileged supervisor with API-enabled builds and offline serving workers."""
 import ctypes
 import errno
 import json
@@ -18,6 +18,7 @@ STORAGE = 64 << 30
 MAX_LINE = 1 << 20
 MAX_DIAGNOSTICS = 128 << 20
 _diagnostic_bytes = 0  # Shared across restarts, within the 512 MiB log reserve.
+BUILD_API_NAMES = ('OPENROUTER_API_KEY', 'JINA_API_KEY', 'OPENROUTER_API_BASE_URL')
 
 
 class ArgComparison(ctypes.Structure):
@@ -67,7 +68,7 @@ def clear_worker_ipc():
         raise Violation('submitted kernel IPC state survived cleanup')
 
 
-def sandbox(cpu_ids, work):
+def sandbox(cpu_ids, work, allow_api=False):
     os.sched_setaffinity(0, cpu_ids)
     # Prefer terminating the over-budget candidate over the small trusted grader.
     Path('/proc/self/oom_score_adj').write_text('1000')
@@ -96,13 +97,14 @@ def sandbox(cpu_ids, work):
             nr = sec.seccomp_syscall_resolve_name(call.encode())
             if nr >= 0 and sec.seccomp_rule_add(ctx, 0x50000 | errno.EPERM, nr, 0):
                 raise RuntimeError('seccomp rule failed')
-        # Local Unix IPC is legitimate (e.g. multiprocessing.Pipe); Internet and
-        # other address families are unavailable. SCMP_CMP_NE=1, AF_UNIX=1.
-        condition = ArgComparison(0, 1, 1, 0)
-        for call in ['socket', 'socketpair']:
-            nr = sec.seccomp_syscall_resolve_name(call.encode())
-            if sec.seccomp_rule_add_array(ctx, 0x50000 | errno.EPERM, nr, 1, ctypes.byref(condition)):
-                raise RuntimeError('network seccomp rule failed')
+        # Build egress uses Harbor's exact-host OpenRouter/Jina allowlist.
+        # Serving retains Unix IPC only. SCMP_CMP_NE=1, AF_UNIX=1.
+        if not allow_api:
+            condition = ArgComparison(0, 1, 1, 0)
+            for call in ['socket', 'socketpair']:
+                nr = sec.seccomp_syscall_resolve_name(call.encode())
+                if sec.seccomp_rule_add_array(ctx, 0x50000 | errno.EPERM, nr, 1, ctypes.byref(condition)):
+                    raise RuntimeError('network seccomp rule failed')
         if sec.seccomp_load(ctx):
             raise RuntimeError('seccomp load failed')
     finally:
@@ -113,24 +115,32 @@ def sandbox(cpu_ids, work):
     os.chdir(work)
 
 
+def submission_env(work, cpu_ids, allow_api=False):
+    env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': str(work),
+           'TMPDIR': str(work), 'XDG_CACHE_HOME': str(work), 'LANG': 'C.UTF-8',
+           'OMP_NUM_THREADS': str(len(cpu_ids)), 'OPENBLAS_NUM_THREADS': str(len(cpu_ids)), 'MKL_NUM_THREADS': str(len(cpu_ids)),
+           'OMP_PROC_BIND': 'false', 'KMP_AFFINITY': 'disabled',
+           'NUMEXPR_NUM_THREADS': str(len(cpu_ids)), 'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONUNBUFFERED': '1'}
+    if allow_api:
+        # Never pass coding-agent or judge credentials to submitted programs.
+        env.update({name: os.environ[name] for name in BUILD_API_NAMES if name in os.environ})
+    return env
+
+
 class Worker:
-    def __init__(self, command, work, log, cpu_ids, fixed_bytes=0):
+    def __init__(self, command, work, log, cpu_ids, fixed_bytes=0, *, allow_api=False):
         self.work, self.cpus, self.fixed_bytes = Path(work), cpu_ids, fixed_bytes
         self.disk_root = self.work
         self.work.mkdir(parents=True, exist_ok=True)
         os.chown(self.work, UID, UID)
         self.stderr = Path(log).open('wb', buffering=0)
         self.stderr_bytes = 0
-        env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': str(work),
-               'TMPDIR': str(work), 'XDG_CACHE_HOME': str(work), 'LANG': 'C.UTF-8',
-               'OMP_NUM_THREADS': str(len(cpu_ids)), 'OPENBLAS_NUM_THREADS': str(len(cpu_ids)), 'MKL_NUM_THREADS': str(len(cpu_ids)),
-               'OMP_PROC_BIND': 'false', 'KMP_AFFINITY': 'disabled',
-               'NUMEXPR_NUM_THREADS': str(len(cpu_ids)), 'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONUNBUFFERED': '1'}
+        env = submission_env(work, cpu_ids, allow_api)
         self.launch_start = time.monotonic()
         self.first_phase = True
         self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE, env=env, start_new_session=True,
-                                        preexec_fn=lambda: sandbox(cpu_ids, work))
+                                        preexec_fn=lambda: sandbox(cpu_ids, work, allow_api))
         self.selector = selectors.DefaultSelector()
         self.selector.register(self.process.stdout, selectors.EVENT_READ, 'stdout')
         self.selector.register(self.process.stderr, selectors.EVENT_READ, 'stderr')

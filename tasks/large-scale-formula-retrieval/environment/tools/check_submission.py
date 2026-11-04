@@ -57,6 +57,8 @@ def main():
         return
     runtime = Path(tempfile.mkdtemp(prefix=a.index_dir.name + '-serve-', dir=a.index_dir.parent))
     environment.update(TMPDIR=str(runtime), HOME=str(runtime))
+    for name in ('OPENROUTER_API_KEY', 'JINA_API_KEY', 'OPENROUTER_API_BASE_URL'):
+        environment.pop(name, None)
     labels = read_qrels(a.data_dir / 'dev/qrels.tsv')
     mapping = np.load(a.data_dir / 'instance_visual.npy', mmap_mode='r')
     queries = [json.loads(s) for s in (a.data_dir / 'dev/queries.jsonl').read_text().splitlines()]

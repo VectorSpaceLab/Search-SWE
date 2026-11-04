@@ -110,9 +110,7 @@ permitted within total storage.
 - Six nDCG@10 retention gates R>=rho*R0. Linear gain; all-qrels IDCG. R0 fixed
   query-only E5. rho is fixed at 0.9.
 - B=max(0,H) of the eligible fixed-format untrained E5 baseline. Query-text-only E5 defines R0 relevance floors, not the deployed B baseline.
-  U is harmonic H of a same-model/resource compact-query fixed-serving weight-adaptation
-  reference selected only on public data before its hidden check. Frozen
-  B=0, U=0.07054277758767746, rho=.9.
+  U is the harmonic H of jhu-clsp/FollowIR-7B measured on this task's 84 hidden groups on 2026-11-04, using the official prompt and 2,048-token truncation. It is an external reranker quality reference, not a same-model/resource reference or a theoretical upper bound. Frozen B=0, U=0.10647366293851011, rho=.9.
 - Score 100*clip((H-B)/(U-B),0,1) after relevance/model/resource gates; framework
   reward score/100. Integrity rejection or failed/unavailable mandatory judge0.
 - Either version invalid/nonfinite/wrong-dimension/zero/timeout/failure -> pair

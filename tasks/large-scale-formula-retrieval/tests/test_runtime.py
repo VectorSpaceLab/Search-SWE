@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 import psutil
 import runtime
@@ -13,6 +14,17 @@ from runtime import Worker, Violation
 FIXTURE = '''import ctypes,json,os,socket,sys,time
 for line in sys.stdin:
  r=json.loads(line); op=r['op']
+ if op=='api_checks':
+  out={k:os.environ.get(k) for k in ['OPENROUTER_API_KEY','JINA_API_KEY','OPENAI_API_KEY']}
+  try:
+   with socket.socket() as listener:
+    listener.bind(('127.0.0.1',0));listener.listen(1)
+    with socket.create_connection(listener.getsockname(),timeout=1) as client:
+     peer,_=listener.accept()
+     with peer:
+      client.sendall(b'api');out['network']=peer.recv(3).decode()
+  except (PermissionError,OSError):out['network']='denied'
+  print(json.dumps(out),flush=True);continue
  if op=='ipc_transfer':
   c=ctypes.CDLL(None,use_errno=True)
   objects=[]
@@ -106,6 +118,28 @@ class RuntimeTests(unittest.TestCase):
         self.worker.begin(.2)
         with self.assertRaisesRegex(Violation, 'timeout'):
             self.worker.request({'op': 'timeout'})
+
+    def test_build_api_access_does_not_reach_serving(self):
+        supplied = {'OPENROUTER_API_KEY': 'test-submission-openrouter',
+                    'JINA_API_KEY': 'test-submission-jina', 'OPENAI_API_KEY': 'test-judge'}
+        self.worker.close()
+        with patch.dict(os.environ, supplied):
+            self.worker = Worker([sys.executable, '/fixture/worker.py'], '/work/test-worker',
+                                 '/logs/verifier/api-build.stderr', self.cpus, allow_api=True)
+            self.worker.begin(5)
+            self.assertEqual(self.worker.request({'op': 'api_checks'}),
+                             {'OPENROUTER_API_KEY': supplied['OPENROUTER_API_KEY'],
+                              'JINA_API_KEY': supplied['JINA_API_KEY'],
+                              'OPENAI_API_KEY': None, 'network': 'api'})
+            self.worker.finish()
+            self.worker.close()
+            self.worker = Worker([sys.executable, '/fixture/worker.py'], '/work/test-worker',
+                                 '/logs/verifier/api-serving.stderr', self.cpus)
+            self.worker.begin(5)
+            self.assertEqual(self.worker.request({'op': 'api_checks'}),
+                             {'OPENROUTER_API_KEY': None, 'JINA_API_KEY': None,
+                              'OPENAI_API_KEY': None, 'network': 'denied'})
+            self.worker.finish()
 
     def test_exit(self):
         self.worker.begin(5)

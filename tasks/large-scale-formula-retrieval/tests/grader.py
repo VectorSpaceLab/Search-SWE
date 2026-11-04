@@ -68,7 +68,8 @@ def main():
         nonlocal count
         count += 1
         stage = Path('/work' if name == 'build' else '/serve')
-        w = Worker(command, str(stage / 'runtime'), LOG / f'{name}-{count}.stderr', cpus, fixed)
+        w = Worker(command, str(stage / 'runtime'), LOG / f'{name}-{count}.stderr', cpus, fixed,
+                   allow_api=name == 'build')
         w.disk_root = stage
         return w
 

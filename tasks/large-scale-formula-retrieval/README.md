@@ -63,7 +63,7 @@ The task allocates 2 CPU cores, 4 GiB RAM and
 specified in the task contract; the verifier service timeout also includes its
 trusted setup and checks.
 
-This task uses no GPU.
+This task uses no GPU. Development and the timed final build may optionally use the OpenRouter/Jina APIs listed in [available resources](environment/docs/available_resources.md). Configure `OPENROUTER_API_KEY` and/or `JINA_API_KEY` for the services used; these submission credentials are separate from coding-agent and judge credentials. Follow the [submission API key profile](../../docs/evaluation/submission-models.md). Model-weight and extra-dataset/package downloads are prohibited. Loading, warmup and queries remain offline. API waits count toward the existing time budgets, and stored outputs count toward the existing storage limits.
 
 Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`,
 `dpkg-deb`, and root or sudo access. The standard launcher prepares fresh
