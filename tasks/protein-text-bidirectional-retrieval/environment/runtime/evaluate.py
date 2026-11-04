@@ -55,26 +55,27 @@ class ResourceViolation(RuntimeError):
 
 
 def writable_bytes():
-    """Count task paths and open files, including sparse and unlinked files."""
+    """Count task paths and retained files, including open or mapped unlinked files."""
     total = 0
     seen = set()
+    writable_prefixes = ('/app/', '/tmp/', '/dev/shm/', '/memfd:')
 
-    def account(path, descriptor=False):
+    def account(path, reference=False):
         nonlocal total
         try:
-            if descriptor:
+            if reference:
                 target = os.readlink(path)
-                if not target.startswith(('/app/', '/tmp/', '/dev/shm/', '/memfd:')):
+                if not target.startswith(writable_prefixes):
                     return
                 info = path.stat()
             else:
                 info = path.lstat()
         except (FileNotFoundError, ProcessLookupError):
-            return  # A normal temporary file or descriptor was just removed.
+            return  # A temporary file, descriptor or mapping was just released.
         identity = info.st_dev, info.st_ino
-        if stat.S_ISREG(info.st_mode) and (not descriptor or identity not in seen):
+        if stat.S_ISREG(info.st_mode) and (not reference or identity not in seen):
             # Preserve per-path accounting for named hard links, but do not
-            # count an open descriptor again if its file was already counted.
+            # count descriptors or mappings again if their file was counted.
             total += info.st_size
             seen.add(identity)
 
@@ -108,7 +109,19 @@ def writable_bytes():
                 denied = False
                 try:
                     for descriptor in (process / 'fd').iterdir():
-                        account(descriptor, descriptor=True)
+                        account(descriptor, reference=True)
+                    # A mapping retains its backing file after unlink AND close.
+                    # Filter system/input mappings and already-counted inodes
+                    # before inspecting map_files. stat gives the full logical
+                    # file size, even when only a small range is mapped.
+                    for line in (process / 'maps').read_text(errors='surrogateescape').splitlines():
+                        fields = line.split(None, 5)
+                        if len(fields) < 6 or not fields[5].startswith(writable_prefixes):
+                            continue
+                        major, minor = (int(part, 16) for part in fields[3].split(':'))
+                        identity = os.makedev(major, minor), int(fields[4])
+                        if identity not in seen:
+                            account(process / 'map_files' / fields[0], reference=True)
                 except (FileNotFoundError, ProcessLookupError):
                     break
                 except PermissionError:
@@ -137,7 +150,7 @@ def writable_bytes():
                     attempt += 1
                     time.sleep(.005)  # Brief setuid/dumpability transition.
                 else:
-                    raise ResourceViolation('Cannot inspect submission open files')
+                    raise ResourceViolation('Cannot inspect submission open files or mappings')
     except PermissionError as error:
         raise ResourceViolation('Cannot account for task storage') from error
     return total

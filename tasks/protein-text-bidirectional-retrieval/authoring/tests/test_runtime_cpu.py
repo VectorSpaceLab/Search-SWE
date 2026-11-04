@@ -74,7 +74,10 @@ class RuntimeCPUTest(unittest.TestCase):
         with selectors.DefaultSelector() as ready:
             ready.register(child.stdout, selectors.EVENT_READ)
             self.assertTrue(ready.select(10), 'child did not become ready')
-        self.assertEqual(child.stdout.readline().strip(), 'ready')
+        message = child.stdout.readline().strip()
+        if message != 'ready':
+            _, error = child.communicate(timeout=5)
+            self.fail(f'child did not become ready: {message!r}; {error}')
         return child
 
     @staticmethod
@@ -186,6 +189,130 @@ sys.stdin.readline()
         with self.assertRaises(ResourceViolation):
             self.check(self.meter())
         self.assertEqual((os.getresuid(), os.getresgid()), identity)
+
+    def mapped_child(self, size, count=1, *, aliases=False, memfd=False):
+        # Use libc directly: Python mmap can retain a duplicated descriptor,
+        # which would accidentally exercise FD accounting instead of mappings.
+        return self.child(f"size={size}; count={count}; aliases={aliases}; memfd={memfd}\n" + """
+import ctypes, os
+status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines()
+              if ':' in line)
+assert int(status['CapEff'], 16) == int(status['CapPrm'], 16) == 0
+libc = ctypes.CDLL(None, use_errno=True)
+libc.mmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
+                      ctypes.c_int, ctypes.c_int, ctypes.c_longlong]
+libc.mmap.restype = ctypes.c_void_p
+libc.munmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+libc.memfd_create.argtypes = [ctypes.c_char_p, ctypes.c_uint]
+names, descriptors, mappings = [], [], []
+for index in range(count):
+    name = 'mapped-' + str(index)
+    fd = (libc.memfd_create(name.encode(), 0) if memfd else
+          os.open(name, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600))
+    assert fd >= 0, ctypes.get_errno()
+    os.ftruncate(fd, size)
+    descriptors.append(fd)
+    if not memfd:
+        names.append(name)
+        if aliases:
+            os.link(name, name + '-alias')
+            names.append(name + '-alias')
+    for _ in range(2):
+        address = libc.mmap(None, 4096, 3, 1, fd, 0)
+        assert address != ctypes.c_void_p(-1).value, ctypes.get_errno()
+        mappings.append(address)
+print('ready', flush=True)
+for command in sys.stdin:
+    command = command.strip()
+    if command == 'unlink':
+        for name in names:
+            os.unlink(name)
+        for fd in descriptors:
+            os.close(fd)
+        names.clear(); descriptors.clear()
+    elif command == 'release-one':
+        assert libc.munmap(mappings.pop(), 4096) == 0
+    elif command == 'unmap':
+        for address in mappings:
+            assert libc.munmap(address, 4096) == 0
+        mappings.clear()
+    elif command == 'exit':
+        break
+    print('ready', flush=True)
+""")
+
+    def mapping_command(self, child, command):
+        child.stdin.write(command + '\n')
+        child.stdin.flush()
+        with selectors.DefaultSelector() as ready:
+            ready.register(child.stdout, selectors.EVENT_READ)
+            self.assertTrue(ready.select(10), 'mapping command did not complete')
+        self.assertEqual(child.stdout.readline().strip(), 'ready')
+
+    def test_partial_mappings_retain_full_unlinked_file_sizes_until_unmap(self):
+        baseline = writable_bytes()
+        child = self.mapped_child(60 << 30, count=2)
+        for phase in ('named', 'mapped-only'):
+            with self.subTest(phase=phase):
+                if phase == 'mapped-only':
+                    self.mapping_command(child, 'unlink')
+                self.assertEqual(writable_bytes() - baseline, 120 << 30)
+                with self.assertRaisesRegex(ResourceViolation, '100 GiB'):
+                    self.check(self.meter())
+        self.mapping_command(child, 'unmap')
+        self.assertEqual(writable_bytes(), baseline)
+        self.check(self.meter())
+
+    def test_mapping_references_deduplicate_but_named_hard_links_count_per_path(self):
+        baseline = writable_bytes()
+        child = self.mapped_child(2 << 20, aliases=True)
+        self.assertEqual(writable_bytes() - baseline, 4 << 20)
+        self.mapping_command(child, 'unlink')
+        self.assertEqual(writable_bytes() - baseline, 2 << 20)
+        self.mapping_command(child, 'release-one')
+        self.assertEqual(writable_bytes() - baseline, 2 << 20)
+        self.mapping_command(child, 'unmap')
+        self.assertEqual(writable_bytes(), baseline)
+
+    def test_mapped_memfd_survives_fd_close_and_is_released_on_exit(self):
+        baseline = writable_bytes()
+        child = self.mapped_child(2 << 20, memfd=True)
+        self.assertEqual(writable_bytes() - baseline, 2 << 20)
+        self.mapping_command(child, 'unlink')
+        self.assertEqual(writable_bytes() - baseline, 2 << 20)
+        child.stdin.write('exit\n'); child.stdin.flush()
+        self.assertEqual(child.wait(timeout=5), 0)
+        self.assertEqual(writable_bytes(), baseline)
+
+    def test_mapping_inspection_denial_fails_closed_and_restores_identity(self):
+        child = self.mapped_child(2 << 20)
+        self.mapping_command(child, 'unlink')
+        original = Path.stat
+        def denied(path, *args, **kwargs):
+            if 'map_files' in path.parts:
+                raise PermissionError(str(path))
+            return original(path, *args, **kwargs)
+        identity = os.getresuid(), os.getresgid(), Path('/proc/self/status').read_text().split('CapEff:')[1].splitlines()[0]
+        with patch.object(Path, 'stat', denied), self.assertRaisesRegex(ResourceViolation, 'inspect submission'):
+            writable_bytes()
+        self.assertEqual((os.getresuid(), os.getresgid(),
+                          Path('/proc/self/status').read_text().split('CapEff:')[1].splitlines()[0]), identity)
+
+    def test_mapping_released_during_inspection_is_not_an_error(self):
+        baseline = writable_bytes()
+        child = self.mapped_child(2 << 20)
+        self.mapping_command(child, 'unlink')
+        original = Path.stat
+        released = False
+        def release(path, *args, **kwargs):
+            nonlocal released
+            if 'map_files' in path.parts and not released:
+                self.mapping_command(child, 'unmap')
+                released = True
+            return original(path, *args, **kwargs)
+        with patch.object(Path, 'stat', release):
+            self.assertEqual(writable_bytes(), baseline)
+        self.assertTrue(released)
 
     def test_live_child_cannot_hide_open_files(self):
         self.child("""

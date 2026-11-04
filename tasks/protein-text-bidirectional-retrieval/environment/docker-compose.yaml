@@ -2,6 +2,8 @@ services:
   main:
     mem_limit: 16g
     pids_limit: 512
+    cap_add:
+    - CHECKPOINT_RESTORE
     deploy:
       resources:
         reservations:

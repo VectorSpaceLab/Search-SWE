@@ -70,3 +70,19 @@ On 2026-11-04, the three Markdown assets were fetched at the immutable revisions
 ## Checks
 
 The 28 existing CPU tests for metrics, ranking, submission transfer and finalization passed using Python 3.13.13. CLI dispatch checks verify public evaluation, rejection of `--full` and the separate verifier's full-evaluation call without running GPU workloads. Task static validation and `git diff --check` cover package syntax and whitespace. These checks do not establish GPU runtime or model performance.
+
+## Mapped-file storage accounting — 2026-11-05, v1.0.0
+
+PR #43 review identified files retained only by memory mappings after unlink and closure of every file descriptor. The earlier path/FD scan omitted them. Storage sampling now also reads each inspected process's file mappings and obtains the backing file's full logical size through `map_files`, even when only a small file range is mapped. System and fixed-input mappings are excluded from the writable-file scan. Named hard links retain per-path accounting; extra FD and mapping references are deduplicated by device/inode. A released mapping is tolerated, while denied inspection fails explicitly.
+
+Both phase Compose overlays grant `CHECKPOINT_RESTORE` to the trusted supervisor for mapping inspection. The existing filesystem-UID inspection mechanism is retained; `SYS_PTRACE` is not added. Real isolated worker fixtures confirm that their effective and permitted capability sets remain empty after privilege dropping. A container without the required capability fails the storage check instead of silently reporting zero for retained mappings. Task version, resource budgets, scoring, submission format and agent-visible instructions are unchanged.
+
+All 51 CPU/container regression tests passed, including five new cases for partial mappings of two 60 GiB files, duplicate mappings and named hard links, mapped memfd objects after FD closure, unmap/process-exit release, permission denial with supervisor identity restoration, and release during inspection. The regression fixtures call libc directly so a Python mmap object's extra descriptor cannot accidentally mask the original bug. Tests use the existing cached verifier image with current sources mounted read-only, no network or GPU, and the added supervisor capability. From the disposable container:
+
+```bash
+PYTHONPATH=/package/authoring/tests:/package/tests /opt/conda/bin/python -m unittest test_metrics test_ranker test_transfer test_finalizer test_boundary test_runtime_cpu -v
+```
+
+The independent review reproducer now reports 128,849,018,880 bytes both before unlink and after FD closure while mappings remain; the actual `Resources.check()` rejects both states as exceeding 100 GiB. Only the unrelated NVML memory read is stubbed. Sparse-file data-block allocation is zero, so this is a logical accounting check, not a 120 GiB physical-write experiment. Both actual Compose overlays render with the single added capability and no development tmpfs mounts; merge-ready static checks and whitespace checks pass.
+
+Commands, before/after reproduction results, permission probes and regression logs are retained outside the package in `reports/2026-11-05/protein-mmap-fix/`. No image rebuild, GPU/model trial, paid judge call or score recalibration was performed for this fix.
