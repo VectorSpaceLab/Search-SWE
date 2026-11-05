@@ -14,10 +14,14 @@ import time
 
 import isolation
 from metrics import ndcg, validate_result
-from model import BUDGET, MODEL, GPU_LIMIT, deployment_config, verify_model
+from model import BUDGET, MODEL, deployment_config, verify_model
+
+from repeated_measurements import TIMING_REPEATS, median_seconds
 
 LOCAL_SECONDS = 1.0
+LOCAL_OBSERVATION_SECONDS = 2.0
 INFERENCE_SECONDS = 90.0
+INFERENCE_OBSERVATION_SECONDS = 120.0
 DEPLOY_SECONDS = 600.0
 WARMUP_SECONDS = 60.0
 STORAGE_LIMIT = 40 << 30
@@ -141,8 +145,6 @@ class Resources:
     def check(self, disk=False):
         used = self.nvml.nvmlDeviceGetMemoryInfo(self.gpu).used
         self.peak_gpu = max(self.peak_gpu, used)
-        if used > GPU_LIMIT:
-            raise RuntimeError(f'Global resource violation: 24 GiB GPU memory exceeded ({used} bytes)')
         if self.oom_count() != self.initial_oom:
             raise RuntimeError('Global resource violation: aggregate memory OOM')
         now = time.monotonic()
@@ -255,14 +257,14 @@ def run_query(query, submission, backend, output, resources):
         pipe.send({'type': 'query', **query, 'token_budget': BUDGET,
                    'output_weight': 4})
         while True:
-            message = pipe.read(started+excluded+LOCAL_SECONDS, resources.check)
+            message = pipe.read(started+excluded+LOCAL_OBSERVATION_SECONDS, resources.check)
             if isinstance(message, dict) and message.get('type') == 'result':
                 report['ids'] = validate_result(message, query)
                 report['status'] = 'ok'
                 break
-            isolation.freeze(started+excluded+LOCAL_SECONDS)
+            isolation.freeze(started+excluded+LOCAL_OBSERVATION_SECONDS)
             pause = time.monotonic()
-            remaining = INFERENCE_SECONDS-report['inference_seconds']
+            remaining = INFERENCE_OBSERVATION_SECONDS-report['inference_seconds']
             if remaining <= 0:
                 raise TimeoutError('Cumulative inference deadline exceeded')
             try:
@@ -283,7 +285,7 @@ def run_query(query, submission, backend, output, resources):
             pipe.send(response['reply'])
         # Returning a result also terminates the complete strategy tree.
         report['local_seconds'] = time.monotonic()-started-excluded
-        if report['local_seconds'] > LOCAL_SECONDS:
+        if report['local_seconds'] > LOCAL_OBSERVATION_SECONDS:
             raise TimeoutError('Cumulative strategy deadline exceeded')
     except Exception as error:
         report.update(status='failed', ids=[], error=str(error))
@@ -337,28 +339,46 @@ def evaluate(submission, queries, qrels, output):
         opener = gzip.open if str(queries).endswith('.gz') else open
         with opener(queries, 'rt') as f:
             data = [json.loads(line) for line in f]
+        samples = {query['query_id']: [] for query in data}
+        for repeat in range(TIMING_REPEATS):
+            measurement_output = output/f'measurement-{repeat+1}'
+            measurement_output.mkdir(mode=0o700)
+            for query in data:
+                if backend.broken:
+                    backend.close()
+                    backend = None
+                    remaining_deploy = DEPLOY_SECONDS-report['deployment_seconds']
+                    if remaining_deploy <= 0:
+                        raise TimeoutError('Cumulative model redeployment deadline exceeded')
+                    restart = time.monotonic()
+                    backend = Backend(submission/'deployment.json', output, resources, remaining_deploy)
+                    report['deployment_seconds'] += time.monotonic()-restart
+                    report['backend_restarts'] = report.get('backend_restarts', 0)+1
+                result = run_query(query, submission, backend, measurement_output, resources)
+                result['ndcg_at_10'] = ndcg(result['ids'], judgments[query['query_id']])
+                samples[query['query_id']].append(result)
+                dump(output/'progress.json', report)
+                print(json.dumps({'query_id': query['query_id'], 'status': result['status'],
+                    'ndcg_at_10': result['ndcg_at_10'], 'spent_tokens': result['spent_tokens']}), flush=True)
         for query in data:
-            if backend.broken:
-                backend.close()
-                backend = None
-                remaining_deploy = DEPLOY_SECONDS-report['deployment_seconds']
-                if remaining_deploy <= 0:
-                    raise TimeoutError('Cumulative model redeployment deadline exceeded')
-                restart = time.monotonic()
-                backend = Backend(submission/'deployment.json', output, resources, remaining_deploy)
-                report['deployment_seconds'] += time.monotonic()-restart
-                report['backend_restarts'] = report.get('backend_restarts', 0)+1
-            result = run_query(query, submission, backend, output, resources)
-            result['ndcg_at_10'] = ndcg(result['ids'], judgments[query['query_id']])
-            report['queries'].append(result)
-            dump(output/'progress.json', report)
-            print(json.dumps({'query_id': query['query_id'], 'status': result['status'],
-                'ndcg_at_10': result['ndcg_at_10'], 'spent_tokens': result['spent_tokens']}), flush=True)
+            measurements = samples[query['query_id']]
+            valid_samples = [m['status'] == 'ok' for m in measurements]
+            local = median_seconds([m['local_seconds'] if ok else None for m, ok in zip(measurements, valid_samples)])
+            inference = median_seconds([m['inference_seconds'] if ok else None for m, ok in zip(measurements, valid_samples)])
+            valid = all(valid_samples) and local is not None and inference is not None and local <= LOCAL_SECONDS and inference <= INFERENCE_SECONDS
+            report['queries'].append({
+                'query_id': query['query_id'], 'status': 'ok' if valid else 'failed',
+                'local_seconds': local, 'inference_seconds': inference,
+                'ndcg_at_10': sum(m['ndcg_at_10'] for m in measurements)/TIMING_REPEATS if valid else 0.0,
+                'measurements': measurements,
+            })
+        report.update(timing_repeats=TIMING_REPEATS, timing_aggregation='median')
         report['quality'] = sum(r['ndcg_at_10'] for r in report['queries'])/len(data)
-        calls = [c for q in report['queries'] for c in q['calls']]
+        measured_queries = [m for q in report['queries'] for m in q['measurements']]
+        calls = [c for q in measured_queries for c in q['calls']]
         report['token_usage'] = {
-            'weighted_tokens_total': sum(q['spent_tokens'] for q in report['queries']),
-            'max_weighted_tokens_per_query': max(q['spent_tokens'] for q in report['queries']),
+            'weighted_tokens_total': sum(q['spent_tokens'] for q in measured_queries),
+            'max_weighted_tokens_per_query': max(q['spent_tokens'] for q in measured_queries),
             'input_tokens_total': sum(c['input_tokens'] for c in calls),
             'known_output_tokens_total': sum(c['output_tokens'] or 0 for c in calls),
             'unknown_output_call_count': sum(c['output_tokens'] is None for c in calls),

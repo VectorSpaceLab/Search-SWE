@@ -39,8 +39,8 @@ def finite_unit(value: Any) -> float:
 
 
 def binary_judge(value: Any) -> tuple[bool, float]:
-    """Accept only numeric 0/1 from RewardKit's binary criterion."""
-    if type(value) not in (int, float) or value not in (0, 1):
+    """Accept the numeric mean of three binary integrity judgments."""
+    if type(value) not in (int, float) or value not in (0, 1/3, 2/3, 1):
         return False, 0.0
     return True, float(value)
 

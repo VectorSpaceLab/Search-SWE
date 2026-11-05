@@ -2,7 +2,7 @@ I need a local model that can make decisions across different tasks, such as cho
 
 Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the runtime and available files. Labeled examples are at `/task/data/examples.jsonl`, and the starting model is at `/task/models/Qwen3-0.6B`. Network access and external APIs are unavailable. Do not use external datasets, additional pretrained weights, hidden examples or labels, precomputed answers, or hard-coded input-to-answer mappings.
 
-You have 6 hours for development, with one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
+You have 6 hours for development, with one GPU, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
 
 Place the complete submission under `/app/submission`, including executable `start.sh` and `run.sh` and every file needed at runtime. Only this directory is transferred to the separate verifier; installed packages and live processes from development are not transferred. The supplied model and resource documents remain available there, but `examples.jsonl` does not. `/task` is read-only. The verifier runs your submission as a non-root user with `/app/submission` read-only; use the supplied runtime directory for generated files and the requested output path for results.
 

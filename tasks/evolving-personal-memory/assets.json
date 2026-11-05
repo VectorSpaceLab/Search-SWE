@@ -11,8 +11,8 @@
     },
     {
       "path": "data/corpus/licenses/source-data-README.md",
-      "size_bytes": 5295,
-      "sha256": "df93166e707dbd9273f5be01f2ec532949d59c55542fe8fb22d71a2e8c82fc0a",
+      "size_bytes": 1768,
+      "sha256": "468da417ff8de0691a80f3cf1ca491fc048de7384bb7d12f85933ca47ec4c3ce",
       "source": {
         "local_path": "asset-metadata/licenses/source-data-README.md"
       }

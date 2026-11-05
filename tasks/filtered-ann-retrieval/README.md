@@ -9,7 +9,7 @@
 | Authors | bingyu |
 | Primary metric | Mean per-query exact filtered Top-10 correctness and latency |
 | Compute | 8 CPUs; 16 GiB RAM; 64 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 5400 s |
+| Agent / verifier time limits | 7200 s / 8000 s |
 | Dataset | NeurIPS 2023 Big-ANN Filter Track / YFCC-10M |
 | Public queries | 10 |
 | Hidden queries | 30 |
@@ -28,7 +28,7 @@ The corpus has 10,000,000 192-dimensional uint8 vectors and CSR metadata with
 and hidden query vectors are distinct. A separate 64-document, 17-query example
 supports functional development without adding scored cases.
 
-The corpus and small example retain their published official pins. The two updated public validation files are published under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/` at immutable revision `234406eb7e304478e48905829fc0d3233f5a9f1f`. Earlier public files remain available. See [SOURCES.md](SOURCES.md) for attribution and source terms.
+The corpus and small example retain their published pins. The two updated public validation files are published under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/` at immutable revision `234406eb7e304478e48905829fc0d3233f5a9f1f`. Earlier public files remain available. See [SOURCES.md](SOURCES.md) for attribution and source terms.
 
 ```bash
 python scripts/assets/download_assets.py --task filtered-ann-retrieval
@@ -110,12 +110,8 @@ boundaries above. Version 0.11.0 changes the query split to ten public and 25
 hidden cases and updates the scoring denominator. It selects five relatively
 easier public and twenty harder hidden cases from 27 repeatedly measured broad
 filter candidates, using reference-runtime medians as a difficulty proxy.
-The verifier clears and verifies System V IPC at each execution boundary,
-using the owner-or-creator cleanup pattern in the reviewed
-`memory-constrained-dense-retrieval/tests/grader.py` as a structural precedent.
+The verifier clears and verifies System V IPC at each execution boundary using owner-or-creator cleanup.
 The instruction, submission interfaces, corpus and time/resource limits are unchanged.
-Structural precedents are `memory-constrained-dense-retrieval`
-and `sparse-retrieval-pruning` for offline CPU retrieval and protected evaluation.
 
 ### Validation
 
@@ -145,3 +141,9 @@ bash scripts/evaluation/run_task.sh --task filtered-ann-retrieval --agent codex 
 ## References
 
 - [Data, model and method provenance](SOURCES.md).
+
+## Repeated measurements
+
+The verifier builds the index once and measures every query five times before relocation and five times after relocation. Each pass starts a fresh service process and clears the index directory's tmp subdirectory. Prepared files are read-only; use the supplied TMPDIR for query-time writes. In each location, the median of the five complete-response times must be at most 15 milliseconds. Each individual measurement has a one-second execution cap. All ten responses must be valid, exact and identical. A query earns one point only when both medians meet the limit and all response checks pass; otherwise it earns zero. Service loading remains outside query timing.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

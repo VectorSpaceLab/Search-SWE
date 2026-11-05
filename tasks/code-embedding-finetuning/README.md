@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | held-out Accuracy@1 improvement |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 5100 s |
+| Agent / verifier time limits | 21600 s / 7500 s |
 | Dataset | code-retrieval |
 | Public queries | 10 |
 | Hidden queries | 200 |
@@ -57,7 +57,7 @@ datasets, labels, and answer mappings are not permitted; see the
 
 The runtime uses Python 3.12 with CUDA-enabled PyTorch. It is configured for
 8 CPUs, 32 GiB memory, and 100 GiB storage. The environment and verifier
-Compose files and `task.toml` explicitly request **one NVIDIA GPU**.
+Compose files and `task.toml` explicitly request **one GPU**.
 For local Docker, the shared launcher works around Harbor 0.22.0's GPU
 capability preflight with `--override-gpus 0`; the Compose reservations still
 provide the GPU to both containers.
@@ -71,7 +71,7 @@ agent and private judge have their own API configuration.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Clarified the fixed evaluation encoding protocol in task instructions |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 

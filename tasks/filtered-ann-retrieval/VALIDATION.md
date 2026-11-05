@@ -280,6 +280,6 @@ complete audited Harbor trial. The original retrieval thresholds were retained.
 
 The unrestricted repository release checker reports existing unpublished inputs
 and ignore-check issues in other unfinished tasks. The selected-package check
-for this task has no errors. Official asset publication, final redistribution
+for this task has no errors. Search-SWE asset publication, final redistribution
 review and remote PR name checks were not requested or performed; immutable
 personal HF references were preserved. No commit, push or publication occurred.

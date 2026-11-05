@@ -115,7 +115,7 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. Missing required executables or a failed or timed-out build gives zero for the entire submission. A search timeout preserves valid completed rows; any other search-command failure invalidates that call's results. Missing, duplicate or invalid retrieval results, and missing, invalid, failed or timed-out answers, score zero for the affected questions. Valid results for other questions remain usable, and all held-out questions remain in the average.
-4. **Search quality.** Three independent judge configurations vote on each memory or forgetting criterion. MPA and FAA are the respective pass rates, and lambda is the fraction of forgetting criteria. Raw quality is the mean of FAMA = max(0, MPA - lambda * (1 - FAA)) across held-out questions. Retrieved IDs select the answer inputs; they are not scored as a separate retrieval metric.
+4. **Search quality.** Three independent judge configurations assess every answer against its memory and forgetting criteria. For each configuration, MPA and FAA are the respective pass rates, lambda is the fraction of forgetting criteria, and FAMA = max(0, MPA - lambda * (1 - FAA)). The answer's quality is the arithmetic mean of these three FAMA values. Raw task quality is the mean across test questions. A failed or incomplete judge call is an evaluation infrastructure failure. Retrieved IDs select the answer inputs; they are not scored separately.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
 
@@ -133,3 +133,5 @@ Before implementing the system, read the following task-provided documents:
 These documents and the supplied inputs are read-only. Follow the task-specific resource restrictions.
 
 Answers are assessed against the supplied style of answer criteria; prioritize correct, useful answers grounded in the available history.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

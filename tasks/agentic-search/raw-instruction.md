@@ -12,7 +12,7 @@ The objective is to maximize Gold Recall@5 on held-out questions. The starter is
 - Treat `/task` as read-only.
 - `build.sh` must complete within 600 seconds.
 - Each query may use at most 20 retrieval rounds. One search action returning a candidate set counts as one round; batched independent searches count separately.
-- There is no per-query time limit. The shared 15,300-second execution budget and 17,100-second verifier phase limit still apply.
+- There is no per-query time limit. Query execution has a shared 15,300-second budget, and the verifier phase has a 20,000-second limit.
 - The search service and `run.sh` must support up to five concurrent query invocations sharing the same `--index-dir`, with separate input and output files.
 - Retrieve documents from the supplied corpus. Do not use hidden relevance labels, hard-coded evaluation query-to-document mappings, or external datasets/services containing evaluation answers or relevance labels. Public validation labels may be used for development and tuning.
 - Read `/task/docs/environment.md` for the installed runtime, packages, and system tools available in the container.
@@ -119,7 +119,6 @@ Before implementing the system, read the following task-provided documents:
 
 These documents are part of the Agent-visible task data and should be treated as read-only. Follow the resource and model restrictions in `available_resources.md`; do not infer permission to use an unlisted provider, model, or endpoint. The credentials described there are injected by Harbor at runtime and must not be placed in the task package or Docker image.
 
-A separate trajectory audit checks compliance with the stated resource, retrieval
-and integrity constraints. Clear circumvention zeros the entire reward. Missing
-trajectory or a failed audit invalidates the run; ordinary low recall is not a
-jailbreak. The audit does not provide additional submission resources.
+A separate trajectory audit checks compliance with the stated resource, retrieval and integrity constraints. Clear circumvention zeros the entire reward. Missing trajectory or a failed audit invalidates the run; ordinary low recall is not a jailbreak. The audit does not provide additional submission resources.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

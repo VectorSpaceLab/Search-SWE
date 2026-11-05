@@ -13,7 +13,7 @@ The objective is to maximize Gold Recall@5 on held-out questions. No starter, in
 - `build.sh` must complete within 600 seconds.
 - Each query may use at most 20 retrieval rounds. One search action returning a candidate set counts as one round; batched independent searches count separately.
 - Do not use embeddings (local, API, or precomputed) or BM25, including its variants and library/database implementations, at build time or query time. Do not use external retrieval or reranking services. The implementation approach is otherwise your choice, subject to the interfaces and resource restrictions.
-- There is no per-query time limit. Build, query execution, and scoring share a 15,300-second wall-clock execution budget, including the 600-second build cap. The verifier phase allows 19,200 seconds in total, including a separate compliance audit of up to 3,600 seconds.
+- There is no per-query time limit. Build, query execution, and scoring share a 15,300-second wall-clock execution budget, including the 600-second build cap. The verifier phase allows 27,000 seconds in total, including a separate compliance audit of up to 10,800 seconds.
 - The search service and `run.sh` must support up to five concurrent query invocations sharing the same `--index-dir`, with separate input and output files.
 - Retrieve documents from the supplied corpus. Do not use hidden relevance labels, hard-coded evaluation query-to-document mappings, or external datasets/services containing evaluation answers or relevance labels. Public validation labels may be used for development and tuning.
 - Read `/task/docs/environment.md` for the installed runtime, packages, and system tools available in the container.
@@ -119,3 +119,5 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — the available generative API resources, runtime environment-variable handling, model allowlist, provider and endpoint restrictions, and jailbreak penalty rules.
 
 These documents are part of the Agent-visible task data and should be treated as read-only. Follow the resource and model restrictions in `available_resources.md`; do not infer permission to use an unlisted provider, model, or endpoint. The credentials described there are injected by Harbor at runtime and must not be placed in the task package or Docker image.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

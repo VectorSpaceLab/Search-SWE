@@ -1,8 +1,6 @@
 services:
   main:
     pids_limit: 256
-    tmpfs:
-      - /app:rw,exec,nosuid,nodev,size=24g,mode=0755
     deploy:
       resources:
         reservations:

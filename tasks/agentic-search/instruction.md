@@ -27,7 +27,7 @@ After a successful build, the query call is:
 
 Process every supplied query and write exactly one result object per query. You may choose any internal protocol or service endpoint that works with `build.sh` and that command-line interface. The verifier builds once and invokes `run.sh` once per hidden query, with up to five invocations in parallel. The search service and entry point must support those concurrent invocations sharing the same `--index-dir`, with separate input and output files. They share the task's CPU, memory, index and service resources.
 
-Each query is allowed at most 20 retrieval rounds. A search action returning a candidate set counts as one round; putting independent searches into a batch does not combine them into a single round. There is no individual query time limit, but the whole query execution shares a 15,300-second budget and the verifier phase has a 17,100-second limit.
+Each query is allowed at most 20 retrieval rounds. A search action returning a candidate set counts as one round; putting independent searches into a batch does not combine them into a single round. There is no individual query time limit, but the whole query execution shares a 15,300-second budget and the verifier phase has a 20,000-second limit.
 
 The output is JSONL, with a line like `{"query_id":"example-1","doc_ids":["100","101","102","103","104"]}`. `query_id` must be a string preserving the input query's identifier. `doc_ids` must be an array of exactly five non-empty strings, all distinct and matching actual `docid` values in `/task/data/corpus.jsonl`. These are the final five documents to read for that question, even if your system went through many internal retrieval rounds to select them. Emit exactly one record per input query, with no missing, duplicate or extra query IDs.
 
@@ -35,7 +35,6 @@ Harbor transfers `/app` to a separate verifier with the same runtime and private
 
 The coverage of those five selected documents is measured only by Gold Recall@5, with every hidden query weighted equally. For a query q, `R_q` is your five returned document IDs and `G_q` is its gold set; GoldRecall@5(q) is the size of their intersection divided by the size of `G_q`. For compliant submissions, the normalized reward is the mean of that quantity across hidden queries and the displayed score is 100 times reward.
 
-A separate trajectory audit checks compliance with the stated resource, retrieval
-and integrity constraints. Clear circumvention zeros the entire reward. Missing
-trajectory or a failed audit invalidates the run; ordinary low recall is not a
-jailbreak. The audit does not provide additional submission resources.
+A separate trajectory audit checks compliance with the stated resource, retrieval and integrity constraints. Clear circumvention zeros the entire reward. Missing trajectory or a failed audit invalidates the run; ordinary low recall is not a jailbreak. The audit does not provide additional submission resources.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

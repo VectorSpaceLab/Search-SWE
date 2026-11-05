@@ -8,7 +8,7 @@ Reports in several languages contain tables, charts and dense page layouts. The 
 
 ### Resource limits and workload
 
-- You have 8 CPU cores, 32 GiB RAM, 100 GiB storage, one 40 GiB GPU and two hours to implement and check the system.
+- You have 8 CPU cores, 32 GiB RAM, 100 GiB storage, one GPU and two hours to implement and check the system.
 - Local model weights and processors are at `/task/models/page-encoder/` and `/task/models/vision-backbone/`.
 - Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the installed tools and permitted API resources.
 - Use only those providers, endpoints and generative model IDs.
@@ -99,3 +99,5 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — available local models or APIs, network restrictions and runtime credential handling.
 
 These documents and the supplied inputs are read-only. Follow the task-specific resource restrictions.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

@@ -3,7 +3,7 @@ set -uo pipefail
 
 TASK_ID=code-embedding-finetuning
 EVALUATION_TIMEOUT_SECONDS=3600
-JUDGE_TIMEOUT_SECONDS=1200
+JUDGE_TIMEOUT_SECONDS=3600
 FINALIZER_TIMEOUT_SECONDS=60
 KILL_AFTER_SECONDS=30
 
@@ -184,7 +184,7 @@ if (( judge_status == 0 )); then
         --signal=TERM \
         --kill-after="${KILL_AFTER_SECONDS}s" \
         "${JUDGE_TIMEOUT_SECONDS}s" \
-        /opt/conda/bin/python /tests/rewardkit_deepseek.py \
+        /opt/conda/bin/python /tests/judge_repeats.py /tests/rewardkit_deepseek.py \
             /tests \
             --workspace /app \
             --output "$REWARD_JSON" \

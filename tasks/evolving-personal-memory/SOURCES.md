@@ -38,3 +38,7 @@ All remote manifest entries use immutable revisions.
 The manifest records exact task-relative paths and asset bytes. Source pins do
 not change the corpus, examples, labels or model weights. Original upstream
 source and model notices continue to apply.
+
+## Bundled source documentation
+
+`data/corpus/licenses/source-data-README.md` is adapted from the source documentation for the supplied conversation histories, retaining source attribution and license information. The task restores the bundled copy using the size and SHA-256 in `assets.json`.

@@ -69,9 +69,7 @@ A failed build, non-timeout execution failure, invalid output or failed complian
 
 ## Hidden Test Overview
 
-The hidden evaluation uses held-out questions with private complete answer sets.
-The public examples are illustrative; the system must support new combinations
-of relationships and conditions.
+The hidden evaluation uses held-out questions with private complete answer sets. The public examples are illustrative; the system must support new combinations of relationships and conditions.
 
 ## Environment and available resources
 
@@ -81,3 +79,5 @@ Read the following task-provided documents:
 
 - [`/task/docs/environment.md`](/task/docs/environment.md) — the installed software and execution environment.
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — permitted APIs and credential rules.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

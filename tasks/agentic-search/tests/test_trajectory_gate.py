@@ -55,9 +55,9 @@ class TrajectoryGate(unittest.TestCase):
                     return AgentJudgeResult(scores=scores, output="Offline transport fixture", warnings=[])
 
                 def execute_rewardkit(command, **kwargs):
-                    self.assertEqual(Path(command[2]), audit)
+                    self.assertEqual(Path(command[3]), audit)
                     output = Path(command[command.index("--output") + 1])
-                    runner.run(command[2], workspace=root, output=output)
+                    runner.run(command[3], workspace=root, output=output)
                     process = unittest.mock.Mock(pid=12345)
                     process.wait.return_value = 0
                     return process

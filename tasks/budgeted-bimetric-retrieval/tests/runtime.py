@@ -117,8 +117,9 @@ class Worker:
         self.log_limit = min(8 << 20, max(0, (128 << 20)-existing_logs))
         self.log = log.open('wb', buffering=0)
         self.logged = 0
-        env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': work,
-               'TMPDIR': work, 'XDG_CACHE_HOME': work, 'PYTHONDONTWRITEBYTECODE': '1',
+        scratch = str(Path(work)/'scratch') if (Path(work)/'scratch').exists() else work
+        env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': scratch,
+               'TMPDIR': scratch, 'XDG_CACHE_HOME': scratch, 'PYTHONDONTWRITEBYTECODE': '1',
                'PYTHONUNBUFFERED': '1', 'LANG': 'C.UTF-8', 'OMP_NUM_THREADS': str(len(cpus)),
                'OPENBLAS_NUM_THREADS': str(len(cpus)), 'MKL_NUM_THREADS': str(len(cpus)),
                'OMP_PROC_BIND': 'false', 'KMP_AFFINITY': 'disabled'}

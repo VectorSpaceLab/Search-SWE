@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | ComposedSourceQuality |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 7200 s / 36000 s |
+| Agent / verifier time limits | 7200 s / 38400 s |
 | Dataset | CIRCO and CIRR original relative captions |
 | Public queries | 5 |
 | Hidden queries | 4392 |
@@ -39,7 +39,7 @@ Public data are mounted read-only under `/task/data`, local models where
 provided under `/task/models`, and resource documents under `/task/docs`.
 Held-out questions and labels are verifier-only.
 
-The shared gallery combines CIRCO with the official CIRR validation release.
+The shared gallery combines CIRCO with the CIRR validation release.
 There are five public requests (two CIRCO and three CIRR) and 4,392 held-out
 requests (214 CIRCO and 4,178 CIRR). Query IDs are disjoint.
 
@@ -47,7 +47,7 @@ requests (214 CIRCO and 4,178 CIRR). Query IDs are disjoint.
 [CIRR](https://github.com/Cuberick-Orion/CIRR/tree/cirr_dataset/captions)
 contributes 4,181 original captions and 2,297 images. Image IDs from the
 [pinned CIRR image mirror](https://huggingface.co/datasets/royokong/cirr_imgs/tree/7a25e03bc7640ef61d80b854e3c9762871d74a28)
-were matched to the official captions. Requests and relevance targets were not
+were matched to the CIRR captions. Requests and relevance targets were not
 generated for this task. CIRR requests have no shared-concept annotation.
 
 #### Fixed Components and Allowed Changes

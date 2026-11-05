@@ -1,31 +1,60 @@
 # Available Resources
 
-The optional APIs below are available through runtime environment variables `OPENROUTER_API_KEY` and `JINA_API_KEY`. Read these variables directly; do not source a `.env` file. Do not put credential values in code, indexes, outputs or logs.
+Use the supplied conversation collection and installed runtime. Optional APIs are available under the stage permissions below.
 
-Network access is limited to `openrouter.ai` and `api.jina.ai`. Documentation links do not permit access to other hosts.
+## Local resources
+
+- `/task/data/corpus/records.jsonl`: complete conversation collection.
+- `/task/data/validation/queries.jsonl`: public development questions.
+- `/task/data/validation/labels.jsonl`: public answer criteria.
+
+Build, search and answer have different file and API permissions, as described below and in the task instruction.
+
+Read `/task/docs/environment.md` for the installed Python environment, packages and system tools. Treat `/task` as read-only.
 
 ## Retrieval resources
 
-Embedding and reranking APIs may be used through OpenRouter or Jina. Use each provider's exact model IDs and request formats.
+Embedding and reranking models may be used through OpenRouter or Jina. Use the exact model IDs and request formats supported by the selected provider. These endpoints are for retrieval operations such as embedding, candidate scoring, and reranking; do not use them as a general-purpose answer generation service.
 
-- [OpenRouter API documentation](https://openrouter.ai/docs/api_reference/overview)
-- [OpenRouter embedding models](https://openrouter.ai/models?output_modalities=embeddings)
-- [OpenRouter reranking models](https://openrouter.ai/models?output_modalities=rerank)
-- [Jina embedding endpoint](https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings)
-- [Jina reranking endpoint](https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/rerank)
+OpenRouter:
 
-## Generative resources
+- API documentation: `https://openrouter.ai/docs/api_reference/overview`
+- Embedding models: `https://openrouter.ai/models?output_modalities=embeddings`
+- Reranking models: `https://openrouter.ai/models?output_modalities=rerank`
 
-Generative calls may use only the OpenRouter endpoint `https://openrouter.ai/api/v1/chat/completions` and these model IDs:
+Jina:
+
+- Embedding API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings`
+- Reranking API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/rerank`
+- Models: `https://jina.ai/models`
+
+## Generative LLM resources
+
+Generative calls may use only the OpenRouter Chat Completions endpoint and the following model IDs. This is the complete generation allowlist:
 
 - `qwen/qwen3.6-35b-a3b`
 - `qwen/qwen3.5-35b-a3b`
 - `qwen/qwen3.5-9b`
 
-Other generative models, providers and endpoints are not permitted. Embedding and reranking endpoints may not be used as substitutes for generation. Use the supplied data; do not obtain external datasets, answer mappings or evaluation labels.
+OpenRouter API:
 
-## Pipeline access
+- OpenAI-compatible endpoint: `https://openrouter.ai/api/v1/chat/completions`
+
+## Pipeline permissions
+
 Build and search may use the retrieval and generative resources above. The answer process receives `OPENROUTER_API_KEY` and may use only the listed OpenRouter generative models with its current input records and question. It does not receive `JINA_API_KEY`. Installed system libraries and reusable answer-side code remain available; corpus and index access are restricted as described in the task request.
 
-## Allowlist and penalty
-The listed generative model IDs are the complete allowlist. Calling an unlisted generative model, provider or endpoint is a jailbreak violation and results in a zero task reward.
+## Network and resource restrictions
+
+The following runtime variables are supplied through the process environment when configured:
+
+- `OPENROUTER_API_KEY`: permitted OpenRouter calls.
+- `JINA_API_KEY`: Jina embedding and reranking calls during development, build and search.
+
+Read credentials from the process environment; do not source a `.env` file or place credential values in code, indexes, outputs or logs.
+
+Submission network access is limited to `openrouter.ai` and `api.jina.ai`. Documentation links do not authorize access to additional hosts. Use the APIs only for operations permitted by the task instruction.
+
+Use the supplied data; do not obtain external datasets, answer mappings or evaluation labels.
+
+Only the listed generative model IDs and the OpenRouter Chat Completions endpoint are permitted. Other generative models, providers and endpoints are prohibited. Embedding and reranking endpoints must not be used as substitutes for generation. If the verifier or trajectory audit detects a prohibited generative call, the submission is classified as a jailbreak and the entire task receives a score of `0`.

@@ -9,7 +9,7 @@
 | Authors | jianlyu |
 | Primary metric | nDCG@10 improvement normalized by fixed-candidate headroom |
 | Compute | 16 CPUs; 32 GiB RAM; 40 GiB storage; 1 GPU |
-| Agent / verifier time limits | 7200 s / 9000 s |
+| Agent / verifier time limits | 7200 s / 40000 s |
 | Dataset | MS MARCO passage; all 43 judged TREC DL2019 public queries and all 54 judged DL2020 test queries |
 
 Improve fixed BM25 Top-100 passage reranking with a metered, frozen local Qwen3-1.7B model.
@@ -56,7 +56,7 @@ The task allocates 16 CPU cores, 32 GiB RAM and
 specified in the task contract; the verifier service timeout also includes its
 trusted setup and checks.
 
-Both phases require one A100 40GB GPU. Use `--gpu-device` to select the same
+Both phases require one GPU. Use `--gpu-device` to select the same
 host GPU for both phases.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
@@ -99,3 +99,9 @@ enforcement belong in disposable task containers, not the shared host.
 ## References
 
 None.
+
+## Repeated measurements
+
+Each test query is measured five times, with a new strategy process and a fresh writable work directory each time. Model deployment and the fixed warmup occur once. Each measurement has its own 2048 weighted-token allowance. The medians of the five local-strategy times and five trusted-response times must be at most 1.0 and 90 seconds, respectively. Individual measurements have execution caps of 2.0 local seconds and 120 trusted-response seconds. All five measurements must return valid rankings within their token allowance; otherwise that query scores zero. For a query passing these checks and both median limits, its quality is the arithmetic mean of its five nDCG@10 values.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

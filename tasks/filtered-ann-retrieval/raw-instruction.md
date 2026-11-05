@@ -15,7 +15,7 @@ The objective is to recover the exact filtered Top-10 under strict latency and r
 - Read `/task/docs/environment.md` for the installed runtime, packages, and system tools.
 - `build.sh` and `run.sh` must be executable files under `/app`.
 - `build.sh` must complete within **600 seconds**.
-- A query earns credit only if it completes within **15 milliseconds**.
+- A query earns credit only if it has a median latency of at most **15 milliseconds**.
 - The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
 
 ### Build interface
@@ -47,7 +47,7 @@ After loading, write exactly `{"status":"ready"}` as one JSON line to stdout and
 
 Each request contains `query_id` (string), `vector` (192 numeric values), `filter` (an object of the form `{"all":[tag_id,...]}`), and `k` (an integer in `[0, 100]`). Tag IDs are nonnegative integers. All scored queries use `k=10`.
 
-The verifier sends requests strictly one at a time; the next query is unavailable until the current response has been checked. The 15 ms deadline starts when the verifier begins writing the request and ends after it receives and decodes the response JSON. Evaluator-side request serialization and result validation are excluded. Service loading is outside the per-query deadline.
+The verifier sends requests strictly one at a time; the next query is unavailable until the current response has been checked. Complete-response timing starts when the verifier begins writing the request and ends after it receives and decodes the response JSON. Evaluator-side request serialization and result validation are excluded. Service loading is outside the per-query deadline.
 
 ### Output contract
 
@@ -97,13 +97,13 @@ The finalized submission must contain executable `build.sh` and `run.sh` files u
 After the Agent phase, the Harbor verifier runs the submission in a separate environment with the same runtime and corpus and uses the private test split. The verifier checks the following items:
 
 1. **Index construction and persistence.** The submission must build a valid Faiss ANN corpus index and persist all state required for retrieval under `--index-dir`. The saved index must remain functional when the original build inputs are unavailable, across fresh service processes, and after index-directory relocation.
-2. **Execution constraints.** build.sh must complete within 600 seconds and each query within 15 milliseconds end-to-end.
+2. **Execution constraints.** build.sh must complete within 600 seconds and each query's median latency within 15 milliseconds end-to-end.
 3. **Interface and output correctness.** The verifier checks the executable interfaces, filtering semantics, document IDs, result counts, uniqueness, ordering, determinism, and output format.
 4. **Retrieval correctness.** Scored queries must return the complete exact filtered Top-K within the query latency limit. Partial Top-K recall does not satisfy the correctness requirement. Equivalent ties at the exact Top-K boundary are accepted.
 
 Submissions must not access hidden evaluation data, hard-code evaluation answers, use external answer lookup, bypass the required retrieval process, or manipulate evaluation infrastructure.
 
-The retrieval score is the fraction of the 30 hidden queries that return the exact Top-10 within 15 ms in both the initial and relocated-index runs, with identical responses. A failed query receives zero independently; build, index, service-load or required trajectory-audit failure makes the final reward zero.
+The retrieval score is the fraction of the 30 hidden queries that pass the exact Top-10, repeated-response and median-latency checks in both index locations. A failed query receives zero independently; build, index, service-load or required trajectory-audit failure makes the final reward zero.
 
 ## Hidden Test Overview
 
@@ -118,3 +118,7 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/data-format.md`](/task/docs/data-format.md) — the binary input formats.
 
 These documents are part of the Agent-visible task data and should be treated as read-only. Follow the resource and model restrictions in `available_resources.md`; do not infer permission to use an unlisted provider, model, or endpoint. The submitted system has no model or retrieval API credentials.
+
+The verifier builds the index once and measures every query five times before relocation and five times after relocation. Each pass starts a fresh service process and clears the index directory's tmp subdirectory. Prepared files are read-only; use the supplied TMPDIR for query-time writes. In each location, the median of the five complete-response times must be at most 15 milliseconds. Each individual measurement has a one-second execution cap. All ten responses must be valid, exact and identical. A query earns one point only when both medians meet the limit and all response checks pass; otherwise it earns zero. Service loading remains outside query timing.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.
