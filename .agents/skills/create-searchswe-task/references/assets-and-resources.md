@@ -7,10 +7,10 @@ task. Nothing in this reference grants permission to publish or use paid APIs.
 ## Manifest construction
 
 Keep downloadable fixed files outside the build contexts, under
-`data/`, `models/` or `tests/data/` in the package at `tasks/<task-name>`.
-Ignore downloaded files in Git and Docker build contexts. Keep grading code and small verifier-only
+`data/` or `models/` in the package at `tasks/<task-name>`.
+Ignore both directories in Git. Keep grading code and small verifier-only
 queries/labels under `tests/`. Large fixed verifier inputs may be restored under
-`tests/data/` or `data/verifier/` through the same `assets.json`, with
+`data/verifier/` or another manifest-declared private input directory, with
 verifier-only read-only mounts and appropriate file/directory modes. Mount only
 public subdirectories into the agent in that case. Hidden evaluation inputs
 are hidden from the running agent; public hosting still requires redistribution

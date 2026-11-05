@@ -71,9 +71,9 @@ class RuntimeControls(unittest.TestCase):
         status_path.write_text(json.dumps(status))
         return status_path
 
-    def run_control(self):
+    def run_control(self, *, sandbox=True):
         return evaluate("/app/submission", ROOT / "corpus", ROOT / "hidden", ROOT / "development",
-                        ROOT / "logs" / self.id().split(".")[-1], sandbox=True, require_gpu=False,
+                        ROOT / "logs" / self.id().split(".")[-1], sandbox=sandbox, require_gpu=False,
                         preparation_seconds=30, query_seconds=.5, frozen_status=ROOT / "frozen-status.json")
 
     def test_identity_known_good(self):
@@ -107,6 +107,105 @@ class RuntimeControls(unittest.TestCase):
     def test_disk_storage_limit_includes_sparse_temporary_files(self):
         self.module(load="with open('oversized-cache','wb') as handle:\n    handle.truncate(100 * 1024**3)\nreturn None")
         with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def retained_module(self, *, mapped=False, size=60 << 30, memfd=False):
+        self.module(load=f'size={size}; mapped={mapped}; memfd={memfd}\n' + '''import ctypes
+if os.getuid() == 10001:
+    status = dict(line.split(':', 1) for line in open('/proc/self/status') if ':' in line)
+    assert int(status['CapEff'], 16) == int(status['CapPrm'], 16) == 0
+libc = ctypes.CDLL(None, use_errno=True)
+libc.mmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
+                      ctypes.c_int, ctypes.c_int, ctypes.c_longlong]
+libc.mmap.restype = ctypes.c_void_p
+libc.memfd_create.argtypes = [ctypes.c_char_p, ctypes.c_uint]
+state = []
+for number in range(2):
+    name = 'retained-cache-' + str(number)
+    fd = libc.memfd_create(name.encode(), 0) if memfd else os.open(name, os.O_CREAT | os.O_RDWR, 0o600)
+    assert fd >= 0, ctypes.get_errno()
+    os.ftruncate(fd, size)
+    if mapped:
+        # libc avoids Python mmap's implicit duplicate descriptor. Only one
+        # page is mapped, but the entire backing file must count toward storage.
+        address = libc.mmap(None, 4096, 3, 1, fd, 0)
+        assert address != ctypes.c_void_p(-1).value, ctypes.get_errno()
+        ctypes.memmove(address, b'canary00', 8)
+        state.append(address)
+    else:
+        os.write(fd, b'canary00')
+        state.append(fd)
+    if not memfd:
+        os.unlink(name)
+    if mapped:
+        os.close(fd)
+if mapped:
+    for entry in os.listdir('/proc/self/fd'):
+        try:
+            assert 'retained-cache-' not in os.readlink('/proc/self/fd/' + entry)
+        except FileNotFoundError:
+            pass
+return (mapped, state)''', transform='''import ctypes
+mapped, retained = state
+for value in retained:
+    assert (ctypes.string_at(value, 8) if mapped else os.pread(value, 8, 0)) == b'canary00'
+return vectors.copy()''')
+
+    def test_storage_rejects_open_unlinked_files(self):
+        self.retained_module()
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def test_storage_rejects_mmap_only_partial_files(self):
+        self.retained_module(mapped=True)
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def test_storage_rejects_mapped_memfd_after_close(self):
+        self.retained_module(mapped=True, memfd=True)
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def test_public_evaluator_rejects_retained_files(self):
+        self.retained_module(mapped=True)
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control(sandbox=False)
+
+    def test_storage_counts_files_in_a_detached_worker(self):
+        self.module(load='''reader, writer = os.pipe()
+if os.fork() == 0:
+    os.close(reader)
+    os.setsid()
+    retained = []
+    for number in range(2):
+        name = 'detached-cache-' + str(number)
+        handle = open(name, 'w+b')
+        handle.truncate(60 << 30)
+        os.unlink(name)
+        retained.append(handle)
+    os.write(writer, b'ready')
+    os.close(writer)
+    import time
+    time.sleep(60)
+    os._exit(0)
+os.close(writer)
+assert os.read(reader, 5) == b'ready'
+os.close(reader)
+return None''')
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def test_under_budget_retained_files_pass_all_rounds(self):
+        for mapped in (False, True):
+            with self.subTest(mapped=mapped):
+                self.retained_module(mapped=mapped, size=1024**2)
+                result = self.run_control()
+                self.assertEqual(result['Q'], 1)
+                self.assertEqual(result['measurement_rounds'], 5)
+
+    def test_live_worker_cannot_disable_storage_inspection(self):
+        self.module(load="import ctypes\nassert ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) == 0\nreturn None")
+        with self.assertRaisesRegex(RuntimeError, 'Cannot inspect submission'):
             self.run_control()
 
     def test_consistency_probe_timeout_does_not_abort_all_measurements(self):

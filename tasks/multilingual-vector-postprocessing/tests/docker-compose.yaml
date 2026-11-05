@@ -1,6 +1,9 @@
 services:
   main:
     mem_limit: 16g
+    # Isolated submission workers drop this capability with their root UID.
+    cap_add:
+    - CHECKPOINT_RESTORE
     command: ["sleep", "infinity"]
     pids_limit: 512
     shm_size: 1g

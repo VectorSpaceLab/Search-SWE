@@ -1,6 +1,9 @@
 services:
   main:
     mem_limit: 16g
+    # Allow the trusted storage monitor to inspect mmap backing files.
+    cap_add:
+    - CHECKPOINT_RESTORE
     # The trusted collector stops every process except PID 1 and its own
     # ancestry. Harbor's shell-wrapped sleep would exit when its child stops.
     command: ["sleep", "infinity"]

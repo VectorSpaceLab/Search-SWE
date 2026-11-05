@@ -78,11 +78,13 @@ class MeasurementTests(unittest.TestCase):
                 self.assertEqual(call.kwargs['query_seconds'], .5)
 
     def test_round_preparation_or_resource_failure_invalidates_whole_run(self):
-        with tempfile.TemporaryDirectory() as directory, \
-                patch.object(evaluator, 'evaluate_once', side_effect=evaluator.ContractViolation('storage limit')) as run:
-            with self.assertRaisesRegex(evaluator.ContractViolation, 'storage limit'):
-                evaluator.evaluate('submission', 'corpus', 'hidden', 'development', directory, require_gpu=False)
-            self.assertEqual(run.call_count, 1)
+        for failing_round in range(1, 6):
+            reports = [{}] * (failing_round - 1) + [evaluator.ContractViolation('storage limit')]
+            with self.subTest(failing_round=failing_round), tempfile.TemporaryDirectory() as directory, \
+                    patch.object(evaluator, 'evaluate_once', side_effect=reports) as run:
+                with self.assertRaisesRegex(evaluator.ContractViolation, 'storage limit'):
+                    evaluator.evaluate('submission', 'corpus', 'hidden', 'development', directory, require_gpu=False)
+                self.assertEqual(run.call_count, failing_round)
 
     def test_verifier_budgets_cover_five_full_rounds(self):
         import re

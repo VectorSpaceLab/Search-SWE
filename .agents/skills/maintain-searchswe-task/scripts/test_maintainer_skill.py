@@ -216,23 +216,6 @@ class MaintainerSkill(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(self.out.exists())
 
-    def test_hidden_inputs_use_the_same_offline_publication_workflow(self):
-        target, data, file, snapshot, _ = self.staging()
-        manifest = json.loads((target / 'assets.json').read_text())
-        entry = manifest['files'][0]
-        entry['path'] = 'tests/data/queries.npy'
-        entry['mode'] = '0600'
-        entry['source']['filename'] = 'tasks/example-search/tests/data/queries.npy'
-        destination = data / entry['source']['filename']
-        destination.parent.mkdir(parents=True)
-        file.rename(destination)
-        (target / 'assets.json').write_text(json.dumps(manifest))
-        result = self.cli('prepare_hf_upload.py', '--repo-root', self.repo,
-                          '--official-manifest', snapshot, '--new-data', data,
-                          '--output', self.out, '--task-path', target.relative_to(self.repo))
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual((self.out / entry['source']['filename']).read_bytes(), destination.read_bytes())
-
     def test_incremental_staging_relocated_hashes_and_manifest_preservation(self):
         target, data, file, snapshot, old = self.staging()
         args = ("--repo-root", self.repo, "--task-path", target.relative_to(self.repo),

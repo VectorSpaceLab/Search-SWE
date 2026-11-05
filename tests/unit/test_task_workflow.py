@@ -404,6 +404,26 @@ a.result_json.write_text(json.dumps({'environment': {'FIXTURE_PREPARED': 'ready'
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("tasks/<task-name>", result.stdout)
 
+    def test_hidden_inputs_publish_with_the_repository_asset_policy(self):
+        entry, data = self.asset()
+        source = data / entry['source']['filename']
+        content = source.read_bytes()
+        entry.update(path='tests/data/queries.npy', mode='0600')
+        entry['source']['filename'] = 'tasks/example-search/tests/data/queries.npy'
+        destination = data / entry['source']['filename']
+        destination.parent.mkdir(parents=True)
+        source.rename(destination)
+        (self.task / 'assets.json').write_text(json.dumps({'schema_version': 1, 'files': [entry]}))
+        snapshot = self.root / 'official.json'
+        snapshot.write_text(json.dumps({'schema_version': 1, 'files': []}))
+        output = self.root / 'upload'
+        result = self.cli('assets/prepare_hf_upload.py', '--repo-root', str(self.repo), '--official-manifest', str(snapshot),
+                          '--new-data', str(data), '--output', str(output), '--task-path', self.source)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((output / entry['source']['filename']).read_bytes(), content)
+        self.assertEqual(json.loads((output / 'manifest.json').read_text())['files'][0]['sha256'],
+                         entry['sha256'])
+
     def test_incremental_manifest_preserves_old_entries_without_old_data(self):
         target = self.repo / "tasks/example-search"
         entry, data = self.asset(target)
