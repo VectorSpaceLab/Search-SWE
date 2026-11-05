@@ -103,7 +103,7 @@ After the Agent phase, the Harbor verifier runs the submission in a separate env
 
 Submissions must not access hidden evaluation data, hard-code evaluation answers, use external answer lookup, bypass the required retrieval process, or manipulate evaluation infrastructure.
 
-The retrieval score is the fraction of the 25 hidden queries that pass the exact Top-10, repeated-response and median-latency checks in both index locations. A failed query receives zero independently; build, index, service-load or required trajectory-audit failure makes the final reward zero.
+The retrieval score is the fraction of the 30 hidden queries that pass the exact Top-10, repeated-response and median-latency checks in both index locations. A failed query receives zero independently; build, index, service-load or required trajectory-audit failure makes the final reward zero.
 
 ## Hidden Test Overview
 

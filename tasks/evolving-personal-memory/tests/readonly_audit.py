@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Launch the unchanged pinned backend inside an inherited Landlock policy."""
+"""Run three judgments inside the audit role and its inherited Landlock policy."""
 import runpy
 from pathlib import Path
 from landlock_audit import restrict_audit
 from rewardkit.agents import CodexBackend
+from judge_repeats import run_repeated_judge
 
 # The native read-only bwrap sandbox requires user namespaces, disabled by Docker.
 # Landlock protects the role instead; do not loosen host or container namespaces.
@@ -25,4 +26,7 @@ async def enter(self):
 
 CodexBackend.__aenter__ = enter
 restrict_audit()
-runpy.run_path("/opt/audit/runner.py", run_name="__main__")
+runpy.run_path("/opt/audit/runner.py", run_name="audit_backend")
+from rewardkit.__main__ import main
+
+raise SystemExit(run_repeated_judge(main))

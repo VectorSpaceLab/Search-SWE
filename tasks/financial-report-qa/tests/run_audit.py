@@ -7,10 +7,19 @@ p.add_argument("--runner", required=True)
 p.add_argument("--judge", choices=["deepseek-codex"], required=True)
 p.add_argument("--model", choices=["deepseek/deepseek-v4.1-flash"], required=True)
 a = p.parse_args()
+pinned_files = [
+    (Path(a.runner), Path("/opt/audit/runner.py")),
+    (Path("/tests/judge_repeats.py"), Path("/opt/audit/judge_repeats.py")),
+]
 if (
     Path(a.runner).resolve() != Path("/tests/rewardkit_deepseek.py")
-    or hashlib.sha256(Path(a.runner).read_bytes()).digest()
-    != hashlib.sha256(Path("/opt/audit/runner.py").read_bytes()).digest()
+    or any(
+        supplied.is_symlink() or installed.is_symlink()
+        or not supplied.is_file() or not installed.is_file()
+        or hashlib.sha256(supplied.read_bytes()).digest()
+        != hashlib.sha256(installed.read_bytes()).digest()
+        for supplied, installed in pinned_files
+    )
 ):
     raise RuntimeError("Pinned audit backend mismatch")
 env = {

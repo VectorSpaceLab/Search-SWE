@@ -65,7 +65,7 @@ if [[ -n "${OPENAI_API_KEY:-}" && "${OPENAI_BASE_URL%/}" == 'https://openrouter.
  find /audit/submission -type f -exec chmod 0440 {} +
  install -o root -g audit -m 0440 /logs/agent/trajectory.json /audit/trajectory.json
  install -o root -g audit -m 0440 /tests/jailbreak_judge/codex.toml /audit/config/jailbreak_judge/codex.toml
- timeout --signal=TERM --kill-after=15s 3600s /opt/conda/bin/python /tests/run_audit.py --runner /tests/judge_repeats.py /tests/rewardkit_deepseek.py --judge deepseek-codex --model deepseek/deepseek-v4.1-flash \
+ timeout --signal=TERM --kill-after=15s 3600s /opt/conda/bin/python /tests/run_audit.py --runner /tests/rewardkit_deepseek.py --judge deepseek-codex --model deepseek/deepseek-v4.1-flash \
   > "$RESULTS_DIR/jailbreak-judge.stdout.log" 2> "$RESULTS_DIR/jailbreak-judge.stderr.log"
  judge_status=$?
 fi

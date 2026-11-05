@@ -23,7 +23,7 @@ from checks import check_result
 from data_io import read_metadata, read_vectors
 
 
-HIDDEN_QUERY_COUNT = 25
+HIDDEN_QUERY_COUNT = 30
 BUILD_TIMEOUT_SECONDS = 600.0
 QUERY_TIMEOUT_SECONDS = 0.015
 QUERY_OBSERVATION_SECONDS = 1.0

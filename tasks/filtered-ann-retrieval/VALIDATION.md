@@ -1,5 +1,20 @@
 # Validation
 
+## Hidden split update — 2026-11-04
+
+The hidden split contains 30 queries, with ten each for unfiltered, single-tag
+and two-tag retrieval. Grader and finalizer case-count checks use 30; two service
+passes make 60 requests. The agent-facing instruction, public inputs, environment,
+600-second build limit, 15 ms query deadline and trajectory-audit rules are unchanged.
+
+- Task-local regressions: `/opt/conda/bin/python -m unittest discover -s /tests -p 'test_*.py' -v` passed all 22 tests with no skips in a disposable offline verifier container. These include 60 requests across index relocation, independent query failures, System V IPC cleanup, finalizer gates and rejection of reports from the previous 25-case split.
+- `python scripts/validation/check_tasks.py tasks/filtered-ann-retrieval --merge-ready --base 783d2eeafd580f64c404da94dfc05733811d5c0f` passed with zero errors. `git diff --check` passed.
+- Frozen hidden query and gold files match the selected 30-case inputs byte for byte. All 40 public and hidden query vectors and IDs are distinct; the result checker accepts the exact labels.
+- A saved-submission query replay completed all 60 requests using the revised grader's native 30-case count, the existing read-only index cache, 8 pinned CPUs, 16 GiB RAM and the unchanged 15 ms deadline. Index bytes were unchanged after the run. This check did not execute index construction, a new coding agent or a live trajectory audit.
+
+Earlier dated sections retain their original split sizes and measurements.
+
+
 Release reconciliation (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
 
 ## System V IPC cleanup — 2026-10-23

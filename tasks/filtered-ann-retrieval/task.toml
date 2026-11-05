@@ -4,14 +4,14 @@ artifacts = ["/app", "/logs/agent/trajectory.json"]
 [task]
 name = "search-swe/filtered-ann-retrieval"
 version = "1.0.0"
-description = "Build a persistent Faiss filtered ANN backend from scratch; score each of 25 hidden exact filtered Top-10 queries independently within 15 ms, then average."
+description = "Build a persistent Faiss filtered ANN backend from scratch; score each of 30 hidden exact filtered Top-10 queries independently within 15 ms, then average."
 authors = [{ name = "bingyu" }]
 keywords = ["search", "faiss", "filtered-ann", "metadata", "yfcc", "indexing"]
 
 [metadata]
 dataset = "NeurIPS 2023 Big-ANN Filter Track / YFCC-10M"
 primary_metric = "Mean per-query exact filtered Top-10 correctness and latency"
-reward_type = "mean of 25 binary query scores; build, index, load and trajectory audit gate the task"
+reward_type = "mean of 30 binary query scores; build, index, load and trajectory audit gate the task"
 metric_k = 10
 corpus_vector_count = 10000000
 corpus_dimension = 192
@@ -19,9 +19,9 @@ corpus_dtype = "uint8"
 distance = "squared_l2"
 filter_semantics = "conjunction of tag IDs"
 public_query_count = 10
-hidden_query_count = 25
+hidden_query_count = 30
 functional_query_count = 0
-data_status = "Full YFCC-10M corpus with ten public and 25 disjoint hidden queries installed; public inputs published with immutable asset pins"
+data_status = "Full YFCC-10M corpus with ten public and 30 disjoint hidden queries installed; public inputs published with immutable asset pins"
 
 [agent]
 timeout_sec = 7200.0
