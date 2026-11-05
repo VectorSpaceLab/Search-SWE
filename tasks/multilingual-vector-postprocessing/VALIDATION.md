@@ -45,6 +45,14 @@ Current instruction SHA-256: `1d377f808408765bea5758f7fe567b8f83de6106b382a72056
 
 # Runtime and resource revision — 2026-11-05
 
+## Surviving-thread storage fix — 2026-11-06
+
+Both runtime copies now enumerate each process's thread list and inspect live threads through `/proc/<tid>`, including when the thread-group leader has exited. References shared by multiple threads are deduplicated by device/inode, and a live thread that denies inspection still fails the resource check. Scoring, timing budgets, task limits and assets remain unchanged.
+
+The offline disposable verifier suite `python -B -m unittest -v test_runtime_controls test_storage test_measurements test_scoring test_finalizer test_grader_import` passed all 55 tests with no skips. New actual-isolation cases reject 120 GiB retained by surviving threads through descriptors or descriptor-free partial mappings, accept under-budget threaded implementations through all five rounds, and reject disabled inspection even after leader exit. The oversize and denied-inspection cases failed against the previous runtime before the fix. Workers retain UID 10001 and empty effective/permitted capabilities.
+
+The third review's unchanged synthetic pipeline payload previously completed five rounds with Q=1 while retaining 120 GiB under the 100 GiB limit. Re-running the same payload now raises `100 GiB total task storage exceeded` from the real evaluator. The independent storage probe likewise rejects its surviving thread's mapped files. Evidence is in `/data/Search-SWE-Workspace/Search-SWE/pr-reviews/2026-11-06-pr-47-thread-fix-evidence/`: `multilingual-before-fix.json`, `multilingual-unit.json`, `multilingual-exited-leader.json` and `multilingual-original-thread-pipeline.json`. These CPU fixtures use read-only source, no network, credentials or GPU; they do not establish a real hidden-set score or final compliance-audit outcome.
+
 This revision implements the requested hardware, measurement, storage, integrity-result and resource-document fixes. Public development paths, assets and their Hugging Face pins remain unchanged by explicit request. The zero-score baseline, full-score point Q=1, nDCG aggregation, transform interface, six-hour development allowance, 16 CPUs, 16 GiB RAM and 100 GiB storage budget are unchanged.
 
 ## Implementation and contract review

@@ -6,6 +6,7 @@ import selectors
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from unittest.mock import patch
 
@@ -38,7 +39,8 @@ class StorageTests(unittest.TestCase):
         meter.check()
         return meter.peak_disk
 
-    def child(self, *, size=20 << 30, count=2, mapped=True, memfd=False, aliases=False):
+    def child(self, *, size=20 << 30, count=2, mapped=True, memfd=False, aliases=False,
+              retired_leader=False):
         program = f'size={size}; count={count}; mapped={mapped}; memfd={memfd}; aliases={aliases}\n' + '''import ctypes,json,os,sys
 from pathlib import Path
 sys.path.insert(0, '/task/runtime')
@@ -51,7 +53,8 @@ libc.mmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_i
 libc.mmap.restype = ctypes.c_void_p
 libc.munmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
 libc.memfd_create.argtypes = [ctypes.c_char_p, ctypes.c_uint]
-names, descriptors, mappings = [], [], []
+'''
+        serve = '''names, descriptors, mappings = [], [], []
 for number in range(count):
     name = 'retained-' + str(number)
     fd = libc.memfd_create(name.encode(), 0) if memfd else os.open(name, os.O_CREAT | os.O_RDWR, 0o600)
@@ -81,9 +84,9 @@ for command in sys.stdin:
             for fd in descriptors:
                 os.close(fd)
             descriptors.clear()
-            for entry in os.listdir('/proc/self/fd'):
+            for entry in os.listdir('/proc/thread-self/fd'):
                 try:
-                    assert 'retained-' not in os.readlink('/proc/self/fd/' + entry)
+                    assert 'retained-' not in os.readlink('/proc/thread-self/fd/' + entry)
                 except FileNotFoundError:
                     pass
     elif command == 'release':
@@ -100,6 +103,23 @@ for command in sys.stdin:
     assert all(ctypes.string_at(address, 8) == b'canary00' for address in mappings)
     print(json.dumps({'stage':command, 'descriptors':len(descriptors), 'mappings':len(mappings)}), flush=True)
 '''
+        if retired_leader:
+            wait = '''import time
+for _ in range(2000):
+    if Path('/proc/self/stat').read_text().rsplit(') ', 1)[1].split()[0] == 'Z':
+        break
+    time.sleep(.001)
+else:
+    os._exit(3)
+'''
+            program += 'import threading\ndef serve():\n' + textwrap.indent(wait + serve, '    ')
+            program += '''threading.Thread(target=threading.Event().wait).start()
+threading.Thread(target=serve).start()
+libc.pthread_exit.argtypes = [ctypes.c_void_p]
+libc.pthread_exit(None)
+'''
+        else:
+            program += serve
         child = subprocess.Popen([sys.executable, '-B', '-c', program, str(self.work)],
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.addCleanup(self.stop_child, child)
@@ -143,6 +163,33 @@ for command in sys.stdin:
         self.assertEqual(state['descriptors'], 0)
         self.assertEqual(state['mappings'], 4)
         with self.assertRaisesRegex(self.evaluate.ResourceViolation, '32 GiB'):
+            self.sample()
+
+    def test_surviving_thread_retained_files_exceed_budget(self):
+        for mapped in (False, True):
+            with self.subTest(mapped=mapped):
+                child = self.child(mapped=mapped, retired_leader=True)
+                self.command(child, 'unlink')
+                with self.assertRaisesRegex(self.evaluate.ResourceViolation, '32 GiB'):
+                    self.sample()
+                self.stop_child(child)
+
+    def test_surviving_thread_references_deduplicate_and_release(self):
+        for mapped in (False, True):
+            with self.subTest(mapped=mapped):
+                baseline = self.sample()
+                child = self.child(size=2 << 20, count=1, mapped=mapped, retired_leader=True)
+                self.command(child, 'unlink')
+                self.assertEqual(self.sample() - baseline, 2 << 20)
+                self.command(child, 'release')
+                self.assertEqual(self.sample(), baseline)
+                self.stop_child(child)
+
+    def test_surviving_thread_cannot_disable_inspection(self):
+        child = self.child(size=2 << 20, count=1, retired_leader=True)
+        self.command(child, 'unlink')
+        self.command(child, 'hide')
+        with self.assertRaisesRegex(self.evaluate.ResourceViolation, 'inspect submission'):
             self.sample()
 
     def test_memfd_mappings_count_after_all_descriptors_close(self):

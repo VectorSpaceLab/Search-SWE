@@ -208,6 +208,77 @@ return None''')
         with self.assertRaisesRegex(RuntimeError, 'Cannot inspect submission'):
             self.run_control()
 
+    def surviving_thread_module(self, *, mapped, size=60 << 30, hide=False):
+        self.module(load=f'mapped={mapped}; size={size}; hide={hide}\n' + '''import ctypes, threading, time
+reader, writer = os.pipe()
+if os.fork() == 0:
+    os.close(reader)
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.mmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_longlong]
+    libc.mmap.restype = ctypes.c_void_p
+    libc.pthread_exit.argtypes = [ctypes.c_void_p]
+    def retain():
+        from pathlib import Path
+        status = dict(line.split(':', 1) for line in Path('/proc/self/status').read_text().splitlines() if ':' in line)
+        assert os.getuid() == 10001 and int(status['CapEff'], 16) == int(status['CapPrm'], 16) == 0
+        for _ in range(2000):
+            if Path('/proc/self/stat').read_text().rsplit(') ', 1)[1].split()[0] == 'Z':
+                break
+            time.sleep(.001)
+        else:
+            os._exit(3)
+        retained = []
+        for number in range(2):
+            name = 'thread-cache-' + str(number)
+            fd = os.open(name, os.O_CREAT | os.O_RDWR, 0o600)
+            os.ftruncate(fd, size)
+            if mapped:
+                address = libc.mmap(None, 4096, 3, 1, fd, 0)
+                assert address != ctypes.c_void_p(-1).value, ctypes.get_errno()
+                ctypes.memmove(address, b'canary00', 8)
+                retained.append(address)
+                os.close(fd)
+            else:
+                os.write(fd, b'canary00')
+                retained.append(fd)
+            os.unlink(name)
+        if hide:
+            assert libc.prctl(4, 0, 0, 0, 0) == 0
+        os.write(writer, b'ready')
+        os.close(writer)
+        while True:
+            assert all((ctypes.string_at(value, 8) if mapped else os.pread(value, 8, 0)) == b'canary00' for value in retained)
+            time.sleep(.01)
+    # A second live thread shares the mappings/FDs; charge each inode once.
+    threading.Thread(target=threading.Event().wait).start()
+    threading.Thread(target=retain).start()
+    libc.pthread_exit(None)
+    os._exit(4)
+os.close(writer)
+assert os.read(reader, 5) == b'ready'
+os.close(reader)
+return None''')
+
+    def test_storage_rejects_files_in_surviving_threads(self):
+        for mapped in (False, True):
+            with self.subTest(mapped=mapped):
+                self.surviving_thread_module(mapped=mapped)
+                with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+                    self.run_control()
+
+    def test_surviving_thread_under_budget_passes_all_rounds(self):
+        for mapped in (False, True):
+            with self.subTest(mapped=mapped):
+                self.surviving_thread_module(mapped=mapped, size=1024**2)
+                result = self.run_control()
+                self.assertEqual(result['Q'], 1)
+                self.assertEqual(result['measurement_rounds'], 5)
+
+    def test_surviving_thread_cannot_disable_storage_inspection(self):
+        self.surviving_thread_module(mapped=True, size=1024**2, hide=True)
+        with self.assertRaisesRegex(RuntimeError, 'Cannot inspect submission'):
+            self.run_control()
+
     def test_consistency_probe_timeout_does_not_abort_all_measurements(self):
         # Two corpus batches, two batch probes, four warmups, then one query and its probe.
         self.module(load="return {'calls': 0}", transform="state['calls'] += 1\nif state['calls'] == 10:\n    import time\n    time.sleep(60)\nreturn vectors.copy()")

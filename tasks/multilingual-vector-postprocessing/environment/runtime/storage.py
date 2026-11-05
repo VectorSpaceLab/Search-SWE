@@ -66,16 +66,25 @@ def logical_bytes(roots, excluded=FRAMEWORK_PATHS, *, include_retained=False):
                 account(path)
     if include_retained:
         libc = ctypes.CDLL(None)
+        threads = []
         for process in Path('/proc').iterdir():
             if not process.name.isdigit():
                 continue
+            try:
+                # The group leader may have exited while other threads retain
+                # files. /proc lists leaders only; map_files needs /proc/<tid>.
+                threads.extend(Path('/proc') / task.name
+                               for task in (process / 'task').iterdir())
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+        for process in threads:
             try:
                 status = (process / 'status').read_text().splitlines()
                 uid = int(next(line.split()[1] for line in status if line.startswith('Uid:')))
             except (FileNotFoundError, ProcessLookupError):
                 continue
-            # Include sandbox workers, escaped descendants of that UID, and
-            # same-UID workers used by the public development evaluator.
+            # Include each sandbox thread, detached workers, and same-UID
+            # workers used by the public development evaluator.
             if uid not in (UID, os.getuid()):
                 continue
             attempt = 0
@@ -115,8 +124,8 @@ def logical_bytes(roots, excluded=FRAMEWORK_PATHS, *, include_retained=False):
                     break
                 if fields[0] == 'Z':
                     break
-                # An exiting process can briefly deny inspection before its
-                # retained files disappear. A live, uninspectable worker fails.
+                # Only this thread is skipped on exit; surviving peers are
+                # checked separately. A live, uninspectable worker fails.
                 if int(fields[6]) & 0x00000004:  # PF_EXITING
                     if exit_deadline is None:
                         exit_deadline = time.monotonic() + 1

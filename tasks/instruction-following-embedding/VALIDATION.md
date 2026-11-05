@@ -1,5 +1,13 @@
 # Validation: instruction-following-embedding
 
+## Surviving-thread storage fix — 2026-11-06
+
+Storage accounting enumerates every thread through `/proc/<tgid>/task/` and reads each thread's descriptors and mappings through `/proc/<tid>`. An exited thread-group leader no longer hides files retained by its living peers. Device/inode deduplication, full backing-file logical sizes, release handling and failure on uninspectable live threads remain enforced. The task's scoring, limits, submission interface and asset pins are unchanged.
+
+In a disposable offline verifier container, `python -B -m unittest discover -s . -p 'test_*.py' -v` collected 76 tests: 71 passed and 5 GPU-only tests were skipped. Three new cases cover descriptor-only and mmap-only storage after leader exit, deduplication across two surviving threads and complete release, and denied inspection. The new negative cases failed against the previous runtime before the fix. The unchanged third-review probe now rejects 40 GiB held by a surviving UID 10001 thread under the 32 GiB limit, with all descriptors closed and effective/permitted capabilities empty.
+
+Evidence: `/data/Search-SWE-Workspace/Search-SWE/pr-reviews/2026-11-06-pr-47-thread-fix-evidence/ife-before-fix.json`, `ife-unit.json` and `ife-exited-leader.json`. Tests use cached images, read-only current source, no network or credentials, and mock only GPU discovery for storage probes. No model training, full-data GPU evaluation or live compliance judge was run.
+
 ## Review scope (2026-11-05)
 
 This revision preserves the E5 query-only LoRA interface, 512 KiB deployment limit, fixed document tower, 20/84 public/hidden split, six relevance gates and harmonic p-MRR reward. It removes GPU model/capacity assumptions and RAM-backed workspaces, measures each query version five times using its median duration, standardizes public validation data under `data/validation`, restores processed training data through the asset manifest, and aligns metadata with the existing FollowIR-7B calibration.
