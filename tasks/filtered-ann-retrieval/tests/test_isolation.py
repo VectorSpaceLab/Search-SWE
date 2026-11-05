@@ -353,9 +353,9 @@ for line in sys.stdin:
             path.write_text(f"#!{sys.executable}\n" + code)
             path.chmod(0o555)
         queries = [{"query_id": str(i), "vector": [0], "filter": {"all": [0]}, "k": 2}
-                   for i in range(25)]
+                   for i in range(30)]
         gold = [{"query_id": str(i), "eligible_count": 3, "distances": [0.0, 1.0],
-                 "group": "synthetic"} for i in range(25)]
+                 "group": "synthetic"} for i in range(30)]
         for name, rows in (("queries.jsonl", queries), ("gold.jsonl", gold)):
             (self.root / name).write_text("\n".join(map(json.dumps, rows)))
         args = SimpleNamespace(app=self.app, work_dir=self.root / "work",
@@ -376,7 +376,7 @@ for line in sys.stdin:
             report = run_stage(args, "retrieval", aliases,
                                self.root / "queries.jsonl", self.root / "gold.jsonl")
         self.assertEqual(check_quality(report), 1.0, report)
-        self.assertEqual(report["request_count_including_reload_checks"], 50)
+        self.assertEqual(report["request_count_including_reload_checks"], 60)
         self.assertEqual(starts, ["index", "index", "restored-index"])
         self.assert_daemons_dead(args.work_dir / "retrieval/restored-index")
         self.assertFalse(any(10001 in (int(row["uid"]), int(row["cuid"]))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the trajectory gate to the mean of 25 per-query scores."""
+"""Apply the trajectory gate to the mean of 30 per-query scores."""
 import json
 import math
 import os
@@ -28,7 +28,7 @@ def main():
     judged = read_json(REWARD_DIR / "reward.json")
     metric = evaluation.get("primary_metric", {}).get("value")
     retrieval_valid = (evaluation.get("valid") is True
-                       and evaluation.get("query_count") == 25
+                       and evaluation.get("query_count") == 30
                        and type(metric) in (int, float)
                        and math.isfinite(metric) and 0 <= metric <= 1)
     retrieval_score = float(metric) if retrieval_valid else 0.0
@@ -45,7 +45,7 @@ def main():
     details["final_gate"] = {
         **result, "evaluation_valid": retrieval_valid, "trajectory_present": trajectory_present,
         "judge_succeeded": judge_succeeded,
-        "rule": "reward = sum(per-query correctness, latency and replay scores) / 25 when build, index, load and trajectory audit pass; otherwise 0",
+        "rule": "reward = sum(per-query correctness, latency and replay scores) / 30 when build, index, load and trajectory audit pass; otherwise 0",
     }
     write_json(REWARD_DIR / "reward-details.json", details)
     print(json.dumps(result))
