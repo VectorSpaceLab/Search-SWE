@@ -9,6 +9,13 @@ SERVICE = "harbor-docker-egress-control-sidecar"
 NETWORK = f"service:{SERVICE}"
 
 
+def is_separate_verifier_context(environment_directory, phase_policy_count):
+    # Harbor uses tests/ for separate single-step verifiers. Session names can
+    # be truncated, so identify the role from the host-created context instead.
+    return (environment_directory is not None
+            and Path(environment_directory).name == "tests" and phase_policy_count == 1)
+
+
 def declared_services(documents):
     names = {"main"}
     for document in documents:
@@ -25,7 +32,8 @@ def declared_services(documents):
     return sorted(names)
 
 
-def validate_final(document, *, private_directory, image, engine_paths=(), protected_paths=()):
+def validate_final(document, *, private_directory, image, engine_paths=(), protected_paths=(),
+                   separate_verifier=False):
     if document.get("configs") or document.get("secrets"):
         raise ValueError("Compose config/secret objects are unsupported with restricted egress")
     services = document.get("services", {})
@@ -71,7 +79,10 @@ def validate_final(document, *, private_directory, image, engine_paths=(), prote
         dropped = {str(cap).removeprefix("CAP_").upper() for cap in service.get("cap_drop", [])}
         if "ALL" not in dropped and not {"NET_RAW", "NET_ADMIN"} <= dropped:
             raise ValueError(f"Service {name} retains network-mark capabilities")
-        if service.get("cap_add") or service.get("privileged"):
+        added = {str(cap).removeprefix("CAP_").upper() for cap in service.get("cap_add", [])}
+        accounting_pair = (separate_verifier is True and name == "main"
+                           and added == {"SYS_PTRACE", "CHECKPOINT_RESTORE"})
+        if (added and not accounting_pair) or service.get("privileged"):
             raise ValueError(f"Service {name} requests unsupported capabilities")
         if service.get("pid") or service.get("ipc") == "host" or service.get("userns_mode"):
             raise ValueError(f"Service {name} requests unsupported namespaces")

@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from scripts.evaluation.harbor_environments import PhaseScopedDocker, DockerEnvironment, gateway_image_info
+from scripts.egress.compose import is_separate_verifier_context
 from scripts.egress import ownership
 
 
@@ -156,6 +157,8 @@ class AdapterCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.env._engine_paths = ()
         self.env.egress = SimpleNamespace(path=Path("/private/fixture.json"), auth_path=None)
         self.env._network_policy = Mock()
+        self.env.environment_dir = Path("/task/tests")
+        self.env._phase_network_policies = [Mock()]
         calls = []
         async def compose(command, *args, **kwargs):
             calls.append(command)
@@ -165,12 +168,31 @@ class AdapterCleanupTests(unittest.IsolatedAsyncioTestCase):
             calls.append("baseline")
         self.env.set_network_policy = AsyncMock(side_effect=baseline)
         with patch.object(DockerEnvironment, "_run_docker_compose_command", side_effect=compose), \
-             patch("scripts.evaluation.harbor_environments.validate_final"):
+             patch("scripts.evaluation.harbor_environments.validate_final") as validate:
             await PhaseScopedDocker._run_docker_compose_command(self.env, ["up", "--detach", "--wait"])
+        self.assertIs(validate.call_args.kwargs["separate_verifier"], True)
         self.assertEqual(calls[1:], [
             ["up", "--detach", "--wait", "--no-deps", "harbor-docker-egress-control-sidecar"],
             "baseline", ["up", "--detach", "--wait"]])
         self.env._private.cleanup()
+
+
+class VerifierContextTests(unittest.TestCase):
+    def test_real_harbor_short_and_truncated_names_keep_verifier_role(self):
+        from harbor.trial.trial import Trial
+        for name in ("training-error-tracing__trial", "t" * 46, "t" * 47, "t" * 200):
+            context = SimpleNamespace(config=SimpleNamespace(trial_name=name))
+            session = Trial._separate_verifier_session_id(context, "trial")
+            with self.subTest(name_length=len(name), session=session):
+                if len(name) > 46:
+                    self.assertFalse(session.endswith("__verifier__trial"))
+                self.assertTrue(is_separate_verifier_context(Path("/task/tests"), 1))
+
+    def test_other_or_shared_contexts_do_not_gain_capabilities(self):
+        for directory, count in ((None, 1), ("/task/environment", 1), ("/task/tests", 2),
+                                 ("/task/tests", 0), ("/task/tests/step-one", 1)):
+            with self.subTest(directory=directory, count=count):
+                self.assertFalse(is_separate_verifier_context(directory, count))
 
 
 class GatewayImagePullTests(unittest.TestCase):

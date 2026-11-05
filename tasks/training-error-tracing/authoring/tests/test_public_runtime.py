@@ -166,7 +166,31 @@ class PublicRuntime(unittest.TestCase):
 
     @unittest.skipUnless(os.geteuid() == 0 and Path("/task/starter").exists(), "Run in the disposable task container")
     def test_runtime_and_starter_are_readable_by_submission_user(self):
-        grade.verify_public_readability([Path("/task/runtime"), Path("/task/starter")])
+        roots = [Path("/task") / name for name in ("runtime", "starter", "docs")]
+        grade.verify_public_readability(roots)
+        for root in roots:
+            for path in [root, *root.rglob("*")]:
+                self.assertEqual(path.stat().st_uid, 0)
+                self.assertEqual(path.stat().st_mode & 0o222, 0)
+                if path.is_file():
+                    source = Path("/tests/public") / root.name / path.relative_to(root)
+                    self.assertEqual(digest(path), digest(source))
+        check = "import os; assert not os.access('/tests/public/starter', os.R_OK); assert not os.access('/tests/data/queries.jsonl', os.R_OK)"
+        subprocess.run(["/usr/bin/setpriv", "--reuid=10001", "--regid=10001", "--clear-groups",
+                        "--no-new-privs", sys.executable, "-c", check], check=True, timeout=10)
+
+    @unittest.skipUnless(os.geteuid() == 0 and Path("/.dockerenv").exists(), "Run in the disposable task container")
+    def test_missing_public_source_aborts_before_scoring(self):
+        setup = (TASK / "tests/test.sh").read_text().split("\ncleanup() {", 1)[0]
+        setup = setup.replace("/tests/public", str(self.root / "missing"))
+        setup = setup.replace("/task/", str(self.root / "task") + "/")
+        setup = setup.replace("/logs/verifier", str(self.root / "logs"))
+        result = subprocess.run(["bash", "-c", setup], capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual((self.root / "logs/reward.txt").read_text(), "0\n")
+        report = json.loads((self.root / "logs/reward-details.json").read_text())
+        self.assertTrue(report["infrastructure_error"])
+        self.assertEqual(report["reason"], "public input preparation failed")
 
     @unittest.skipUnless(os.geteuid() == 0 and Path("/task/starter").exists(), "Run in the disposable task container")
     def test_control_copy_is_independent_and_can_be_frozen(self):

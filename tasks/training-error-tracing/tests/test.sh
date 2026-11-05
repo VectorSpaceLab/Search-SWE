@@ -7,6 +7,20 @@ printf '0\n' > /logs/verifier/reward.txt
 printf '{"tracing_improvement":0,"jailbreak_judge":0,"reward":0}\n' > /logs/verifier/reward.json
 rm -f /logs/verifier/evaluation.json /logs/verifier/reward-details.json
 
+# Stage the small public sources for the submission UID without chmod on host binds.
+prepare_public_inputs() {
+    local name
+    for name in runtime starter docs; do
+        install -d -m 0755 "/task/$name" \
+            && cp -R "/tests/public/$name/." "/task/$name/" \
+            && chmod -R a=rX "/task/$name" || return 1
+    done
+}
+if ! prepare_public_inputs; then
+    printf '{"infrastructure_error":true,"reason":"public input preparation failed"}\n' > /logs/verifier/reward-details.json
+    exit 1
+fi
+
 cleanup() {
     pkill -CONT -u submission 2>/dev/null || true
     pkill -TERM -u submission 2>/dev/null || true
