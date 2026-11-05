@@ -73,6 +73,8 @@ layer; runtime proxy settings apply to task traffic.
 - Direct mode supports public and restricted phases. **Proxy mode supports
   `allowlist` and `no-network` phases.**
 - Task services use the enforced topology and project-local plain Docker volumes.
+  The main service in either phase may explicitly request `CHECKPOINT_RESTORE`
+  alone for mapped-file accounting; helper services may not.
   A separate single-step verifier's main service may explicitly request the exact
   `SYS_PTRACE` + `CHECKPOINT_RESTORE` pair for file accounting; submitted processes
   must drop all capabilities. Other extra capabilities/devices, host/control mounts, external/shared volumes,
