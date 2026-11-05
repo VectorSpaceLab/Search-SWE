@@ -92,6 +92,8 @@ enforcement belong in disposable task containers, not the shared host.
 
 The verifier Compose service grants `SYS_PTRACE` and `CHECKPOINT_RESTORE` so the trusted supervisor can account for open-unlinked and memory-mapped task files. The host kernel/runtime must support these capabilities. Candidate commands drop all capability sets. Storage inspection errors fail closed; unit and real descriptor/mapping regressions are in `authoring/tests/test_storage_accounting.py` and can run in a disposable verifier without a GPU by setting `SEARCH_SWE_RUN_ISOLATION_TESTS=1`.
 
+The phase-scoped host adapter accepts this capability pair only for the separate verifier main service, including trials with truncated session names. This task enables `metadata.public_inputs_readable` so the adapter restores read/traverse permissions on declared public inputs, including the starter and runtime, before starting either phase while preserving read-only mounts. The verifier still checks readability as UID 10001. These runtime repairs preserve task inputs and scoring; existing frozen submissions can be reevaluated without another coding run.
+
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## Maintainer notes

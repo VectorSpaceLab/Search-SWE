@@ -10,6 +10,7 @@ authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "training-data-attribution", "gradient-retrieval", "gpu"]
 
 [metadata]
+public_inputs_readable = true
 primary_metric = "quality-gated paired query-latency and GPU-memory cost"
 base_model = "Qwen/Qwen2.5-7B compact fixed diagnostic probe"
 provided_assets_limit_bytes = 5000000000

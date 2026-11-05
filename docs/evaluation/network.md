@@ -73,8 +73,20 @@ layer; runtime proxy settings apply to task traffic.
 - Direct mode supports public and restricted phases. **Proxy mode supports
   `allowlist` and `no-network` phases.**
 - Task services use the enforced topology and project-local plain Docker volumes.
-  Extra capabilities/devices, host/control mounts, external/shared volumes,
+  Explicit `CHECKPOINT_RESTORE` is supported for mapped-file accounting. The exact
+  `SYS_PTRACE` + `CHECKPOINT_RESTORE` pair is also supported on the main service of
+  a separate single-step verifier. The host identifies this role from Harbor's
+  `tests/` environment context, independently of trial-name length. Submitted
+  processes must still drop all capabilities. Other extra capabilities/devices,
+  host/control mounts, external/shared volumes,
   custom networks and kept containers are rejected.
+- Tasks can opt into `[metadata] public_inputs_readable = true`. Before
+  build/start, the adapter ensures that their task-local read-only `/task/`
+  inputs also declared in the agent main service are readable and directories
+  traversable by submission users. This restores checkout/cache permissions
+  without changing contents, ownership or write permissions. Hidden verifier
+  inputs and writable mounts are excluded; links and special files requiring
+  unsafe traversal or permission changes are rejected.
 - Filtering checks HTTP destinations and TLS SNI; it does not inspect encrypted
   paths, bodies or domain fronting at an allowed origin.
 

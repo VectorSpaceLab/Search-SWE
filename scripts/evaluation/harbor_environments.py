@@ -16,7 +16,8 @@ from harbor.environments.capabilities import EnvironmentCapabilities
 from harbor.environments.docker.docker import DockerEnvironment, _sanitize_docker_compose_project_name
 from harbor.models.task.config import NetworkMode, TaskOS
 
-from scripts.egress.compose import SERVICE, declared_services, validate_final
+from scripts.egress.compose import SERVICE, declared_services, is_separate_verifier_context, validate_final
+from scripts.evaluation.public_inputs import prepare_public_inputs
 from scripts.egress.config import DEFAULT_IMAGE, direct_config, exact_hosts, load_config, require_supported_harbor
 from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
 from environments.egress.gateway import LEASE_SECONDS
@@ -302,8 +303,12 @@ print(json.dumps({'gateway':hashlib.sha256(Path('/opt/searchswe/gateway.py').rea
                 protected.append(self.egress.auth_path)
             document = json.loads(rendered.stdout)
             validate_final(document, private_directory=self._private.name,
-                           image=self._gateway_image, engine_paths=self._engine_paths, protected_paths=protected)
+                           image=self._gateway_image, engine_paths=self._engine_paths, protected_paths=protected,
+                           separate_verifier=is_separate_verifier_context(
+                               getattr(self, "environment_dir", None),
+                               len(getattr(self, "_phase_network_policies", ()))))
             await asyncio.to_thread(self._check_resource_ownership, document)
+            await asyncio.to_thread(prepare_public_inputs, document, getattr(self, "environment_dir", None))
             self._rendered_document = document
             if command[0] == "up" and self._heartbeat is None:
                 self._heartbeat = asyncio.create_task(self._keep_lease())

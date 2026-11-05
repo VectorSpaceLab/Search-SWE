@@ -105,11 +105,40 @@ class ComposeTests(unittest.TestCase):
                                                "security_opt": ["no-new-privileges:true"],
                                                "depends_on": {SERVICE: {"condition": "service_healthy"}}}}}
 
-    def validate(self, document=None):
-        validate_final(document or self.document, private_directory="/tmp/private-egress-unique", image="sha256:fixture")
+    def validate(self, document=None, **kwargs):
+        validate_final(document or self.document, private_directory="/tmp/private-egress-unique", image="sha256:fixture", **kwargs)
 
     def test_hardened_compose(self):
         self.validate()
+
+    def test_storage_capabilities_are_scoped_to_the_verifier(self):
+        main = self.document["services"]["main"]
+        for cap in ("CHECKPOINT_RESTORE", "CAP_CHECKPOINT_RESTORE"):
+            main["cap_add"] = [cap]
+            self.validate()
+        main["cap_add"] = ["SYS_PTRACE", "CHECKPOINT_RESTORE"]
+        self.validate(separate_verifier=True)
+        for role in (False, "true"):
+            with self.assertRaises(ValueError):
+                self.validate(separate_verifier=role)
+        self.document["services"]["helper"] = copy.deepcopy(main)
+        with self.assertRaises(ValueError):
+            self.validate(separate_verifier=True)
+
+    def test_accounting_exception_keeps_security_guards(self):
+        changes = [{"cap_add": ["SYS_PTRACE"]}]
+        changes += [{"cap_add": ["SYS_PTRACE", "CHECKPOINT_RESTORE", cap]}
+                    for cap in ("NET_ADMIN", "NET_RAW", "SYS_ADMIN", "ALL")]
+        changes += [{"pid": "host"}, {"pid": "service:helper"}, {"ipc": "host"},
+                    {"privileged": True}, {"network_mode": "host"}, {"cap_drop": []},
+                    {"security_opt": []}, {"security_opt": ["no-new-privileges:true", "seccomp:unconfined"]},
+                    {"volumes": [{"type": "bind", "source": "/proc", "target": "/host"}]}]
+        for change in changes:
+            document = copy.deepcopy(self.document)
+            document["services"]["main"]["cap_add"] = ["SYS_PTRACE", "CHECKPOINT_RESTORE"]
+            document["services"]["main"].update(change)
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.validate(document, separate_verifier=True)
 
     def test_all_untrusted_services_checked(self):
         self.document["services"]["helper"] = {"image": "python"}
