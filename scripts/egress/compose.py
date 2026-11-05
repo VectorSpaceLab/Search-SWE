@@ -80,9 +80,10 @@ def validate_final(document, *, private_directory, image, engine_paths=(), prote
         if "ALL" not in dropped and not {"NET_RAW", "NET_ADMIN"} <= dropped:
             raise ValueError(f"Service {name} retains network-mark capabilities")
         added = {str(cap).removeprefix("CAP_").upper() for cap in service.get("cap_add", [])}
+        checkpoint_restore = name == "main" and added == {"CHECKPOINT_RESTORE"}
         accounting_pair = (separate_verifier is True and name == "main"
                            and added == {"SYS_PTRACE", "CHECKPOINT_RESTORE"})
-        if (added and not accounting_pair) or service.get("privileged"):
+        if (added and not (checkpoint_restore or accounting_pair)) or service.get("privileged"):
             raise ValueError(f"Service {name} requests unsupported capabilities")
         if service.get("pid") or service.get("ipc") == "host" or service.get("userns_mode"):
             raise ValueError(f"Service {name} requests unsupported namespaces")
