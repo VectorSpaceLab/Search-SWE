@@ -13,13 +13,13 @@ trap '/opt/conda/bin/python -c "from isolation import cleanup; cleanup()"' EXIT
 /opt/conda/bin/python -c 'from transfer import restore; restore()'
 trap 'exit 143' INT TERM HUP
 primary_status=0
-timeout --signal=TERM --kill-after=10s 4650s /opt/conda/bin/python /task/runtime/evaluate.py --private-dir /task/private --reference-dir /tests/data --output-dir /logs/verifier \
+timeout --signal=TERM --kill-after=10s 6000s /opt/conda/bin/python /task/runtime/evaluate.py --private-dir /task/private --reference-dir /tests/data --output-dir /logs/verifier \
     > /logs/verifier/grader.stdout 2> /logs/verifier/grader.stderr || primary_status=$?
 /opt/conda/bin/python /tests/integrity_gate.py cleanup
 judge_status=78
 if [ -n "${OPENAI_API_KEY:-}" ] && [ -n "${OPENAI_BASE_URL:-}" ]; then
     judge_status=0
-    timeout --signal=TERM --kill-after=30s 1200s /opt/conda/bin/python /tests/rewardkit_deepseek.py \
+    timeout --signal=TERM --kill-after=30s 3600s /opt/conda/bin/python /tests/judge_repeats.py /tests/rewardkit_deepseek.py \
         /audit --workspace /app/submission --output /logs/verifier/audit.json \
         --max-concurrent-agent 1 --judge deepseek-codex --model deepseek/deepseek-v4.1-flash \
         > /logs/verifier/audit.stdout.log 2> /logs/verifier/audit.stderr.log || judge_status=$?

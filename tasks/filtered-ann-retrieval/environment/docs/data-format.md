@@ -1,7 +1,6 @@
 # Binary input formats
 
-Both corpus and example files use the layouts below. All multibyte fields are
-little-endian; arrays are consecutive with no padding.
+Both corpus and example files use the layouts below. All multibyte fields are little-endian; arrays are consecutive with no padding.
 
 ## `vectors.u8bin`
 
@@ -26,6 +25,4 @@ Document-by-tag matrix in compressed sparse row (CSR) format.
 | `24 + 8 * (N + 1)` | `int32`, `nnz` | Tag IDs, `indices` |
 | `24 + 8 * (N + 1) + 4 * nnz` | `float32`, `nnz` | Entry values, `data` |
 
-Row `i` occupies entries `[indptr[i], indptr[i + 1])`. A nonzero entry means that
-the document has the corresponding tag. Missing or zero-valued entries mean
-absence. Document rows correspond to vector rows.
+Row `i` occupies entries `[indptr[i], indptr[i + 1])`. A nonzero entry means that the document has the corresponding tag. Missing or zero-valued entries mean absence. Document rows correspond to vector rows.

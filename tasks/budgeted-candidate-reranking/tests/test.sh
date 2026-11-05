@@ -10,12 +10,12 @@ chmod 0700 /logs/agent
 trap 'pkill -KILL -u 10001 2>/dev/null || true' EXIT
 trap 'exit 143' INT TERM HUP
 primary_status=0
-timeout --signal=TERM --kill-after=10s 7200s /opt/conda/bin/python /tests/grader.py || primary_status=$?
+timeout --signal=TERM --kill-after=10s 35000s /opt/conda/bin/python /tests/grader.py || primary_status=$?
 /opt/conda/bin/python /tests/integrity_gate.py cleanup
 judge_status=78
 if [ "$primary_status" -eq 0 ] && [ -n "${OPENAI_API_KEY:-}" ] && [ -n "${OPENAI_BASE_URL:-}" ]; then
     judge_status=0
-    timeout --signal=TERM --kill-after=30s 1200s /opt/conda/bin/python /tests/rewardkit_deepseek.py \
+    timeout --signal=TERM --kill-after=30s 3600s /opt/conda/bin/python /tests/judge_repeats.py /tests/rewardkit_deepseek.py \
         /audit --workspace /app/submission --output /logs/verifier/audit.json \
         --max-concurrent-agent 1 --judge deepseek-codex --model deepseek/deepseek-v4.1-flash \
         > /logs/verifier/audit.stdout.log 2> /logs/verifier/audit.stderr.log || judge_status=$?

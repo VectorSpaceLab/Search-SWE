@@ -69,13 +69,13 @@ copies have been checked against them:
 - Vectors: `589030afcbcc44a50ff798cec935f0980815a02eb7075b224d4f7c12febe96bf`
 - Metadata: `2f9c9a533fde31cb062edfdf5c9410f088bb5d7bf4a721ab98c47e3d2954287d`
 
-`assets.json` records the exact sizes and SHA-256 values for eight runtime inputs. The six unchanged corpus/example files retain their official published pins. The updated public files are published at `234406eb7e304478e48905829fc0d3233f5a9f1f` under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/`. All earlier assets and manifest entries are preserved.
+`assets.json` records the exact sizes and SHA-256 values for eight runtime inputs. The six unchanged corpus/example files retain the published revisions recorded in `assets.json`. The updated public files are published at `234406eb7e304478e48905829fc0d3233f5a9f1f` under `tasks/filtered-ann-retrieval/v0.11.0/data/validation/`. All earlier assets and manifest entries are preserved.
 
 Upstream CC BY 4.0 terms and attribution apply to the original dataset and its
 derived inputs. The synthetic example files are published
 with the task author's authorization; no additional standalone license for
 those original files was supplied. Their downstream license should be settled
-with the author before official redistribution. The development dataset card
+with the author before redistribution. The development dataset card
 therefore points to these per-file terms instead of claiming one license for
 every file. This document does not change the repository's code license.
 

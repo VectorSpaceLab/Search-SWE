@@ -36,3 +36,5 @@ Write one JSONL result per question, preserving its identifier and returning dis
 Scoring uses ExactSetAccuracy: a question earns 1 only if the returned set exactly matches the complete answer set; order does not matter. Wrong answers and timeouts earn 0. The displayed score is 100 times the average across all hidden questions.
 
 A failed build, non-timeout execution failure, invalid output or failed compliance audit makes the entire submission score zero.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

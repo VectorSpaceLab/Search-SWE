@@ -9,7 +9,7 @@
 | Authors | jianlyu |
 | Primary metric | baseline-normalized mean nDCG@10 |
 | Compute | 16 CPUs; 32 GiB RAM; 64 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 16200 s |
+| Agent / verifier time limits | 7200 s / 62000 s |
 
 Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query.
 
@@ -24,7 +24,6 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-11-04 | 1.0.0 | Added a public two-round feedback baseline and updated the frozen baseline reference. |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -127,3 +126,9 @@ enforcement belong in disposable task containers, not the shared host.
 ## References
 
 None.
+
+## Repeated measurements
+
+Each test query is measured five times in five complete passes over the query set. The index is built once. Before each pass, the verifier starts a fresh load worker and clears its writable scratch directory. Prepared artifacts become read-only after construction; use the supplied TMPDIR for query-time writes. Initial construction and all loads still share the 3600-second startup allowance. Each measurement receives a fresh query token and a separate 20-score allowance. The median of the five complete-response times must be at most 2.0 seconds. Each individual measurement has a 3.0-second execution cap. All five results must satisfy the protocol and score budget; otherwise that query scores zero. For a query that passes these checks and the median time limit, its quality is the arithmetic mean of the five nDCG@10 values.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

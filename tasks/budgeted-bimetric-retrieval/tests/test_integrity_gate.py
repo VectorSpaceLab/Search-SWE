@@ -44,6 +44,14 @@ class IntegrityGateTests(unittest.TestCase):
         self.assertTrue(result['healthy'])
         self.assertFalse(result['infrastructure_error'])
 
+    def test_mixed_three_run_decision_is_a_healthy_rejection(self):
+        for mean in (1/3, 2/3):
+            result = self.finish({'status': 'complete', 'raw_reward': .8},
+                                 {'integrity_judge': mean}, '0', '0', True)
+            self.assertTrue(result['healthy'])
+            self.assertFalse(result['infrastructure_error'])
+            self.assertEqual(result['reward'], 0)
+
     def test_missing_failed_or_malformed_audit_fails_closed(self):
         for decision in (None, True, False, .5, '1', float('nan'), {}, []):
             with self.subTest(decision=decision):

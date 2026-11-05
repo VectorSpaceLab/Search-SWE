@@ -1,5 +1,6 @@
 """Trusted verifier; all test queries remain in this root-owned process."""
 import csv
+from repeated_measurements import TIMING_REPEATS, median_seconds, freeze_prepared, reset_scratch
 import errno
 import json
 from scoring_parameters import SCORING
@@ -133,51 +134,70 @@ def main():
 
         worker = start('build', 0)
         if oom_count() != initial_oom: raise Violation('aggregate memory exceeded during build')
-        for i, query in enumerate(queries):
-            item = {'query_id': query['query_id'], 'ndcg10': 0.0, 'calls': 0, 'valid': False}
-            if worker is None:
-                worker = start('load', i+1)
-                if oom_count() != initial_oom: raise Violation('aggregate memory exceeded during reload')
-            token = secrets.token_hex(16)
-            t0 = time.monotonic()
-            deadline = t0+2.0
-            oracle.begin(query_vectors[i], token, deadline)
-            try:
-                worker.resume()
-                worker.send({'op':'query', 'token':token, 'text':query['text'], 'vector':query['vector']}, deadline)
-                while True:
-                    result = worker.receive(deadline)
-                    if not isinstance(result, dict): raise QueryFailure('Expected object')
-                    if result.get('op') == 'score':
-                        worker.send(oracle.score(result), deadline)
-                    elif set(result) == {'op','token','doc_ids'} and result['op']=='result' and result['token']==token:
-                        if not valid_ranking(result['doc_ids'], len(expensive)):
-                            raise QueryFailure('Invalid top-10 result')
-                        worker.suspend()
-                        worker.sample(force_disk=True, deadline=deadline)
-                        elapsed = time.monotonic()-t0
-                        if elapsed > 2.0: raise QueryFailure('Query timeout')
-                        item.update(valid=True, ndcg10=ndcg10(result['doc_ids'], qrels[query['query_id']]),
-                                    seconds=elapsed, doc_ids=result['doc_ids'])
-                        break
-                    else:
-                        raise QueryFailure('Unexpected protocol response')
-            except (QueryFailure, Violation) as exc:
-                item.update(error=str(exc), seconds=time.monotonic()-t0)
-                if isinstance(exc, Violation) and 'aggregate' in str(exc): raise
-                peak_rss = max(peak_rss, worker.peak_rss)
-                peak_storage = max(peak_storage, worker.peak_storage)
+        peak_rss, peak_storage = worker.peak_rss, worker.peak_storage
+        worker.close()
+        worker = None
+        freeze_prepared(work, 'scratch')
+        samples = [[] for _ in queries]
+        for repeat in range(TIMING_REPEATS):
+            reset_scratch(work, 'scratch')
+            for i, query in enumerate(queries):
+                item = {'query_id': query['query_id'], 'ndcg10': 0.0, 'calls': 0, 'valid': False}
+                if worker is None:
+                    worker = start('load', f'{repeat+1}-{i+1}')
+                    if oom_count() != initial_oom: raise Violation('aggregate memory exceeded during reload')
+                token = secrets.token_hex(16)
+                t0 = time.monotonic()
+                deadline = t0+3.0
+                oracle.begin(query_vectors[i], token, deadline)
+                try:
+                    worker.resume()
+                    worker.send({'op':'query', 'token':token, 'text':query['text'], 'vector':query['vector']}, deadline)
+                    while True:
+                        result = worker.receive(deadline)
+                        if not isinstance(result, dict): raise QueryFailure('Expected object')
+                        if result.get('op') == 'score':
+                            worker.send(oracle.score(result), deadline)
+                        elif set(result) == {'op','token','doc_ids'} and result['op']=='result' and result['token']==token:
+                            if not valid_ranking(result['doc_ids'], len(expensive)):
+                                raise QueryFailure('Invalid top-10 result')
+                            worker.suspend()
+                            worker.sample(force_disk=True, deadline=deadline)
+                            elapsed = time.monotonic()-t0
+                            if elapsed > 3.0: raise QueryFailure('Query observation timeout')
+                            item.update(valid=True, ndcg10=ndcg10(result['doc_ids'], qrels[query['query_id']]),
+                                        seconds=elapsed, doc_ids=result['doc_ids'])
+                            break
+                        else:
+                            raise QueryFailure('Unexpected protocol response')
+                except (QueryFailure, Violation) as exc:
+                    item.update(error=str(exc), seconds=time.monotonic()-t0)
+                    if isinstance(exc, Violation) and 'aggregate' in str(exc): raise
+                    peak_rss = max(peak_rss, worker.peak_rss)
+                    peak_storage = max(peak_storage, worker.peak_storage)
+                    worker.close()
+                    worker = None
+                finally:
+                    item['calls'] = oracle.used
+                    oracle.close()
+                if oom_count() != initial_oom: raise Violation('aggregate memory exceeded (cgroup OOM)')
+                samples[i].append(item)
+                if worker:
+                    peak_rss = max(peak_rss, worker.peak_rss)
+                    peak_storage = max(peak_storage, worker.peak_storage)
+                if (i+1)%50 == 0: write(LOGS/'progress.json', {'measurement':repeat+1,'completed':i+1,'total':3452})
+            if worker is not None:
                 worker.close()
                 worker = None
-            finally:
-                item['calls'] = oracle.used
-                oracle.close()
-            if oom_count() != initial_oom: raise Violation('aggregate memory exceeded (cgroup OOM)')
-            report['queries'].append(item)
-            if worker:
-                peak_rss = max(peak_rss, worker.peak_rss)
-                peak_storage = max(peak_storage, worker.peak_storage)
-            if (i+1)%50 == 0: write(LOGS/'progress.json', {'completed':i+1,'total':3452})
+        for query, measurements in zip(queries, samples, strict=True):
+            seconds = median_seconds([m.get('seconds') if m['valid'] else None for m in measurements])
+            valid = all(m['valid'] for m in measurements) and seconds is not None and seconds <= 2.0
+            report['queries'].append({
+                'query_id': query['query_id'], 'valid': valid, 'seconds': seconds,
+                'ndcg10': sum(m['ndcg10'] for m in measurements)/TIMING_REPEATS if valid else 0.0,
+                'measurements': measurements,
+            })
+        report.update(timing_repeats=TIMING_REPEATS, timing_aggregation='median')
         quality = sum(q['ndcg10'] for q in report['queries'])/3452
         if oom_count() != initial_oom: raise Violation('aggregate memory exceeded')
         result = reward(quality, refs['B'], refs['U'])

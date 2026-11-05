@@ -66,22 +66,21 @@ def fama(gold, panels):
         len(p) != len(cs) or any(v not in ["yes", "no"] for v in p) for p in panels
     ):
         raise ValueError("Incomplete atomic judge votes")
-    decisions = [
-        "yes" if sum(p[i] == "yes" for p in panels) >= 2 else "no"
-        for i in range(len(cs))
-    ]
     m = [i for i, c in enumerate(cs) if c["kind"] == "memory_presence"]
     f = [i for i, c in enumerate(cs) if c["kind"] == "forgetting_absence"]
     if not m or len(m) + len(f) != len(cs):
         raise ValueError("Invalid criterion kinds")
-    mpa = sum(decisions[i] == cs[i]["expected_answer"] for i in m) / len(m)
-    faa = (
-        sum(decisions[i] == cs[i]["expected_answer"] for i in f) / len(f) if f else 1.0
-    )
     lam = len(f) / len(cs)
-    return max(0.0, mpa - lam * (1 - faa)), {
-        "mpa": mpa,
-        "faa": faa,
+    measurements = []
+    for decisions in panels:
+        mpa = sum(decisions[i] == cs[i]["expected_answer"] for i in m) / len(m)
+        faa = sum(decisions[i] == cs[i]["expected_answer"] for i in f) / len(f) if f else 1.0
+        measurements.append({"mpa": mpa, "faa": faa,
+                             "fama": max(0.0, mpa - lam * (1 - faa))})
+    return sum(row["fama"] for row in measurements) / 3, {
+        "mpa": sum(row["mpa"] for row in measurements) / 3,
+        "faa": sum(row["faa"] for row in measurements) / 3,
         "forgetting_weight": lam,
-        "decisions": decisions,
+        "judge_measurements": measurements,
+        "aggregation": "mean",
     }

@@ -68,8 +68,8 @@ if [[ -z "${OPENAI_BASE_URL:-}" || -z "${OPENAI_API_KEY:-}" ]]; then
     judge_status=78
 fi
 if (( judge_status == 0 )); then
-    /usr/bin/timeout --signal=TERM --kill-after=30s 1260s \
-        /opt/conda/bin/python /tests/rewardkit_deepseek.py /tests \
+    /usr/bin/timeout --signal=TERM --kill-after=30s 3660s \
+        /opt/conda/bin/python /tests/judge_repeats.py /tests/rewardkit_deepseek.py /tests \
         --workspace /app --output "$REWARD_DIR/reward.json" --max-concurrent-agent 1 \
         --judge deepseek-codex --model deepseek/deepseek-v4.1-flash \
         > "$RESULTS_DIR/jailbreak-judge.stdout.log" \

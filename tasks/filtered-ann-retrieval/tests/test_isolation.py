@@ -134,7 +134,7 @@ class ExecutionBoundaryTests(unittest.TestCase):
                        self.root / "child.log", "submission", 1, service=service)
 
     def assert_daemons_dead(self, index):
-        for path in index.glob("escape-*.pid"):
+        for path in index.rglob("escape-*.pid"):
             self.assertFalse(alive(int(path.read_text())), str(path))
 
     def test_sysv_objects_of_dead_creators_cannot_cross_boundaries(self):
@@ -341,7 +341,7 @@ idx=faiss.read_index(str(index_dir/'index.faiss'))
 # This three-vector fixture needs one search thread, not an eight-thread team.
 faiss.omp_set_num_threads(1)
 idx.search(np.zeros((1,1),dtype='float32'),2)
-''' + DAEMON + "\nchange_owner = True\n" + SYSV_CREATE + '''
+''' + "\nimport os\nindex_dir=Path(os.environ['TMPDIR'])\n" + DAEMON + "\nchange_owner = True\n" + SYSV_CREATE + '''
 print(json.dumps({'status':'ready'}),flush=True)
 for line in sys.stdin:
     q=json.loads(line)
@@ -376,8 +376,8 @@ for line in sys.stdin:
             report = run_stage(args, "retrieval", aliases,
                                self.root / "queries.jsonl", self.root / "gold.jsonl")
         self.assertEqual(check_quality(report), 1.0, report)
-        self.assertEqual(report["request_count_including_reload_checks"], 60)
-        self.assertEqual(starts, ["index", "index", "restored-index"])
+        self.assertEqual(report["request_count_including_reload_checks"], 300)
+        self.assertEqual(starts, ["index"]*6 + ["restored-index"]*5)
         self.assert_daemons_dead(args.work_dir / "retrieval/restored-index")
         self.assertFalse(any(10001 in (int(row["uid"]), int(row["cuid"]))
                              for row in ipc_rows().values()))

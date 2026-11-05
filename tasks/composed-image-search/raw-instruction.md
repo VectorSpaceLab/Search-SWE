@@ -8,7 +8,7 @@ A user starts with a photograph and describes a change they want, such as a diff
 
 ### Resource limits and workload
 
-- You have two hours, 8 CPU cores, 32 GiB RAM and 100 GiB working storage and one 40 GiB GPU.
+- You have two hours, 8 CPU cores, 32 GiB RAM and 100 GiB working storage and one GPU.
 - The build command has 3,600 seconds.
 - The system must handle up to 4,400 requests in two calls of at most 2,200 requests, with an independent 14,400-second allowance for each call.
 - At most 100 candidate images per request may undergo additional query-dependent visual inspection.
@@ -100,3 +100,5 @@ Before implementing the system, read the following task-provided documents:
 - [`/task/docs/available_resources.md`](/task/docs/available_resources.md) — available local models or APIs, network restrictions and runtime credential handling.
 
 These documents and the supplied inputs are read-only. Follow the task-specific resource restrictions.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

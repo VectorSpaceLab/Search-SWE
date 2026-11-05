@@ -36,6 +36,7 @@ RUN chmod 700 /tests \
 
 RUN install -d -m 0755 /opt/audit \
     && install -m 0755 /tests/rewardkit_deepseek.py /opt/audit/runner.py \
+    && install -m 0755 /tests/judge_repeats.py /opt/audit/judge_repeats.py \
     && install -m 0755 /tests/readonly_audit.py /opt/audit/readonly_audit.py \
     && install -m 0644 /tests/landlock_audit.py /opt/audit/landlock_audit.py \
     && install -d -o audit -g audit -m 0700 /home/audit/.cache/harbor-rewardkit/codex/0.164.0/bin \

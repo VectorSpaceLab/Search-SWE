@@ -89,7 +89,7 @@ class IndependentQueryTests(unittest.TestCase):
     def test_failures_do_not_abort_or_contaminate_other_queries(self):
         # Exercise build -> queries -> relocation -> replay aggregation. A
         # failed first replay must not earn credit from a successful second one.
-        for failure in [None, "recall", "timeout", "malformed", "exit", "wrong_id", "replay", "all"]:
+        for failure in [None, "recall", "timeout", "malformed", "exit", "wrong_id", "replay", "all", "two_slow", "three_slow"]:
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 corpus = root / "corpus"
@@ -101,6 +101,7 @@ class IndependentQueryTests(unittest.TestCase):
                 (root / "queries.jsonl").write_text("\n".join(map(json.dumps, queries)))
                 (root / "gold.jsonl").write_text("\n".join(map(json.dumps, gold)))
                 processes, attempts, startup_timeouts = [], [], []
+                seen_timings = {}
 
                 class Submission:
                     def __init__(self, command, app, work, log, run_as, threads, *, service=False):
@@ -132,7 +133,11 @@ class IndependentQueryTests(unittest.TestCase):
                                 result["results"] = [{"doc_id": 1}, {"doc_id": 2}]
                         if failure == "replay" and self.reloaded and query["query_id"] == "3":
                             result["results"][1]["doc_id"] = 2
-                        return result, 0.001
+                        key = (self.reloaded, query['query_id'])
+                        repeat = seen_timings.get(key, 0)
+                        seen_timings[key] = repeat+1
+                        slow_count = 2 if failure == 'two_slow' else 3 if failure == 'three_slow' else 0
+                        return result, 0.02 if query['query_id'] == '3' and repeat < slow_count else 0.001
 
                     def close(self):
                         self.closed = True
@@ -145,19 +150,19 @@ class IndependentQueryTests(unittest.TestCase):
                         patch("grader.inspect_faiss", return_value={}):
                     report = run_stage(args, "retrieval", corpus, root / "queries.jsonl",
                                        root / "gold.jsonl")
-                expected = 1.0 if failure is None else 0.0 if failure == "all" else 29 / 30
+                expected = 1.0 if failure in (None, 'two_slow') else 0.0 if failure == "all" else 29 / 30
                 self.assertEqual(check_quality(report), expected)
                 self.assertEqual(report["mean_score"], expected)
-                self.assertEqual(len(attempts), 60)
+                self.assertEqual(len(attempts), 300)
                 self.assertEqual(len(set(attempts)), 60)
                 self.assertTrue(all(p.closed for p in processes))
                 self.assertTrue(startup_timeouts)
                 self.assertTrue(all(timeout is None for timeout in startup_timeouts))
-                if failure not in [None, "all"]:
+                if failure not in [None, "all", "two_slow"]:
                     self.assertEqual(report["queries"][3]["score"], 0)
                     self.assertTrue(all(q["score"] == 1 for q in report["queries"][4:]))
                 if failure in ["timeout", "malformed", "exit", "wrong_id"]:
-                    self.assertEqual(len(processes), 4)  # build, first service, recovery, replay
+                    self.assertEqual(len(processes), 16)  # build, ten services, five recovery workers
 
 
 class IndexAndDeadlineTests(unittest.TestCase):

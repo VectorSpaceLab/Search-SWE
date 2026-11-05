@@ -100,7 +100,7 @@ class RewardTests(unittest.TestCase):
             self.assertFalse(audit.exists())
             command = run.call_args_list[1].args[0]
             self.assertEqual(command[0], "/usr/bin/timeout")
-            self.assertIn("3600s", command)
+            self.assertIn("10800s", command)
             self.assertEqual(command[command.index("--output") + 1], str(audit))
             env = run.call_args_list[1].kwargs["env"]
             self.assertEqual(env["OPENAI_API_KEY"], "judge-fixture")

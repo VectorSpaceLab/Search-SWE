@@ -1,34 +1,14 @@
 # Available Resources
 
-The submission may use the external API below for permitted generative LLM calls only.
+Use the supplied document collection and installed runtime. The only permitted external resource is OpenRouter generation through the models listed below.
 
-The variables listed below are injected by Harbor at runtime and are available directly in the agent container's process environment, including child processes started by the agent. Read them as ordinary environment variables; for example, use `$OPENROUTER_API_KEY` in shell or `os.environ["OPENROUTER_API_KEY"]` in Python. Do not source a `.env` file inside the container. Only variables listed in this document and configured by Harbor are guaranteed to be available. Do not assume that all variables from a `.env` file are automatically injected.
+## Local resources
 
-For example, check whether a credential is present without exposing its value:
+- `/task/data/corpus.jsonl`: document collection.
+- `/task/data/validation/queries.jsonl`: public development questions.
+- `/task/data/validation/qrels_gold.txt`: public relevance labels.
 
-```bash
-if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-    echo "OPENROUTER_API_KEY is not set" >&2
-    exit 1
-fi
-```
-
-```python
-import os
-
-if not os.environ.get("OPENROUTER_API_KEY"):
-    raise RuntimeError("OPENROUTER_API_KEY is not set")
-```
-
-These credentials are runtime resources. Do not hard-code them, print or log their values, write them into source code, indexes, or output artifacts, or assume that they are available during Docker image build.
-
-Harbor restricts runtime egress to `openrouter.ai`. Documentation links below do not grant
-access to any additional host. The coding agent's own phase-scoped model host
-is not a submission resource.
-
-```bash
-OPENROUTER_API_KEY=<YOUR_OPENROUTER_API_KEY>
-```
+Read `/task/docs/environment.md` for the installed Python environment, packages and system tools. Treat `/task` as read-only.
 
 ## Retrieval resources
 
@@ -36,29 +16,27 @@ Embeddings (local, API, or precomputed), BM25 and its variants, and external ret
 
 ## Generative LLM resources
 
-Generative calls are allowed only through the OpenRouter API. The following four model IDs are the complete allowlist:
+Generative calls may use only the OpenRouter Chat Completions endpoint and the following model IDs. This is the complete generation allowlist:
 
-- `qwen/qwen3.6-35b-a3b` — `https://openrouter.ai/qwen/qwen3.6-35b-a3b`
-- `qwen/qwen3.5-35b-a3b` — `https://openrouter.ai/qwen/qwen3.5-35b-a3b`
-- `qwen/qwen3.5-9b` — `https://openrouter.ai/qwen/qwen3.5-9b`
-- `qwen/qwen3-30b-a3b-instruct-2507` — `https://openrouter.ai/qwen/qwen3-30b-a3b-instruct-2507`
+- `qwen/qwen3.6-35b-a3b`
+- `qwen/qwen3.5-35b-a3b`
+- `qwen/qwen3.5-9b`
+- `qwen/qwen3-30b-a3b-instruct-2507`
 
-The fourth model ID above is the exact OpenRouter identifier corresponding to the `Qwen3-30B-A3B-Instruct-2507` model name.
+OpenRouter API:
 
-OpenRouter generation resources:
-
-- Quickstart: `https://openrouter.ai/docs/quickstart`
-- API documentation: `https://openrouter.ai/docs/api_reference/overview`
-- PDF OCR / multimodal PDF guide: `https://openrouter.ai/docs/guides/overview/multimodal/pdfs`
 - OpenAI-compatible endpoint: `https://openrouter.ai/api/v1/chat/completions`
+- API documentation: `https://openrouter.ai/docs/api_reference/overview`
 
-### Strict allowlist and jailbreak penalty
+## Network and resource restrictions
 
-The four Qwen IDs above are an allowlist, not a recommendation. Do not call any other generative model ID, any other generative provider, or a prohibited chat/completions endpoint. In particular, do not use another provider's generative endpoint or an embedding/reranking endpoint.
+The following runtime variables are supplied through the process environment when configured:
 
-If the verifier or trajectory audit detects a prohibited generative model or provider call, the submission is classified as jailbreak and the entire task receives a score of `0`, regardless of retrieval quality or final answer quality.
+- `OPENROUTER_API_KEY`: permitted OpenRouter calls.
+- `OPENROUTER_API_BASE_URL`: configured OpenRouter API base URL, `https://openrouter.ai/api/v1`.
 
-The mandatory verifier-only audit also checks the embedding/BM25 bans, the
-20-round retrieval limit, hidden-label access and verifier manipulation.
-Violations zero the entire reward. Audit credentials and the DeepSeek judge
-endpoint are verifier resources only, not available to submitted commands.
+Read credentials from the process environment; do not source a `.env` file or place credential values in code, indexes, outputs or logs.
+
+Submission network access is limited to `openrouter.ai`. Documentation links do not authorize access to additional hosts. Use the APIs only for operations permitted by the task instruction.
+
+Only the listed generative model IDs and the OpenRouter Chat Completions endpoint are permitted. Other generative models, providers and endpoints are prohibited. Embedding and reranking endpoints must not be used as substitutes for generation. If the verifier or trajectory audit detects a prohibited generative call, the submission is classified as a jailbreak and the entire task receives a score of `0`.

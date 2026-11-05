@@ -9,7 +9,7 @@
 | Authors | Jianlyu |
 | Primary metric | GoldRecall@5 |
 | Compute | 32 CPUs; 16 GiB RAM; 200 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 19200 s |
+| Agent / verifier time limits | 7200 s / 27000 s |
 | Dataset | BrowseComp-Plus |
 | Hidden queries | 20 |
 
@@ -37,7 +37,7 @@ Submitted processes receive an explicit environment allowlist and the task `OPEN
 
 ### Validation
 
-From the repository root, restore inputs with `python scripts/assets/download_assets.py --task agentic-search-vectorless`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
+From the repository root, restore inputs with `python scripts/assets/download_assets.py --task agentic-search-vectorless`. The input sources, immutable revisions, filenames, sizes and hashes are listed in `assets.json`.
 
 Use `python scripts/validation/check_tasks.py tasks/agentic-search-vectorless`, `python scripts/assets/download_assets.py --task agentic-search-vectorless --verify-only`, and `python -B -m unittest discover -s tasks/agentic-search-vectorless/tests -p 'test_*.py' -q`. Full trials use `bash scripts/evaluation/run_task.sh --task agentic-search-vectorless --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max` with locally configured agent, optional generation and verifier-judge credentials.
 
@@ -105,8 +105,6 @@ bash scripts/evaluation/run_task.sh --task agentic-search-vectorless --agent cod
 
 ## References
 
-### Sources and structural references
+### Sources
 
-The corpus/public split has the exact current `tasks/agentic-search/assets.json` hashes and named paths, pinned to official dataset revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. No source bytes were changed or republished. See [SOURCES.md](SOURCES.md) for provenance and usage terms. Published inputs may be reused at their original paths. The hidden split remains runtime-isolated but visible to repository readers; it is not a secret evaluation set.
-
-Read-only references: `tasks/agentic-search` for corpus layout, build/query lifecycle and deterministic Recall scoring, and `tasks/long-pdf-evidence` for the current trajectory-judge backend. Intentional differences: no ReAct/BM25 starter, no embeddings or BM25, no external retrieval/reranking, and a broader audit of the embedding/BM25 bans and other task constraints; the reviewed task now also has a trajectory audit. The allowed Qwen generation models remain those in this package's resource document.
+The corpus and public split are pinned in `assets.json` to `search-swe/Search-SWE` revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. See [SOURCES.md](SOURCES.md) for provenance and usage terms.

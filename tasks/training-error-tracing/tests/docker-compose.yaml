@@ -34,19 +34,19 @@ services:
           create_host_path: false
       - type: bind
         source: ../environment/runtime
-        target: /task/runtime
+        target: /tests/public/runtime
         read_only: true
         bind:
           create_host_path: false
       - type: bind
         source: ../environment/starter
-        target: /task/starter
+        target: /tests/public/starter
         read_only: true
         bind:
           create_host_path: false
       - type: bind
         source: ../environment/docs
-        target: /task/docs
+        target: /tests/public/docs
         read_only: true
         bind:
           create_host_path: false

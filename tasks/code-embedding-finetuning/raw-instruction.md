@@ -20,7 +20,7 @@ The corpus and training data are under /task/data. A fixed 10-query public valid
 
 ## Environment and Available Resources
 
-Read /task/docs/environment.md and /task/docs/available_resources.md. The supplied backbone is mounted read-only under /task/models.
+Read /task/docs/environment.md and /task/docs/available_resources.md. The runtime provides one GPU, 8 CPUs, 32 GiB RAM and 100 GiB storage. The supplied backbone is mounted read-only under /task/models.
 
 ## Expected Artifacts
 
@@ -42,3 +42,5 @@ Evaluation encodes queries without a prefix and documents as `(title + " " + tex
 ## Hidden Test Overview
 
 The hidden split contains code-retrieval queries and private relevance labels disjoint from the public validation split. Hidden data is unavailable during the Agent phase.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

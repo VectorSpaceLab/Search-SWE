@@ -21,7 +21,7 @@ Store all required runtime state as regular files inside the supplied index dire
 
 After loading, write and flush `{"status":"ready"}` to stdout. Then process one JSON request per stdin line and write and flush one JSON response per stdout line; send diagnostics to stderr. Requests arrive one at a time and contain string `query_id`, numeric `vector` matching the corpus dimension, `filter` in the form `{"all":[tag_id,...]}`, and integer `k` from 0 through 100. Tag IDs are nonnegative integers; scored requests use `k=10`.
 
-Each query has a **15 millisecond** deadline, including request transmission and response JSON decoding. Service loading and evaluator-side request serialization and result checking are excluded.
+Each query has a **15 millisecond median** time limit, measured as described below, including request transmission and response JSON decoding. Service loading and evaluator-side request serialization and result checking are excluded.
 
 Return ranked document IDs in this format:
 
@@ -31,4 +31,8 @@ Return ranked document IDs in this format:
 
 Preserve `query_id`; document IDs are integer, zero-based corpus row numbers. Every result must contain all requested tags. Repeated tags have no additional effect, and an empty tag list matches the whole corpus. Return exactly `min(k, matching_document_count)` distinct valid IDs, ordered by ascending squared Euclidean distance, breaking ties by document ID. Equivalent matches at the Top-K distance boundary are accepted. Identical requests must receive identical responses after restart and index relocation.
 
-The score is the fraction of held-out queries returning the complete exact Top-10 within the deadline in both the initial and relocated-index runs. A failed query earns zero; partial Top-K recall earns no credit. Build, index, service-load or required trajectory-audit failure makes the submission score zero.
+The score is the fraction of held-out queries passing the exact Top-10, repeated-response and median-latency checks in both index locations. A failed query earns zero; partial Top-K recall earns no credit. Build, index, service-load or required trajectory-audit failure makes the submission score zero.
+
+The verifier builds the index once and measures every query five times before relocation and five times after relocation. Each pass starts a fresh service process and clears the index directory's tmp subdirectory. Prepared files are read-only; use the supplied TMPDIR for query-time writes. In each location, the median of the five complete-response times must be at most 15 milliseconds. Each individual measurement has a one-second execution cap. All ten responses must be valid, exact and identical. A query earns one point only when both medians meet the limit and all response checks pass; otherwise it earns zero. Service loading remains outside query timing.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

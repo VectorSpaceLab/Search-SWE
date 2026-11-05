@@ -123,8 +123,8 @@ if [[ -z "${OPENAI_BASE_URL:-}" || -z "${OPENAI_API_KEY:-}" ]]; then
 fi
 
 if (( judge_status == 0 )); then
-    /usr/bin/timeout --signal=TERM --kill-after=30s 1200s \
-        /opt/conda/bin/python /tests/rewardkit_transport.py /tests/rewardkit_deepseek.py \
+    /usr/bin/timeout --signal=TERM --kill-after=30s 3600s \
+        /opt/conda/bin/python /tests/rewardkit_transport.py /tests/judge_repeats.py /tests/rewardkit_deepseek.py \
         /tests \
         --workspace /app \
         --output "$REWARD_JSON" \

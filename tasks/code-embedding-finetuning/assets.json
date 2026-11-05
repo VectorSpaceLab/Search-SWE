@@ -58,13 +58,10 @@
     },
     {
       "path": "models/bge-base-en-v1.5/README.md",
-      "size_bytes": 94551,
-      "sha256": "fd29e6117a8c2bc83f8eafb73f261d35341702dcd95c9cc0b34f5be75afa8231",
+      "size_bytes": 87601,
+      "sha256": "bb9475f98006e55e7048efbb2a9ef321fe213576ddfd74169498701a807676f9",
       "source": {
-        "repo_id": "BAAI/bge-base-en-v1.5",
-        "repo_type": "model",
-        "revision": "a5beb1e3e68b9ab74eb54cfd186867f64f240e1a",
-        "filename": "README.md"
+        "local_path": "model-metadata/models/bge-base-en-v1.5/README.md"
       }
     },
     {

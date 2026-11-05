@@ -12,7 +12,7 @@ from torch.utils.cpp_extension import (
 build_cuda = True
 
 if build_cuda:
-    os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0"
+    os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0+PTX"
     ext = CUDAExtension(
         name="apex_topk._ops",
         language="c++",

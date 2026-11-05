@@ -21,7 +21,10 @@ from metrics import TARGETS
 from gold import feasible as true_feasible, top_ids
 
 PREPARE_SECONDS = 3600.0
+from repeated_measurements import TIMING_REPEATS, median_seconds, freeze_prepared, reset_scratch
+
 QUERY_SECONDS = 2.0
+QUERY_OBSERVATION_SECONDS = 3.0
 STORAGE_BYTES = 64 << 30
 
 
@@ -35,7 +38,7 @@ def files_size(root):
 
 
 def writable_bytes():
-    # /app uses disk, not a RAM-backed tmpfs. Account for logical bytes, including
+    # Account for logical disk bytes, including
     # sparse and open-unlinked files, without counting unrelated image layers.
     seen = set()
     total = 0
@@ -150,10 +153,6 @@ class Resources:
         if pynvml.nvmlDeviceGetCount() != 1:
             raise ResourceViolation("Exactly one mapped GPU is required")
         self.gpu = pynvml.nvmlDeviceGetHandleByIndex(0)
-        name = pynvml.nvmlDeviceGetName(self.gpu)
-        capacity = pynvml.nvmlDeviceGetMemoryInfo(self.gpu).total
-        if "A100" not in name or not (39 << 30) <= capacity <= (41 << 30):
-            raise ResourceViolation("The task requires an A100 40GB")
         quota, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()
         maximum = Path("/sys/fs/cgroup/memory.max").read_text().strip()
         if quota == "max" or int(quota) / int(period) > 16:
@@ -187,7 +186,8 @@ class Worker:
         env = {name: os.environ[name] for name in (
             "PATH", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES",
             "NVIDIA_DRIVER_CAPABILITIES") if name in os.environ}
-        env.update(HOME=str(work), TMPDIR=str(work), XDG_CACHE_HOME=str(work / "cache"),
+        scratch = work / "scratch" if (work / "scratch").exists() else work
+        env.update(HOME=str(scratch), TMPDIR=str(scratch), XDG_CACHE_HOME=str(scratch),
                    MOLECULE_WORK_DIR=str(work), MOLECULE_LIBRARY_DIR=str(library_dir),
                    PYTHONUNBUFFERED="1", PYTHONDONTWRITEBYTECODE="1",
                    HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", OMP_NUM_THREADS="16",
@@ -271,65 +271,98 @@ def evaluate(private_dir, output, library_dir="/task/library", reference_dir=Non
     first = True
     started = time.monotonic()
     try:
-        for query in queries:
-            expected = (truth[query["query_id"]] if truth is not None else
-                        top_ids(scores[:, TARGETS.index(query["target"])],
-                                true_feasible(properties, query["constraints"]), query["k"]))
-            if worker is None:
+        tick = time.monotonic()
+        worker = Worker(work, output, resources, library_dir)
+        ready = worker.call({"op": "prepare"}, tick + PREPARE_SECONDS)
+        preparation += time.monotonic() - tick
+        if ready != {"ready": True} or preparation > PREPARE_SECONDS:
+            raise RuntimeError("Final preparation failed or exceeded 3600 seconds")
+        worker.close()
+        worker = None
+        first = False
+        freeze_prepared(work, 'scratch')
+        expected_by_id = {
+            query["query_id"]: (truth[query["query_id"]] if truth is not None else
+                top_ids(scores[:, TARGETS.index(query["target"])],
+                        true_feasible(properties, query["constraints"]), query["k"]))
+            for query in queries
+        }
+        samples = {query["query_id"]: [] for query in queries}
+        for repeat in range(TIMING_REPEATS):
+            reset_scratch(work, 'scratch')
+            for query in queries:
+                expected = expected_by_id[query["query_id"]]
+                if worker is None:
+                    tick = time.monotonic()
+                    worker = Worker(work, output, resources, library_dir)
+                    ready = worker.call({"op": "prepare" if first else "load"},
+                                        tick + PREPARE_SECONDS - preparation)
+                    preparation += time.monotonic() - tick
+                    if ready != {"ready": True} or preparation > PREPARE_SECONDS:
+                        raise RuntimeError("Final preparation failed or exceeded 3600 seconds")
+                    first = False
+                row = {"query_id": query["query_id"], "target": query["target"],
+                       "main": query.get("main", True), "recalls": [0.0] * len(JS),
+                       "status": "invalid", "output_count": 0,
+                       "constraints": query["constraints"], "configuration_id": query.get("configuration_id"),
+                       "true_feasible_count": query.get("true_feasible_count")}
                 tick = time.monotonic()
-                worker = Worker(work, output, resources, library_dir)
-                ready = worker.call({"op": "prepare" if first else "load"},
-                                    tick + PREPARE_SECONDS - preparation)
-                preparation += time.monotonic() - tick
-                if ready != {"ready": True} or preparation > PREPARE_SECONDS:
-                    raise RuntimeError("Final preparation failed or exceeded 3600 seconds")
-                first = False
-            row = {"query_id": query["query_id"], "target": query["target"],
-                   "main": query.get("main", True), "recalls": [0.0] * len(JS),
-                   "status": "invalid", "output_count": 0,
-                   "constraints": query["constraints"], "configuration_id": query.get("configuration_id"),
-                   "true_feasible_count": query.get("true_feasible_count")}
-            tick = time.monotonic()
-            try:
-                # No evaluator-only counts, grouping or diagnostic metadata
-                # cross the worker boundary.
-                request = {key: query[key] for key in ("query_id", "target", "constraints", "k")}
-                response = worker.call(request, tick + QUERY_SECONDS)
-                if response.get("query_id") != query["query_id"] or "error" in response:
-                    raise ValueError("Query ID mismatch or submission error")
-                ids = validate_ids(response.get("ids"), manifest["n_products"], query["k"])
-                row["seconds"] = time.monotonic() - tick
-                if row["seconds"] > QUERY_SECONDS:
-                    raise TimeoutError("Complete ID response exceeded 2 seconds")
-                row.update(status="ok", output_count=len(ids))
-                if row["main"]:
-                    row["recalls"] = recalls(ids, expected, (query["k"],))
-                feasible = np.ones(len(ids), dtype=bool)
-                for name, (lower, upper) in query["constraints"].items():
-                    values = properties[ids, PROPERTIES.index(name)]
-                    if lower is not None:
-                        feasible &= values >= lower
-                    if upper is not None:
-                        feasible &= values <= upper
-                row["true_constraint_satisfaction"] = float(np.mean(feasible)) if len(ids) else 0.0
-                row["feasible_output_count"] = int(feasible.sum())
-            except ResourceViolation:
-                raise
-            except (TimeoutError, ValueError, RuntimeError, BrokenPipeError, OSError) as error:
-                row.update(seconds=time.monotonic() - tick, failure=str(error),
-                           status="timeout" if isinstance(error, TimeoutError) else "invalid")
+                try:
+                    # No evaluator-only counts, grouping or diagnostic metadata
+                    # cross the worker boundary.
+                    request = {key: query[key] for key in ("query_id", "target", "constraints", "k")}
+                    response = worker.call(request, tick + QUERY_OBSERVATION_SECONDS)
+                    if response.get("query_id") != query["query_id"] or "error" in response:
+                        raise ValueError("Query ID mismatch or submission error")
+                    ids = validate_ids(response.get("ids"), manifest["n_products"], query["k"])
+                    row["seconds"] = time.monotonic() - tick
+                    if row["seconds"] > QUERY_OBSERVATION_SECONDS:
+                        raise TimeoutError("Complete ID response exceeded 3 seconds")
+                    row.update(status="ok", output_count=len(ids))
+                    if row["main"]:
+                        row["recalls"] = recalls(ids, expected, (query["k"],))
+                    feasible = np.ones(len(ids), dtype=bool)
+                    for name, (lower, upper) in query["constraints"].items():
+                        values = properties[ids, PROPERTIES.index(name)]
+                        if lower is not None:
+                            feasible &= values >= lower
+                        if upper is not None:
+                            feasible &= values <= upper
+                    row["true_constraint_satisfaction"] = float(np.mean(feasible)) if len(ids) else 0.0
+                    row["feasible_output_count"] = int(feasible.sum())
+                except ResourceViolation:
+                    raise
+                except (TimeoutError, ValueError, RuntimeError, BrokenPipeError, OSError) as error:
+                    row.update(seconds=time.monotonic() - tick, failure=str(error),
+                               status="timeout" if isinstance(error, TimeoutError) else "invalid")
+                    worker.close()
+                    worker = None
+                samples[query["query_id"]].append(row)
+                (output / "query-metrics.jsonl").write_text("".join(json.dumps(r) + "\n" for group in samples.values() for r in group))
+            if worker is not None:
                 worker.close()
                 worker = None
+        for query in queries:
+            measurements = samples[query["query_id"]]
+            seconds = median_seconds([m.get('seconds') if m['status'] == 'ok' else None for m in measurements])
+            valid = all(m['status'] == 'ok' for m in measurements) and seconds is not None and seconds <= QUERY_SECONDS
+            row = {**measurements[0], 'seconds': seconds, 'status': 'ok' if valid else 'invalid',
+                   'measurements': measurements}
+            row['recalls'] = [sum(m['recalls'][j] for m in measurements)/TIMING_REPEATS if valid else 0.0
+                              for j in range(len(row['recalls']))]
+            row['true_constraint_satisfaction'] = sum(m.get('true_constraint_satisfaction', 0.0) for m in measurements)/TIMING_REPEATS if valid else 0.0
             rows.append(row)
-            (output / "query-metrics.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+        (output / "query-metrics.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
         resources.check(force=True)
         q, targets = summarize(rows)
-        latencies = [r["seconds"] for r in rows]
+        latencies = [r["seconds"] for r in rows if r["seconds"] is not None]
         return {"valid": True, "reward": reward(q, 0.0, 1.0),
                 "Q": q, "B": 0.0, "U": 1.0, "by_target": targets,
                 "preparation_seconds": preparation, "total_seconds": time.monotonic() - started,
-                "latency_p50": float(np.median(latencies)), "latency_p95": float(np.percentile(latencies, 95)),
-                "latency_max": max(latencies), "queries": rows, "resources": resources.report(),
+                "timing_repeats": TIMING_REPEATS, "timing_aggregation": "median",
+                "latency_p50": float(np.median(latencies)) if latencies else None,
+                "latency_p95": float(np.percentile(latencies, 95)) if latencies else None,
+                "latency_max": max(latencies) if latencies else None, "queries": rows, "resources": resources.report(),
                 "submission_bytes": files_size("/app/submission"),
                 "index_bytes": files_size(work / "index"), "scratch_bytes": files_size(work),
                 "submission_sha256": hashes}

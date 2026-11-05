@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | DomainMacroNDCG@10 |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 7200 s / 19200 s |
+| Agent / verifier time limits | 7200 s / 21600 s |
 | Dataset | ViDoRe V3, eight public domains |
 | Public queries | 30 |
 | Hidden queries | 14484 |
