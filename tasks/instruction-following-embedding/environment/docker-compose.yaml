@@ -1,5 +1,8 @@
 services:
   main:
+    # Trusted storage accounting inspects mmap backing files after unlink.
+    cap_add:
+    - CHECKPOINT_RESTORE
     pids_limit: 512
     deploy:
       resources:

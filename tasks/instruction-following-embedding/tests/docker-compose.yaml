@@ -1,5 +1,8 @@
 services:
   main:
+    # Isolated submission workers drop this capability with their root UID.
+    cap_add:
+    - CHECKPOINT_RESTORE
     pids_limit: 512
     deploy:
       resources:

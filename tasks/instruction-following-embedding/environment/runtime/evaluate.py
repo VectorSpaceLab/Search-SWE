@@ -14,6 +14,7 @@ import pynvml
 from isolation import UID,isolate,cleanup
 from metrics import evaluate_pairs,reward,rank_vectors
 from models import validate
+from storage import logical_bytes
 
 SUB=Path('/app/submission')
 WORK=Path('/app/worker')
@@ -72,10 +73,14 @@ class Worker:
             except BlockingIOError:time.sleep(.005)
         return self.receive(deadline)['vectors']
     def close(self):
-        cleanup()
-        if self.p.poll() is None:self.p.kill()
-        self.p.wait(timeout=10);self.selector.close();self.log.close()
-        self.p.stdin.close();self.p.stdout.close()
+        try:
+            # Inspect retained files before cleanup releases their last reference.
+            self.resources.check(force=True)
+        finally:
+            cleanup()
+            if self.p.poll() is None:self.p.kill()
+            self.p.wait(timeout=10);self.selector.close();self.log.close()
+            self.p.stdin.close();self.p.stdout.close()
 
 
 class Resources:
@@ -83,14 +88,20 @@ class Resources:
         pynvml.nvmlInit()
         if pynvml.nvmlDeviceGetCount()!=1:raise RuntimeError('Exactly one mapped GPU required')
         self.peak_disk=0;self.last_disk=0
-        self.fixed=sum(p.stat().st_size for root in [Path('/task/models'),Path('/task/corpus'),Path('/task/data')] for p in root.rglob('*') if p.is_file())
-    def check(self):
-        if time.monotonic()-self.last_disk>=1:
+        self.fixed=logical_bytes([Path('/task/models'),Path('/task/corpus'),Path('/task/data')])
+    def check(self,*,force=False):
+        if force or time.monotonic()-self.last_disk>=1:
             self.last_disk=time.monotonic()
-            total=self.fixed+sum(p.stat().st_size for root in [Path('/app'),Path('/tmp')] for p in root.rglob('*') if p.is_file() and not p.is_symlink())
+            try:
+                total=self.fixed+logical_bytes([Path('/app'),Path('/tmp')],include_retained=True)
+            except Exception as error:
+                # Inspection failure must not become an ordinary query failure
+                # that five-run timing or worker recovery could hide.
+                raise ResourceViolation('Cannot account for task storage: '+str(error)) from error
             self.peak_disk=max(self.peak_disk,total)
-            if total>32<<30:raise ResourceViolation('32 GiB task storage exceeded')
+        if self.peak_disk>32<<30:raise ResourceViolation('32 GiB task storage exceeded')
     def report(self):
+        self.check(force=True)
         return {'peak_task_storage_bytes':self.peak_disk}
 
 
