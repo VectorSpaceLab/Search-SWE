@@ -7,6 +7,7 @@ from harbor.agents.model_connection import ResolvedModelConnection
 from dataclasses import replace
 from harbor.environments.base import BaseEnvironment
 import json
+import re
 import shlex
 import tempfile
 from pathlib import Path
@@ -38,6 +39,13 @@ async def _require_version(
 
 class PreinstalledCodex(Codex):
     """Run the pinned Codex CLI without runtime package downloads."""
+
+    def parse_version(self, stdout: str) -> str:
+        # Startup warnings can precede the version. Require one complete CLI
+        # version line; a version mentioned inside a warning is not evidence.
+        versions = [match.group(1) for line in stdout.splitlines()
+                    if (match := re.fullmatch(r"codex-cli ([0-9]+\.[0-9]+\.[0-9]+)", line.strip()))]
+        return versions[0] if len(versions) == 1 else ""
 
     async def install(self, environment: BaseEnvironment) -> None:
         if self._version != CODEX_VERSION:

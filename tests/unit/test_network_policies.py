@@ -22,6 +22,7 @@ from harbor.trial.network_policy import resolve_trial_network_plan
 from scripts.evaluation.harbor_agents import (
     PreinstalledClaudeCode,
     PreinstalledCodex,
+    PreinstalledOpenRouterCodex,
     PreinstalledPi,
 )
 from scripts.evaluation.run_task import CLAUDE_CODE_EFFORT_LEVELS
@@ -177,6 +178,30 @@ class TaskNetworkPolicies(unittest.TestCase):
                         for token in ("npm install", "curl", "bootstrap.sh")
                     )
                 )
+
+    def test_codex_version_check_tolerates_warnings_but_rejects_ambiguity(self):
+        class FakeEnvironment:
+            def __init__(self, output, return_code=0):
+                self.output, self.return_code = output, return_code
+
+            async def exec(self, command, **kwargs):
+                return SimpleNamespace(return_code=self.return_code, stdout=self.output)
+
+        version = "codex-cli 0.164.0"
+        with tempfile.TemporaryDirectory() as directory:
+            for cls in (PreinstalledCodex, PreinstalledOpenRouterCodex):
+                agent = cls(logs_dir=Path(directory), model_name="fixture", version="0.164.0")
+                for output in (version, f"WARNING: PATH update failed\n{version}\n",
+                               f"\r\n  {version}\r\nWARNING: ignored\r\n"):
+                    with self.subTest(agent=cls.__name__, output=output):
+                        asyncio.run(agent.install(FakeEnvironment(output)))
+                for output, code in (("", 0), (f"WARNING: expected {version}", 0),
+                                     ("codex-cli 0.163.0", 0), (f"{version}-alpha", 0),
+                                     (f"{version}\ncodex-cli 0.163.0", 0),
+                                     (f"{version}\n{version}", 0), (version, 1)):
+                    with self.subTest(agent=cls.__name__, output=output, code=code):
+                        with self.assertRaisesRegex(RuntimeError, "Task image must provide Codex"):
+                            asyncio.run(agent.install(FakeEnvironment(output, code)))
 
     def test_preinstalled_claude_code_rejects_unsupported_wrong_or_missing_version(self):
         class FakeEnvironment:

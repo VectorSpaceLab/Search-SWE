@@ -79,6 +79,8 @@ class GpuSelection(unittest.TestCase):
                         env.environment_dir = env_dir
                         env.session_id = f"{run}-{phase}"
                         env.gpu_device = identity
+                        env.task_env_config = SimpleNamespace(cpus=8)
+                        env._cpu_resource_mode = "limit"
                         env.trial_paths = SimpleNamespace(trial_dir=root / run)
                         env._gateway_overlay = root / "gateway.json"
                         with patch.object(DockerEnvironment, "_docker_compose_paths", new_callable=PropertyMock,
