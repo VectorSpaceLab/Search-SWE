@@ -39,10 +39,10 @@ Process every input query, emit exactly one object per query. Verifier calls sep
 
 ## Runtime and grading
 
-- Build: 2,400 seconds. Each query: 900 seconds. Shared query phase: 1,800 seconds, concurrency at most five. Queuing excluded from individual time, included in shared budget. Unfinished/unlaunched queries score zero. Runner cleanup/result collection: extra 60 seconds. Whole verifier: 10,800 seconds.
-- Check corpus hashes, exact sentence membership and output contract. Then OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0 judges the entire evidence set. Credentials are verifier-only; this does not extend submission API permissions.
+- Build: 2,400 seconds. Each query: 900 seconds. Shared query phase: 1,800 seconds, concurrency at most five. Queuing excluded from individual time, included in shared budget. Unfinished/unlaunched queries score zero. Runner cleanup/result collection: extra 60 seconds. Whole verifier: 14,400 seconds.
+- Check corpus hashes, exact sentence membership and output contract. Judge each fixed evidence set three times using the verifier-only `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY`, with effort `high` and temperature 0. Do not rerun retrieval between judgments. These settings do not extend submission API permissions.
 - Binary support: complete explanation/contrast/reversal/qualification = 1, otherwise 0. Topical or scene matching alone fails. Accept alternative evidence; no exact reference-ID requirement. No borrowing missing facts from reference or outside knowledge. Harmless redundant evidence permitted within limits.
-- `SentenceEvidenceAccuracy` = mean binary support across all 12 private queries, including failed/invalid/missing/time-out zeros. Isolated failures do not invalidate other queries. Shared build/setup failure prevents all scoring.
-- Answer judging: 2,700-second total limit, two workers, at most two attempts/request, connect/read timeouts 10/120 seconds. Compliance audit: 3,600 seconds.
+- Each query receives the arithmetic mean of its three binary support judgments. `SentenceEvidenceAccuracy` is the mean of those query scores across all 12 private queries, including failed/invalid/missing/time-out zeros. Isolated retrieval failures do not invalidate other queries. Shared build/setup failure prevents all scoring.
+- Evidence judging: 5,400-second total limit, two workers, at most two attempts per judgment, connect/read timeouts 10/120 seconds. Compliance audit: one run, bounded at 3,600 seconds.
 - Judge infrastructure/parse errors invalidate measurement and fail closed with final reward 0, separately reported from retrieval mistakes.
 - Report `score = 100 * SentenceEvidenceAccuracy`; final reward on 0–1 scale after separate trajectory compliance audit. Only a valid binary pass yields reward; a failed, missing, malformed, rejected or timed-out audit sets reward to 0.

@@ -26,7 +26,7 @@ The verifier then invokes:
   --top-k 5
 ```
 
-Process every supplied query and exit successfully after writing its result. Verification uses one query per invocation, with a **30-second wall-clock limit**. A timed-out query receives zero.
+Process every supplied query and exit successfully after writing its result. Verification uses one query per invocation, with a **30-second wall-clock limit**. Up to five queries may run concurrently. A timed-out query receives zero.
 
 Write one JSONL result per query, preserving its identifier and using exactly these fields:
 

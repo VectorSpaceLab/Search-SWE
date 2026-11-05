@@ -20,7 +20,7 @@ The verifier invokes:
 ```bash
 /app/build.sh \
   --corpus /task/data/corpus.jsonl \
-  --index-dir /app/index
+  --index-dir /path/to/index
 ```
 
 Executable `build.sh` must return 0 within 3,600 seconds when its indexes and any background service are ready. Build-started services may persist into querying.
@@ -31,13 +31,13 @@ After a successful build, the verifier invokes:
 
 ```bash
 /app/run.sh \
-  --index-dir /app/index \
+  --index-dir /path/to/index \
   --queries /path/to/queries.jsonl \
   --output /path/to/results.jsonl \
   --top-k 10
 ```
 
-Executable `run.sh` must return 0 and finish the entire query batch within 20 seconds.
+Executable `run.sh` must return 0 and finish the entire query batch within 20 seconds. Evaluate the same frozen query order in five rounds, each starting with a fresh build, index directory and service processes. Clear submission-owned IPC and writable state between rounds; operating-system file caches are not flushed. Each build retains its 3,600-second deadline. Sort successful batches by elapsed time, place failed, late or invalid batches last, and break timing ties by round order. Score the rankings from the third batch in that ordering, never select a batch by retrieval quality.
 
 ### Output contract
 
@@ -69,7 +69,7 @@ The finalized submission must contain executable `build.sh` and `run.sh` files a
 
 ## Verification
 
-Evaluate retrieval by mean NDCG@10 on held-out queries. Failed or late commands, invalid output or a failed integrity audit receive zero credit.
+Evaluate retrieval by mean NDCG@10 on held-out queries. A failed build, fewer than three successful query batches, or a failed integrity audit receives zero credit. The single audit's aggregate, raw decision and normalized criterion value must agree; missing or inconsistent audit details produce zero and a nonzero verifier exit. A consistent rejection is a valid zero.
 
 ## Hidden Test Overview
 

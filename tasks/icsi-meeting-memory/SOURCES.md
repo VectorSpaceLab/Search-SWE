@@ -33,9 +33,12 @@ All remote manifest entries use immutable revisions.
 | Repository | Type | Immutable revision | Files |
 | --- | --- | --- | ---: |
 | search-swe/Search-SWE | dataset | d931a7d5645d84f54ee33258b63f7eaae528479f | 1 |
+| search-swe/Search-SWE | dataset | 102f2baf7980f81220d8c5519ff97b3edd369e21 | 3 |
 
-3 small metadata/example files are bundled under the local paths in
-[assets.json](assets.json); those files need no separate upload.
+The three public validation files are hosted alongside the history and restored
+directly to `data/validation/` through [assets.json](assets.json). They preserve
+the original five examples byte for byte; the public answer filename is
+`ground_truth.jsonl`. The 143 hidden examples remain separate in `tests/data/`.
 
 The manifest records exact task-relative paths and asset bytes. Source pins do
 not change the corpus, examples, labels or model weights. Original upstream

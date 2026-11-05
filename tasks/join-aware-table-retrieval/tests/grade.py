@@ -3,7 +3,6 @@ import json
 import math
 import os
 from pathlib import Path
-import random
 import selectors
 import signal
 import stat
@@ -32,6 +31,10 @@ ENV = {'HOME': '/home/submission', 'USER': 'submission', 'LOGNAME': 'submission'
        'TOKENIZERS_PARALLELISM': 'false', 'TMPDIR': '/work/tmp'}
 
 
+class SubmissionFailure(ValueError):
+    """A documented submission gate failed, rather than the verifier itself."""
+
+
 def submission_env():
     # Forward only the public task API resources, never coding-agent/judge keys.
     env = ENV.copy()
@@ -54,16 +57,18 @@ def cleanup_children():
 
 def readable_submission():
     if SUBMISSION.is_symlink() or not SUBMISSION.is_dir():
-        raise ValueError('Missing submission directory')
+        raise SubmissionFailure('Missing submission directory')
     for root, dirs, files in os.walk(SUBMISSION, followlinks=False):
+        os.chown(root, 0, 0)
         os.chmod(root, 0o755)
         for name in files:
             path = Path(root) / name
             mode = path.lstat().st_mode
             if stat.S_ISREG(mode):
+                os.chown(path, 0, 0)
                 os.chmod(path, 0o755 if mode & 0o111 else 0o644)
             elif not stat.S_ISLNK(mode):
-                raise ValueError('Submission contains a special file')
+                raise SubmissionFailure('Submission contains a special file')
         dirs[:] = [d for d in dirs if not (Path(root) / d).is_symlink()]
 
 
@@ -74,11 +79,11 @@ def index_size():
             path = Path(root) / name
             info = path.lstat()
             if stat.S_ISLNK(info.st_mode) or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
-                raise ValueError('Index must contain only regular files and directories')
+                raise SubmissionFailure('Index must contain only regular files and directories')
             if stat.S_ISREG(info.st_mode):
                 total += info.st_size
         if total > MAX_INDEX:
-            raise ValueError('Index exceeds 8 GiB')
+            raise SubmissionFailure('Index exceeds 8 GiB')
     return total
 
 
@@ -175,23 +180,24 @@ def evaluate():
     gold = {r['query_id']: r for r in labels}
     assert len(queries) == len(gold) == 10
     catalog_lookup = lookup(load_catalog(CORPUS))
-    report = {'n': len(queries), 'reward': 0.0, 'table_success_rate': 0.0, 'valid_fraction': 0.0, 'queries': []}
+    report = {'status': 'ok', 'valid': True, 'n': len(queries), 'reward': 0.0,
+              'table_success_rate': 0.0, 'valid_fraction': 0.0, 'queries': []}
     started = time.monotonic()
     builder = launch(['/bin/bash', str(SUBMISSION / 'build.sh'), '--corpus', str(CORPUS),
                       '--index-dir', str(INDEX)], 'build', stdout_pipe=False)
     try:
         while builder.poll() is None:
             if time.monotonic() - started > BUILD_SECONDS:
-                raise TimeoutError('Index build exceeded 1200 seconds')
+                raise SubmissionFailure('Index build exceeded 1200 seconds')
             index_size()
             time.sleep(0.1)
         if builder.returncode:
-            raise ValueError(f'Index build exited with code {builder.returncode}')
+            raise SubmissionFailure(f'Index build exited with code {builder.returncode}')
         report['index_bytes'] = index_size()
     finally:
         close_process(builder)
     report['build_seconds'] = time.monotonic() - started
-    random.SystemRandom().shuffle(queries)
+    # Preserve the frozen query-file order so service/cache state is reproducible.
     server = None
     server_number = 0
     durations = []
@@ -256,13 +262,16 @@ def main():
         report = evaluate()
     except Exception as error:
         cleanup_children()
-        report = {'n': 10, 'reward': 0.0, 'error': f'{type(error).__name__}: {error}'}
+        status = 'submission_failed' if isinstance(error, SubmissionFailure) else 'infrastructure_error'
+        report = {'status': status, 'valid': False, 'n': 10, 'reward': 0.0,
+                  'error': f'{type(error).__name__}: {error}'}
         (LOGS / 'failure.log').write_text(traceback.format_exc())
     assert math.isfinite(report['reward']) and 0 <= report['reward'] <= 1
     (LOGS / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
-    (LOGS / 'reward.txt').write_text(f"{report['reward']:.10f}\n")
+    # Only finalize_reward.py may release a positive reward after the audit.
     print(json.dumps({k: v for k, v in report.items() if k != 'queries'}))
+    return int(report['status'] == 'infrastructure_error')
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

@@ -299,11 +299,25 @@
       }
     },
     {
-      "path": "data/examples.jsonl",
-      "size_bytes": 623,
-      "sha256": "946c2ba70c4d7d12181af62eb04bc5ec0830d5370f9acd34992bdf8558d63a24",
+      "path": "data/validation/queries.jsonl",
+      "size_bytes": 393,
+      "sha256": "7d0841a3218c9f20c99f89b2012770907802955d5021d649b9432a719cb7c4a9",
       "source": {
-        "local_path": "asset-metadata/examples.jsonl"
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "8431ce24f7706eb51ff68aef7494f2b2780319a1",
+        "filename": "tasks/khmer-embedding-training/data/validation/queries.jsonl"
+      }
+    },
+    {
+      "path": "data/validation/answers.jsonl",
+      "size_bytes": 272,
+      "sha256": "6887e0506b6a86d062e08dbf061dfad6fb82a88a88b1a960762f7837b31076fe",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "8431ce24f7706eb51ff68aef7494f2b2780319a1",
+        "filename": "tasks/khmer-embedding-training/data/validation/answers.jsonl"
       }
     }
   ]

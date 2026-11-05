@@ -195,6 +195,8 @@ both phases. Recheck this integration when changing Harbor versions.
 
 ## Bounded task storage
 
+Tasks with `tools/prepare_task.py` run package-specific preparation automatically after input checks and before Harbor starts the coding agent. The helper receives the selected `--cpu-set` and a temporary `--result-json` path; it writes `{"environment": {"VARIABLE": "value"}}` for the launcher's Compose settings. A failed preparation stops the run. Preview and configuration checks never execute the helper. Packages document their initial preparation cost and cache policy in their README.
+
 Tasks with `tools/prepare_storage.py` use automatic host preparation. In
 addition to the host prerequisites, provide root/sudo, `/dev/fuse`, `mkfs.ext4`
 and `dpkg-deb` (Ubuntu/Debian packages `e2fsprogs` and `dpkg`). If needed, load

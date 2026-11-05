@@ -4,7 +4,7 @@ artifacts = ["/logs/agent/collected-submission", "/logs/agent/submission-freeze-
 [task]
 name = "search-swe/multilingual-vector-postprocessing"
 version = "1.0.0"
-description = "Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors within one A100 and six hours."
+description = "Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors with one GPU within six hours."
 authors = [{ name = "jianlyu" }]
 keywords = ["information-retrieval", "multilingual", "vector-postprocessing", "representation-learning", "gpu"]
 
@@ -22,7 +22,9 @@ development_queries = 3138
 hidden_queries = 13002
 preparation_seconds = 1800
 query_seconds = 0.5
-gpu_profile = "Exactly one NVIDIA A100 40GB in each agent/verifier stage"
+gpu_profile = "Exactly one GPU in each agent/verifier stage"
+measurement_rounds = 5
+measurement_aggregation = "Per-query median duration; quality from the same sample; ties by round order"
 
 [agent]
 timeout_sec = 21600.0
@@ -30,7 +32,7 @@ user = "root"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 10800.0
+timeout_sec = 45600.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

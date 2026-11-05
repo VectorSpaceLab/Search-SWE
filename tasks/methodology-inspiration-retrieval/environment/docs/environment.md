@@ -6,7 +6,4 @@ The task Python interpreter and its installed packages are available at `/opt/co
 
 The image also includes the CUDA 13.0 toolkit and runtime, JDK 21, Node.js 24.16.0 with npm 11.13.0, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
 
-An additional Python environment is available at `/opt/stella/bin/python`, with
-`transformers==4.44.2`, `tokenizers==0.19.1`, `huggingface-hub==0.36.0`,
-`sentence-transformers==3.0.1`, `einops==0.8.1` and `peft==0.12.0`. It shares the base image's
-CUDA-enabled PyTorch. Both Python environments are available during verification.
+An additional Python environment is available at `/opt/stella/bin/python`, with `transformers==4.44.2`, `tokenizers==0.19.1`, `huggingface-hub==0.36.0`, `sentence-transformers==3.0.1`, `einops==0.8.1` and `peft==0.12.0`. It shares the base image's CUDA-enabled PyTorch. Both Python environments are available during verification.

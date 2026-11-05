@@ -12,9 +12,11 @@ import sys
 import tempfile
 import time
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "evaluation"))
 from checkpoint import file_hash, validate_checkpoint
-from metrics import read_jsonl, score_results, improvement_score
+from metrics import read_jsonl, score_results
+from score_mapping import normalize_score
 
 LOG = Path("/logs/verifier/khmer-embedding-training-eval")
 CORPUS = Path("/task/data/corpus.parquet")
@@ -257,7 +259,7 @@ def main():
                 "/opt/task-runtime/check_checkpoint.py", "--load-standard",
                 APP / "submission/model",
             ],
-            checkpoint_work, LOG / "checkpoint-load", 300,
+            checkpoint_work, LOG / "checkpoint-load", CONTRACT["checkpoint_timeout_sec"],
         )
         results, pipeline = run_pipeline(APP, CORPUS, queries, root, LOG, CONTRACT)
         try:
@@ -269,9 +271,7 @@ def main():
         result["executable_gate"] = True
         result["baseline_recall@20"] = baseline["recall@20"]
         result["baseline_recall@100"] = baseline["recall@100"]
-        result["reward"] = improvement_score(
-            result["recall@100"], baseline["recall@100"]
-        )
+        result["reward"] = normalize_score(result["recall@100"])
     except SubmissionError as exc:
         # A broken submission is a valid zero; infrastructure failures remain invalid.
         result = {

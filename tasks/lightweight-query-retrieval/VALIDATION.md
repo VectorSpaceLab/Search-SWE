@@ -1,6 +1,55 @@
 # Local validation
 
-Release reconciliation (2026-10-23): [RUN_RESULTS.md](RUN_RESULTS.md) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
+## Review update — 2026-11-05
+
+The current contract specifies one GPU without a model or memory capacity. Query timing now uses five fresh service instances and their median duration; the index is still built once, and every run must pass the existing quality gate. The retrieval supervisor is 2,900 seconds and the overall verifier limit is 4,500 seconds. The candidate-stage maximum is `1200 + 5 * (120 + 60 + 120) = 2700` seconds, leaving 200 seconds inside the retrieval supervisor. Retrieval, audit and finalization supervisors plus their termination grace periods total 4,260 seconds, leaving 240 seconds for outer setup and cleanup. The environment document's compatibility explanation is shortened.
+
+Input files, public-example layout, model weights, the 0.45 quality gate, the 0.8-second zero-credit point and the single integrity audit are unchanged. Historical hardware and three-run measurements below describe their original runs; they are not five-run measurements of this revision.
+
+Checks executed: `python -B -m unittest -v test_contract test_final_gate test_timing` from `tests/` passed all 22 tests. The new fixtures exercise the production evaluation loop with simulated services and build execution, covering one build, five fresh scratch directories, five-sample median scoring, fifth-run quality failure and nested timeout coverage. The task static validator reported zero errors; `bash -n tests/test.sh` and task-scoped `git diff --check` passed. No full GPU retrieval run or live integrity-audit call was performed for this revision.
+
+Release reconciliation (2026-10-23): [recorded run evidence](#run-evidence-reconciled-on-2026-10-23) records the available Luna result, judge health, version limits and published asset pins. The records below preserve earlier validation stages; statements that no trial has run, a trial is running, or assets are unpublished refer to those earlier stages.
+
+## Run evidence reconciled on 2026-10-23
+
+This section preserves the historical v0.4.0 evaluation. Its version, hashes and results refer to that run, not the current five-run revision.
+
+The v0.4.0 verifier and live integrity audit completed. Macro nDCG@10 was 0.4303102260205993, below the 0.45 gate; median query-batch time was 0.41057249531149864 seconds. The zero is therefore a quality-gate result. A positive-reward final-configuration witness and live adversarial audit calibration remain unestablished.
+
+| Field | Observed value |
+| --- | --- |
+| Evaluated package | `0.4.0` |
+| Saved agent trial version | `0.4.0` |
+| Agent / model / effort | Codex / OpenRouter `openai/gpt-6-luna` / `max` |
+| Evidence type | Saved formal verifier result |
+| Recorded score | 0 |
+| Raw metric | macro nDCG@10 = 0.430310226020599 |
+| Archived final reward | 0 |
+| Required trajectory judge | Succeeded; numeric pass = 1 |
+| Evaluated CPU / RAM / GPU configuration | 16 CPUs / 32768 MiB / 1 GPU(s) |
+| Development limit | 21600 seconds |
+| Evaluated instruction SHA-256 | `dea7762c163c98d43a21e3eabfa516d2627d704677c54883421bfdb38f13fc8e` |
+| Saved evaluation SHA-256 | `c8b5676b33232e8f892f892c93c2ea2137500055032fa5c7e6e5faad96601fcb` |
+| Saved reward SHA-256 | `b968c26c370deb6b29fd210d9bb4206f1d14d34014734d2e39c29cc440dd5501` |
+
+The records are retained in the author's surrounding workspace under
+`task_results/lightweight-query-retrieval/codex-openrouter-gpt-6-luna-max-v040-20261022T135859Z/jobs/2026-10-22__21-59-35/lightweight-query-retrieval__NXt6iHq/verifier/report.json` and
+`task_results/lightweight-query-retrieval/codex-openrouter-gpt-6-luna-max-v040-20261022T135859Z/jobs/2026-10-22__21-59-35/lightweight-query-retrieval__NXt6iHq/verifier/reward.json`. These are author-local evidence
+locations, not public download links. Original trajectories, submitted code,
+private evaluation outputs and credentials are not published in this task.
+At the 2026-10-23 reconciliation, the instruction matched the evaluated instruction. Later changes, including the current five-run protocol, are recorded separately above.
+
+Public inputs have immutable source revisions, sizes and SHA-256 values in
+`assets.json`. Unchanged published data/model references are retained.
+The only new data in this release are the biomedical and filtered-ANN public
+validation pairs, published through [HF PR #8](https://huggingface.co/datasets/search-swe/Search-SWE/discussions/8) at
+`234406eb7e304478e48905829fc0d3233f5a9f1f`. All 52,417 earlier dataset manifest records were preserved.
+Publication does not resolve outstanding upstream licensing or independent
+quality-review limitations recorded in the task's provenance.
+
+This release reconciliation uses existing model results. It does not start a
+fresh coding agent, GPU training job or paid judge call. Task-local regression
+checks are recorded in the contribution PR; earlier construction and runtime records are retained below.
 
 ## Integrity judge integration — 2026-10-22, version 0.4.0
 
@@ -256,3 +305,42 @@ automatically. These publication changes affect paths, pins and author-facing
 records; input hashes, instruction, runtime and scoring are unchanged, so the
 existing GPU feasibility evidence remains applicable. No new paid model or
 GPU trial was run.
+
+## Third-party materials
+
+This local task is Built with Llama.
+
+- **Llama 3.2 1B**, Meta: original model revision
+  `4e20de362430cd3b72f300e6b0f18e50e7166e08`.
+  [Original model](https://huggingface.co/meta-llama/Llama-3.2-1B).
+  The model's Llama 3.2 Community License and Acceptable Use Policy are retained
+  in `models/Llama-3.2-1B/LICENSE.txt` and `USE_POLICY.md`. They are separate from
+  the repository's software license. The weights were obtained from the
+  [ModelScope LLM-Research mirror](https://modelscope.cn/models/LLM-Research/Llama-3.2-1B)
+  and verified against the original Hugging Face LFS pointer. No author-trained
+  retrieval adapter is supplied to the agent.
+- **LightRetriever fine-tuning data**, Guangyuan Ma et al., revision
+  `840793a0229ead35a9c820e9803092c3f1383e07`:
+  [author release](https://huggingface.co/datasets/lightretriever/lightretriever-finetune-data).
+  Its dataset card declares Apache-2.0. The 80,000 examples are a sampled
+  derivative of the original 23-source experiment configuration. Original
+  query, positive-passage and negative-passage contents are preserved. The
+  upstream collections retain their respective rights and attribution
+  requirements; the author's aggregate license does not replace those rights.
+- **BEIR-formatted SciFact, NFCorpus and FiQA**:
+  [SciFact](https://huggingface.co/datasets/BeIR/scifact),
+  [NFCorpus](https://huggingface.co/datasets/BeIR/nfcorpus), and
+  [FiQA](https://huggingface.co/datasets/BeIR/fiqa).
+  These BEIR release cards declare CC-BY-SA-4.0. Preserve that license and the
+  original dataset attributions for the derived corpus and evaluation records.
+  Transformations are ID renaming and anonymous collection tags; original text, candidate
+  universes, split membership and relevance grades are retained.
+
+The original datasets are SciFact (Wadden et al., 2020), NFCorpus (Boteva et al.,
+2016), and FiQA (Maia et al., 2018), distributed for retrieval evaluation by
+BEIR (Thakur et al., 2021). This task does not introduce new relevance labels.
+
+The public corpus and example files are published in `search-swe/Search-SWE`
+at revision `ff16485accd6d258610c158fce45e36b50a47c3f`; see the task asset
+manifest and the official dataset provenance. Model files remain pinned to the
+original gated upstream repository. Publication does not replace source terms.

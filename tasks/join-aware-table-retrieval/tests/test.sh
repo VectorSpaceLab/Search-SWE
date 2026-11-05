@@ -1,7 +1,77 @@
 #!/usr/bin/env bash
-set -eu
-mkdir -p /logs/verifier
-chmod 755 /logs
-chmod 700 /logs/verifier
-printf "0\n" > /logs/verifier/reward.txt
-exec /opt/conda/bin/python -I /tests/grade.py
+set -uo pipefail
+umask 077
+unset PYTHONHOME PYTHONSTARTUP
+export PYTHONSAFEPATH=1 PYTHONNOUSERSITE=1 PYTHONPATH=/tests
+cd /tests || exit 1
+
+reward_dir=/logs/verifier
+install -d -o root -g root -m 0700 "$reward_dir" "$reward_dir/.private" || exit 1
+printf '0\n' > "$reward_dir/reward.txt"
+printf '{"primary_metric":0,"jailbreak_judge":0,"reward":0}\n' > "$reward_dir/reward.json"
+rm -f "$reward_dir/report.json" "$reward_dir/judge.json" \
+    "$reward_dir/reward-details.json" "$reward_dir/judge-status.json"
+
+cleanup() {
+    pkill -TERM -u submission 2>/dev/null || true
+    sleep 0.5
+    pkill -KILL -u submission 2>/dev/null || true
+}
+phase() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$reward_dir/stages.log"; }
+trap cleanup EXIT
+trap 'phase "terminated"; exit 143' TERM INT HUP
+cleanup
+
+# The transferred trajectory is private audit evidence, never a candidate input.
+if [[ -L /logs/agent || -L /logs/agent/trajectory.json ]]; then
+    phase "invalid trajectory path"
+    exit 1
+fi
+install -d -o root -g root -m 0700 /logs/agent || exit 1
+if [[ -f /logs/agent/trajectory.json ]]; then
+    chown root:root /logs/agent/trajectory.json || exit 1
+    chmod 0600 /logs/agent/trajectory.json || exit 1
+fi
+
+phase "grader start budget=3000"
+/usr/bin/timeout --signal=TERM --kill-after=15s 3000s \
+    /opt/conda/bin/python -I /tests/grade.py \
+    > "$reward_dir/grader.stdout.log" 2> "$reward_dir/grader.stderr.log"
+primary_status=$?
+phase "grader end status=$primary_status"
+cleanup
+
+judge_status=125
+phase "judge start budget=1500"
+if (( primary_status == 0 )); then
+    if [[ -n "${OPENAI_BASE_URL:-}" && -n "${OPENAI_API_KEY:-}" \
+          && -s /logs/agent/trajectory.json ]]; then
+        TMPDIR="$reward_dir/.private" \
+        /usr/bin/timeout --signal=TERM --kill-after=15s 1500s \
+            /opt/conda/bin/python /tests/rewardkit_deepseek.py /audit \
+            --workspace /app --output "$reward_dir/judge.json" \
+            --max-concurrent-agent 1 --judge deepseek-codex \
+            --model deepseek/deepseek-v4.1-flash \
+            > "$reward_dir/judge.stdout.log" 2> "$reward_dir/judge.stderr.log"
+        judge_status=$?
+    else
+        printf '%s\n' 'Verifier judge credentials and nonempty trajectory are required.' \
+            > "$reward_dir/judge.stderr.log"
+        judge_status=78
+    fi
+fi
+phase "judge end status=$judge_status"
+
+phase "finalizer start budget=30"
+SEARCH_SWE_PRIMARY_STATUS="$primary_status" SEARCH_SWE_JUDGE_STATUS="$judge_status" \
+    /usr/bin/timeout --signal=TERM --kill-after=5s 30s \
+    /opt/conda/bin/python /tests/finalize_reward.py --output-dir "$reward_dir" \
+    --trajectory /logs/agent/trajectory.json \
+    > "$reward_dir/finalizer.stdout.log" 2> "$reward_dir/finalizer.stderr.log"
+finalizer_status=$?
+phase "finalizer end status=$finalizer_status"
+if (( finalizer_status != 0 )); then
+    printf '0\n' > "$reward_dir/reward.txt"
+    printf '{"primary_metric":0,"jailbreak_judge":0,"reward":0}\n' > "$reward_dir/reward.json"
+fi
+exit "$finalizer_status"

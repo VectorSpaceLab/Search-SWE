@@ -1,12 +1,12 @@
-I need to answer business questions using data spread across several databases. I have a catalog of their tables, but I need to find which tables belong together and which columns connect them before writing a SQL query. Please build an executable search engine that takes a natural-language question and returns five candidate tables with up to six joins. The goal is to retrieve a complete set of tables and relationships that can support the question. Choose the indexing and retrieval approach; generating or executing SQL is outside this task.
+I need to answer business questions using data spread across several databases. Before writing SQL, I need to find the relevant tables and the columns connecting them. Build an executable search engine that takes a natural-language question and returns five candidate tables with up to six joins that together support the question. Generating or executing SQL is outside this task.
 
-Before choosing your approach, read `/task/docs/environment.md` and `/task/docs/available_resources.md`. They describe the installed runtime and the permitted retrieval and generative APIs, including model allowlists, providers, endpoints, credential handling and jailbreak penalties. You may use the documented embedding and reranking APIs during indexing and querying, and the permitted generative models for query interpretation, candidate selection and join reasoning. Follow those resource restrictions. Harbor injects the documented credentials at runtime; do not include credentials in submission files or generated artifacts.
+Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the runtime and permitted APIs and models. Those APIs may be used during indexing and querying. Both phases have 16 CPUs, 32 GiB RAM, 100 GiB storage and no GPU. You have 120 minutes for implementation and validation.
 
-The catalog to search is `/task/data/catalog.json`, a JSON object containing `schema_version`, `tables` and `joins`. Each table has an opaque `table_id` and database `group_id`, its original name and description, column definitions, a row count and sample rows. Columns have IDs scoped to their table, original names, types and primary-key metadata. If several columns have `primary_key: true`, they jointly form the table's primary key. Samples are incomplete and are supplied to help interpret the data. The public `joins` list defines the available column-level equality relationships. Questions do not identify their database group, so the engine must search the shared catalog. You can inspect and index the entire catalog before queries arrive.
+`/task/data/catalog.json` contains `schema_version`, `tables` and `joins`. Tables have opaque `table_id` and database `group_id` values, original names, descriptions, columns, row counts and incomplete sample rows. Columns have table-scoped IDs, names, types and primary-key metadata; multiple `primary_key: true` columns jointly form the key. The public `joins` list defines column-level equality relationships. Questions do not identify their database group. The entire catalog is available for indexing and search.
 
-Public development questions are in `/task/data/validation/queries.jsonl`, with reference labels in `/task/data/validation/labels.jsonl`. Each label contains `query_id` and `acceptable_plans`, whose entries have `table_ids` and `joins`. Use these examples to develop and check real retrieval from the catalog. Implement any local validation checks you need using these labels and the scoring rule below. Do not hard-code question-specific answers, obtain external Spider SQL or answers, inspect hidden grading files, or manipulate grading or reward files. Full databases and source SQL are not supplied. Final evaluation uses held-out questions and labels that are not copied into your environment.
+The 10 public validation questions are in `/task/data/validation/queries.jsonl`, with labels in `/task/data/validation/labels.jsonl`. Each label contains `query_id` and `acceptable_plans`, whose entries have `table_ids` and `joins`. Final evaluation uses 10 hidden questions. Full databases and source SQL are not supplied. Implement genuine catalog retrieval; do not hard-code question-specific answers, obtain external benchmark SQL or answers, access hidden grading files, or tamper with evaluation.
 
-Put the implementation and all supporting files in `/app/submission`, which starts empty. The final submission must include working `build.sh` and `search.sh` entrypoints. Harbor transfers only this directory to a fresh verifier, where submission commands run as an unprivileged user. Package any additional dependencies there; globally installed changes, development indexes and running processes do not transfer.
+Put `build.sh`, `search.sh` and all supporting files and additional dependencies in `/app/submission`, which starts empty. Only this submission directory transfers to a fresh verifier, where commands run as an unprivileged user with the submission read-only.
 
 To prepare the catalog for search, the verifier invokes:
 
@@ -16,7 +16,7 @@ bash /app/submission/build.sh \
   --index-dir /work/index
 ```
 
-The supplied index directory exists and is empty. Build all index files under that path and return exit status 0 when ready, within 1,200 seconds. The index may contain only regular files and directories totaling at most 8 GiB. The verifier builds once before sending queries.
+The index directory exists and is empty. Build once, place all index files there, and exit with status 0 within 1,200 seconds. The index may contain only regular files and directories totaling at most 8 GiB.
 
 After a successful build, it starts the search process with:
 
@@ -31,25 +31,14 @@ Print `{"ready":true}` followed by a newline within 30 seconds, then keep the pr
 {"query_id":"opaque-query-id","question":"A natural-language business question."}
 ```
 
-For each query, emit and flush one JSON response on stdout within 20 seconds of receiving it. Send diagnostics to stderr. API calls count toward the applicable build, readiness or query deadline. Query IDs and ordering may change; preserve the received ID without interpreting it. An unscored warm-up query precedes evaluation. If warm-up fails, the verifier may restart the process before sending a scored query; warm-up failure itself does not reduce a query's score.
+For each query, emit and flush one JSON response on stdout within 20 seconds of receiving it; send diagnostics to stderr. API calls count toward all deadlines. Evaluation queries arrive sequentially in a fixed order; echo the received opaque query ID. An unscored warm-up precedes evaluation, with a restart on failure.
 
-Each response contains exactly `query_id`, `table_ids` and `joins`. Its structure is illustrated below with placeholder IDs; use real catalog IDs and relationships in your output. The example is expanded for readability, but emit each response as a single JSON line, at most 65,536 bytes including its newline.
+Each response must be one JSON line of at most 65,536 bytes including its newline, with exactly these fields and real catalog IDs:
 
 ```json
-{
-  "query_id": "opaque-query-id",
-  "table_ids": ["tbl_A", "tbl_B", "tbl_C", "tbl_D", "tbl_E"],
-  "joins": [
-    {
-      "left_table": "tbl_A",
-      "left_column": "c_000",
-      "right_table": "tbl_B",
-      "right_column": "c_001"
-    }
-  ]
-}
+{"query_id":"opaque-query-id","table_ids":["tbl_A","tbl_B","tbl_C","tbl_D","tbl_E"],"joins":[{"left_table":"tbl_A","left_column":"c_000","right_table":"tbl_B","right_column":"c_001"}]}
 ```
 
-Return exactly five distinct table IDs and zero to six distinct public joins. Each join must have exactly the four fields shown, refer to returned tables and identify real columns of those tables. Do not invent cross-group relationships. Table order, join order and reversing both endpoints of a join do not affect scoring. Extra legal candidates within the budgets are allowed; the full candidate set need not be connected or belong to one database group.
+Return exactly five distinct table IDs and zero to six distinct public joins. Each join must contain exactly the four fields shown and reference real columns of returned tables. Duplicate JSON keys and extra fields are invalid. Table order, join order and reversing join endpoints do not affect scoring. Extra valid candidates are allowed within the budgets; the full candidate set need not be connected or belong to one database group.
 
-During final evaluation, a question earns 1 only when a valid response contains every table and every join of the same acceptable plan, and 0 otherwise. The reward is the mean across all evaluation questions, including failures, with no partial credit. Missing, late or malformed responses, duplicate JSON keys, duplicate tables or joins, extra fields, and unknown or invalid identifiers or relationships fail that question. A failed search process may be restarted for subsequent questions; a build failure or index-limit violation gives zero overall. Only complete table-and-join coverage contributes to the reward.
+A question earns 1 only when a valid response contains every table and join of the same acceptable plan, and 0 otherwise. The score is the mean across all evaluation questions, including failures, with no partial credit. Missing, late or invalid responses fail that question; the service may restart for later queries. Build failure, index-limit violation or a confirmed task/resource-policy violation gives zero overall.

@@ -2,6 +2,7 @@ schema_version = "1.4"
 
 artifacts = [
     "/app/submission",
+    "/logs/agent/trajectory.json",
 ]
 
 [task]
@@ -51,3 +52,5 @@ JINA_API_KEY = "${JINA_API_KEY:-}"
 OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 JINA_API_KEY = "${JINA_API_KEY:-}"
+OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
+OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

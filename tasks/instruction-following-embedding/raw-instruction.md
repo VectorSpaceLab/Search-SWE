@@ -52,7 +52,7 @@ is optional. Do not substitute FollowIR-7B or cross/generative rerankers.
   including special tokens and L2 normalization. The query string is exactly
   `query: {query}\nInstruction: {instruction}`; document input is `passage: {text}`,
   where text is `(title+' '+passage).strip()`.
-- Each deployed query/instruction, including warmups, executes exactly one
+- Each deployed query/instruction encoding, including warmups, executes exactly one
   complete E5 forward: one sequence, batch1, <=512 tokens, standard2-D binary
   padding mask, embeddings and every BERT layer once. No additional encodings,
   altered layers, output transforms or forward-counter changes. Violations are
@@ -78,7 +78,7 @@ is optional. Do not substitute FollowIR-7B or cross/generative rerankers.
 - `/task/data/train.jsonl`: 1717 filtered FollowIR-train records, fields
   query/instruction/document/label/score/id; 59 source topic-overlap records
   removed from 1776. Labels true/false; no imposed contrastive-batch recipe.
-- `/task/public/dev-groups.json`: 20 public groups (10 Robust04, 4 Core17,
+- `/task/data/validation/dev-groups.json`: 20 public groups (10 Robust04, 4 Core17,
   6 News21), original/changed instructions, all original 1000 candidates,
   original/changed qrels and changed-document IDs.
 - `/task/corpus/{robust04,core17,news21}.jsonl`: 47492/19899/30921 passage
@@ -113,7 +113,7 @@ permitted within total storage.
   U is the harmonic H of jhu-clsp/FollowIR-7B measured on this task's 84 hidden groups on 2026-11-04, using the official prompt and 2,048-token truncation. It is an external reranker quality reference, not a same-model/resource reference or a theoretical upper bound. Frozen B=0, U=0.10647366293851011, rho=.9.
 - Score 100*clip((H-B)/(U-B),0,1) after relevance/model/resource gates; framework
   reward score/100. Integrity rejection or failed/unavailable mandatory judge0.
-- Either version invalid/nonfinite/wrong-dimension/zero/timeout/failure -> pair
+- Either version invalid/nonfinite/wrong-dimension/zero/failed-median-latency/failure -> pair
   p-MRR and both versions' relevance0, all denominators retained.
 - At the120-minute development cutoff, stop task processes and collect the
   last submission. A valid artifact is graded even if the agent times out or
@@ -130,27 +130,26 @@ permitted within total storage.
 
 ### Timing and resource protocol
 
-- 16 CPU / 32 GiB shared RAM / 32 GiB task storage / one A100-SXM4-40GB.
+- 16 CPU / 32 GiB shared RAM / 32 GiB task storage / one GPU.
 - 120-minute agent phase includes preprocessing, all training, tuning and
   public evaluations. No external submission resources or keys. Coding-model
   transport belongs to framework; verifier-only integrity key stays private.
-- Task writes under /app (28 GiB tmpfs), /tmp (1 GiB tmpfs), plus fixed input
-  bytes within 32 GiB total; tmpfs consumes the 32 GiB RAM cgroup. Framework
+- Task writes under /app and /tmp on disk, plus fixed input
+  bytes within 32 GiB total. Framework
   setup/logs/collection staging exempt; do not use them to bypass task storage.
 - Final preparation <=3600 seconds includes model load, complete 98312-document
   independent encoding/cache, query process startup and three fixed public
   warmup requests. Document batches <=32. No submitted document cache accepted.
   Singleton/batch normalized-vector cosine check >=.999 allows measured bf16
   GEMM roundoff; semantic query/batch independence remains mandatory.
-- Per version <=1 second, concurrency1; includes encode, transfer, normalize,
-  all-candidate scoring/sorting. No document re-encoding during query phase.
+- Per version median <=1 second across five complete sequential measurements; each measurement includes encode, transfer, normalize, all-candidate scoring/sorting and exactly one backbone forward. Documents are prepared once, with no re-encoding during the query phase. Timeouts remain in the five-sample population, ordered after completed measurements; three timed-out measurements fail the version. Use the median sample's ranking for quality. Invalid outputs invalidate the version immediately, and model/resource violations retain their global failure behavior. Worker recovery is outside individual samples but inside the primary verifier budget.
 - Verifier normalizes vectors in float32, ranks original 1000 candidates by
   cosine descending, equal scores retain source candidate order. It produces
   complete rankings internally; submission never returns just Top-10.
 - Encoders run as UID10001 with read-only submission/model, restricted file
   reads, scratch-only writes, no network and process cleanup. Submit weights for the provided fixed runtime; no custom services, launch scripts or background jobs.
 - Public check `python /task/runtime/evaluate.py --groups
-  /task/public/dev-groups.json --output /app/public-evaluation`; full corpus
+  /task/data/validation/dev-groups.json --output /app/public-evaluation`; full corpus
   re-encoding counts toward development time. Faster independent dev code allowed.
 
 ## Hidden Test Overview
@@ -163,7 +162,7 @@ and connected repeated topics remain on the same side of the 20/84 split.
 Before implementing the system, read the following read-only task documents:
 
 - `/task/docs/environment.md` — installed runtime, paths, permissions and public execution tools.
-- `/task/docs/available_resources.md` — supplied data/models, use restrictions, sources and license notices.
+- `/task/docs/available_resources.md` — permitted supplied data/models and offline use restrictions.
 
 The coding agent's provider connection does not grant task-program API access.
 Follow this task's resource permissions; only the declared artifacts transfer

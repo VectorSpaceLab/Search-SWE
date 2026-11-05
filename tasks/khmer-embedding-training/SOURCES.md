@@ -40,9 +40,9 @@ All remote manifest entries use immutable revisions.
 | BeIR/nq | dataset | b7253e6c379163d024ddb1d6948152a91a2e3b46 | 2 |
 | Qwen/Qwen3.5-9B | model | c202236235762e1c871ad0ccb60c8ee5ba337b9a | 15 |
 | intfloat/multilingual-e5-large | model | 3d7cfbdacd47fdda877c5cd8a79fbcc4f2a574f3 | 10 |
+| search-swe/Search-SWE | dataset | 8431ce24f7706eb51ff68aef7494f2b2780319a1 | 2 |
 
-1 small metadata/example files are bundled under the local paths in
-[assets.json](assets.json); those files need no separate upload.
+The three public examples are stored as `data/validation/queries.jsonl` (`id`, `question`) and `data/validation/answers.jsonl` (`id`, `answers`). Their fixed official copies are under `tasks/khmer-embedding-training/data/validation/` at the revision above, published in [HF PR #11](https://huggingface.co/datasets/search-swe/Search-SWE/discussions/11). Splitting the original combined rows preserves their order, IDs, questions and answer aliases exactly. Recombining the two files reproduces the original records from `asset-metadata/examples.jsonl` (original file SHA-256 `946c2ba70c4d7d12181af62eb04bc5ec0830d5370f9acd34992bdf8558d63a24`). The obsolete bundled copy has been removed; the asset downloader restores the two public files from HF. No held-out data was uploaded.
 
 The manifest records exact task-relative paths and asset bytes. Source pins do
 not change the corpus, examples, labels or model weights. Original upstream

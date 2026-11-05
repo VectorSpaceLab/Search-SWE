@@ -12,7 +12,7 @@
 | Agent / verifier time limits | 7200 s / 4800 s |
 | Hidden queries | 10 |
 
-Build a CPU search engine over 1,056 tables in 206 opaque database groups. Given a natural-language question without a database ID, return exactly five tables and at most six public column-level equality relationships. A question scores one only when an acceptable table-and-join plan is completely covered. The task score is the mean over all hidden questions. Author: **Bingyu**.
+Build a CPU search engine over 1,056 tables in 206 opaque database groups. Given a natural-language question without a database ID, return exactly five tables and at most six public column-level equality relationships. A question scores one only when an acceptable table-and-join plan is completely covered. The raw score is the mean over all hidden questions; the final score additionally requires a healthy, accepting compliance audit. Author: **Bingyu**.
 
 ### Corpus and runtime
 
@@ -20,14 +20,17 @@ The catalog contains 935 public relationships and 2,926 sample rows, at most thr
 
 Both images use `docker.io/hanhainebula/search-swe-base:cpu-py3.12-1.0.0`. Resources remain 16 CPUs, 32 GiB RAM and no GPU. Build/readiness/scored-response limits are 1,200/30/20 seconds, with an 8 GiB index. Coding and whole-verifier budgets remain 7,200 and 4,800 seconds respectively. Queries are sent individually; time cannot be pooled across questions.
 
-The agent starts with an empty `/app/submission`; only that directory transfers to a fresh verifier. The verifier builds a new index and runs submitted commands as UID 10001. Hidden questions, labels and reward files remain protected. One synthetic warm-up precedes scored work. This revision fixes an earlier recovery bug: a warm-up failure is recorded, the process is restarted, and the actual query still receives its own full deadline instead of losing a point before it was sent.
+The agent starts with an empty `/app/submission`; that directory transfers to a fresh verifier along with the protected agent trajectory for the compliance audit. The verifier builds a new index and runs submitted commands as UID 10001, with submitted files read-only. Hidden questions, labels, trajectory and reward files remain protected. Queries follow the frozen hidden-file order. One synthetic warm-up precedes scored work; on failure, the process restarts and the actual query retains its full deadline.
 
-The CPU/API resource documents remain byte-identical to `tasks/agentic-search`. OpenRouter/Jina retrieval APIs and the four listed Qwen generation models remain available during indexing and queries. The archived newer engine uses Qwen 3.5 for query-time selection; Luna is the coding-agent model, not the retrieval model used on every query.
+The CPU environment document matches `docker/cpu/environment.md`. The API resource document retains the `tasks/agentic-search` template and policy, with prose unwrapped. OpenRouter/Jina retrieval APIs and the four listed Qwen generation models remain available during indexing and queries. The archived newer engine uses Qwen 3.5 for query-time selection; Luna is the coding-agent model, not the retrieval model used on every query.
+
+The verifier runs one trajectory/source audit using the repository's pinned RewardKit/DeepSeek backend. Configure `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and `VERIFIER_OPENAI_API_KEY` locally; they map only to verifier-side `OPENAI_BASE_URL` and `OPENAI_API_KEY`. Submitted commands receive only the documented public API credentials. `tests/finalize_reward.py` releases the coverage score only after a healthy accepting audit. Rejection is a measured zero; a missing or failed audit is an invalid measurement with a nonzero verifier exit. The primary supervisor, audit wrapper and finalizer allow 3,000, 1,500 and 30 seconds within the existing 4,800-second verifier budget.
 
 ## Change Log
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-11-05 | 1.0.0 (working revision) | Add the required compliance audit and reward gate, freeze query order, simplify the instruction and reconcile resource/evidence documents |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -54,12 +57,7 @@ The fresh program used one Jina table-reranking request followed by local five-t
 
 The fresh program solved `shipment_header_and_item_orders`; the earlier success on `municipal_occupancy` remains in the evidence. Consequently **eight of ten** have never been observed solved across all three programs, and the fresh program failed nine. This ten-question challenge has measured difficulty, not a claim that every question defeats every implementation. The full result is in `task_results/join-aware-table-retrieval/codex-openrouter-gpt-6-luna-max-v060-20261014-232013/REPORT.txt`, with per-query records in `query-results.json`. The requested model and effort were verified from the actual session. No score-based rerun occurred. The original evaluated revision and fingerprints are retained in the validation records.
 
-[VALIDATION.md](VALIDATION.md) consolidates the trial ID, UTC timestamps,
-instruction fingerprint, configured budgets, raw/final scores and original
-evidence locations. The 2026-10-22 reconciliation confirmed that all 23
-non-README files in the frozen run manifest still match. This existing trial is
-reused without rerunning the coding agent. No model judge is configured for this
-task; the HTTP-observability limitation above is retained.
+[VALIDATION.md](VALIDATION.md) preserves the historical trial ID, timestamps, fingerprints, budgets and scores. That trial predates the current instruction, fixed query order and compliance audit. Its 0.1 result is historical evidence, not a measured score for this revision. The raw metric still uses no answer-quality model judge; the new compliance audit is separate. The HTTP-observability limitation above remains.
 
 ## Verification Explanation
 
@@ -106,7 +104,7 @@ python scripts/assets/download_assets.py --task join-aware-table-retrieval --ver
 python scripts/validation/check_tasks.py tasks/join-aware-table-retrieval
 ```
 
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+The three public inputs are pinned in `assets.json` to `search-swe/Search-SWE` revision `2a2188f3a9426361da5f10c82a35148269574a92`, with exact sizes and SHA-256 hashes. This task has no model assets. See [RUN_RESULTS.md](RUN_RESULTS.md) for run evidence and publication status. Existing source terms and attribution remain applicable.
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
 

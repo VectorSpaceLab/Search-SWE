@@ -8,9 +8,8 @@ Locate the pages that support a question about a report's figures, tables or lay
 
 ### Resource limits and workload
 
-- You have six hours for implementation and checking, eight CPU cores, 32 GiB RAM, 100 GiB storage and one 40 GiB GPU.
+- You have six hours for implementation and checking, eight CPU cores, 32 GiB RAM, 100 GiB storage and one GPU.
 - The supplied encoders are fixed.
-- An optional scoring or adaptation component may have up to five million trainable parameters and use up to 45 minutes of training.
 - Per request, query-dependent page-token or region comparisons and learned pairwise scoring may inspect at most 40 candidate pages; corpus-wide text processing, global representations and gallery-only preprocessing are allowed.
 - No external model, dataset or API is available.
 

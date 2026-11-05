@@ -19,3 +19,5 @@ AgentJudge configured in `jailbreak_judge/codex.toml`. `finalize_reward.py`
 applies that result as a hard gate: a valid `Accuracy@5` score is retained only
 when the recorded trajectory is present and the AgentJudge accepts the
 submission.
+
+The binary aggregate, group score, raw criterion and normalized criterion must agree, and the audit must include a non-empty judge output without reported errors. A consistent rejection receives zero credit. Missing, malformed, contradictory or failed audit results also receive zero credit and make the verifier exit with an infrastructure error. The model-use audit checks file contents and actual use; filename extensions alone do not establish a model violation.

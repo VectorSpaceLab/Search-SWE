@@ -23,6 +23,7 @@ corpus_visual_count = 8073699
 corpus_post_count = 2466080
 build_timeout_seconds = 3600
 query_timeout_seconds = 0.05
+query_repeats = 5
 serving_capacity_bytes = 41943040
 prepared_artifact_limit_bytes = 35651584
 
@@ -36,9 +37,9 @@ allowed_hosts = [
 ]
 
 [verifier]
-# 3600 build + 76 * (120 load + 30 warmup + 0.05 query) < 15004 s,
-# plus trusted cleanup/reporting and the separate 1200-second integrity audit. Query failures retain the full denominator.
-timeout_sec = 19800.0
+# 3600 build + 5 * 76 * (120 load + 30 warmup + 0.05 query) = 60619 s.
+# A 66000 s primary wrapper covers cleanup/scoring; audit has 1200 s, finalization 30 s.
+timeout_sec = 67800.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

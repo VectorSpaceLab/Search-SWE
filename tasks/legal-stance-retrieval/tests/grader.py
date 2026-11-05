@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private verifier for stance-conditioned retrieval, one timed whole-suite call."""
+"""Private verifier for stance retrieval using five independent timed batches."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Any
+
+import psutil
 
 
 TASK_ID = "legal-stance-retrieval"
@@ -32,6 +34,7 @@ TOP_K = 10
 HIDDEN_QUERY_COUNT = 311
 BUILD_TIMEOUT_SECONDS = 3600.0
 RUN_TIMEOUT_SECONDS = 20.0
+QUERY_REPEATS = 5
 BASELINE_B = 0.5610484855098774
 SUBMISSION_UID = 10001
 SUBMISSION_GID = 10001
@@ -174,6 +177,48 @@ def stop_submission_processes() -> None:
         )
         if signal_name == "TERM":
             time.sleep(0.5)
+    deadline = time.monotonic() + 10
+    while True:
+        live = []
+        for process in psutil.process_iter(["uids", "status"]):
+            try:
+                if process.info["uids"].real == SUBMISSION_UID and process.info["status"] != psutil.STATUS_ZOMBIE:
+                    live.append(process)
+                    process.kill()
+            except psutil.NoSuchProcess:
+                pass
+        if not live:
+            return
+        if time.monotonic() >= deadline:
+            raise VerificationError("submission processes survived cleanup")
+        time.sleep(0.01)
+
+
+def clear_submission_ipc() -> None:
+    """Discard writable IPC state between independently rebuilt query batches."""
+    for root in (Path("/dev/shm"), Path("/dev/mqueue")):
+        if not root.is_dir():
+            continue
+        for path in root.iterdir():
+            if path.lstat().st_uid == SUBMISSION_UID:
+                if path.is_dir() and not path.is_symlink():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+    for table, identifier, flag in (("shm", "shmid", "-m"),
+                                    ("msg", "msqid", "-q"), ("sem", "semid", "-s")):
+        rows = Path("/proc/sysvipc", table).read_text().splitlines()
+        columns = rows[0].split()
+        for line in rows[1:]:
+            row = dict(zip(columns, line.split(), strict=True))
+            if SUBMISSION_UID in (int(row["uid"]), int(row["cuid"])):
+                subprocess.run(
+                    ["/usr/bin/setpriv", f"--reuid={SUBMISSION_UID}",
+                     f"--regid={SUBMISSION_GID}", "--clear-groups", "--no-new-privs",
+                     "/usr/bin/ipcrm", flag, row[identifier]],
+                    check=True, timeout=5, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
 
 
 def kill_group(process: subprocess.Popen[bytes]) -> None:
@@ -399,40 +444,71 @@ def score_results(results: list[dict[str, Any]], gold: dict[str, set[str]]) -> d
 
 def main() -> int:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    report: dict[str, Any] = {"task_id": TASK_ID, "valid": False, "reward": 0.0, "errors": []}
+    report: dict[str, Any] = {"task_id": TASK_ID, "valid": False, "reward": 0.0,
+                              "errors": [], "query_repeats": QUERY_REPEATS, "attempts": []}
     try:
         if EXECUTION_ERROR:
             raise VerificationError(EXECUTION_ERROR)
-        recreate_workdirs()
         corpus_ids, corpus_order = load_corpus()
         queries, gold = load_private_data(corpus_ids)
-        check_submission_boundary()
-        report["build"] = run_timed(
-            [str(SUBMISSION_DIR / "build.sh"), "--corpus", str(CORPUS_PATH),
-             "--index-dir", str(INDEX_DIR)], timeout=BUILD_TIMEOUT_SECONDS,
-            stdout_path=RESULTS_DIR / "build.stdout.log", stderr_path=RESULTS_DIR / "build.stderr.log")
-        require_success(report["build"], "build.sh")
-        if report["build"]["elapsed_seconds"] > BUILD_TIMEOUT_SECONDS:
-            raise VerificationError("build.sh exceeded its deadline")
-        # Do not expose any hidden query to a build-started service before the build finishes.
-        query_path = stage_queries(queries)
-        OUTPUT_PATH.unlink(missing_ok=True)
-        report["run"] = run_timed(
-            [str(SUBMISSION_DIR / "run.sh"), "--index-dir", str(INDEX_DIR),
-             "--queries", str(query_path), "--output", str(OUTPUT_PATH), "--top-k", str(TOP_K)],
-            timeout=RUN_TIMEOUT_SECONDS,
-            stdout_path=RESULTS_DIR / "run.stdout.log", stderr_path=RESULTS_DIR / "run.stderr.log")
-        stop_submission_processes()
-        require_success(report["run"], "run.sh whole batch")
-        if report["run"]["elapsed_seconds"] > RUN_TIMEOUT_SECONDS:
-            raise VerificationError("whole query batch exceeded 20 seconds")
-        results = validate_output(queries, corpus_ids, corpus_order)
-        report.update(score_results(results, gold))
+        for repeat in range(1, QUERY_REPEATS + 1):
+            stop_submission_processes()
+            clear_submission_ipc()
+            recreate_workdirs()
+            check_submission_boundary()
+            attempt: dict[str, Any] = {"repeat": repeat, "valid": False, "errors": []}
+            report["attempts"].append(attempt)
+            # Rebuild because the existing interface permits build-started services.
+            # No query files, prior index, process or writable IPC survive a round.
+            attempt["build"] = run_timed(
+                [str(SUBMISSION_DIR / "build.sh"), "--corpus", str(CORPUS_PATH),
+                 "--index-dir", str(INDEX_DIR)], timeout=BUILD_TIMEOUT_SECONDS,
+                stdout_path=RESULTS_DIR / f"build-{repeat}.stdout.log",
+                stderr_path=RESULTS_DIR / f"build-{repeat}.stderr.log")
+            require_success(attempt["build"], "build.sh")
+            if attempt["build"]["elapsed_seconds"] > BUILD_TIMEOUT_SECONDS:
+                raise VerificationError("build.sh exceeded its deadline")
+            # Stage the same frozen query order only after this round's build.
+            query_path = stage_queries(queries)
+            try:
+                attempt["run"] = run_timed(
+                    [str(SUBMISSION_DIR / "run.sh"), "--index-dir", str(INDEX_DIR),
+                     "--queries", str(query_path), "--output", str(OUTPUT_PATH), "--top-k", str(TOP_K)],
+                    timeout=RUN_TIMEOUT_SECONDS,
+                    stdout_path=RESULTS_DIR / f"run-{repeat}.stdout.log",
+                    stderr_path=RESULTS_DIR / f"run-{repeat}.stderr.log")
+                stop_submission_processes()
+                require_success(attempt["run"], "run.sh whole batch")
+                if attempt["run"]["elapsed_seconds"] > RUN_TIMEOUT_SECONDS:
+                    raise VerificationError("whole query batch exceeded 20 seconds")
+                results = validate_output(queries, corpus_ids, corpus_order)
+                attempt.update(score_results(results, gold))
+                attempt["valid"] = True
+            except VerificationError as error:
+                attempt["errors"].append(f"{type(error).__name__}: {error}")
+            finally:
+                stop_submission_processes()
+            write_json(REPORT_PATH, report)
+        # Failed/late/invalid batches rank after all successful batches. Select
+        # the median-time batch's rankings, never the highest relevance score.
+        selected = sorted(report["attempts"], key=lambda item: (
+            item["run"]["elapsed_seconds"] if item["valid"] else math.inf,
+            item["repeat"],
+        ))[QUERY_REPEATS // 2]
+        report["median_repeat"] = selected["repeat"]
+        report["successful_attempts"] = sum(item["valid"] for item in report["attempts"])
+        if not selected["valid"]:
+            raise VerificationError("fewer than three valid query batches within 20 seconds")
+        report.update({key: selected[key] for key in (
+            "build", "run", "query_count", "mean_ndcg_at_10", "baseline_ndcg_at_10",
+            "primary_metric", "reward", "queries",
+        )})
         report["valid"] = True
     except Exception as error:
         report["errors"].append(f"{type(error).__name__}: {error}")
     finally:
         stop_submission_processes()
+        clear_submission_ipc()
     write_json(REPORT_PATH, report)
     print(json.dumps({k: v for k, v in report.items() if k != "queries"}, ensure_ascii=False, indent=2))
     return 0 if report["valid"] else 1

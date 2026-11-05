@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | Recall@100 |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 48000 s |
+| Agent / verifier time limits | 21600 s / 51000 s |
 | Dataset | MKQA Khmer / BEIR NQ |
 | Public queries | 3 |
 | Hidden queries | 1000 |
@@ -33,13 +33,16 @@ pipeline must operate offline.
 | Asset | Purpose |
 | --- | --- |
 | `data/corpus.parquet` | 2,681,468 English documents |
-| `data/examples.jsonl` | Three Khmer questions with English answer aliases |
+| `data/validation/queries.jsonl` | Three Khmer questions with stable IDs |
+| `data/validation/answers.jsonl` | Matching IDs and English answer aliases |
 | `models/multilingual-e5-large/` | Embedding backbone |
 | `models/Qwen3.5-9B/` | Optional development-only local generative model |
 
 Public data are mounted read-only under `/task/data`, local models where
 provided under `/task/models`, and resource documents under `/task/docs`.
 Held-out questions and labels are verifier-only.
+
+The three public questions and answers are restored into `data/validation/` from the immutable official HF revision recorded in [assets.json](assets.json). This is a layout change only; their content, IDs and order are unchanged. Corpus and model sources retain their existing upstream pins.
 
 The collection is [BEIR/NQ](https://huggingface.co/datasets/BeIR/nq).
 Question and answer aliases originate from filtered MKQA records checked
@@ -63,16 +66,16 @@ already built corpus index is transferred as a runtime retrieval resource.
 
 #### Environment and Resource Limits
 
-Development has six hours with eight CPU cores, 32 GiB RAM, 100 GiB storage
-and one A100 40 GiB GPU. The verifier provides the same CPU, RAM and GPU
-resources without the development-only generative model.
-Index construction has 43,200 seconds; each of two query calls has 1,800 seconds.
+Development has six hours with eight CPU cores, 32 GiB RAM, 100 GiB storage and one GPU. The verifier provides the same CPU, RAM and GPU count without the development-only generative model. Checkpoint loading has 300 seconds, index construction has 43,200 seconds, and each of two query calls has 1,800 seconds.
+
+The primary evaluator has 48,000 seconds, covering these 47,100 seconds of candidate-stage allowances plus scoring and cleanup. The single compliance audit has a 1,200-second wrapper, finalization has 30 seconds, and the outer verifier has 51,000 seconds to include setup, snapshotting and termination overhead.
 
 ## Change Log
 
 | Date | Version | Description |
 | --- | --- | --- |
 | 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-05 | 1.0.0 | Corrected nested verifier budgets and audit validation, aligned reported scores, and standardized public validation assets and GPU documentation |
 
 ## Difficulty Explanation
 
@@ -119,7 +122,7 @@ reward(q) = (a / 100) * q / b                             if 0 <= q <= b
 This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and
 auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
 precision; a displayed 0–100 score is rounded to one decimal place.
-Correctness and trajectory-audit gates take precedence over this conversion.
+Correctness and trajectory-audit gates take precedence over this conversion. The primary evaluation report and finalizer use this same mapping. The stored untrained-backbone Recall@100 of 0.279 is a historical diagnostic, not the score anchor or denominator.
 
 #### Correctness and Resource Gates
 
@@ -131,10 +134,9 @@ to submitted build and retrieval processes.
 
 #### Integrity Checks and Final Reward
 
-A separate trajectory audit checks task compliance and gates the quality
-reward. A confirmed violation sets reward to zero; unavailable or incomplete
-audit results are not valid evidence of model quality. The audit uses pinned
-RewardKit 0.2.0 with verifier-only OpenRouter settings.
+A separate trajectory audit runs once, checks task compliance and gates the quality reward. A confirmed violation sets reward to zero. A valid run requires successful primary evaluation, a nonempty trajectory, and a successful audit with an exact binary decision, a matching criterion and a nonempty judge response. Unavailable, fractional, inconsistent or incomplete audit results produce an infrastructure failure with a zero reward artifact. The audit uses pinned RewardKit 0.2.0 with verifier-only OpenRouter settings.
+
+Recall@100 uses deterministic answer matching. Execution times are diagnostic and subject to hard deadlines; they do not contribute to the quality score. There is no answer-quality LLM judge and no repeated latency metric in this task.
 
 Private questions, reference labels and audit credentials are excluded from
 the agent environment and protected from submitted programs.
@@ -177,6 +179,7 @@ credentials or hardware. Results are written under `jobs/khmer-embedding-trainin
 | [tests/](tests/) | Execution, output validation, isolation and scoring |
 | [environment/docs/available_resources.md](environment/docs/available_resources.md) | Permitted APIs, models and credential handling |
 | [SOURCES.md](SOURCES.md) | Dataset provenance, preparation and runtime asset sources |
+| [VALIDATION.md](VALIDATION.md) | Checks and limitations for the current package changes |
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 

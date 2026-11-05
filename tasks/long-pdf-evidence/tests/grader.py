@@ -17,7 +17,9 @@ RESULTS_DIR = Path(os.environ.get('SEARCH_SWE_RESULTS_DIR', '/logs/verifier/long
 PREDICTIONS_PATH = RESULTS_DIR / 'results.jsonl'
 EXECUTION_PATH = RESULTS_DIR / 'query_execution.json'
 REPORT_PATH = RESULTS_DIR / 'evaluation.json'
-MODEL, EFFORT, TOP_K = 'deepseek/deepseek-v4.1-flash', 'high', 5
+EFFORT, TOP_K = 'high', 5
+JUDGE_REPEATS = 3
+JUDGE_WORKERS = 2
 MAX_OUTPUT_CHARS = 16000
 PDF_SHA256 = 'cb4e9d2b33682eb7106a8d2c2e39c40380e347f8cf526c26a5e5d41de22033b1'
 CATALOG_SHA256 = '89a0bc79c5298aa5fdc87ca59a4fbead91c20ee67bf7b80b42577cabeae5b837'
@@ -182,15 +184,16 @@ def load_execution_errors(queries, path=EXECUTION_PATH):
 class JudgeConfig:
     api_base: str
     api_key: str
+    model: str
 
 
 def judge_config():
-    base = os.environ.get('ANSWER_JUDGE_BASE_URL','').rstrip('/')
-    key = os.environ.get('ANSWER_JUDGE_API_KEY','')
-    model = os.environ.get('ANSWER_JUDGE_MODEL_NAME',MODEL)
-    if base != 'https://openrouter.ai/api/v1' or not key or model != MODEL:
-        raise VerificationError('configure verifier-only OpenRouter ANSWER_JUDGE settings for '+MODEL)
-    return JudgeConfig(base,key)
+    names = ('ANSWER_JUDGE_BASE_URL', 'ANSWER_JUDGE_API_KEY', 'ANSWER_JUDGE_MODEL_NAME')
+    values = {name:os.environ.get(name,'').strip() for name in names}
+    missing = [name for name in names if not values[name]]
+    if missing:
+        raise VerificationError('missing verifier-only judge settings: '+', '.join(missing))
+    return JudgeConfig(values[names[0]].rstrip('/'),values[names[1]],values[names[2]])
 
 
 def parse_judgement(content):
@@ -202,7 +205,7 @@ def parse_judgement(content):
 
 
 def call_judge(config, question, sentences, reference):
-    body = {'model':MODEL, 'temperature':0, 'max_tokens':8192,
+    body = {'model':config.model, 'temperature':0, 'max_tokens':8192,
             'reasoning':{'effort':EFFORT,'exclude':True}, 'response_format':{'type':'json_object'},
             'messages':[{'role':'system','content':SYSTEM_PROMPT},
                         {'role':'user','content':json.dumps({'QUESTION':question,
@@ -229,28 +232,33 @@ def call_judge(config, question, sentences, reference):
 def evaluate(queries, references, predictions, errors, config, judge=call_judge):
     decisions, judge_errors = {}, {}
     eligible = [q for q in queries if q['query_id'] not in errors and predictions.get(q['query_id'])]
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        jobs = {pool.submit(judge,config,q['query'],predictions[q['query_id']],references[q['query_id']]):q['query_id'] for q in eligible}
+    with ThreadPoolExecutor(max_workers=JUDGE_WORKERS) as pool:
+        jobs = {pool.submit(judge,config,q['query'],predictions[q['query_id']],references[q['query_id']]):(q['query_id'],round_index)
+                for q in eligible for round_index in range(JUDGE_REPEATS)}
         for future in as_completed(jobs):
-            qid = jobs[future]
-            try:decisions[qid] = future.result()
-            except Exception as exc:judge_errors[qid] = str(exc)
+            key = jobs[future]
+            try:decisions[key] = future.result()
+            except Exception as exc:judge_errors[key] = str(exc)
     per_query=[]
     for q in queries:
-        qid=q['query_id'];decision=decisions.get(qid)
+        qid=q['query_id']
+        rounds = [decisions.get((qid,i)) for i in range(JUDGE_REPEATS)]
+        round_errors = [judge_errors.get((qid,i)) for i in range(JUDGE_REPEATS)]
+        support_fraction = sum(bool(d and d['supported']) for d in rounds)/JUDGE_REPEATS
         per_query.append({'query_id':qid,'valid':qid not in errors,'error':errors.get(qid),
-            'judge_error':judge_errors.get(qid),'judge':decision,
-            'supported':bool(decision and decision['supported']),
+            'judge_errors':round_errors,'judge_rounds':rounds,
+            'support_fraction':support_fraction,
             'evidence_count':len(predictions.get(qid,[]))})
-    raw=sum(r['supported'] for r in per_query)/len(queries)
+    raw=sum(r['support_fraction'] for r in per_query)/len(queries)
     valid=not judge_errors
     return {'task_id':'long-pdf-evidence','valid':valid,'score':100*raw if valid else 0.0,
             'query_count':len(queries),'invalid_query_count':len(errors),
-            'judge_model':MODEL,'judge_reasoning_effort':EFFORT,'judge_error_count':len(judge_errors),
+            'judge_model':config.model if config else None,'judge_reasoning_effort':EFFORT,
+            'judge_repeats':JUDGE_REPEATS,'judge_error_count':len(judge_errors),
             'primary_metric':{'name':'SentenceEvidenceAccuracy','value':raw if valid else 0.0},
             'completed_judgments_accuracy_for_diagnosis_only':raw,
             'per_query_metrics':per_query,'errors':list(judge_errors.values()),
-            'scoring_rule':'Mean binary complete evidence support; invalid/failed query=0; judge failure invalidates evaluation.'}
+            'scoring_rule':'Mean of three binary judgments of each fixed evidence set, then mean over queries; invalid/failed query=0; any judge failure invalidates evaluation.'}
 
 
 def main():

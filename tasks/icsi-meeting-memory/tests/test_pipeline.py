@@ -56,7 +56,7 @@ class EvidenceTests(JudgeLogTests):
                 [{"text": "It was too costly."}],
                 ["Budget was insufficient."],
             )
-        self.assertTrue(result["hit"])
+        self.assertAlmostEqual(result["hit"], 2 / 3)
         self.assertEqual(model.call_count, 6)
         self.assertEqual(
             set(model.call_args_list[0].args[1]), {"question", "retrieved_texts"}
@@ -325,7 +325,7 @@ class FakeGateway:
 
 
 class PipelineTests(unittest.TestCase):
-    def run_pipeline(self, root, evidence_missing=False):
+    def run_pipeline(self, root, evidence_missing=False, mixed_votes=False):
         art = root / "app"
         art.mkdir()
         (art / "memory.json").write_text('["Some retained information."]')
@@ -406,12 +406,21 @@ class PipelineTests(unittest.TestCase):
             i = int(q["query_id"][1:])
             self.assertEqual(answer["answer"], f"answer {i}")
             self.assertTrue((root / "logs/submitted_answers.json").is_file())
-            return {"query_id": q["query_id"], "correct": i in (0, 2), "votes": []}
+            values = [True, False, True] if mixed_votes and i == 0 else [i in (0, 2)] * repetitions
+            return {
+                "query_id": q["query_id"],
+                "correct": sum(values) / repetitions,
+                "votes": [{"correct": value} for value in values],
+            }
 
         def judge_evidence(q, evidence, memories, repetitions):
             i = int(q["query_id"][1:])
             self.assertEqual(memories[0], f"memory {i}")
-            return {"hit": i in (0, 1), "votes": []}
+            values = [True, True, False] if mixed_votes and i == 0 else [i in (0, 1)] * repetitions
+            return {
+                "hit": sum(values) / repetitions,
+                "votes": [{"hit": value} for value in values],
+            }
 
         with (
             patch("harness.seal"),
@@ -439,6 +448,16 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(
                 len(json.loads((Path(tmp) / "logs/retrievals.json").read_text())), 4
             )
+
+    def test_fractional_joint_score_keeps_fixed_retrievals_and_answers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result, calls = self.run_pipeline(Path(tmp), mixed_votes=True)
+            self.assertTrue(result["valid"], result)
+            self.assertAlmostEqual(result["queries"][0]["correct"], 1 / 3)
+            self.assertAlmostEqual(result["score"], 1 / 12)
+            self.assertAlmostEqual(result["evidence_accuracy"], 5 / 12)
+            self.assertAlmostEqual(result["answer_accuracy"], 5 / 12)
+            self.assertEqual(len(calls), 1 + 2 * 4)
 
     def test_answer_input_permissions_survive_production_umask(self):
         import os

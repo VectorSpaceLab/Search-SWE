@@ -9,7 +9,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' INT TERM
 cleanup
-/opt/conda/bin/python /tests/grader.py
+timeout --signal=TERM --kill-after=60 80000 /opt/conda/bin/python /tests/grader.py
 cleanup
 judge_status=0
 timeout 3600 /opt/conda/bin/python /tests/rewardkit_deepseek.py /tests \

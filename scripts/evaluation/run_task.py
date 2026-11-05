@@ -24,6 +24,7 @@ from scripts.assets.download_assets import destination_path, read_manifest, rela
 from scripts.evaluation.gpu_device import resolve_gpu_device, validate_gpu_device
 from scripts.evaluation.harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
 from scripts.evaluation.task_storage import StoragePlan, prepared_storage, run_command
+from scripts.evaluation.task_preparation import prepare_task
 from scripts.evaluation.cpu_affinity import validate_cpu_set
 
 
@@ -406,6 +407,8 @@ def main():
                 print(f"Task setup for {name}: {options.get('description', '')}\n{options['guidance'].strip()}")
     if args.dry_run:
         print("Preview only; credentials, assets, Docker, GPU, and API access are not checked.")
+        if (task / "tools/prepare_task.py").is_file():
+            print("Task platform preparation runs automatically before the coding-agent time limit; valid cached results are reused.")
         if storage:
             print(f"Bounded storage and {storage.cpus} logical CPUs are prepared automatically; "
                   f"optional overrides: {storage.variable}, {storage.cpu_variable}.")
@@ -454,6 +457,10 @@ def main():
         env["PYTHONPATH"] += os.pathsep + existing_pythonpath
 
     print(f"Launching {task_key(REPO, task)}; job output: {output}", flush=True)
+    try:
+        prepare_task(task, env, cpu_set=args.cpu_set)
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
+        parser.error(str(error))
     if storage:
         try:
             with prepared_storage(storage, env):

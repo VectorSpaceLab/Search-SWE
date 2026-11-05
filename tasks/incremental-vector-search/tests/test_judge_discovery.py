@@ -14,7 +14,7 @@ class JudgeDiscoveryTests(unittest.TestCase):
             root = Path(directory)
             tests = root / "tests"
             shutil.copytree(Path(__file__).resolve().parent, tests,
-                            ignore=shutil.ignore_patterns("__pycache__"))
+                            ignore=shutil.ignore_patterns("__pycache__", "data", "platform", "platform-*"))
             self.assertFalse((root / "prepare_data.py").exists())
             self.assertFalse((root / "assets.json").exists())
             # Isolate RewardKit's registration state from unittest discovery.
@@ -31,7 +31,7 @@ print(json.dumps([group.name for group in layout.groups]))
                 capture_output=True, text=True, timeout=60,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(json.loads(result.stdout), ["integrity_judge"])
+            self.assertEqual(json.loads(result.stdout), ["jailbreak_judge"])
 
 
 if __name__ == "__main__":

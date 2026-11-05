@@ -6,6 +6,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.assets._maintainer_skill import helpers
 
+# Apply the repository's asset policy only to its publication entrypoint.
+# The portable skill and its loader retain their independent behavior.
+if (Path(__file__).resolve().parent / 'download_assets.py').is_file():
+    from scripts.assets.download_assets import read_manifest
+    helpers.read_manifest = read_manifest
+
 prepare = helpers.prepare
 
 

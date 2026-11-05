@@ -26,7 +26,7 @@ Create persistent index/runtime artifacts under the passed index directory, star
 
 `/app/run.sh --index-dir /app/index --queries /path/to/queries.jsonl --output /path/to/results.jsonl --top-k 5`
 
-Process every input query, emit exactly one object per query. Verifier calls separately per query. Any compliant internal protocol is allowed. Internal evaluator scheduling uses up to five concurrent calls sharing the index/service; this scheduling detail is omitted from the agent-facing instruction.
+Process every input query, emit exactly one object per query. Verifier calls separately per query. Any compliant internal protocol is allowed. Up to five queries may run concurrently, sharing the index/service.
 
 ## Output
 
@@ -39,10 +39,10 @@ Process every input query, emit exactly one object per query. Verifier calls sep
 
 ## Runtime and grading
 
-- Build: 2,400 seconds. Each query: 30 seconds, measured from its invocation; a timed-out query receives zero. The agent-facing instruction states the per-query limit without a total query-phase budget or concurrency requirement.
-- Internal evaluator safeguards: 1,800-second shared query budget, concurrency at most five, with an extra 60 seconds for runner cleanup/result collection. Queuing is excluded from the individual allowance. Whole verifier: 10,800 seconds. These safeguards do not shorten the per-query allowance for the fixed twelve-query workload.
-- Check corpus hashes, exact sentence membership and output contract. Then OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0 judges the entire evidence set. Credentials are verifier-only; this does not extend submission API permissions.
+- Build: 2,400 seconds. Each query: 30 seconds, measured from its invocation; a timed-out query receives zero. The agent-facing instruction states the per-query limit and maximum concurrency.
+- Internal evaluator safeguards: 1,800-second shared query budget, concurrency at most five, with an extra 60 seconds for runner cleanup/result collection. Queuing is excluded from the individual allowance. Evidence judging: 5,400 seconds. Whole verifier: 14,400 seconds. These safeguards do not shorten the per-query allowance for the fixed twelve-query workload.
+- Check corpus hashes, exact sentence membership and output contract. Judge each fixed evidence set three times using the verifier-only `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY`, with effort `high` and temperature 0. Do not rerun retrieval between judgments. These settings do not extend submission API permissions.
 - Binary support: complete explanation/contrast/reversal/qualification = 1, otherwise 0. Topical or scene matching alone fails. Accept alternative evidence; no exact reference-ID requirement. No borrowing missing facts from reference or outside knowledge. Harmless redundant evidence permitted within limits.
-- `SentenceEvidenceAccuracy` = mean binary support across all 12 private queries, including failed/invalid/missing/time-out zeros. Isolated failures do not invalidate other queries. Shared build/setup failure prevents all scoring.
+- Each query receives the arithmetic mean of its three binary support judgments. `SentenceEvidenceAccuracy` is the mean of those query scores across all 12 private queries, including failed/invalid/missing/time-out zeros. Isolated retrieval failures do not invalidate other queries. Shared build/setup failure prevents all scoring.
 - Judge infrastructure/parse errors invalidate measurement and fail closed with final reward 0, separately reported from retrieval mistakes.
 - Report `score = 100 * SentenceEvidenceAccuracy`; final reward on 0–1 scale after separate trajectory compliance audit. An unsuccessful audit sets reward to 0.

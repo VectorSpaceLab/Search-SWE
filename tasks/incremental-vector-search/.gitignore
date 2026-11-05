@@ -1,4 +1,4 @@
-/data/
-/models/
-__pycache__/
-*.py[cod]
+/tests/data/
+/tests/platform/
+/tests/platform-preparing-*/
+/tests/platform-previous-*/

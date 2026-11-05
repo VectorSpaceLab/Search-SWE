@@ -9,7 +9,7 @@
 | Authors | Cooki-e |
 | Primary metric | Baseline-normalized mean NDCG@10 |
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 5100 s |
+| Agent / verifier time limits | 21600 s / 20100 s |
 | Hidden queries | 311 |
 
 Given a legal claim and `supported`, `refuted` or `all`, retrieve ten ranked
@@ -87,9 +87,8 @@ The agent receives 16 CPUs, 32 GiB RAM, 100 GiB storage, one NVIDIA GPU and a
 6-hour development phase. Both images use the standard GPU base.
 `/app/build.sh` receives `--corpus` and `--index-dir`, with a 3,600-second build
 budget. `/app/run.sh` receives `--index-dir`, `--queries`, `--output` and
-`--top-k 10`. All hidden inputs are passed in **one call with a 20-second
-wall-clock deadline**, including command startup/loading, API waits and writing.
-There is no per-query or network extension. Build-started services may persist;
+`--top-k 10`. All hidden inputs are passed in one batch with a **20-second wall-clock deadline**, including command startup/loading, API waits and writing. Evaluate five rounds with the same query order, rebuilding from an empty index directory and restarting services each round; submission-owned IPC is cleared between rounds, while operating-system file caches are not flushed. Score the rankings from the median-time batch, with failed, late or invalid batches ordered last and timing ties broken by round order. Fewer than three successful batches gives zero. Each build retains its 3,600-second deadline; any build failure gives zero. The primary wrapper has 18,600 seconds and the outer verifier 20,100 seconds to cover five rounds and the existing single audit/finalization stages.
+There is no per-query or network extension. Build-started services may persist within a round;
 agent-container services do not transfer to the separate verifier. Learned
 weights and implementation files must be under the transferred `/app`.
 
@@ -97,8 +96,7 @@ The verifier mounts only the fixed corpus, local model and resource docs.
 It stages query text only after build completion and runs submission commands
 as UID 10001 with a filtered environment. `/app` is read-only to that UID;
 the index and result locations are writable. Hidden labels, grading code,
-trajectory and reward paths are root-owned. A failed build, failed command,
-invalid result or batch timeout gives total zero. No partial timeout credit.
+trajectory and reward paths are root-owned. A failed build gives total zero. Failed commands, invalid results and batch timeouts count as unsuccessful attempts in the five-round selection; no partial batch receives credit. The single audit must have matching aggregate, raw and normalized decisions and complete judge output. Missing or inconsistent audit details produce zero and a nonzero verifier exit; a consistent rejection is a valid zero.
 The required DeepSeek trajectory audit remains separate from deterministic
 ranking quality and fails closed. No training recipe or minimum weight-change
 threshold is imposed by the audit; an honest baseline is a valid zero-improvement
@@ -112,7 +110,7 @@ at repository snapshot `16a4072067c39daa463495e10e3bb029c29beb5b`.
 Its downloaded README advertises **CC BY-NC 4.0**; GitHub's license field was
 unset. Retain attribution and the noncommercial restriction when distributing
 these derived data. The case summaries originate from Oyez, as retained in
-original record metadata. See [SOURCES.md](SOURCES.md) for exact input hashes,
+original record metadata. See [source and annotation record](VALIDATION.md#source-and-annotation-record) for exact input hashes,
 transformations and licensing scope. This package is an adaptation, not the
 original paper's task, scoring implementation or official benchmark release.
 Dataset branding and author-side audit material are kept outside agent docs.
@@ -123,7 +121,7 @@ the pinned inventory. Runtime corpus/example/model files are restored under
 ignored `data/` and `models/`. Hidden test files are copied only into the
 verifier image.
 
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [recorded model run](VALIDATION.md#recorded-model-run) for historical run evidence and publication status. Existing source terms and attribution remain applicable.
 
 ### Structural precedents and validation
 
@@ -143,7 +141,7 @@ checks and outstanding release/model-evaluation layers. The instruction rewrite
 keeps fenced build/run examples because the user explicitly requested that format;
 this overrides the skill's generic prose-only convention. All source obligations
 were checked against the request and grader; see
-[instruction-audit.md](instruction-audit.md).
+[instruction contract review](VALIDATION.md#instruction-contract-review).
 
 ### Instruction revision 0.1.1
 
@@ -155,7 +153,7 @@ The redundant `model-metadata` directory and its two asset entries were removed.
 
 Public examples are now under `/task/data/examples`, with `queries.jsonl` and `ground_truth.jsonl`. The host directory, Compose mount, asset manifest and packaging output use this name. Public query IDs replace the source `train_` prefix with `example_` in both files; the claim text, stance and relevance maps are unchanged. The agent-facing instruction, resource docs and task description provide the examples and model without suggesting a training method. Original source-split names remain in author provenance and audit records.
 
-See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+See [recorded model run](VALIDATION.md#recorded-model-run) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
 
 ### Running the task
 
@@ -171,4 +169,4 @@ bash scripts/evaluation/run_task.sh --task legal-stance-retrieval --agent codex 
 
 ## References
 
-- [Data, model and method provenance](SOURCES.md).
+- [Data, model and method provenance](VALIDATION.md#source-and-annotation-record).

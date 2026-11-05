@@ -57,3 +57,53 @@ def dataset_score(cells, stages=10, ks=KS):
         if not 0 <= cell["recall"] <= 1:
             return 0.0
     return sum(c["recall"] for c in cells) / len(expected)
+
+
+def median_record(records, field='seconds'):
+    """Missing/aborted timings are infinite, never omitted from the five samples."""
+    def duration(record):
+        value = record.get(field) if record is not None else None
+        return value if type(value) in (int, float) and math.isfinite(value) and value >= 0 else math.inf
+    ordered = sorted(enumerate(records), key=lambda pair: (duration(pair[1]), pair[0]))
+    _, record = ordered[len(ordered) // 2]
+    return record, duration(record)
+
+
+def aggregate_replays(replays, limits, *, stages=10, batch_size=1000, ks=KS):
+    """Median timing gates; quality comes from the corresponding median-time run."""
+    if len(replays) != 5:
+        raise ValueError('Exactly five independent replays are required')
+    result = {'score': 0.0, 'cells': [], 'replays': replays, 'insert_seconds': []}
+    if any(r.get('failure_kind') == 'invalid_submission' for r in replays):
+        result['failure'] = 'Invalid execution or resource violation in a replay'
+        return result
+    _, build = median_record(replays, 'build_seconds')
+    result['build_seconds'] = build if math.isfinite(build) else None
+    if build > limits['build_seconds']:
+        result['failure'] = 'Median build time exceeded its budget'
+        return result
+    for stage in range(stages):
+        records = [{'seconds': r.get('insert_seconds', [])[stage]}
+                   if len(r.get('insert_seconds', [])) > stage else None for r in replays]
+        _, seconds = median_record(records)
+        result['insert_seconds'].append(seconds if math.isfinite(seconds) else None)
+        if seconds > limits['insert_seconds']:
+            result['failure'] = 'Median insertion time exceeded its budget'
+            return result
+        for ki, k in enumerate(ks):
+            records = [next((c for c in r.get('cells', []) if (c['stage'], c['k']) == (stage, k)), None)
+                       for r in replays]
+            selected, seconds = median_record(records)
+            budget = .10 * limits['full_scan_seconds'][stage][ki]
+            if seconds > budget:
+                result['failure'] = f'Median query time exceeded its budget at stage {stage}, K={k}'
+                return result
+            result['cells'].append({**selected, 'seconds': seconds, 'budget_seconds': budget,
+                                    'median_replay': next(i for i, c in enumerate(records) if c is selected)})
+    missing = missing_neighbors(result['cells'])
+    total = stages * batch_size * sum(ks)
+    result.update(missing_neighbors=missing, micro_recall=1 - missing / total,
+                  mean_recall=sum(c['recall'] for c in result['cells']) / (stages * len(ks)))
+    anchor = limits.get('baseline_missing_neighbors')
+    result['score'] = error_gain(missing, anchor) if anchor is not None else result['micro_recall']
+    return result

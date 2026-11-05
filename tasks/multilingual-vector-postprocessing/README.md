@@ -9,10 +9,10 @@
 | Authors | jianlyu |
 | Primary metric | clip((Q-B)/(1-B),0,1), with B frozen before agent evaluation and full score at Q=1 |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 10800 s |
+| Agent / verifier time limits | 21600 s / 45600 s |
 | Dataset | Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition |
 
-Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors within one A100 and six hours.
+Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors with one GPU within six hours.
 
 The complete task contract is in [raw-instruction.md](raw-instruction.md).
 The coding agent receives [instruction.md](instruction.md),
@@ -33,7 +33,7 @@ Only transformations of frozen vectors are available. Improvements must transfer
 
 ## Verification Explanation
 
-The verifier normalizes transformed vectors, ranks by FP32 cosine and computes binary nDCG@20 using the full positive sets. It averages equally across query languages and datasets, then linearly normalizes improvement from the fixed baseline B=0.9127469497437668 to the full-score point Q=1. Query failures retain their denominator; preparation, resource and integrity failures invalidate the submission. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+The verifier normalizes transformed vectors, ranks by FP32 cosine and computes binary nDCG@20 using the full positive sets. It averages equally across query languages and datasets, then linearly normalizes improvement from the fixed baseline B=0.9127469497437668 to the full-score point Q=1. Five fresh measurement rounds use a fixed order and fixed consistency probes. Each query is scored from its median-duration sample; failed samples occupy the deadline, and quality is never used to select a sample. Query failures retain their denominator; preparation, resource and integrity failures invalidate the submission. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
 
 ### Restore inputs
 
@@ -54,9 +54,9 @@ The task allocates 16 CPU cores, 16 GiB RAM and
 100 GiB storage. Agent development has
 21600 seconds. Final-stage limits and accounting are
 specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+trusted setup and checks. The primary supervisor is 43,500 seconds, the audit wrapper is 1,200 seconds, and the outer verifier allows 45,600 seconds.
 
-Both phases require one A100 40GB GPU. Use `--gpu-device` to select the same
+Both phases require one GPU. Use `--gpu-device` to select the same
 host GPU for both phases.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or

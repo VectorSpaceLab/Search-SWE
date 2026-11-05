@@ -22,10 +22,6 @@ if not os.environ.get("OPENROUTER_API_KEY"):
 
 These credentials are runtime resources. Do not hard-code them, print or log their values, write them into source code, indexes, or output artifacts, or assume that they are available during Docker image build.
 
-Harbor restricts runtime egress to `openrouter.ai`. Documentation links below do not grant
-access to any additional host. The coding agent and trajectory judge use
-separate phase-scoped model access that is not a submission resource.
-
 ```bash
 OPENROUTER_API_KEY=<YOUR_OPENROUTER_API_KEY>
 ```

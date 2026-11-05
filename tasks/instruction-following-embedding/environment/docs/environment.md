@@ -1,5 +1,11 @@
 # Environment
 
-The task uses Python 3.12 at /opt/conda/bin/python with CUDA-enabled PyTorch, Transformers, PEFT, NumPy, and safetensors. One NVIDIA A100 with 40 GiB GPU memory is available, together with 16 CPU cores, 32 GiB RAM, and 32 GiB task storage.
+This image provides a Conda-managed Python 3.12 environment with CUDA-enabled PyTorch, TorchVision, TorchCodec, and FAISS GPU, together with the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-gpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, and `pydantic-settings`.
 
-Task data and the supplied backbone are mounted read-only under /task/data, /task/public, /task/corpus, and /task/models. Public evaluation tools and the baseline script are read-only under /task/runtime and /task/baselines. Work under /app.
+The task Python interpreter and its installed packages are available at `/opt/conda/bin/python`. Use `/opt/conda/bin/python` and `/opt/conda/bin/pip` when invoking Python or inspecting installed packages.
+
+The image also includes the CUDA 13.0 toolkit and runtime, JDK 21, Node.js 24.16.0 with npm 11.13.0, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
+
+This task additionally installs `peft==0.20.0` and `nvidia-ml-py==13.580.82`. Both phases provide one GPU, 16 CPUs, 32 GiB RAM and 32 GiB task storage. Network access and package installation are disabled for task code.
+
+Task data and the supplied backbone are read-only under `/task/data`, `/task/corpus` and `/task/models`. Public evaluation tools and the baseline script are read-only under `/task/runtime` and `/task/baselines`. Work under `/app`; `/app` and `/tmp` use disk storage. Final evaluation treats the submitted files as read-only. See the task instruction for the submission and serving interfaces.

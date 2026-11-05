@@ -14,10 +14,9 @@ Training is not required.
 
 Authoring note: the user requests the presentation used by
 `tasks/reasoning-query-rewriting/instruction.md`: a natural task request with
-fenced Bash commands and JSON examples. Keep machine allocations, the coding
-phase's time budget, internal process limits, catalog preparation details and
-diagnostic reporting in author/runtime metadata rather than repeating them in
-the request. These details remain recorded below and in the configuration.
+fenced Bash commands and JSON examples. State machine allocations and the coding
+phase's time budget concisely. Keep internal process limits, catalog preparation
+details and diagnostic reporting in author/runtime metadata.
 Build, index, startup and query limits, interface fields, validity rules and
 scoring remain explicit in the request.
 
@@ -33,7 +32,7 @@ scoring remain explicit in the request.
   or manipulate grading or reward files.
 - Use only the supplied column-level relationships. Do not invent cross-group
   joins.
-- Work within 16 CPU cores and 32 GiB RAM, without a GPU. API access is limited to the providers and models in
+- Work within 16 CPU cores, 32 GiB RAM and 100 GiB storage, without a GPU. API access is limited to the providers and models in
   `/task/docs/available_resources.md`.
 - The Agent phase allows two hours for implementation and validation. Index
   construction allows 1,200 seconds and at most 8 GiB of index files. Search
@@ -109,7 +108,8 @@ seconds of receiving it, including any API calls. A failed warm-up does not redu
 questions. Write diagnostics to stderr and stop serving at EOF. Each response,
 including its newline, must be at most 65,536 bytes.
 
-Query IDs and ordering may change. Echo the received ID without interpreting it.
+Queries run sequentially in the frozen hidden query-file order. Query IDs remain
+opaque and may change. Echo the received ID without interpreting it.
 The verifier runs submission code as an unprivileged user, with a writable index
 and temporary directory. Serving can read the index and submission files. The
 verifier container is limited to 512 processes/threads; each submission process
@@ -163,9 +163,12 @@ entrypoints and all supporting code/resources under `/app/submission`:
 └── ...              # supporting implementation files and resources
 ```
 
-Only this directory transfers to the fresh verifier. Globally installed package
+Only this submission directory transfers to the fresh verifier. It is read-only
+to the submitted commands. Globally installed package
 changes, files elsewhere, running services and a development index do not
 transfer. The verifier builds a fresh index using the submitted entrypoint.
+The framework also transfers `/logs/agent/trajectory.json` as protected,
+verifier-only evidence for the compliance audit.
 
 ## Verification
 
@@ -177,7 +180,8 @@ the same complete acceptable plan; otherwise it earns `0`. Covering the tables
 of one plan and the joins of a different plan does not suffice.
 
 ```text
-reward = sum(query scores) / number of evaluation queries
+coverage = sum(query scores) / number of evaluation queries
+reward = coverage if the required compliance audit is healthy and accepts, else 0
 ```
 
 All hidden queries remain in the denominator, including failed queries. There
@@ -191,6 +195,15 @@ verifier may restart a failed search process for later queries.
 
 Table-only completeness and the warm p95 latency of completed responses are
 diagnostics, without additional reward terms.
+
+Run one independent trajectory/source compliance audit after primary evaluation.
+A confirmed violation sets the final reward to zero. Missing trajectories,
+unavailable or malformed audit results, and trusted verifier failures produce
+zero reward with an invalid-measurement status and a nonzero verifier exit;
+they are not measured retrieval failures. The grader has a 3,000-second supervisor
+window. The audit session has 1,200 seconds inside a 1,500-second wrapper; the
+whole verifier retains its 4,800-second limit. Judge credentials are verifier-only
+and are never forwarded to build or search processes.
 
 ## Hidden Test Overview
 
@@ -207,7 +220,7 @@ visible, while table and group identifiers are opaque.
 
 ## Environment and Available Resources
 
-The task provides 16 CPU cores and 32 GiB RAM, with no GPU. The implementation
+The task provides 16 CPU cores, 32 GiB RAM and 100 GiB storage, with no GPU. The implementation
 budget is two hours. No pretrained weights are bundled, and training is not
 required. Choose the indexing and search method within these resources.
 

@@ -29,12 +29,12 @@ description = "Required by the verifier's answerer gateway, including for local 
 guidance = """
 Allow the answerer's four generation models: qwen/qwen3.6-35b-a3b, qwen/qwen3.5-35b-a3b,
 qwen/qwen3.5-9b and qwen/qwen3-30b-a3b-instruct-2507. The task gateway restricts submitted requests to these models.
-JINA_API_KEY is optional for embedding/reranking. The answer and trajectory judges use VERIFIER_OPENAI_API_KEY separately.
+JINA_API_KEY is optional for embedding/reranking. Evidence and answer grading use ANSWER_JUDGE_API_KEY; trajectory auditing uses VERIFIER_OPENAI_API_KEY.
 """
 
 [metadata.configuration.ANSWER_JUDGE_MODEL_NAME]
-description = "OpenRouter Chat Completions model for evidence and answer grading."
-guidance = "The verifier fixes the endpoint to https://openrouter.ai/api/v1 and uses VERIFIER_OPENAI_API_KEY; that key must allow this model as well as the trajectory judge."
+description = "Chat Completions model for evidence and answer grading."
+guidance = "Configure ANSWER_JUDGE_MODEL_NAME, ANSWER_JUDGE_BASE_URL and ANSWER_JUDGE_API_KEY in the repository .env; these are passed only to the verifier."
 
 [agent]
 timeout_sec = 7200
@@ -77,7 +77,7 @@ JINA_API_KEY = "${JINA_API_KEY:-}"
 OPENROUTER_API_KEY = "${OPENROUTER_API_KEY:-}"
 JINA_API_KEY = "${JINA_API_KEY:-}"
 ANSWER_JUDGE_MODEL_NAME = "${ANSWER_JUDGE_MODEL_NAME:-}"
-ANSWER_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
-ANSWER_JUDGE_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"
+ANSWER_JUDGE_BASE_URL = "${ANSWER_JUDGE_BASE_URL:-}"
+ANSWER_JUDGE_API_KEY = "${ANSWER_JUDGE_API_KEY:-}"
 OPENAI_BASE_URL = "${VERIFIER_OPENAI_BASE_URL:-}"
 OPENAI_API_KEY = "${VERIFIER_OPENAI_API_KEY:-}"

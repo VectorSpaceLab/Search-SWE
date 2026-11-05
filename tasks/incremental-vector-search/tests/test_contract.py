@@ -1,5 +1,4 @@
 """Small synthetic fixtures exercise contracts, not full-data feasibility."""
-import importlib.util
 import hashlib
 import json
 import os
@@ -38,67 +37,47 @@ class CalibrationTests(unittest.TestCase):
 
     def test_runtime_limits_and_invalid_values(self):
         import grader
-        from kernel import kernel_signature
+        from copy import deepcopy
         with tempfile.TemporaryDirectory() as directory:
-            public = Path(directory) / "public"
-            public.mkdir()
-            reference = Path(directory) / "reference"
-            reference.mkdir()
-            for name in ("exact_search.py", "baseline_search.py"):
-                (reference / name).write_bytes((TASK / "environment" / name).read_bytes())
-            calibration = {"timing_policy": "same-environment-exact-reference",
+            truth = Path(directory)
+            inputs = {"initial": "a", "inserts": "b", "queries": "c"}
+            for dim in (1536, 3072):
+                (truth / str(dim)).mkdir()
+                (truth / str(dim) / "truth-manifest.json").write_text(json.dumps({"input_sha256": inputs}))
+            calibration = {"timing_policy": "platform-calibrated-five-replay-median",
                            "exact_scan_fraction": grader.EXACT_SCAN_FRACTION,
                            "minimum_baseline_missing_neighbors": grader.MIN_BASELINE_MISSES,
                            "scoring_policy": "log-missed-neighbor-gain-over-public-reference",
                            "total_requested_neighbors": 25_000_000,
-                           "cpu_affinity": list(range(16)), "runtime_signature": kernel_signature(),
-                           "exact_reference_sha256": hashlib.sha256((reference / "exact_search.py").read_bytes()).hexdigest(),
-                           "baseline": {"public_sha256": hashlib.sha256((reference / "baseline_search.py").read_bytes()).hexdigest()},
                            "datasets": {str(d): {"build_seconds": 60, "insert_seconds": 10,
+                             "input_sha256": inputs,
                              "baseline_micro_recall": .8,
                              "baseline_missing_neighbors": 5_000_000,
                              "full_scan_seconds": [[20] * 5 for _ in range(10)]}
                              for d in (1536, 3072)}}
-            def load():
-                with patch.object(grader, "LIMITS", calibration):
-                    return grader.load_limits()
-            with patch.object(grader, "PUBLIC", public), patch.object(
-                    grader.os, "sched_getaffinity", return_value=set(range(16))):
-                self.assertEqual(load(), calibration)
-                for invalid_fraction in (None, True, 0, .05, .99, float("nan")):
-                    with self.subTest(fraction=invalid_fraction):
-                        calibration["exact_scan_fraction"] = invalid_fraction
-                        with self.assertRaisesRegex(RuntimeError, "Frozen query fraction"):
-                            load()
+            with patch.object(grader, "load_runtime_limits", return_value=calibration), \
+                 patch.object(grader, "input_hashes", return_value=inputs), \
+                 patch.object(grader, "TRUTH", truth), \
+                 patch.object(grader.os, "sched_getaffinity", return_value=set(range(16))):
+                self.assertEqual(grader.load_limits(), calibration)
+                for fraction in (None, True, 0, .05, .99, float("nan")):
+                    calibration["exact_scan_fraction"] = fraction
+                    with self.assertRaisesRegex(RuntimeError, "Frozen query fraction"):
+                        grader.load_limits()
                 calibration["exact_scan_fraction"] = grader.EXACT_SCAN_FRACTION
-                strong = calibration["datasets"]["1536"]
-                original_anchor = strong.copy()
-                strong.update(baseline_missing_neighbors=grader.MIN_BASELINE_MISSES,
-                              baseline_micro_recall=1 - grader.MIN_BASELINE_MISSES / 25_000_000)
-                self.assertEqual(load(), calibration)
-                strong.update(baseline_missing_neighbors=grader.MIN_BASELINE_MISSES - 1,
-                              baseline_micro_recall=1 - (grader.MIN_BASELINE_MISSES - 1) / 25_000_000)
-                with self.assertRaisesRegex(RuntimeError, f"at least {grader.MIN_BASELINE_MISSES} neighbors"):
-                    load()
-                strong.update(original_anchor)
-                (reference / "baseline_search.py").write_text("changed after calibration")
-                with self.assertRaisesRegex(RuntimeError, "Public reference changed"):
-                    load()
-                (reference / "baseline_search.py").write_bytes((TASK / "environment/baseline_search.py").read_bytes())
-                calibration["cpu_affinity"] = [0] * 16
-                with self.assertRaisesRegex(RuntimeError, "16 allocated logical CPUs"):
-                    load()
-                calibration["cpu_affinity"] = list(range(1, 17))
-                with self.assertRaisesRegex(RuntimeError, "CPUs are unavailable"):
-                    load()
-                calibration["cpu_affinity"] = list(range(16))
-                calibration["runtime_signature"] = {}
-                with self.assertRaisesRegex(RuntimeError, "different Faiss runtime"):
-                    load()
-                calibration["runtime_signature"] = kernel_signature()
-                calibration["datasets"]["1536"]["build_seconds"] = float("nan")
+                original = deepcopy(calibration["datasets"]["1536"])
+                current = calibration["datasets"]["1536"]
+                current.update(baseline_missing_neighbors=99, baseline_micro_recall=1-99/25_000_000)
+                with self.assertRaisesRegex(RuntimeError, "at least 100"):
+                    grader.load_limits()
+                current.update(original)
+                current["build_seconds"] = float("nan")
                 with self.assertRaisesRegex(RuntimeError, "preparation budgets"):
-                    load()
+                    grader.load_limits()
+                current.update(original)
+                current["input_sha256"] = {}
+                with self.assertRaisesRegex(RuntimeError, "Prepared data changed"):
+                    grader.load_limits()
 
 
 class MetricsTests(unittest.TestCase):
@@ -167,19 +146,22 @@ class MetricsTests(unittest.TestCase):
 
     def test_failed_audit_is_not_valid_zero_quality(self):
         evaluation = {"valid": True, "raw_reward": .73}
-        for status, present, audit in [("1", True, {"integrity_judge": 1}),
-                                        ("0", False, {"integrity_judge": 1}), ("0", True, {}),
-                                        ("0", True, {"integrity_judge": True}),
-                                        ("0", True, {"integrity": 1})]:
+        for status, present, audit in [("1", True, {"jailbreak_judge": 1}),
+                                        ("0", False, {"jailbreak_judge": 1}), ("0", True, {}),
+                                        ("0", True, {"jailbreak_judge": True}),
+                                        ("0", True, {"integrity": 1}),
+                                        ("0", True, {"integrity_judge": 1})]:
             result, healthy = finalize(evaluation, audit, status, present)
             self.assertEqual(result["reward"], 0)
             self.assertFalse(healthy)
-        result, healthy = finalize(evaluation, {"integrity_judge": 0.0}, "0", True)
+        result, healthy = finalize(evaluation, {"jailbreak_judge": 0.0}, "0", True)
         self.assertTrue(healthy)
         self.assertEqual(result["reward"], 0)
-        result, healthy = finalize(evaluation, {"integrity_judge": 1.0}, "0", True)
+        self.assertEqual(result["jailbreak_judge"], 0.0)
+        result, healthy = finalize(evaluation, {"jailbreak_judge": 1.0}, "0", True)
         self.assertTrue(healthy)
         self.assertEqual(result["reward"], .73)
+        self.assertEqual(result["jailbreak_judge"], 1.0)
 
 
 class ProtocolTests(unittest.TestCase):
@@ -247,16 +229,6 @@ class ProtocolTests(unittest.TestCase):
             np.testing.assert_allclose(response["distances"], np.sqrt(squared[response["ids"]]), rtol=2e-6, atol=1e-6)
 
 
-class SplitTests(unittest.TestCase):
-    def test_no_overlap_and_all_rows_covered(self):
-        spec = importlib.util.spec_from_file_location("prepare_data", TASK / "prepare_data.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        parts = module.split_rows(120, 100, 2, 5)
-        self.assertEqual([len(p) for p in parts], [100, 10, 10])
-        self.assertEqual(len(set(np.concatenate(parts).tolist())), 120)
-        for first, second in zip(parts, module.split_rows(120, 100, 2, 5)):
-            np.testing.assert_array_equal(first, second)
 
 
 if __name__ == "__main__":

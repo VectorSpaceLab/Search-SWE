@@ -9,7 +9,7 @@
 | Authors | Bingyu |
 | Primary metric | Retrieval runtime after a macro nDCG@10 quality gate |
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 3900 s |
+| Agent / verifier time limits | 21600 s / 4500 s |
 | Dataset | BEIR SciFact, NFCorpus and FiQA; author-released LightRetriever examples |
 | Hidden queries | 1271 |
 
@@ -51,7 +51,7 @@ The base model is the original
 [Meta Llama-3.2-1B](https://huggingface.co/meta-llama/Llama-3.2-1B/tree/4e20de362430cd3b72f300e6b0f18e50e7166e08),
 not the Instruct model or the LightRetriever adapter. Its exact official bytes
 were acquired from the ModelScope LLM-Research mirror and checked against the
-Meta Git/LFS objects. See `THIRD_PARTY_NOTICES.md` and retained model license files.
+Meta Git/LFS objects. See [third-party notices](VALIDATION.md#third-party-materials) and retained model license files.
 
 Source archives:
 [SciFact](https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip),
@@ -75,7 +75,7 @@ The objective covers complete query processing, including representation and sea
 
 ### Runtime and scoring
 
-One NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM, 100 GiB storage, six hours of
+One GPU, 16 CPU cores, 32 GiB RAM, 100 GiB storage, six hours of
 development, and no task network/API access. The shared GPU image supplies
 Python 3.12 and CUDA 13.0. Index construction has 1,200 seconds; each fresh
 service instance has 120 seconds to load. A warm-up uses 24 queries from the
@@ -99,7 +99,7 @@ take the equal mean across the three collections. Gain is the original qrel
 grade, matching `pytrec_eval` / BEIR `ndcg_cut_10`, rather than exponential or
 binary conversion. The ideal ranking uses all positive grades up to rank ten.
 
-Let `Q` be the minimum quality across the three runs and `T` their median
+The index is built once. Let `Q` be the minimum quality across the five fresh service runs and `T` their median
 timed duration. If `Q < 0.45`, reward is zero. Otherwise the raw retrieval reward is:
 
 ```text
@@ -133,9 +133,9 @@ alone is not an integrity violation.
 The judge uses the repository's pinned RewardKit 0.2.0 / DeepSeek V4.1 Flash
 wrapper. Configure `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` and
 `VERIFIER_OPENAI_API_KEY` locally through the launcher's ignored environment
-configuration. The overall verifier budget is 3,900 seconds to include the
-audit; the existing 2,300-second retrieval supervisor and all candidate limits
-are unchanged.
+configuration. The overall verifier budget is 4,500 seconds, including a
+2,900-second retrieval supervisor, the audit, finalization and cleanup. The
+candidate build, loading, warm-up and query deadlines remain unchanged.
 
 ### Validation and release state
 
@@ -146,9 +146,8 @@ quality **0.454410**, median **0.860873 seconds**
 and reward **0.000000**. See `VALIDATION.md` for the evidence and limits.
 The later v0.4.0 verifier run completed its live integrity audit. Macro nDCG@10
 was 0.4303102260205993, below the 0.45 gate, and median query-batch time was
-0.41057249531149864 seconds. See [RUN_RESULTS.md](RUN_RESULTS.md) for that
-measurement and its remaining validation limits, and [VALIDATION.md](VALIDATION.md)
-for the separate local checks.
+0.41057249531149864 seconds. See [VALIDATION.md](VALIDATION.md#run-evidence-reconciled-on-2026-10-23)
+for that measurement, its remaining validation limits and the separate local checks.
 
 The two derived data assets are published in
 [`search-swe/Search-SWE`](https://huggingface.co/datasets/search-swe/Search-SWE/tree/ff16485accd6d258610c158fce45e36b50a47c3f/tasks/lightweight-query-retrieval)
@@ -159,7 +158,7 @@ access to Meta's gated model must also be configured.
 Authoring scripts, baselines and trained witness checkpoints are not included
 in the agent mounts.
 
-See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
+See [VALIDATION.md](VALIDATION.md) for recorded run outcomes, judge health, validation evidence and third-party notices.
 
 ### Running the task
 

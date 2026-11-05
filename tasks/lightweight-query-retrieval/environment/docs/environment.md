@@ -6,4 +6,4 @@ The task Python interpreter and its installed packages are available at `/opt/co
 
 The image also includes the CUDA 13.0 toolkit and runtime, JDK 21, Node.js 24.16.0 with npm 11.13.0, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
 
-The sanitized verifier child environment preserves the fixed Java runtime at `/opt/java/openjdk`. It supplies the fixed public string `search-swe-offline-no-credentials` as `OPENAI_API_KEY` solely because Pyserini imports an unused OpenAI encoder client while loading offline Lucene search. This string grants no access; real API credentials are never inherited, and submission Internet sockets remain blocked.
+Java is available at `/opt/java/openjdk`. During verification, the placeholder `OPENAI_API_KEY` supports offline libraries and grants no API access.

@@ -108,7 +108,7 @@ trap cleanup_submission_processes EXIT
 current_phase=primary_evaluation
 SEARCH_SWE_RESULTS_DIR="$RESULTS_DIR" \
     SEARCH_SWE_EXECUTION_ERROR="$execution_error" \
-    /usr/bin/timeout --signal=TERM --kill-after=30s 3700s \
+    /usr/bin/timeout --signal=TERM --kill-after=30s 18600s \
     /opt/conda/bin/python /tests/grader.py
 grader_status=$?
 
@@ -144,7 +144,10 @@ SEARCH_SWE_JUDGE_STATUS="$judge_status" \
 finalizer_status=$?
 
 if (( finalizer_status != 0 )); then
-    write_zero_reward finalizer "reward finalizer failed"
+    # Preserve the finalizer's consistency diagnostics while failing closed.
+    printf '0\n' > "$REWARD_FILE"
+    /usr/bin/jq -n '{ndcg_at_10: 0.0, normalized_ndcg: 0.0, jailbreak_judge: 0.0, reward: 0.0}' > "$REWARD_JSON"
+    echo "reward finalizer failed with status $finalizer_status" > "$RESULTS_DIR/finalizer.error.log"
     exit 1
 fi
 if (( grader_status != 0 || judge_status != 0 )); then

@@ -66,15 +66,16 @@ class CredentialSetupTests(unittest.TestCase):
         self.assertEqual(gpu.required_variables(), {"VERIFIER_OPENAI_API_KEY", "VERIFIER_OPENAI_BASE_URL"})
         self.assertEqual(gpu.optional_variables(), set())
 
-    def test_required_answerer_key_and_fixed_judge_mappings(self):
+    def test_required_answerer_key_and_configurable_judge_mappings(self):
         task = self.catalog["icsi-meeting-memory"]
         self.assertEqual(task.required_variables(), {"OPENROUTER_API_KEY", "ANSWER_JUDGE_MODEL_NAME",
+                                                    "ANSWER_JUDGE_API_KEY", "ANSWER_JUDGE_BASE_URL",
                                                     "VERIFIER_OPENAI_API_KEY", "VERIFIER_OPENAI_BASE_URL"})
         self.assertEqual(task.optional_variables(), {"JINA_API_KEY"})
         task = self.catalog["long-pdf-evidence"]
         self.assertIn("ANSWER_JUDGE_API_KEY", task.required_variables())
-        self.assertNotIn("ANSWER_JUDGE_MODEL_NAME", task.required_variables())
-        self.assertNotIn("ANSWER_JUDGE_BASE_URL", task.required_variables())
+        self.assertIn("ANSWER_JUDGE_MODEL_NAME", task.required_variables())
+        self.assertIn("ANSWER_JUDGE_BASE_URL", task.required_variables())
 
     def test_existing_agent_and_task_credentials_need_no_questions(self):
         self.env.update(OPENROUTER_API_KEY="fixture-submission-private", JINA_API_KEY="fixture-jina-private")
@@ -135,7 +136,8 @@ class CredentialSetupTests(unittest.TestCase):
         self.assertEqual(self.env["VERIFIER_OPENAI_API_KEY"], "fixture-judge-private")
 
     def test_new_required_task_service_is_not_in_the_optional_menu(self):
-        self.env.update(ANSWER_JUDGE_MODEL_NAME="vendor/judge", JINA_API_KEY="fixture-jina-private")
+        self.env.update(ANSWER_JUDGE_MODEL_NAME="vendor/judge", ANSWER_JUDGE_API_KEY="fixture-answer-judge-private",
+                        ANSWER_JUDGE_BASE_URL="https://openrouter.ai/api/v1", JINA_API_KEY="fixture-jina-private")
         with patch.object(wizard, "ask", return_value="fixture-answerer-private") as ask, \
                 patch.object(wizard.questionary, "password") as password, \
                 patch.object(wizard.questionary, "checkbox") as checkbox, redirect_stdout(io.StringIO()):
@@ -173,7 +175,8 @@ class CredentialSetupTests(unittest.TestCase):
             self.assertFalse(path.exists())
 
     def test_native_preflight_requires_answerer_but_not_optional_rewriting_key(self):
-        env = {**self.env, "PATH": os.environ["PATH"], "ANSWER_JUDGE_MODEL_NAME": "vendor/judge"}
+        env = {**self.env, "PATH": os.environ["PATH"], "ANSWER_JUDGE_MODEL_NAME": "vendor/judge",
+               "ANSWER_JUDGE_API_KEY": "fixture-answer-judge-private", "ANSWER_JUDGE_BASE_URL": "https://openrouter.ai/api/v1"}
         command = [sys.executable, str(ROOT / "scripts/evaluation/run_task.py"), "--no-env-file", "--agent", "codex",
                    "--openrouter", "--model", "openai/gpt-6-luna", "--check"]
         missing = subprocess.run([*command, "--task", "icsi-meeting-memory"], env=env, cwd=ROOT, capture_output=True, text=True)

@@ -49,7 +49,7 @@ done
 
 cleanup
 grader_status=0
-/usr/bin/timeout --signal=TERM --kill-after=5s 2300s \
+/usr/bin/timeout --signal=TERM --kill-after=5s 2900s \
     /opt/conda/bin/python /tests/grader.py || grader_status=$?
 cleanup
 

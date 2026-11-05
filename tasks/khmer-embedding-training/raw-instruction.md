@@ -8,7 +8,7 @@ Build an embedding model and a search system for finding English documents with 
 
 ### Resource limits
 
-- You have 6 hours, one A100 with 40 GiB GPU memory, 8 CPU cores, 32 GiB RAM and 100 GiB working storage.
+- You have 6 hours, one GPU, 8 CPU cores, 32 GiB RAM and 100 GiB working storage.
 - Network access is unavailable.
 - Use only the supplied local resources.
 - Treat `/task` as read-only and put your work under `/app`.
@@ -63,7 +63,7 @@ The abbreviated example illustrates the fields and ranking order. Do not write p
 
 ## Available Validation Data
 
-The collection at `/task/data/corpus.parquet` has `_id`, `title` and `text` columns. Three examples are available in `/task/data/examples.jsonl`, with `id`, `question` and `answers` fields; the questions are in Khmer and the answers are in English. No other labeled training data is supplied. The embedding backbone is at `/task/models/multilingual-e5-large`, and an optional local generative model is at `/task/models/Qwen3.5-9B`.
+The collection at `/task/data/corpus.parquet` has `_id`, `title` and `text` columns. Three Khmer validation questions are available in `/task/data/validation/queries.jsonl`, with `id` and `question` fields; `/task/data/validation/answers.jsonl` contains matching `id` values and English `answers`. No other labeled training data is supplied. The embedding backbone is at `/task/models/multilingual-e5-large`, and an optional local generative model is at `/task/models/Qwen3.5-9B`.
 
 ## Expected Artifacts
 
@@ -89,9 +89,11 @@ After development, Harbor transfers the declared artifacts to a separate verifie
 1. **Task and resource compliance.** The submission must use the supplied inputs and permitted resources, follow stage isolation, and avoid hidden labels or hard-coded evaluation answers.
 2. **Executable behavior.** The required commands must follow the interfaces, filesystem permissions and time limits above and support the specified repeated calls.
 3. **Output validity.** Results must satisfy the task-specific schema, identifiers, bounds and ordering rules. An invalid checkpoint, a failed or timed-out build or retrieval command, or invalid retrieval output gives zero for the entire submission.
-4. **Search quality.** Raw quality is Recall@100: a query succeeds when at least one of its first 100 retrieved documents contains an accepted answer under the answer-token matching rule. Recall@20 is reported separately.
+4. **Search quality.** Raw quality is Recall@100 over 1,000 hidden questions: a query succeeds when at least one of its first 100 retrieved documents contains an accepted answer as a contiguous, case-insensitive token sequence after Unicode NFD normalization. Recall@20 is reported separately.
 
 The final reward applies the fixed task-specific piecewise score mapping documented in `README.md` to raw quality. Raw quality is also reported separately. A confirmed trajectory-audit violation sets the entire reward to zero; an incomplete audit or a failed trusted judge is an infrastructure failure.
+
+The primary evaluator has 48,000 seconds, covering checkpoint loading (300 seconds), building (43,200 seconds), two retrieval calls (1,800 seconds each), scoring and cleanup. A single compliance audit has a 1,200-second supervisor window and finalization has 30 seconds. The whole verifier has 51,000 seconds including preparation, audit snapshotting and termination overhead. The final gate requires a successful primary evaluation, a nonempty trajectory and a healthy, consistent binary audit decision with its detailed judge response.
 
 ## Hidden Test Overview
 

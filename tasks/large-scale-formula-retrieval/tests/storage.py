@@ -42,7 +42,7 @@ class PreparedVolume:
         marker = Path('/work/.storage.json')
         config = json.loads(marker.read_text())
         self.size = config['image_capacity_bytes']
-        fixed = file_bytes('/task/data/public')
+        fixed = file_bytes('/task/data')
         if config['probe'] or config['public_bytes'] != fixed:
             raise RuntimeError('Storage preparation does not match current public inputs')
         if self.size != (LIMIT - fixed - LOG_RESERVE - SERVING_LIMIT) // 4096 * 4096:
@@ -73,6 +73,19 @@ class PreparedVolume:
 
 def evaluation_volume():
     return PreparedVolume()
+
+
+def reset_serving_runtime(root=Path('/serve/runtime')):
+    """Discard only writable serving state after its process family has exited."""
+    if root.is_symlink() or not root.is_dir():
+        raise RuntimeError('Invalid serving runtime directory')
+    for path in root.iterdir():
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+    os.chown(root, 10001, 10001)
+    root.chmod(0o700)
 
 
 def prepare_serving_volume():

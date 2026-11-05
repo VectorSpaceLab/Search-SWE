@@ -22,8 +22,7 @@ PACKAGES = [
 ]
 
 
-def prepare_tools(task):
-    cache = task / 'data/runtime-tools'
+def prepare_tools(cache):
     cache.mkdir(parents=True, exist_ok=True)
     record = cache / 'verified-runtime.json'
     package_hashes = [expected for _, _, expected in PACKAGES]
@@ -45,8 +44,7 @@ def prepare_tools(task):
         if hashlib.sha256(archive.read_bytes()).hexdigest() != expected:
             raise RuntimeError(f'Runtime package integrity failure: {archive}')
         subprocess.run(['dpkg-deb', '-x', str(archive), str(cache)], check=True)
-    # The repository's package validator also inspects ignored data directories.
-    # Materialize package-local library links as ordinary files.
+    # Keep cached runtime libraries self-contained, outside the public task data.
     for path in cache.rglob('*'):
         if path.is_symlink():
             source = path.resolve()
@@ -96,9 +94,9 @@ def main():
         raise RuntimeError('Run storage already exists; use a fresh run ID')
     if not Path('/dev/fuse').exists() or not shutil.which('mkfs.ext4'):
         raise RuntimeError('Linux host requires /dev/fuse and mkfs.ext4')
-    cache = prepare_tools(task)
+    cache = prepare_tools(runtime_root / '.tools')
     fixed = sum(max(p.stat().st_size, p.stat().st_blocks * 512)
-                for p in (task / 'data/public').rglob('*') if p.is_file())
+                for p in (task / 'data').rglob('*') if p.is_file())
     serving_size = 40 << 20
     size = ((64 << 30) - fixed - (512 << 20) - serving_size) // 4096 * 4096
     if args.probe_mib:

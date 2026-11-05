@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 import grader as g
@@ -66,7 +67,45 @@ class SentenceContractTests(unittest.TestCase):
         report=g.evaluate(self.queries,self.refs,{'q1':['original'],'q2':['ignored']},
                           {'q2':'timeout'},None,judge)
         self.assertTrue(report['valid']);self.assertEqual(report['primary_metric']['value'],0.5)
-        self.assertEqual(len(calls),1)
+        self.assertEqual(len(calls),3)
+
+    def test_three_judgments_use_the_same_evidence_and_arithmetic_mean(self):
+        outcomes = {self.queries[0]['query']:iter([True,True,False]),
+                    self.queries[1]['query']:iter([False,False,True])}
+        predictions = {'q1':['first fixed evidence'],'q2':['second fixed evidence']}
+        calls=[]
+        lock=threading.Lock()
+        def judge(config,question,sentences,reference):
+            with lock:
+                calls.append((question,list(sentences),reference))
+                return {'supported':next(outcomes[question]),'reason':'mocked verdict'}
+        report=g.evaluate(self.queries,self.refs,predictions,{},None,judge)
+        self.assertTrue(report['valid'])
+        self.assertEqual(len(calls),6)
+        for q in self.queries:
+            expected=(q['query'],predictions[q['query_id']],self.refs[q['query_id']])
+            self.assertEqual(calls.count(expected),3)
+        rows=report['per_query_metrics']
+        self.assertEqual([r['support_fraction'] for r in rows],[2/3,1/3])
+        self.assertTrue(all(len(r['judge_rounds'])==3 for r in rows))
+        self.assertEqual(report['primary_metric']['value'],0.5)
+        self.assertEqual(report['score'],50)
+
+    def test_one_failed_judgment_invalidates_otherwise_passing_evidence(self):
+        outcomes=iter([True,None,True])
+        lock=threading.Lock()
+        def judge(*args):
+            with lock:
+                outcome=next(outcomes)
+            if outcome is None:
+                raise g.VerificationError('judge unavailable')
+            return {'supported':outcome,'reason':'supported'}
+        report=g.evaluate(self.queries[:1],self.refs,{'q1':['original']},{},None,judge)
+        self.assertFalse(report['valid'])
+        self.assertEqual(report['judge_error_count'],1)
+        self.assertEqual(report['primary_metric']['value'],0)
+        self.assertEqual(report['score'],0)
+        self.assertEqual(report['completed_judgments_accuracy_for_diagnosis_only'],2/3)
 
     def test_partial_semantic_support_receives_zero(self):
         report=g.evaluate(self.queries,self.refs,{'q1':['partial']},{},None,
@@ -82,7 +121,7 @@ class SentenceContractTests(unittest.TestCase):
     def test_judge_failure_is_invalid_measurement(self):
         def failing(*args):raise g.VerificationError('judge HTTP 429')
         report=g.evaluate(self.queries,self.refs,{'q1':['original']},{},None,failing)
-        self.assertFalse(report['valid']);self.assertEqual(report['judge_error_count'],1)
+        self.assertFalse(report['valid']);self.assertEqual(report['judge_error_count'],3)
         self.assertEqual(report['primary_metric']['value'],0)
 
     def test_judge_schema_requires_actual_boolean(self):
@@ -94,10 +133,12 @@ class SentenceContractTests(unittest.TestCase):
     def test_judge_credentials_not_in_submission_environment(self):
         with patch.dict(runner.os.environ,{'ANSWER_JUDGE_API_KEY':'private',
                                            'ANSWER_JUDGE_BASE_URL':'private-url',
+                                           'ANSWER_JUDGE_MODEL_NAME':'private-model',
                                            'OPENAI_API_KEY':'private-audit'}):
             env=runner.submission_env()
             self.assertNotIn('ANSWER_JUDGE_API_KEY',env)
             self.assertNotIn('ANSWER_JUDGE_BASE_URL',env)
+            self.assertNotIn('ANSWER_JUDGE_MODEL_NAME',env)
             self.assertNotIn('OPENAI_API_KEY',env)
 
 

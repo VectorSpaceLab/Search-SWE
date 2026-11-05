@@ -13,7 +13,7 @@ During development and the timed final build, embedding, reranking and generativ
 
 ### Build interface
 
-The verifier invokes `/app/submission/build.sh --data-dir /task/data/public --index-dir /work/index`
+The verifier invokes `/app/submission/build.sh --data-dir /task/data --index-dir /work/index`
 in a fresh environment. It must exit zero within 3600 seconds, including preprocessing, optional
 training, compilation, full-corpus encoding, index construction, API waiting/retries and subprocess work. The index
 directory starts empty. `/app/submission` and inputs are read-only. Persistent output goes into the
@@ -33,7 +33,7 @@ zero.
 Verifier launches `/app/submission/serve.sh` as UID 10001. Keep it alive; read stdin JSONL, write
 one flushed JSON line per request to stdout, diagnostics to stderr. Each response at most 1 MiB, no
 unsolicited output. First request:
-`{"op":"load","data_dir":"/task/data/public","index_dir":"/serve/index","work_dir":"/serve/runtime"}`.
+`{"op":"load","data_dir":"/task/data","index_dir":"/serve/index","work_dir":"/serve/runtime"}`.
 Reply exactly `{"ok":true}` within 120 seconds, including process startup. Load already-built
 data/models; do not perform deferred corpus preprocessing, training, encoding or index construction
 during load/warmup. Three public development queries warm up the service within 30 seconds total.
@@ -46,12 +46,12 @@ Each subsequent request is `{"op":"query","query_id":"opaque-string","latex":"x^
 ID and 0–1000 items. Scores must be finite JSON numbers, excluding booleans; formula IDs must be
 unsigned decimal strings. The evaluator sorts by decreasing score, ties by output order. Duplicate
 instance/visual IDs receive no extra credit; unknown or excluded instance IDs are discarded.
-Malformed structure/fields/nonfinite scores/wrong ID/more than 1000 results invalidates that query.
+Malformed structure/fields/nonfinite scores/wrong ID/more than 1000 results invalidates that attempt.
 Empty results are valid and earn zero.
 
 ## Available Validation Data
 
-`/task/data/public/formulas.tsv` is UTF-8 TSV with CSV quoting and header `formula_id, post_id,
+`/task/data/formulas.tsv` is UTF-8 TSV with CSV quoting and header `formula_id, post_id,
 thread_id, type, visual_id, latex`. All IDs are decimal integers; output instance IDs as decimal
 strings. Rows retain original official instance and v3 visual IDs. Thread IDs follow the question ID
 or answer ParentId in Posts v1.3, correcting stale TSV thread references. Retain all question/answer
@@ -59,14 +59,14 @@ instances from 2010–2018, including question titles; exclude comments and offi
 containing `d`. `type` is `question`, `answer` or `title`. Inputs are already extracted and
 converted.
 
-`/task/data/public/posts.sqlite` has table `posts(post_id INTEGER PRIMARY KEY, thread_id INTEGER,
+`/task/data/posts.sqlite` has table `posts(post_id INTEGER PRIMARY KEY, thread_id INTEGER,
 type TEXT, title TEXT, body TEXT, owner_user_id TEXT, creation_date TEXT)`. Title/body contain
-original annotated HTML; read candidates' context freely. `/task/data/public/instance_visual.npy` is
+original annotated HTML; read candidates' context freely. `/task/data/instance_visual.npy` is
 a little-endian int32 array indexed by formula ID, with -1 for excluded/unknown IDs.
-`/task/data/public/corpus.json` reports collection counts. All supplied files are read-only.
+`/task/data/corpus.json` reports collection counts. All supplied files are read-only.
 
-`/task/data/public/dev/queries.jsonl` has five selected official assessed 2021 queries, each with
-string `query_id` and string `latex`; `dev/qrels.tsv` has the complete official 2021 judgments for
+`/task/data/validation/queries.jsonl` has five selected official assessed 2021 queries, each with
+string `query_id` and string `latex`; `validation/qrels.tsv` has the complete official 2021 judgments for
 those five queries mapped to v3 visual IDs in TREC `query_id 0 visual_id relevance` format. Final
 evaluation uses all 76 official assessed 2022 queries and their complete official qrels, isolated at
 runtime. Query titles/body are never provided. Neither the remaining historical 2021 queries/labels
@@ -74,7 +74,7 @@ nor the public historical test files are authorized inputs.
 
 Use `/opt/conda/bin/python /task/tools/check_submission.py --submission /app/submission --index-dir
 /app/dev-index` for a public build/protocol/scoring check. This uses only the five public queries
-and reports timing; only the isolated verifier enforces all final resource and failure conditions.
+and reports five-pass median timing; only the isolated verifier enforces all final resource and failure conditions.
 `--skip-build` reuses an existing development index. No algorithmic starter is imposed.
 
 ## Expected Artifacts
@@ -91,7 +91,7 @@ set.
 
 ### Integrity review
 
-The coding trajectory is also transferred to the separate verifier and protected before submission execution. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. The verifier's judge has separate API credentials that are unavailable to submitted programs; only the documented submission API credentials are passed to the build process.
+The coding trajectory is also transferred to the separate verifier and protected before submission execution. A separate audit user has read-only access to the submission and a protected trajectory copy, with no access to hidden inputs or grading reports. An independent integrity judge reviews that trajectory and the submitted files for prohibited inputs, precomputed test answers, and attempts to bypass the task's resource, timing or grading rules. Legitimate indexes, model parameters and caches derived from allowed inputs within the permitted phases remain valid; low quality, a timeout or an ordinary implementation error alone is not an integrity violation. Final reward is the numerical score defined in this task only when this review succeeds and accepts the submission. A rejected review gives zero; a missing, failed, timed-out or malformed review also gives zero and is reported as an audit infrastructure failure. The verifier's judge has separate API credentials that are unavailable to submitted programs; only the documented submission API credentials are passed to the build process.
 
 ### Metrics and failure handling
 
@@ -108,14 +108,11 @@ Deterministic relevance metrics; final reward also requires a successful integri
 
 ### Timing and resource protocol
 
-Each query has 0.050 seconds (50 ms) end-to-end wall time at concurrency 1. Clock starts before
-query transmission and stops after response reception and suspension of all submission processes.
-Parsing/encoding, retrieval, context I/O, reranking, query-dependent cache calculations, output and
-subprocess work count. Worker family is suspended between phases and queries, preventing untimed
-work. Hidden queries are never present during build/load/warmup. Timeout/crash/protocol failure
-gives that query zero; the verifier terminates its process family and reloads the built index before
-the next query. Remaining unanswered queries also receive zero. Load/warmup failure gives the
-affected query zero; initial load/warmup failure leaves all queries unanswered.
+Build the index once, then evaluate five complete passes in the same frozen query order. Each pass starts a fresh service with an empty writable runtime directory, the same read-only index and the same three-query warmup. The operating-system file cache is not flushed. Each query attempt has 0.050 seconds (50 ms) end-to-end wall time at concurrency 1, from before transmission until the response is received and all submitted processes are suspended. Parsing, retrieval, context I/O, reranking, caches, output and subprocess work are included. Workers remain suspended between queries.
+
+For each query, order its five attempts by elapsed time, placing failed, invalid or timed-out attempts after successful ones and breaking equal-time ties by pass order. Score the response associated with the third attempt in this ordering; do not choose a response by relevance. At least three attempts must be valid and within 50 ms, otherwise the query receives zero. Keep all five attempts in the diagnostic report. The quality metric and the 76-query denominator are unchanged.
+
+After a query failure, terminate its process family, clear IPC and the writable runtime directory, and reload the index before the next query. A failed recovery load/warmup makes that attempt fail; failure of the initial load/warmup of any pass makes the entire task zero. Memory and total-storage violations remain whole-task failures. The primary wrapper has 66,000 seconds; the independent single audit has 1,200 seconds, finalization has 30 seconds, and the outer verifier has 67,800 seconds. Agent and candidate-stage deadlines are unchanged.
 
 2 assigned CPU cores; at most 2 simultaneous CPU execution threads across the process family. 4 GiB
 container memory including data, index, model, caches, runtime and descendants; swap disabled. 64

@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import ssl
@@ -36,6 +37,20 @@ class Downloads(unittest.TestCase):
 
     def restore(self, **kwargs):
         return assets.restore(self.task, self.output, kwargs.get("entry", self.entry), kwargs.get("modes", {}), self.args)
+
+    def test_hidden_data_restores_with_the_normal_manifest(self):
+        self.entry.update(path="tests/data/queries.npy", mode="0600")
+        (self.task / "assets.json").write_text(json.dumps({"schema_version": 1, "files": [self.entry]}))
+        manifest = assets.read_manifest(self.task)
+        self.assertEqual(self.restore(entry=manifest["files"][0]), "restored metadata")
+        target = self.output / "tests/data/queries.npy"
+        self.assertEqual(target.read_bytes(), self.content)
+        self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o600)
+        for invalid in ("tests/grader.py", "tests/data", "tests/data/../../grader.py"):
+            self.entry["path"] = invalid
+            (self.task / "assets.json").write_text(json.dumps({"schema_version": 1, "files": [self.entry]}))
+            with self.assertRaises(ValueError):
+                assets.read_manifest(self.task)
 
     def test_bundled_metadata_restored_and_repeated_run_skips_source(self):
         self.assertEqual(self.restore(), "restored metadata")

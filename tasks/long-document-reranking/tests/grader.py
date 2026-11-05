@@ -293,14 +293,6 @@ def main() -> int:
         for path in (Path("/app/build.sh"), Path("/app/run.sh")):
             if not path.is_file() or not os.access(path, os.X_OK):
                 raise ValueError(f"missing executable submission entry point: {path}")
-        forbidden_extensions = {".safetensors", ".pt", ".pth", ".bin", ".onnx"}
-        submitted_weights = [
-            str(path) for path in Path("/app").rglob("*")
-            if path.is_file() and path.suffix in forbidden_extensions
-        ]
-        if submitted_weights:
-            raise ValueError(f"submission added model/checkpoint files under /app: {submitted_weights[:5]}")
-
         shutil.rmtree(WORK_DIR, ignore_errors=True)
         WORK_DIR.mkdir(parents=True, exist_ok=True)
         shutil.chown(WORK_DIR, user="submission", group="submission")

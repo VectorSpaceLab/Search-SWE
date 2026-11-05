@@ -26,7 +26,7 @@ assert pathlib.Path(sys.modules['scoring_parameters'].__file__).resolve() == pat
                 "raise AssertionError('Untrusted working-directory module was imported')\n"
             )
             result = subprocess.run(
-                [sys.executable, "-I", "-c", probe, str(grade)],
+                [sys.executable, "-I", "-B", "-c", probe, str(grade)],
                 cwd=directory, env={**os.environ, "PYTHONPATH": directory},
                 capture_output=True, text=True, timeout=30,
             )

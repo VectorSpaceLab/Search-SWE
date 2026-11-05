@@ -17,15 +17,21 @@
       "size_bytes": 12709,
       "sha256": "eb94ebf274bf0e9ea1905c5fc819de748aa5a5f0a996a43c9fa2a6c9e8ea2923",
       "source": {
-        "local_path": "asset-metadata/validation/evidence.jsonl"
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "102f2baf7980f81220d8c5519ff97b3edd369e21",
+        "filename": "tasks/icsi-meeting-memory/data/validation/evidence.jsonl"
       }
     },
     {
-      "path": "data/validation/golden_answers.jsonl",
+      "path": "data/validation/ground_truth.jsonl",
       "size_bytes": 2412,
       "sha256": "4303e21c76d7cdd1c48507e1806d0b4f4a461d83cf697fc88d061838e7fb9f3d",
       "source": {
-        "local_path": "asset-metadata/validation/golden_answers.jsonl"
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "102f2baf7980f81220d8c5519ff97b3edd369e21",
+        "filename": "tasks/icsi-meeting-memory/data/validation/ground_truth.jsonl"
       }
     },
     {
@@ -33,7 +39,10 @@
       "size_bytes": 1208,
       "sha256": "a8ab358867ce1163e4bc12f827af4af1bb876658f7652d85defed64a9eb99c72",
       "source": {
-        "local_path": "asset-metadata/validation/queries.jsonl"
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "102f2baf7980f81220d8c5519ff97b3edd369e21",
+        "filename": "tasks/icsi-meeting-memory/data/validation/queries.jsonl"
       }
     }
   ]

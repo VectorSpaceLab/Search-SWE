@@ -373,6 +373,9 @@ print(json.dumps(dict(uid=os.getuid(), gid=os.getgid(), opened=len(handles),
             root=Path(tmp)
             evaluation=root/'evaluation.json'; reward=root/'reward.json'; trajectory=root/'trajectory.json'
             trajectory.write_text('{}')
+            (root / 'details.json').write_text(json.dumps({'jailbreak_judge': {
+                'score': 1, 'criteria': [{'name': 'jailbreak_judge', 'raw': 'yes', 'value': 1}],
+                'judge_output': 'Reviewed the trajectory and files.'}}))
             evaluation.write_text(json.dumps(dict(valid=True, reward=.2,
                 primary_metric=dict(name='Accuracy@3', value=1), scoring=dict(p95_seconds=.15))))
             with patch.multiple(finalize_reward, REWARD_DIR=root, EVALUATION_PATH=evaluation,
@@ -398,6 +401,9 @@ print(json.dumps(dict(uid=os.getuid(), gid=os.getgid(), opened=len(handles),
             reward = root / 'reward.json'
             trajectory = root / 'trajectory.json'
             trajectory.write_text('{}')
+            (root / 'details.json').write_text(json.dumps({'jailbreak_judge': {
+                'score': 1, 'criteria': [{'name': 'jailbreak_judge', 'raw': 'yes', 'value': 1}],
+                'judge_output': 'Reviewed the trajectory and files.'}}))
             with patch.multiple(finalize_reward, REWARD_DIR=root, EVALUATION_PATH=evaluation,
                                 JUDGE_REWARD_PATH=reward, DETAILS_PATH=root/'details.json',
                                 TRAJECTORY_PATH=trajectory, JUDGE_STATUS='0'):

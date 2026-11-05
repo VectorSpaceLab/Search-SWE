@@ -13,6 +13,13 @@ from isolation import isolate
 LANGUAGES = {"ar", "zh", "en", "fr", "hi", "it", "ja", "pt", "ru", "es"}
 
 
+def initialize_gpu(torch):
+    if torch.cuda.device_count() != 1 or not torch.cuda.is_available():
+        raise RuntimeError("Exactly one usable GPU is required")
+    torch.cuda.init()
+    return torch._C._cuda_synchronize
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--submission", required=True)
@@ -30,15 +37,9 @@ def main():
     # No submitted code/weights, hidden data, or service keys are loaded here.
     import torch
     if args.require_gpu:
-        if torch.cuda.device_count() != 1 or "A100" not in torch.cuda.get_device_name(0):
-            raise RuntimeError("Exactly one A100 GPU is required")
-        memory = torch.cuda.get_device_properties(0).total_memory
-        if not 39e9 < memory < 44e9:
-            raise RuntimeError("The A100 must have 40GB physical memory")
-        torch.cuda.init()
         # Keep the trusted C entrypoint before submitted imports can replace
         # Python attributes such as torch.cuda.synchronize.
-        synchronize = torch._C._cuda_synchronize
+        synchronize = initialize_gpu(torch)
     else:
         synchronize = lambda: None
     if args.isolate:

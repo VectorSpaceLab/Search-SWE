@@ -1,6 +1,7 @@
 FROM docker.io/hanhainebula/search-swe-base:cpu-py3.12-1.0.0
 
 ENV LITELLM_LOCAL_MODEL_COST_MAP=true
+ENV OMP_NUM_THREADS=16 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 RUN /opt/conda/bin/python -m pip install --no-cache-dir \
     --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
@@ -26,3 +27,6 @@ RUN chmod 700 /tests \
     && chmod 700 /tests/test.sh
 
 COPY runtime_limits.py /task/tools/runtime_limits.py
+
+ENTRYPOINT ["/opt/conda/bin/python", "/task/tools/runtime_limits.py"]
+CMD ["sleep", "infinity"]

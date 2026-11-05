@@ -12,10 +12,12 @@ def main():
                "/etc/localtime", "/proc/cpuinfo", "/proc/meminfo", "/sys/devices/system/cpu"]
     rules = [(p, READ | READ_DIR | EXECUTE) for p in runtime if Path(p).exists()]
     rules += [("/app/submission", READ | READ_DIR | EXECUTE),
-              ("/task/public", READ | READ_DIR), ("/work/events", READ | READ_DIR),
+              ("/task/data/corpus", READ | READ_DIR), ("/work/events", READ | READ_DIR),
               ("/work/state", ALL), ("/dev/null", READ | WRITE), ("/dev/urandom", READ)]
     if Path("/task/reference").exists():
         rules.append(("/task/reference", READ | READ_DIR))
+    if Path("/task/platform").exists():
+        rules.append(("/task/platform", READ | READ_DIR))
     os.setgroups([])
     os.setgid(10001)
     os.setuid(10001)

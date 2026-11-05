@@ -19,6 +19,8 @@ The original Math Stack Exchange posts are user content, with [CC BY-SA versions
 
 See `source-manifest.json` for original source sizes/hashes and `assets.json` for the fixed converted inputs and restoration sources.
 
+The 2026-11-05 layout revision restores the existing fixed corpus files directly under `data/` and the five public query/judgment files under `data/validation/`. Remote filenames and revision `3635ca4269c1a1122c2da50187d0db42f3f73006` are retained; all six asset sizes and SHA-256 hashes are unchanged. This revision neither creates new labels nor republishes source data. Runtime storage-tool caches are kept outside the task's public data directory.
+
 Posts v1.3 contains eight retained answer posts whose parent question is absent from that snapshot. Their own bodies and formula instances remain available; no parent content is invented and no additional corpus filtering is applied. This does not leave any 2022 official judged visual group without a valid instance.
 
 

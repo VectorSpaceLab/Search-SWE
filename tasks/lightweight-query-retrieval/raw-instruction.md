@@ -92,7 +92,7 @@ and all required runtime files under `/app`.
 Warm-up uses supplied example queries and has 60 seconds. Then all 1,271 hidden queries arrive in
 one batch, which must complete within 120 seconds. Timing includes receiving
 and processing queries, retrieval, ranking and returning the response. Build,
-model loading and warm-up are excluded. Use three fresh service instances with
+model loading and warm-up are excluded. Use five fresh service instances with
 fresh temporary storage; aggregate by median retrieval time.
 
 Quality is original graded nDCG@10, with relevance grades used directly as gains
@@ -116,7 +116,7 @@ available to the submitted system in the separate verifier.
 
 ## Environment and available resources
 
-The runtime provides one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and
+The runtime provides one GPU, 16 CPU cores, 32 GiB RAM and
 100 GiB storage. The base model is `/task/models/Llama-3.2-1B`.
 
 Read the following task-provided documents:

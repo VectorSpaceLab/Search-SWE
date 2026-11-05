@@ -1,10 +1,8 @@
 """Trusted event controller for the fixed incremental-search workload."""
 from __future__ import annotations
 
-import hashlib
 import json
-from copy import deepcopy
-from runtime_limits import LIMITS
+from runtime_limits import TIMING_REPEATS, load_runtime_limits, select_cpus
 import os
 from pathlib import Path
 import shutil
@@ -15,8 +13,8 @@ import time
 import numpy as np
 import faiss
 
-from metrics import KS, TOTAL_NEIGHBORS, dataset_score, recall, error_gain, missing_neighbors
-from kernel import kernel_signature, require_truth_kernel
+from metrics import KS, TOTAL_NEIGHBORS, dataset_score, recall, error_gain, missing_neighbors, aggregate_replays
+from kernel import input_hashes, require_truth_kernel
 from process import Process
 
 UID = 10001
@@ -24,7 +22,7 @@ GIB = 1024**3
 EXACT_SCAN_FRACTION = .10
 MIN_BASELINE_MISSES = 100
 ROOT = Path(__file__).resolve().parent
-PUBLIC, PRIVATE, WORK, LOG = map(Path, ["/task/public", "/private", "/work", "/logs/verifier"])
+PUBLIC, PRIVATE, TRUTH, WORK, LOG = map(Path, ["/task/data/corpus", "/tests/data", "/private", "/work", "/logs/verifier"])
 
 
 def submission_tasks():
@@ -107,8 +105,8 @@ def write_json(path, value):
 
 
 def load_limits():
-    calibration = deepcopy(LIMITS)
-    if calibration.get("timing_policy") != "same-environment-exact-reference":
+    calibration = load_runtime_limits()
+    if calibration.get("timing_policy") != "platform-calibrated-five-replay-median":
         raise RuntimeError("Exact-scan timings must be measured in the evaluation environment")
     fraction = calibration.get("exact_scan_fraction")
     if (type(fraction) not in (int, float) or not np.isfinite(fraction)
@@ -120,23 +118,17 @@ def load_limits():
         raise RuntimeError("Missing public-baseline recall gain policy")
     if calibration.get("total_requested_neighbors") != TOTAL_NEIGHBORS:
         raise RuntimeError("Invalid total requested-neighbor count")
-    if len(os.sched_getaffinity(0)) < 16:
-        raise RuntimeError("At least 16 allocated logical CPUs are required")
-    cpus = calibration.get("cpu_affinity")
-    if (not isinstance(cpus, list) or len(cpus) != 16 or
-            any(type(cpu) is not int or cpu < 0 for cpu in cpus) or len(set(cpus)) != 16):
-        raise RuntimeError("Calibration must identify its 16 allocated logical CPUs")
-    if set(cpus) != set(os.sched_getaffinity(0)):
-        raise RuntimeError("Calibrated CPUs are unavailable or allocation differs; use the calibrated cpuset in both phases")
-    if calibration.get("runtime_signature") != kernel_signature():
-        raise RuntimeError("Reference timings use a different Faiss runtime; recalibrate")
-    for name, expected in (("exact_search.py", calibration["exact_reference_sha256"]),
-                           ("baseline_search.py", calibration["baseline"]["public_sha256"])):
-        actual = hashlib.sha256((PUBLIC.parent / "reference" / name).read_bytes()).hexdigest()
-        if actual != expected:
-            raise RuntimeError("Public reference changed after calibration; recalibrate")
+    select_cpus()
     for dim in (1536, 3072):
         limits = calibration["datasets"][str(dim)]
+        expected_inputs = input_hashes(PUBLIC / str(dim) / "initial.npy",
+                                       PRIVATE / str(dim) / "inserts.npy",
+                                       PRIVATE / str(dim) / "queries.npy")
+        if limits.get("input_sha256") != expected_inputs:
+            raise RuntimeError("Prepared data changed; restart through the evaluation launcher")
+        truth_manifest = json.loads((TRUTH / str(dim) / "truth-manifest.json").read_text())
+        if truth_manifest.get("input_sha256") != expected_inputs:
+            raise RuntimeError("Exact targets do not match the current inputs; restart through the evaluation launcher")
         preparation = np.asarray([limits["build_seconds"], limits["insert_seconds"]], dtype=float)
         if not np.isfinite(preparation).all() or (preparation <= 0).any():
             raise RuntimeError("Invalid preparation budgets")
@@ -178,8 +170,8 @@ def boundary_ties(response, target, boundary, query, initial, inserts, live_coun
 
 
 def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, stages=10,
-                     selected_cells=None):
-    require_truth_kernel(PRIVATE / str(dim))
+                     selected_cells=None, repeat=0):
+    require_truth_kernel(TRUTH / str(dim))
     stop_submission()
     for name in ("state", "events"):
         path = WORK / name
@@ -190,15 +182,15 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
     initial = PUBLIC / str(dim) / "initial.npy"
     inserts = np.load(PRIVATE / str(dim) / "inserts.npy", mmap_mode="r")
     queries = np.load(PRIVATE / str(dim) / "queries.npy", mmap_mode="r")
-    truth = np.load(PRIVATE / str(dim) / "truth.npy", mmap_mode="r")
-    truth_distances = np.load(PRIVATE / str(dim) / "truth_distances.npy", mmap_mode="r")
+    truth = np.load(TRUTH / str(dim) / "truth.npy", mmap_mode="r")
+    truth_distances = np.load(TRUTH / str(dim) / "truth_distances.npy", mmap_mode="r")
     if (inserts.shape != (batch_size * stages, dim) or queries.shape != inserts.shape
             or truth.shape != (batch_size * stages, 1000) or truth_distances.shape != truth.shape):
         raise RuntimeError("Invalid fixed dataset shape")
     initial_vectors = np.load(initial, mmap_mode="r")
     if initial_vectors.shape != (initial_count, dim):
         raise RuntimeError("Invalid initial corpus shape")
-    cpus = set(sorted(os.sched_getaffinity(0))[:16])
+    cpus = set(select_cpus())
     base_bytes = tree_bytes(Path("/app/submission")) + initial.stat().st_size
     last_check = 0.0
     peak_disk = base_bytes
@@ -217,7 +209,7 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
            "MKL_NUM_THREADS": "1", "KMP_AFFINITY": "disabled", "OMP_PROC_BIND": "false",
            "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"}
     worker = Process([sys.executable, str(ROOT / "isolate.py")], cwd=WORK / "state", env=env,
-                     stderr=LOG / f"{dim}.stderr.log", prepare=lambda: os.sched_setaffinity(0, cpus))
+                     stderr=LOG / f"{dim}.replay-{repeat}.stderr.log", prepare=lambda: os.sched_setaffinity(0, cpus))
     result = {"dimension": dim, "cells": [], "insert_seconds": [], "score": 0.0}
     phase = {"operation": "build"}
     try:
@@ -236,8 +228,6 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
                            worker.started + limits["build_seconds"], monitor)
         pause_submission()
         result["build_seconds"] = time.monotonic() - worker.started
-        if result["build_seconds"] > limits["build_seconds"]:
-            raise TimeoutError("Build including warmup exceeded its budget")
         for stage in range(stages):
             phase = {"operation": "insert", "stage": stage}
             affinity(cpus)
@@ -251,8 +241,6 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
                                  start + limits["insert_seconds"], monitor)
             pause_submission()
             result["insert_seconds"].append(time.monotonic() - start)
-            if result["insert_seconds"][-1] > limits["insert_seconds"]:
-                raise TimeoutError("Insertion exceeded its budget")
             if ack != {"ok": True}:
                 raise ValueError("Insert did not acknowledge readiness")
             event.unlink()
@@ -287,9 +275,7 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
                                         "exact_query_fraction": float(np.mean(hits == k)),
                                         "p10_recall": float(np.quantile(values, .1)),
                                         "recall_histogram": np.bincount(hits, minlength=k + 1).tolist()})
-                write_json(LOG / f"{dim}.progress.json", result)
-                if seconds > budget:
-                    raise TimeoutError("Query cell exceeded its budget")
+                write_json(LOG / f"{dim}.replay-{repeat}.progress.json", result)
         monitor()
         timed_recall = dataset_score(result["cells"], stages=stages)
         if "baseline_missing_neighbors" in limits:
@@ -300,6 +286,9 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
             result["score"] = timed_recall
     except (ValueError, TimeoutError, BrokenPipeError) as error:
         result["failure"] = str(error)
+        result["failure_kind"] = "timing_timeout" if isinstance(error, TimeoutError) else "invalid_submission"
+        if phase["operation"] in ("build", "public_warmup"):
+            result["build_seconds"] = None
         result["failure_context"] = phase
     finally:
         stop_submission()
@@ -313,7 +302,7 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
         result["baseline_missing_neighbors"] = limits.get("baseline_missing_neighbors")
         result["micro_recall"] = (1 - result["missing_neighbors"] / (stages * batch_size * sum(KS))
                                   if result["missing_neighbors"] is not None else None)
-        write_json(LOG / f"{dim}.result.json", result)
+        write_json(LOG / f"{dim}.replay-{repeat}.result.json", result)
     return result
 
 
@@ -324,10 +313,16 @@ def main():
     write_json(LOG / "reward.json", {"reward": 0.0})
     try:
         calibration = load_limits()
-        # Reuse the allocation used for calibration, including under quota-only Docker backends.
-        os.sched_setaffinity(0, calibration["cpu_affinity"])
+        os.sched_setaffinity(0, select_cpus())
         WORK.mkdir(exist_ok=True)
-        results = [evaluate_dataset(dim, calibration["datasets"][str(dim)]) for dim in (1536, 3072)]
+        results = []
+        for dim in (1536, 3072):
+            limits = calibration["datasets"][str(dim)]
+            replays = [evaluate_dataset(dim, limits, repeat=i) for i in range(TIMING_REPEATS)]
+            result = aggregate_replays(replays, limits)
+            result["dimension"] = dim
+            write_json(LOG / f"{dim}.result.json", result)
+            results.append(result)
         reward = sum(r["score"] for r in results) / 2
         write_json(LOG / "evaluation.json", {"valid": True, "datasets": results, "raw_reward": reward})
         # The trajectory audit applies the semantic no-rebuild/integrity gate separately.

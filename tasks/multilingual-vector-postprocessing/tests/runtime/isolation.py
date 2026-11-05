@@ -65,6 +65,9 @@ def isolate(work):
         if sec.seccomp_load(ctx):raise RuntimeError('seccomp_load')
     finally:sec.seccomp_release(ctx)
     os.setgroups([]);os.setgid(UID);os.setuid(UID);os.chdir(work)
+    # Restore nonroot procfs visibility after setuid for trusted storage sampling.
+    # ptrace and cross-process memory access remain blocked by seccomp above.
+    if libc.prctl(4,1,0,0,0):raise OSError('submission procfs visibility')
 
 
 def cleanup():
