@@ -1,4 +1,4 @@
-"""Per-run logical CPU selection without changing task CPU quotas."""
+"""Per-run CPU selection and equivalent Compose quota representation."""
 
 import copy
 import os
@@ -6,6 +6,8 @@ import re
 
 
 def parse_cpu_set(value):
+    if not isinstance(value, str):
+        raise ValueError("CPU sets must be a string of IDs or ranges")
     selected = set()
     for item in value.split(","):
         if not re.fullmatch(r"\d+(?:-\d+)?", item):
@@ -32,4 +34,21 @@ def select_compose_cpus(document, value):
     result = copy.deepcopy(document)
     for service in result["services"].values():
         service["cpuset"] = value
+    return result
+
+
+def normalize_compose_cpu_quota(document, cpus):
+    """Remove CFS fields that conflict with Harbor's equivalent NanoCPU limit."""
+    result = copy.deepcopy(document)
+    main = result.get("services", {}).get("main", {})
+    if cpus is None or not ({"cpu_period", "cpu_quota"} & main.keys()):
+        return result
+    period, quota = main.get("cpu_period"), main.get("cpu_quota")
+    # NanoCPUs uses a 100 ms period. Other periods or budgets cannot be
+    # silently replaced, even when their quota/period ratio happens to match.
+    if (type(period) is not int or type(quota) is not int or period != 100_000
+            or quota != cpus * period or float(main.get("cpus", cpus)) != cpus):
+        raise ValueError("Explicit CFS quota must match Harbor's CPU budget at the 100 ms period")
+    del main["cpu_period"], main["cpu_quota"]
+    main["cpus"] = cpus
     return result

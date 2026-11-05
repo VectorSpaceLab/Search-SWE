@@ -149,7 +149,8 @@ def main():
     os.setuid(UID)
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     resource.setrlimit(resource.RLIMIT_NOFILE, (1024, 1024))
-    resource.setrlimit(resource.RLIMIT_NPROC, (128, 128))
+    # Compose limits this container to 256 PIDs. RLIMIT_NPROC would instead
+    # count UID 10001's threads across concurrent containers on the host.
     file_limit = 16 * 1024**2 if mode == "search" else 16 * 1024**3
     resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
     # Compilation and indexing run under the submission UID with hidden paths

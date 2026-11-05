@@ -112,7 +112,8 @@ including its newline, must be at most 65,536 bytes.
 Query IDs and ordering may change. Echo the received ID without interpreting it.
 The verifier runs submission code as an unprivileged user, with a writable index
 and temporary directory. Serving can read the index and submission files. The
-process limits are 512 processes and 256 open file descriptors per process.
+verifier container is limited to 512 processes/threads; each submission process
+is limited to 256 open file descriptors.
 
 ### Output contract
 

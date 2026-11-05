@@ -161,6 +161,11 @@ count declared by the selected task, across its services and both phases,
 preserving CPU quotas, RAM limits and mounts. Coordinate native allocations
 with other users and keep placement fixed for timing comparisons.
 
+When a task declares an explicit CFS quota matching Harbor's CPU budget at a
+100 ms period, the adapter converts it to the equivalent `cpus` setting in a
+per-run Compose copy. Conflicting budgets or other periods stop startup;
+the task files and other resource limits remain unchanged.
+
 ## GPU tasks
 
 ### GPU device selection
