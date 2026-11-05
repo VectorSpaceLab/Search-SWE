@@ -14,7 +14,7 @@ UID=10001
 def isolate(work):
     libc=ctypes.CDLL(None,use_errno=True)
     resource.setrlimit(resource.RLIMIT_CORE,(0,0))
-    resource.setrlimit(resource.RLIMIT_FSIZE,(28<<30,28<<30))
+    resource.setrlimit(resource.RLIMIT_FSIZE,(32<<30,32<<30))
     if libc.prctl(38,1,0,0,0):raise OSError('no_new_privs')
     abi=libc.syscall(444,0,0,1)
     if abi<3:raise RuntimeError('Landlock ABI >=3 required')

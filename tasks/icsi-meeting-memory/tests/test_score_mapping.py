@@ -132,6 +132,19 @@ runpy.run_path(target, run_name="__main__")
         self.assertEqual(status, 0)
         self.assertAlmostEqual(output["reward"], BASELINE_SCORE / 100)
 
+    def test_three_judge_average_keeps_fractional_joint_and_marginal_scores(self):
+        status, output = self.run_finalizer(1 / 3, evaluation_override={
+            "valid": True,
+            "score": 1 / 3,
+            "answer_accuracy": 2 / 3,
+            "evidence_accuracy": 2 / 3,
+            "infrastructure_error": False,
+        })
+        self.assertEqual(status, 0)
+        self.assertAlmostEqual(output["reward"], normalize_score(1 / 3))
+        self.assertAlmostEqual(output["answer_accuracy"], 2 / 3)
+        self.assertAlmostEqual(output["evidence_accuracy"], 2 / 3)
+
     def test_piecewise_output_preserves_raw_metrics(self):
         anchor = BASELINE_SCORE / 100
         for raw, expected in [(0, 0), (BASELINE_RAW / 2, anchor / 2),

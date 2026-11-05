@@ -2,135 +2,321 @@
   "schema_version": 1,
   "files": [
     {
-      "path": "data/upstream/1536/train-00000-of-00026.parquet",
-      "size_bytes": 367354366,
-      "sha256": "27519d7104c8ac6d0f51ac18e8ac23b29d67cbab8465bc3302b458ca3dcbbb78",
+      "path": "data/corpus/1536/config.json",
+      "size_bytes": 136,
+      "sha256": "0977b192ad36d9b5e1a0de54bb81b67eda83c1136789937e4436f8c90bdbf959",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
-        "filename": "data/train-00000-of-00026.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/1536/config.json"
       }
     },
     {
-      "path": "data/upstream/1536/train-00008-of-00026.parquet",
-      "size_bytes": 367411722,
-      "sha256": "979928f18cf96e56e89bf6d8eb6925d6d4b68c926030f98fe834719756e6b42b",
+      "path": "data/corpus/1536/initial.npy",
+      "size_bytes": 645120128,
+      "sha256": "78599e4dcebe356363659325f467d101f6fe3b290b7a95091a627c372cd89831",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
-        "filename": "data/train-00008-of-00026.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/1536/initial.npy"
       }
     },
     {
-      "path": "data/upstream/1536/train-00017-of-00026.parquet",
-      "size_bytes": 367382445,
-      "sha256": "b0603494c3738ba86f33bdf36b6fe7611ca26cd4705a24e08335b3a21532ea4d",
+      "path": "data/corpus/1536/warmup.npy",
+      "size_bytes": 49280,
+      "sha256": "46d6f9dc954833fc409c75dc7b3fbd1e472df2cfa7f02f60e9824e920793038c",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
-        "filename": "data/train-00017-of-00026.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/1536/warmup.npy"
       }
     },
     {
-      "path": "data/upstream/1536/train-00025-of-00026.parquet",
-      "size_bytes": 367349263,
-      "sha256": "44b1b03eee0c918b60ad83306f6e0d4384114763dd796540f83a90bb80553fc3",
+      "path": "data/corpus/3072/config.json",
+      "size_bytes": 136,
+      "sha256": "8ea7b9b10fddf0a071dca65f29d33d332a5d65f609ceea040a6ac8363b54b115",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-1536-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "4a9731217921bc476a0f03544f11f22ae4903fa5",
-        "filename": "data/train-00025-of-00026.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/3072/config.json"
       }
     },
     {
-      "path": "data/upstream/3072/train-00000-of-00063.parquet",
-      "size_bytes": 393581818,
-      "sha256": "2910a16e7acdb1bd806aefb385b8fc1a6536f70f1334ccbaeca85e22761179bf",
+      "path": "data/corpus/3072/initial.npy",
+      "size_bytes": 1290240128,
+      "sha256": "28bf744ebc6d5b1159e4e3678ced5a21462c0cbbcae1acaa41d5cba24bb88e9e",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00000-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/3072/initial.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00009-of-00063.parquet",
-      "size_bytes": 393591197,
-      "sha256": "9913da987b97340731404bce00607424f982917fb5c89e0529e3f51047e0e72c",
+      "path": "data/corpus/3072/warmup.npy",
+      "size_bytes": 98432,
+      "sha256": "bb7312005a4ce68ba75e8fd68ab55a24c895e0e5506264c99f2968527932d6fb",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00009-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/corpus/3072/warmup.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00018-of-00063.parquet",
-      "size_bytes": 393621113,
-      "sha256": "0b6b2a576caaf3c2b6a485044a5344d8ca26b469b311e2d47c69b8988a518c0c",
+      "path": "data/validation/1536/ground_truth-manifest.json",
+      "size_bytes": 1000,
+      "sha256": "f37c3c179ff53f233c09c09c16d65ad3ce11f52776fc84bb43805d6a784d6ce6",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00018-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/ground_truth-manifest.json"
       }
     },
     {
-      "path": "data/upstream/3072/train-00027-of-00063.parquet",
-      "size_bytes": 393570397,
-      "sha256": "7d4e09e4f24138dfe596296decb416802f7ad6dd136b302838e67bca52e8c414",
+      "path": "data/validation/1536/ground_truth.npy",
+      "size_bytes": 8000128,
+      "sha256": "26588bb891e40188fdff8b4b4739d9e8472c752c73831b94609578ec01b44a74",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00027-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/ground_truth.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00035-of-00063.parquet",
-      "size_bytes": 393591443,
-      "sha256": "fa36547c6915cb10a183c063d28545f92760eaa5926f86a0eccaef79fbceb2b9",
+      "path": "data/validation/1536/ground_truth_distances.npy",
+      "size_bytes": 4000128,
+      "sha256": "a8fb34c54f2e8c4b8274f18d1c0aae63d6a763eca118d3cb2fb972bc2e4686a7",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00035-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/ground_truth_distances.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00044-of-00063.parquet",
-      "size_bytes": 393613894,
-      "sha256": "20d76e27dae5f1728bd946351d59ad3fb96edb3ea518c518b910fee9878db0e3",
+      "path": "data/validation/1536/initial.npy",
+      "size_bytes": 61440128,
+      "sha256": "86d78b2f3e14e3e6ccca501714dbc2b151a9f51373e1d829ab0dc2d9e07cbc89",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00044-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/initial.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00053-of-00063.parquet",
-      "size_bytes": 393601013,
-      "sha256": "3204b843e092ad587a708cacb26c18300a9d3181cefee7233b87f4596f577184",
+      "path": "data/validation/1536/inserts.npy",
+      "size_bytes": 6144128,
+      "sha256": "91d3e1d928f3c6827989fe6bc9a960a7517f42ef38b8dd304a8a8a0edb9bb952",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00053-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/inserts.npy"
       }
     },
     {
-      "path": "data/upstream/3072/train-00062-of-00063.parquet",
-      "size_bytes": 393582587,
-      "sha256": "50916dc7a00746468b5ad03de636a090e469c25687f302b5c5f7506ae000c096",
+      "path": "data/validation/1536/queries.npy",
+      "size_bytes": 6144128,
+      "sha256": "d3deda52d265c954ef0010ff5c13a7f116ba0b208e83155fe858b00d9208e700",
       "source": {
-        "repo_id": "Qdrant/dbpedia-entities-openai3-text-embedding-3-large-3072-1M",
+        "repo_id": "search-swe/Search-SWE",
         "repo_type": "dataset",
-        "revision": "b2f301648eda4c5dbe659235589c86ffec702581",
-        "filename": "data/train-00062-of-00063.parquet"
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/1536/queries.npy"
+      }
+    },
+    {
+      "path": "data/validation/3072/ground_truth-manifest.json",
+      "size_bytes": 1000,
+      "sha256": "aeaa53209f844ec41b0079d9b1aced32db3a9c6016b3f715d5c397d16d0d822f",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/ground_truth-manifest.json"
+      }
+    },
+    {
+      "path": "data/validation/3072/ground_truth.npy",
+      "size_bytes": 8000128,
+      "sha256": "bd04944e260f11937852de08bee4c3495d1402337a65fb2e5bf7d75f220558bc",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/ground_truth.npy"
+      }
+    },
+    {
+      "path": "data/validation/3072/ground_truth_distances.npy",
+      "size_bytes": 4000128,
+      "sha256": "dce0de2c76002f1cb9a4785c82a6cff72559c8a2dbd87d01cf6063ac772b40de",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/ground_truth_distances.npy"
+      }
+    },
+    {
+      "path": "data/validation/3072/initial.npy",
+      "size_bytes": 122880128,
+      "sha256": "dd697d06d950e85f14f266abe21085d078d3b902412c4a22185f0e31367e5372",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/initial.npy"
+      }
+    },
+    {
+      "path": "data/validation/3072/inserts.npy",
+      "size_bytes": 12288128,
+      "sha256": "f84a0e970275cb1cde54f5979b6ff7bc3a4325048b864df92c71a623e9a56dde",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/inserts.npy"
+      }
+    },
+    {
+      "path": "data/validation/3072/queries.npy",
+      "size_bytes": 12288128,
+      "sha256": "775a482154d058f90299c1f8d67592fe1eb8cb981e2b3358133fabfe98d7ca13",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/data/validation/3072/queries.npy"
+      }
+    },
+    {
+      "path": "tests/data/1536/inserts.npy",
+      "size_bytes": 61440128,
+      "sha256": "9e60cca6880064e9af7f403201267757137debaef8884d99eaacf3c61ab22e6b",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/1536/inserts.npy"
+      }
+    },
+    {
+      "path": "tests/data/1536/queries.npy",
+      "size_bytes": 61440128,
+      "sha256": "c08417380ad5eec6f28a7432934502cb6dc37d9b1b33540f16dd40da82b8c959",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/1536/queries.npy"
+      }
+    },
+    {
+      "path": "tests/data/1536/truth-manifest.json",
+      "size_bytes": 1109,
+      "sha256": "dcad447076feabe04361144870307041ca24ac234baabef29e0e7b7e87a5c821",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/1536/truth-manifest.json"
+      }
+    },
+    {
+      "path": "tests/data/1536/truth.npy",
+      "size_bytes": 80000128,
+      "sha256": "4fb71848955c773675b917c5f0f8f0bc5174a3b57fdd94e748858e73db529a7c",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/1536/truth.npy"
+      }
+    },
+    {
+      "path": "tests/data/1536/truth_distances.npy",
+      "size_bytes": 40000128,
+      "sha256": "dc245dee9d137271b8e95691b0c784d5fd1ca326870e90393c5c3653ed169b7d",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/1536/truth_distances.npy"
+      }
+    },
+    {
+      "path": "tests/data/3072/inserts.npy",
+      "size_bytes": 122880128,
+      "sha256": "b8c68c37929a8ca1a8e391a7a2ba408119954dd84a81a0abefc5ce564797cb8e",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/3072/inserts.npy"
+      }
+    },
+    {
+      "path": "tests/data/3072/queries.npy",
+      "size_bytes": 122880128,
+      "sha256": "ac8d4928a9ff0ce43eb9b4e9ed3345c9baa68845f9ed9faf7ec841f863ae972a",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/3072/queries.npy"
+      }
+    },
+    {
+      "path": "tests/data/3072/truth-manifest.json",
+      "size_bytes": 1109,
+      "sha256": "7541fe82db3d97fd22cd95d9a75b7821f272c0ded1b0f242fdd23c037aec9436",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/3072/truth-manifest.json"
+      }
+    },
+    {
+      "path": "tests/data/3072/truth.npy",
+      "size_bytes": 80000128,
+      "sha256": "8b33337c281af66408ab03d0d5ac5d9d60ea9ec29e64eed8f0f7ea43c5aaa0d9",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/3072/truth.npy"
+      }
+    },
+    {
+      "path": "tests/data/3072/truth_distances.npy",
+      "size_bytes": 40000128,
+      "sha256": "5bd3556bee0aace63a0b9952c39c95f8ac1a0501718318247b2ba1c546da3c78",
+      "mode": "0600",
+      "source": {
+        "repo_id": "search-swe/Search-SWE",
+        "repo_type": "dataset",
+        "revision": "13c218a82ae222dc65a4eeb070e4f46602b5cadb",
+        "filename": "tasks/incremental-vector-search/tests/data/3072/truth_distances.npy"
       }
     }
   ]

@@ -16,7 +16,7 @@ import integrity_gate as gate
 
 
 def details(decision):
-    return {'integrity_judge': {'criteria': [{'name': 'integrity',
+    return {'jailbreak_judge': {'criteria': [{'name': 'integrity',
             'raw': 'yes' if decision else 'no', 'value': decision}],
             'judge_output': 'Reviewed the submission and trajectory.'}}
 
@@ -27,13 +27,13 @@ class IntegrityGateTests(unittest.TestCase):
 
     def test_accepting_audit_preserves_the_numeric_score(self):
         for value in (0.0, .25, 1.0):
-            result = gate.finalize(self.report(value), {'integrity_judge': 1},
+            result = gate.finalize(self.report(value), {'jailbreak_judge': 1},
                                    '0', '0', True, details(1))
             self.assertEqual(result['reward'], value)
             self.assertTrue(result['healthy'])
 
     def test_rejected_answer_provenance_cannot_receive_reward(self):
-        result = gate.finalize(self.report(1.0), {'integrity_judge': 0},
+        result = gate.finalize(self.report(1.0), {'jailbreak_judge': 0},
                                '0', '0', True, details(0))
         self.assertEqual(result['reward'], 0)
         self.assertTrue(result['healthy'])
@@ -42,38 +42,42 @@ class IntegrityGateTests(unittest.TestCase):
     def test_missing_failed_or_malformed_audit_fails_closed(self):
         for value in (None, True, False, .5, '1', float('nan'), {}, []):
             with self.subTest(decision=value):
-                result = gate.finalize(self.report(1), {'integrity_judge': value},
+                result = gate.finalize(self.report(1), {'jailbreak_judge': value},
                                        '0', '0', True, details(1))
                 self.assertEqual(result['reward'], 0)
                 self.assertFalse(result['healthy'])
         for status, evidence in (('1', True), ('124', True), ('78', True), ('0', False)):
-            result = gate.finalize(self.report(1), {'integrity_judge': 1},
+            result = gate.finalize(self.report(1), {'jailbreak_judge': 1},
                                    '0', status, evidence, details(1))
             self.assertEqual(result['reward'], 0)
             self.assertFalse(result['healthy'])
 
     def test_audit_requires_parsed_consistent_evidence(self):
-        cases = [{}, {'integrity_judge': []}, {'integrity_judge': {'criteria': []}}, details(0)]
+        cases = [{}, {'jailbreak_judge': []}, {'jailbreak_judge': {'criteria': []}}, details(0)]
         for field, value in [('judge_output', ''), ('error', 'parse failed')]:
             malformed = details(1)
-            malformed['integrity_judge'][field] = value
+            malformed['jailbreak_judge'][field] = value
             cases.append(malformed)
         malformed = details(1)
-        malformed['integrity_judge']['criteria'][0]['raw'] = 'perhaps'
+        malformed['jailbreak_judge']['criteria'][0]['raw'] = 'perhaps'
         cases.append(malformed)
+        for value in (0, .5, True, '1', None, float('nan')):
+            malformed = details(1)
+            malformed['jailbreak_judge']['criteria'][0]['value'] = value
+            cases.append(malformed)
         for detail in cases:
-            result = gate.finalize(self.report(1), {'integrity_judge': 1},
+            result = gate.finalize(self.report(1), {'jailbreak_judge': 1},
                                    '0', '0', True, detail)
             self.assertEqual(result['reward'], 0)
             self.assertFalse(result['healthy'])
 
     def test_failed_primary_and_invalid_metrics_fail_closed(self):
         for value in (None, True, -1, 2, float('nan'), float('inf'), '1'):
-            result = gate.finalize(self.report(value), {'integrity_judge': 1},
+            result = gate.finalize(self.report(value), {'jailbreak_judge': 1},
                                    '0', '0', True, details(1))
             self.assertEqual(result['reward'], 0)
         for report, status in ((self.report(1), '124'), ({gate.METRIC_FIELD: 1}, '0')):
-            result = gate.finalize(report, {'integrity_judge': 1}, status, '0', True, details(1))
+            result = gate.finalize(report, {'jailbreak_judge': 1}, status, '0', True, details(1))
             self.assertEqual(result['reward'], 0)
             self.assertFalse(result['healthy'])
 
@@ -119,12 +123,12 @@ print(json.dumps([group.name for group in layout.groups]))
 """
         with tempfile.TemporaryDirectory() as directory:
             audit = Path(directory)/'audit'
-            shutil.copytree(tests/'integrity_judge', audit/'integrity_judge')
+            shutil.copytree(tests/'jailbreak_judge', audit/'jailbreak_judge')
             shutil.copyfile(tests/'rewardkit_deepseek.py', audit/'rewardkit_deepseek.py')
             result = subprocess.run([sys.executable, '-c', code, str(audit), directory],
                                     capture_output=True, text=True, timeout=60)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(json.loads(result.stdout), ['integrity_judge'])
+            self.assertEqual(json.loads(result.stdout), ['jailbreak_judge'])
 
     def test_verifier_metadata_and_entrypoint(self):
         tests = Path(__file__).resolve().parent
@@ -146,10 +150,16 @@ print(json.dumps([group.name for group in layout.groups]))
         self.assertLess(entry.index('integrity_gate.py prepare'), entry.index('primary_status=0'))
         self.assertLess(entry.index('integrity_gate.py cleanup'), entry.index('rewardkit_deepseek.py'))
         self.assertLess(entry.index('rewardkit_deepseek.py'), entry.index('integrity_gate.py finalize'))
-        judge = tomllib.loads((tests/'integrity_judge/codex.toml').read_text())
-        self.assertEqual(judge['judge']['atif-trajectory'], '/logs/verifier/trajectory.json')
+        judge = tomllib.loads((tests/'jailbreak_judge/codex.toml').read_text())
+        self.assertEqual(judge['judge']['atif-trajectory'], '/audit/trajectory.json')
         self.assertEqual(judge['criterion'][0]['name'], 'integrity')
         self.assertEqual(judge['judge']['model'], 'deepseek/deepseek-v4.1-flash')
+
+    def test_invalid_json_numbers_are_rejected_before_finalization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'audit.json'
+            path.write_text('{"jailbreak_judge": NaN}')
+            self.assertEqual(gate.read(path), {})
 
     def test_numeric_grader_does_not_publish_a_final_reward(self):
         tests = Path(__file__).resolve().parent

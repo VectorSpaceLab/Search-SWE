@@ -1,6 +1,6 @@
 services:
   main:
-    cpuset: ${FORMULA_CPUSET:-80,81}
+    cpuset: ${FORMULA_CPUSET:?Use the standard launcher or select two available CPUs}
     mem_limit: 4g
     memswap_limit: 4g
     cpus: 2
@@ -19,8 +19,8 @@ services:
       bind:
         create_host_path: false
     - type: bind
-      source: ../data/public
-      target: /task/data/public
+      source: ../data
+      target: /task/data
       read_only: true
       bind:
         create_host_path: false

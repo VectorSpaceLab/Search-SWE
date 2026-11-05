@@ -23,7 +23,7 @@ def parser():
  p.add_argument("--checkpoint",required=True,type=Path)
  p.add_argument("--backbone",type=Path,default=Path("/task/models/multilingual-e5-large"))
  p.add_argument("--corpus",type=Path,default=Path("/task/data/corpus.parquet"))
- p.add_argument("--queries",type=Path,default=Path("/task/data/examples.jsonl"))
+ p.add_argument("--queries",type=Path,default=Path("/task/data/validation/queries.jsonl"))
  p.add_argument("--answers",type=Path)
  p.add_argument("--output",required=True,type=Path)
  p.add_argument("--work-dir",required=True,type=Path)
@@ -106,7 +106,10 @@ def main():
  a.output.parent.mkdir(parents=True,exist_ok=True)
  a.output.write_text("".join(json.dumps(row,allow_nan=False)+"\n" for row in all_results))
  if not a.retrieval_only:
-  labels=read_jsonl(a.answers) if a.answers else queries
+  answer_path=a.answers
+  if answer_path is None and a.queries==Path("/task/data/validation/queries.jsonl"):
+   answer_path=Path("/task/data/validation/answers.jsonl")
+  labels=read_jsonl(answer_path) if answer_path else queries
   report=score_results(a.corpus,queries,labels,all_results)
   report.update({"seconds":time.monotonic()-start,"checkpoint":str(a.checkpoint),"encoding":"e5-mean-nfd-lower-bf16-v1"})
   a.output.with_suffix(".metrics.json").write_text(json.dumps(report,indent=2,allow_nan=False)+"\n")

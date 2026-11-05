@@ -329,7 +329,7 @@ def grade_answer(q, g, answer, repetitions=3):
     return {
         "query_id": q["query_id"],
         "answer": answer,
-        "correct": sum(v["correct"] for v in votes) > repetitions / 2,
+        "correct": sum(v["correct"] for v in votes) / repetitions,
         "votes": votes,
     }
 
@@ -541,7 +541,7 @@ def checked_judgment(prompt, payload, validate):
 def grade_evidence(q, evidence, memories, repetitions=3):
     """Extract without references, verify provenance, then compare semantics."""
     if not memories:
-        return {"hit": False, "votes": []}
+        return {"hit": 0.0, "votes": [{"hit": False} for _ in range(repetitions)]}
     extraction, meta, rejected = checked_judgment(
         EXTRACTION_PROMPT,
         {
@@ -560,7 +560,11 @@ def grade_evidence(q, evidence, memories, repetitions=3):
         "provenance_repairs": extraction.get("provenance_repairs", []),
     }
     if not passages:
-        return {"hit": False, "votes": [], "extraction": audit}
+        return {
+            "hit": 0.0,
+            "votes": [{"hit": False} for _ in range(repetitions)],
+            "extraction": audit,
+        }
     # The comparator sees only its own explicit labels. Source memory numbers
     # stay in the trusted provenance map and cannot be confused with these labels.
     payload = {
@@ -615,10 +619,20 @@ def grade_evidence(q, evidence, memories, repetitions=3):
             }
         )
     return {
-        "hit": sum(v["hit"] for v in votes) > repetitions / 2,
+        "hit": sum(v["hit"] for v in votes) / repetitions,
         "votes": votes,
         "extraction": audit,
     }
+
+
+def joint_accuracy(evidence_votes, answer_votes, repetitions):
+    """Average complete evidence-and-answer decisions over the fixed outputs."""
+    if repetitions < 1 or len(evidence_votes) != repetitions or len(answer_votes) != repetitions:
+        raise ValueError("All evidence and answer judgments are required")
+    return sum(
+        evidence["hit"] and answer["correct"]
+        for evidence, answer in zip(evidence_votes, answer_votes)
+    ) / repetitions
 
 
 def validate_answer(text, contract):
@@ -832,14 +846,20 @@ def evaluate(art, history, queries, gold, log, answerer=True, evidence=None):
                     q, bygold[qid], generated[qid], contract["judge_repetitions"]
                 )
                 if answerer
-                else {"query_id": qid, "correct": False}
+                else {
+                    "query_id": qid,
+                    "correct": 0.0,
+                    "votes": [{"correct": False} for _ in range(contract["judge_repetitions"])],
+                }
             )
             row["answer_correct"] = row.pop("correct")
             row.update(
                 evidence_hit=evidence_grade["hit"],
                 evidence_votes=evidence_grade["votes"],
                 evidence_extraction=evidence_grade.get("extraction"),
-                correct=evidence_grade["hit"] and row["answer_correct"],
+                correct=joint_accuracy(
+                    evidence_grade["votes"], row["votes"], contract["judge_repetitions"]
+                ),
                 question=q["question"],
                 reference=bygold[qid]["answer"],
                 retrieved_count=len(selections[qid]),

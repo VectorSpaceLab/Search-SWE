@@ -44,9 +44,11 @@ the supplied vector-only assets; using IDs, call counters or phase information
 to apply different query/document transformation rules; adapting parameters
 to test requests; continuing training after the six-hour agent phase; altering
 timing, tests, isolation, limits, collected artifacts or rewards. The task has
-16 CPUs, 16 GiB memory, one physical A100 40GB, and 100 GiB total task storage
+16 CPUs, 16 GiB memory, one GPU, and 100 GiB total task storage
 including supplied inputs, models, checkpoints and caches. Writable task work
-belongs in /app and the documented temporary filesystems. Framework setup,
+belongs in /app and the temporary or cache directories /tmp, /var/tmp, /root
+and /dev/shm; these files count toward total task storage. These workspaces use
+disk storage except /dev/shm, which also counts against memory. Framework setup,
 transport and logs are exempt but must not be repurposed as training/cache
 storage to bypass limits. Coding-model transport is not a submission API;
 the task provides no external submission APIs or extra model credentials.

@@ -17,7 +17,7 @@ The objective is to maximize retrieval quality on held-out queries while satisfy
 - Do not use precomputed query-to-document mappings, hidden relevance information, external datasets containing evaluation labels, or external retrieval/reranking services.
 - Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the installed runtime, local resources, and network restrictions.
 - `build.sh` and `run.sh` must be executable files under `/app`.
-- During verification, `/app` is read-only and the submission runs as a non-root user. Only the supplied `--index-dir` is writable for persistent and runtime-generated artifacts.
+- During verification, `/app` is read-only and the submission runs as a non-root user. Store all persistent and runtime-generated artifacts in the supplied `--index-dir`, except for the result file at the supplied `--output` path.
 - The evaluator allows up to 120 minutes for the Agent to complete this task; plan implementation, validation, and debugging within this time budget.
 
 ### Build interface
@@ -27,7 +27,7 @@ The verifier invokes:
 ```bash
 /app/build.sh \
   --corpus /task/data/corpus.jsonl \
-  --index-dir /app/index
+  --index-dir /path/to/index
 ```
 
 `build.sh` must prepare all required corpus, model, and runtime artifacts, start the reranking service, and return exit status `0` only after the system is ready to process queries, within 1800 seconds. The service must remain available across repeated `run.sh` calls.
@@ -40,17 +40,13 @@ After a successful build, the verifier invokes:
 
 ```bash
 /app/run.sh \
-  --index-dir /app/index \
+  --index-dir /path/to/index \
   --queries /path/to/queries.jsonl \
   --output /path/to/results.jsonl \
   --top-k 5
 ```
 
-Each query contains a fixed BM25 Top-100 candidate set. `run.sh` must rerank only the candidates supplied with that query and write exactly one result object for each input query.
-
-The verifier invokes `run.sh` twice sequentially with the same complete query file and separate output paths. Each invocation has 3600 seconds for the entire query file. Both outputs must satisfy the output contract; identical bytes, scores, or rankings across invocations are not required. Accuracy@5 is calculated from the first invocation. The second checks continued service availability and output validity. The total verifier allowance is 13200 seconds, covering the 1800-second build, two 3600-second query invocations, a 3600-second trajectory audit, and 600 seconds for setup and cleanup.
-
-It may use any internal protocol or service endpoint, as long as it works with the `build.sh` process and the command-line interface.
+Rerank only the supplied BM25 Top-100 candidates and write one result object per query, in input query order. `run.sh` must support repeated calls, complete each full query batch within 3600 seconds, and produce valid output on every call.
 
 ### Output contract
 
@@ -91,12 +87,12 @@ The finalized submission must contain executable `build.sh` and `run.sh` files u
 
 ## Verification
 
-After the Agent phase, the Harbor verifier runs the submission in the same task environment and uses the private test split. The verifier checks the following items:
+The verifier uses the task runtime and the private test split. The verifier checks the following items:
 
 1. **Reranking integrity.** The submission must implement a genuine reranking pipeline over the candidate documents supplied with each query. It must not obtain relevance judgments or results through hidden labels, hard-coded query-to-document mappings, precomputed answer files, external datasets containing the evaluation judgments, or external retrieval/reranking services.
 2. **Candidate-set and model compliance.** The submission must rerank only the fixed BM25 Top-100 candidates supplied with each query and must use the supplied local `/task/models/bge-reranker-large` model without replacing, training, or modifying it.
 3. **Executable and output validity.** The verifier checks that build.sh and run.sh exist and are executable, invokes build.sh, waits for it to return successfully, and then invokes run.sh for the hidden queries. It also checks the JSONL result structure, query coverage, result count, duplicate handling, candidate document IDs, scores, and ranking output. Invalid output or a failed executable gate receives a zero score.
-4. **Final retrieval score.** For a valid submission, the final task score is calculated only with `Accuracy@5`:
+4. **Final retrieval score.** For a valid submission that passes the compliance review, the final task score is calculated only with `Accuracy@5`. A rejected review gives zero credit:
 
 ```text
 score = 100 * average(Accuracy@5)

@@ -1,5 +1,24 @@
 # Validation record
 
+## 2026-11-05 repeated evidence judgments and runtime configuration
+
+Retrieval still runs once per query. The verifier judges the fixed returned evidence three times, averages those binary judgments per query, then averages across all twelve hidden queries. Invalid, empty, failed and timed-out retrievals remain zero without judge calls. Any failed judgment invalidates the measurement instead of averaging only successful calls. The separate trajectory audit remains one run. All three decisions and errors are retained in the evaluation report.
+
+Evidence judging requires `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY` from runtime configuration, passed only to the verifier. There is no fixed evidence-judge model or base URL and no fallback to solver credentials. The evidence sufficiency prompt, effort `high`, temperature 0, hidden queries, reference evidence, asset manifest, embedding prohibition and index-only search boundary are unchanged.
+
+The evidence-judge limit is 5,400 seconds. The request-budget estimate is `18 * (2 * (10 + 120) + 2) = 4,716` seconds for 36 judgments on two workers, including bounded retries. Build, query-runner, evidence-judge and trajectory-audit budgets total `2,400 + 1,860 + 5,400 + 3,600 = 13,260` seconds. The 14,400-second verifier limit leaves 1,140 seconds for termination grace, staging, cleanup and finalization. The 900-second per-query and 1,800-second shared query limits are unchanged.
+
+Both environment documents only merge wrapped prose; all wording, links, code blocks and permissions are preserved. The instruction's evidence criteria omit judge model, request parameters, worker count, retries and judge-stage budgets. Its SHA-256 is `b403fe9bc0fff3e635e8ffe88d3abcb09e71f8f38386fa9f69d053cda316ba7d`.
+
+Completed locally:
+
+- `PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tasks/long-pdf-evidence-vectorless/tests -p 'test_*.py' -v`: **27 passed**, including mixed three-round averages, fixed evidence inputs, a single failed round, runtime configuration, nested timeout budgets and the existing corpus permission boundary checks.
+- `python scripts/validation/check_tasks.py tasks/long-pdf-evidence-vectorless`: **0 errors**.
+- `bash -n tasks/long-pdf-evidence-vectorless/tests/test.sh` and task-scoped `git diff --check`: passed.
+- Both environment documents are identical to their prior contents after whitespace normalization, with code blocks unchanged. Hidden query, reference and judge-prompt hashes still match the historical fingerprints below.
+
+Judge responses were mocked. No live API evaluation, Docker build or new coding-model trial was run, and no new task score is claimed. The four public assets are not restored in this checkout; use the existing asset manifest to restore them before a full evaluation.
+
 ## 2026-10-28 semantic judge clarification — 1.0.0
 
 Base: `bb0ddbaf105c25cc53e3598c37e0428c943a7098`.

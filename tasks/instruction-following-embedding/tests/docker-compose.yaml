@@ -1,9 +1,6 @@
 services:
   main:
     pids_limit: 512
-    tmpfs:
-    - /app:rw,exec,nosuid,nodev,size=28g,mode=0755
-    - /tmp:rw,exec,nosuid,nodev,size=1g,mode=1777
     deploy:
       resources:
         reservations:
@@ -14,19 +11,19 @@ services:
             - gpu
     volumes:
     - type: bind
-      source: ../data/upstream/robust04/corpus.jsonl
+      source: ../data/corpus/robust04.jsonl
       target: /task/corpus/robust04.jsonl
       read_only: true
       bind:
         create_host_path: false
     - type: bind
-      source: ../data/upstream/core17/corpus.jsonl
+      source: ../data/corpus/core17.jsonl
       target: /task/corpus/core17.jsonl
       read_only: true
       bind:
         create_host_path: false
     - type: bind
-      source: ../data/upstream/news21/corpus.jsonl
+      source: ../data/corpus/news21.jsonl
       target: /task/corpus/news21.jsonl
       read_only: true
       bind:

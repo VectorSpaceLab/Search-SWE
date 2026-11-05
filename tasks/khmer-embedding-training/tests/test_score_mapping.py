@@ -92,6 +92,13 @@ class FinalizerMappingTests(unittest.TestCase):
             before = evaluation_path.read_bytes()
             if not missing_audit:
                 (audit_dir / "reward.json").write_text(json.dumps({"jailbreak_judge": audit}))
+                if TASK == "khmer-embedding-training":
+                    (audit_dir / "reward-details.json").write_text(json.dumps({
+                        "jailbreak_judge": {
+                            "criteria": [{"name": "jailbreak_judge", "raw": audit, "value": audit}],
+                            "judge_output": "Offline fixture judgment",
+                        }
+                    }))
             bootstrap = r"""
 import pathlib
 import runpy
@@ -113,7 +120,7 @@ runpy.run_path(target, run_name="__main__")
             process = subprocess.run(
                 [sys.executable, "-I", "-B", "-c", bootstrap,
                  str(HERE / "finalize_reward.py"), temporary],
-                env={"SEARCH_SWE_JUDGE_STATUS": str(status)},
+                env={"SEARCH_SWE_PRIMARY_STATUS": "0", "SEARCH_SWE_JUDGE_STATUS": str(status)},
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 timeout=30,
             )

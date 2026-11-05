@@ -40,8 +40,10 @@ def read_manifest(task):
     seen = set()
     for entry in manifest["files"]:
         rel = relative_path(entry["path"])
-        if not rel.parts or rel.parts[0] not in ("data", "models") or len(rel.parts) < 2:
-            raise ValueError(f"Asset must be under data/ or models/: {rel}")
+        ordinary = len(rel.parts) >= 2 and rel.parts[0] in ("data", "models")
+        verifier = len(rel.parts) >= 3 and rel.parts[:2] == ("tests", "data")
+        if not (ordinary or verifier):
+            raise ValueError(f"Asset must be under data/, models/ or tests/data/: {rel}")
         if rel in seen:
             raise ValueError(f"Duplicate asset: {rel}")
         seen.add(rel)

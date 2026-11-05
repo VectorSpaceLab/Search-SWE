@@ -74,8 +74,8 @@ the ideal nDCG@20 value, so full score requires Q=1.
 Reusing the baseline is legal and earns zero without improvement.
 Extra speed/GPU savings/language count do not earn extra points.
 
-A single query error, timeout, wrong shape, nonfinite or unnormalizable output earns zero for that
-query and remains in its language denominator. Document preparation failure/timeout, total resource
+A failed median query sample, including an error, timeout, wrong shape, nonfinite or unnormalizable
+output, earns zero for that query and remains in its language denominator. Document preparation failure/timeout, total resource
 violation, use of prohibited data/models/services, continued learning in verification, or violation
 of the frozen-function/integrity rules makes the entire task zero. The verifier measures behavior
 and time rather than accepting submitted scores. A separate trajectory integrity audit gates the
@@ -84,7 +84,7 @@ diagnostics are reported.
 
 ### Timing and resource protocol
 
-One physical NVIDIA A100 40GB is available in both phases with the same allocation, together with 16
+One GPU is available in both phases with the same allocation, together with 16
 CPUs, 16 GiB memory and 100 GiB total task storage including provided inputs, weights, optimizer
 state, checkpoints, indexes and caches. Each container has a combined limit of 512
 processes/threads. The whole agent phase is at most 21,600 seconds (six hours), including
@@ -93,21 +93,33 @@ submission. There is no separate extra training period. The trusted collector st
 and freezes /app/submission when the agent ends or its deadline expires. Only that submission and
 framework-owned audit artifacts are transferred.
 
-The image is read-only. /app has a 91 GiB tmpfs; /tmp, /root and /var/tmp have 1 GiB tmpfs each,
-charged to the same 16 GiB RAM budget. The private /dev/shm area is 1 GiB for IPC and shares that
-RAM budget. The small /opt/harbor tmpfs, framework logs and collection metadata are for the
-framework, not extra task cache/storage. The submitted verifier process runs without privileged
+Task workspaces and submission transport use disk storage. Task inputs and runtime mounts remain
+read-only. Logical bytes of supplied inputs and files in /app, /tmp, /var/tmp, /root and /dev/shm
+count toward the 100 GiB task limit; the collector checks usage, and verification samples it during
+execution. This is logical accounting, not a per-write filesystem quota. Framework setup, transport,
+logs and collection metadata are excluded and cannot be used as task cache/storage. The private
+/dev/shm area is 1 GiB for IPC and shares the 16 GiB RAM budget. The submitted verifier process runs without privileged
 file/network access and shares the same CPU/RAM/GPU limits. Network/model/data services are
 unavailable for task programs. Read the environment documentation for exact installed tools and
 writable paths.
 
-Independent verifier preparation is at most 1,800 seconds, including module/parameter loading,
+Each of five independent measurement rounds allows at most 1,800 seconds of preparation, including module/parameter loading,
 transforming all 6,320 documents and constructing caches. It does not grant further training/tuning
 time. Models/documents may be preloaded; warmup uses public queries only. Hidden queries first reach
 the transform in the timed phase. Queries are sequential, concurrency one, with at most 0.5 seconds
 each for input transfer/transform, GPU synchronization, normalization, full-candidate cosine
 scanning, Top-20 selection and output. Labels/metric computation are outside the query operation.
-Hanging/exited transforms leave subsequent unanswered queries failed.
+The five rounds use the same fixed query order and consistency-check seed, with fresh workers,
+document caches and temporary workspaces. A query timeout closes the worker and leaves the
+remaining queries in that round failed. A timed-out or exited worker during a consistency probe
+is handled the same way; a returned vector that violates consistency still invalidates the task.
+Failed samples count as 0.5 seconds for aggregation.
+For each query, sort its five samples by capped duration, with valid samples before failed ones
+at an equal duration, then by round number. Use the middle sample for both latency and nDCG/Recall;
+quality is never a selection criterion. At least three successful samples are needed for credit.
+Any preparation, resource or consistency violation still invalidates the whole submission.
+The primary supervisor allows 43,500 seconds and the outer verifier 45,600 seconds, including
+the single integrity audit. Agent development time remains six hours.
 
 ## Hidden Test Overview
 

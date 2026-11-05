@@ -19,11 +19,11 @@ base_model = "meta-llama/Llama-3.2-1B"
 corpus_document_count = 66454
 example_count = 80000
 hidden_query_count = 1271
-gpu_hardware = "1 x NVIDIA A100 40GB"
+gpu_hardware = "1 GPU"
 index_build_timeout_seconds = 1200
 service_load_timeout_seconds = 120
 query_batch_timeout_seconds = 120
-timing_repeats = 3
+timing_repeats = 5
 data_status = "Public derivative assets pinned to the official dataset; original model pinned upstream"
 
 minimum_ndcg_at_10 = 0.45
@@ -38,7 +38,7 @@ user = "root"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 3900.0
+timeout_sec = 4500.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

@@ -30,7 +30,7 @@ def format_input(query,instruction,template):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--groups',default='/task/public/dev-groups.json');p.add_argument('--cache',default='/app/baseline-cache');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--groups',default='/task/data/validation/dev-groups.json');p.add_argument('--cache',default='/app/baseline-cache');args=p.parse_args()
     cache=Path(args.cache);cache.mkdir(parents=True,exist_ok=True)
     torch.set_num_threads(16);torch.manual_seed(20261019)
     tok=AutoTokenizer.from_pretrained('/task/models/e5-large-v2',local_files_only=True)

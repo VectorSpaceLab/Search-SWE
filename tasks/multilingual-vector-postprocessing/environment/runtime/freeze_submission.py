@@ -6,10 +6,13 @@ from pathlib import Path
 import signal
 import shutil
 import stat
+import sys
 import tempfile
 import time
 
 import psutil
+sys.path.insert(0, "/task/runtime")
+from storage import StorageBudget
 
 
 def container_resources():
@@ -65,6 +68,8 @@ def main():
     try:
         if remaining:
             raise ValueError("Background work did not stop before artifact freezing")
+        storage = StorageBudget()
+        status["task_storage_bytes"] = storage.check(force=True)
         if root.is_symlink() or not root.is_dir():
             raise ValueError("Submission root must be a real directory")
         paths = []
@@ -109,9 +114,8 @@ def main():
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(temporary, destination)
-    # Harbor 0.22 downloads with Docker cp, which cannot see this engine's
-    # tmpfs contents. Only after all agent work stopped, materialize the frozen
-    # artifact in its framework-owned bind mount, never as an agent cache.
+    # After agent work stops, publish the frozen artifact and trusted metadata
+    # together in the framework transport directory, never as an agent cache.
     log_root = Path("/logs/agent")
     log_root.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=".collect-submission-", dir=log_root))

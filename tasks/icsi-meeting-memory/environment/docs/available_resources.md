@@ -1,48 +1,18 @@
 # Available Resources
 
-The submission may use the external APIs below for retrieval and, where allowed by the task instruction, generative LLM calls.
+Use the supplied meeting history and public validation examples. No local model weights are supplied. Task API access is limited to `openrouter.ai` and `api.jina.ai`; documentation links do not grant access to additional hosts. External search, reader services, answer lookup and benchmark-answer datasets are prohibited.
 
-The variables listed below are injected by Harbor at runtime and are available directly in your development processes. Read them as ordinary environment variables; for example, use `$OPENROUTER_API_KEY` in shell or `os.environ["JINA_API_KEY"]` in Python. Do not source a `.env` file inside the container. Only variables listed here and configured by Harbor are guaranteed to be available.
-
-For example, check whether a credential is present without exposing its value:
-
-```bash
-if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-    echo "OPENROUTER_API_KEY is not set" >&2
-    exit 1
-fi
-```
-
-```python
-import os
-
-if not os.environ.get("OPENROUTER_API_KEY"):
-    raise RuntimeError("OPENROUTER_API_KEY is not set")
-```
-
-Credentials are runtime resources. Do not hard-code them, print or log their values, write them into code, memories, indexes, prompts or output artifacts, or assume they are available during Docker image build. Evaluation uses the stage-specific transports below; submitted processes do not receive provider keys.
-
-Harbor restricts task API access to `openrouter.ai` and `api.jina.ai`. Documentation links are references and do not grant access to additional hosts.
-
-```bash
-OPENROUTER_API_KEY=<YOUR_OPENROUTER_API_KEY>
-JINA_API_KEY=<YOUR_JINA_API_KEY>
-```
+Development processes receive `OPENROUTER_API_KEY` and, when configured, `JINA_API_KEY` as environment variables. Do not expose or save credentials in code, memories, indexes, prompts, logs or output artifacts. During evaluation, submitted programs use the stage-specific clients below instead of provider keys and have no direct network access.
 
 ## Retrieval resources
 
-Embedding and reranking models may be used through Jina for memory preparation, index construction and retrieval. Use the exact model IDs and request formats supported by the selected Jina endpoint. These APIs are for text embedding and candidate scoring, not generation, external search, URL fetching or answer lookup. OpenRouter embedding and reranking endpoints are not supplied for this task. Local computation remains available without Jina.
+Local computation and Jina text embedding and reranking are permitted for memory preparation, index construction and retrieval. Generative APIs are not permitted for these operations. Jina is optional; no single retrieval model is prescribed. OpenRouter embedding and reranking endpoints are not supplied for this task.
 
-Jina:
+- Embedding endpoint: `https://api.jina.ai/v1/embeddings` — [API reference](https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings)
+- Reranking endpoint: `https://api.jina.ai/v1/rerank` — [API reference](https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/rerank)
+- Supported models: `https://jina.ai/models`
 
-- Quickstart: `https://docs.jina.ai/get-started/quickstart`
-- Embedding API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings`
-- Reranking API documentation: `https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/rerank`
-- Models: `https://jina.ai/models`
-
-During development, use `JINA_API_KEY` with `https://api.jina.ai/v1/embeddings` or `https://api.jina.ai/v1/rerank`. Select a model supported by the corresponding endpoint; no single retrieval model is prescribed. Only text inputs are permitted.
-
-During evaluation, `build.sh` and `run.sh` receive `TASK_JINA_CLIENT` and `TASK_JINA_FD` instead of a provider key. Load the supplied client module and use it for Jina requests:
+During development, call these endpoints using `JINA_API_KEY`. Use text from the supplied history and select a model supported by the corresponding endpoint. During evaluation, `build.sh` and `run.sh` receive `TASK_JINA_CLIENT` and `TASK_JINA_FD`:
 
 ```python
 import importlib.util
@@ -55,26 +25,20 @@ vectors = jina.embeddings(model=embedding_model_id, input=text_batch)
 ranking = jina.rerank(model=reranker_model_id, query=question, documents=candidate_texts)
 ```
 
-The client sends an operation (`embeddings` or `rerank`) and the provider request body through the supplied file descriptor. Preserve `TASK_JINA_FD` when starting subprocesses. Each serialized request, including its newline, must fit within 128 KiB; batch larger inputs. There is no separate Jina call-count limit, but calls count toward the build or retrieval time budget. Use only the current stage's permitted inputs. The answerer does not receive this transport, and direct network access from submitted evaluation processes is disabled.
+The client forwards an operation (`embeddings` or `rerank`) and the provider request body through the supplied file descriptor. Preserve `TASK_JINA_FD` when starting subprocesses. Each serialized request, including its newline, must fit within 128 KiB; batch larger inputs. There is no separate Jina call-count limit, but calls count toward the build or retrieval time budget. Use only the current stage's permitted inputs. The answerer does not receive this transport.
 
 ## Generative LLM resources
 
-Generative calls are allowed only through OpenRouter, and only from `answer.sh` using the current question and retrieved strings. The following four model IDs are the complete allowlist:
+Only `answer.sh` may call a generative model, using the current question and retrieved strings. Generation is allowed through OpenRouter with these four exact model IDs:
 
-- `qwen/qwen3.6-35b-a3b` — `https://openrouter.ai/qwen/qwen3.6-35b-a3b`
-- `qwen/qwen3.5-35b-a3b` — `https://openrouter.ai/qwen/qwen3.5-35b-a3b`
-- `qwen/qwen3.5-9b` — `https://openrouter.ai/qwen/qwen3.5-9b`
-- `qwen/qwen3-30b-a3b-instruct-2507` — `https://openrouter.ai/qwen/qwen3-30b-a3b-instruct-2507`
+- `qwen/qwen3.6-35b-a3b`
+- `qwen/qwen3.5-35b-a3b`
+- `qwen/qwen3.5-9b`
+- `qwen/qwen3-30b-a3b-instruct-2507`
 
-The fourth ID is the exact OpenRouter identifier for `Qwen3-30B-A3B-Instruct-2507`. Include your chosen model ID in each request; you may select different allowed models within the question's call budget.
+The endpoint is `https://openrouter.ai/api/v1/chat/completions`; see the [OpenRouter API reference](https://openrouter.ai/docs/api/reference/overview). Include an allowed model ID in each request. Different allowed models may be selected within the question's call budget.
 
-OpenRouter generation resources:
-
-- Quickstart: `https://openrouter.ai/docs/quickstart`
-- API documentation: `https://openrouter.ai/docs/api/reference/overview`
-- OpenAI-compatible endpoint: `https://openrouter.ai/api/v1/chat/completions`
-
-During evaluation, `answer.sh` receives `TASK_LLM_CLIENT` and `TASK_LLM_FD`. The supplied client forwards Chat Completions requests while retaining the provider credential outside the submitted process:
+During development, send Chat Completions requests directly to that endpoint using `OPENROUTER_API_KEY`. During evaluation, `answer.sh` receives `TASK_LLM_CLIENT` and `TASK_LLM_FD`; use this client without requiring a provider key or direct network access:
 
 ```python
 import importlib.util
@@ -92,29 +56,8 @@ response = api.chat_completion(
 text = response["choices"][0]["message"]["content"]
 ```
 
-The model in this example is one allowed choice. Preserve `TASK_LLM_FD` when starting subprocesses. When `TASK_LLM_CLIENT` is present, use the client without requiring `OPENROUTER_API_KEY` or direct network access. Without that transport during development, the answerer may send the same request body directly to the OpenRouter endpoint:
+Preserve `TASK_LLM_FD` when starting subprocesses. The answerer must not consult the full memory, index, original transcripts, previous requests or corpus-specific facts embedded in its code.
 
-```python
-import os
-import requests
+Each question permits at most two generation calls, each requesting 1–2,000 output tokens. Accepted options are `model`, `messages`, `temperature`, `top_p`, `max_tokens` and `response_format`. Messages must be a list of 1–32 objects with exactly the string fields `role` and `content`; allowed roles are `system`, `user` and `assistant`. Each serialized request, including its newline, must fit within 128 KiB. Streaming, tool calls and alternate endpoints are not supported. The same call and content restrictions apply to development self-tests.
 
-response = requests.post(
-    "https://openrouter.ai/api/v1/chat/completions",
-    headers={"Authorization": "Bearer " + os.environ["OPENROUTER_API_KEY"]},
-    json=request_body,
-    timeout=45,
-    allow_redirects=False,
-)
-response.raise_for_status()
-result = response.json()
-```
-
-Build `request_body` only from the current question and retrieved notes, with an explicit allowed `model`. The answerer must not consult the full memory, index, original transcripts, previous requests or corpus-specific facts embedded in its code.
-
-Each question permits at most two generation calls, each requesting 1–2,000 output tokens. The accepted options are `model`, `messages`, `temperature`, `top_p`, `max_tokens` and `response_format`. Messages must be a list of 1–32 objects with exactly the string fields `role` and `content`; allowed roles are `system`, `user` and `assistant`. Each serialized request, including its newline, must fit within 128 KiB. Streaming, tool calls and alternate endpoints are not supported. The same call and content restrictions apply to development self-tests.
-
-### Strict allowlist and jailbreak penalty
-
-The four model IDs, OpenRouter endpoint and answering-only use are mandatory restrictions. Do not call other generative models or providers, use generative APIs for memory preparation or retrieval, or use embedding and reranking endpoints as substitutes for generation. Only the listed Jina retrieval endpoints are permitted; external search, reader and answer services and benchmark-answer datasets are prohibited.
-
-Do not seek unprovided evidence or reuse information across answering requests. A failed API call does not authorize an unlisted model, provider or endpoint. If the verifier or trajectory audit detects a prohibited call, access to hidden data or a bypass of the required pipeline, the entire task receives a score of `0`, regardless of retrieval or answer quality.
+Do not use unlisted models, providers or endpoints, or use retrieval endpoints as generation substitutes. A failed call does not authorize a different service. Prohibited API calls, hidden-data access or bypassing the required pipeline cause the entire task to receive zero. See the task instruction for the submission interfaces, stage inputs and execution limits.

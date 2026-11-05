@@ -34,6 +34,7 @@ DIMENSION = 1024
 VECTOR_DTYPE_BYTES = 4
 TOP_K = 3
 HIDDEN_QUERY_COUNT = 20
+MEASUREMENT_ROUNDS = 5
 BUILD_TIMEOUT_SECONDS = 150.0
 # Each query is an independent run.sh invocation and earns its own score.
 # Keep the per-query budget tight enough to reject exhaustive-scan baselines
@@ -489,6 +490,13 @@ def summarize_scores(results: list[dict[str, Any]]) -> dict[str, Any]:
             "reward": accuracy * factor if quality_gate_passed else 0.0}
 
 
+def select_median_round(rounds: list[dict[str, Any]]) -> dict[str, Any]:
+    if len(rounds) != MEASUREMENT_ROUNDS:
+        raise VerificationError("incomplete measurement rounds")
+    # Stable ties use round order; accuracy never influences run selection.
+    return sorted(rounds, key=lambda row: row["scoring"]["p95_seconds"])[MEASUREMENT_ROUNDS // 2]
+
+
 def run_submission_check(script: str) -> bool:
     result = subprocess.run(
         SUBMISSION_COMMAND + ["/bin/sh", "-c", script],
@@ -558,6 +566,19 @@ def prepare_workdirs() -> None:
         child.mkdir()
         os.chown(child, SUBMISSION_UID, SUBMISSION_GID)
         os.chmod(child, 0o700)
+
+
+def reset_measurement_workspace() -> None:
+    """Discard all previous query state before another independent build."""
+    restart_submission_for_queries()
+    validate_index_workspace()
+    for child in INDEX_DIR.iterdir():
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    # Keep the tmpfs mount, but remove all prior query inputs and output paths.
+    prepare_workdirs()
 
 
 def private_input_file(path: Path) -> None:
@@ -838,11 +859,12 @@ def score_query(
 
 def main() -> int:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    rounds: list[dict[str, Any]] = []
     report: dict[str, Any] = {
         "task_id": "memory-constrained-dense-retrieval", "valid": False, "score": 0.0, "reward": 0.0,
-        "errors": [],
+        "errors": [], "rounds": rounds,
     }
-    records: list[tuple[str, Path, dict[str, Any], str | None]] = []
+    record_batches: list[list[tuple[str, Path, dict[str, Any], str | None]]] = []
     try:
         if EXECUTION_ERROR:
             raise VerificationError(EXECUTION_ERROR)
@@ -855,76 +877,100 @@ def main() -> int:
         report['query_cpu_boundary'] = validate_query_cpu_boundary()
         corpus_rows = load_corpus_shape()
         private_metadata, ground_truth, private_config, raw_vectors = load_private_queries()
-        build_metrics = run_timed(
-            [str(SUBMISSION_DIR / "build.sh"),
-             "--vectors", str(TASK_DATA / "vectors.f32"),
-             "--metadata", str(TASK_DATA / "metadata.jsonl"),
-             "--config", str(TASK_DATA / "vector_config.json"),
-             "--index-dir", str(INDEX_DIR)],
-            timeout=BUILD_TIMEOUT_SECONDS,
-            stdout_path=RESULTS_DIR / "build.stdout.log",
-            stderr_path=RESULTS_DIR / "build.stderr.log",
-        )
-        report["build"] = build_metrics
-        check_phase_metrics(build_metrics, "build.sh", timeout=BUILD_TIMEOUT_SECONDS)
-        index_bytes_after_build = check_index_size(INDEX_DIR)
-        report["index_workspace_after_build"] = validate_index_workspace()
-        report["index_bytes_after_build"] = index_bytes_after_build
-        if index_bytes_after_build <= 0:
-            raise VerificationError("build.sh did not create a persistent index")
-
-        # Prove that the bounded artifacts survive a fresh service process.
-        restart_submission_for_queries()
-        report["service_restart_before_queries"] = True
         report["query_cpu_limit"] = 1
         report["query_cpu_affinity"] = report["query_cpu_boundary"]["allowed_cpus"]
         report["query_cpu_enforcement"] = "inherited affinity; seccomp denies affinity changes"
-        for query_number, metadata_row in enumerate(private_metadata, start=1):
-            vectors_path, metadata_path, config_path, output_path = write_single_query(
-                "query", query_number, raw_vectors=raw_vectors,
-                metadata_row=metadata_row, dimension=int(private_config["dimension"]),
+        for round_number in range(1, MEASUREMENT_ROUNDS + 1):
+            if round_number > 1:
+                reset_measurement_workspace()
+            round_report: dict[str, Any] = {"round": round_number}
+            rounds.append(round_report)
+            prefix = f"round-{round_number}"
+            build_metrics = run_timed(
+                [str(SUBMISSION_DIR / "build.sh"),
+                 "--vectors", str(TASK_DATA / "vectors.f32"),
+                 "--metadata", str(TASK_DATA / "metadata.jsonl"),
+                 "--config", str(TASK_DATA / "vector_config.json"),
+                 "--index-dir", str(INDEX_DIR)],
+                timeout=BUILD_TIMEOUT_SECONDS,
+                stdout_path=RESULTS_DIR / f"{prefix}.build.stdout.log",
+                stderr_path=RESULTS_DIR / f"{prefix}.build.stderr.log",
             )
-            snapshot_path = RESULTS_DIR / f"run.query-{query_number:03d}.results.jsonl"
-            metrics = run_timed(
-                ["/usr/local/bin/search-swe-query-cpu", str(SUBMISSION_DIR / "run.sh"), "--index-dir", str(INDEX_DIR),
-                 "--query-vectors", str(vectors_path),
-                 "--query-metadata", str(metadata_path),
-                 "--query-config", str(config_path),
-                 "--output", str(output_path), "--top-k", str(TOP_K)],
-                timeout=QUERY_TIMEOUT_SECONDS,
-                stdout_path=RESULTS_DIR / f"run.query-{query_number:03d}.stdout.log",
-                stderr_path=RESULTS_DIR / f"run.query-{query_number:03d}.stderr.log",
-                output_path=output_path,
-                snapshot_path=snapshot_path,
-            )
-            output_error = metrics.get("output_error")
-            records.append((str(metadata_row["query_id"]), snapshot_path, metrics, output_error))
-            check_index_size(INDEX_DIR)
+            round_report["build"] = build_metrics
+            check_phase_metrics(build_metrics, f"round {round_number} build.sh", timeout=BUILD_TIMEOUT_SECONDS)
+            index_bytes_after_build = check_index_size(INDEX_DIR)
+            round_report["index_workspace_after_build"] = validate_index_workspace()
+            round_report["index_bytes_after_build"] = index_bytes_after_build
+            if index_bytes_after_build <= 0:
+                raise VerificationError("build.sh did not create a persistent index")
 
-        # Keep the query service alive throughout the workload. Stop it
-        # before loading the large metadata lookup and inspecting private labels.
-        stop_submission_processes()
-        report["index_bytes"] = check_index_size(INDEX_DIR)
-        report["index_workspace_final"] = validate_index_workspace()
+            # Each run starts from persisted state, without a build-started service.
+            restart_submission_for_queries()
+            round_report["service_restart_before_queries"] = True
+            records: list[tuple[str, Path, dict[str, Any], str | None]] = []
+            for query_number, metadata_row in enumerate(private_metadata, start=1):
+                vectors_path, metadata_path, config_path, output_path = write_single_query(
+                    prefix, query_number, raw_vectors=raw_vectors,
+                    metadata_row=metadata_row, dimension=int(private_config["dimension"]),
+                )
+                snapshot_path = RESULTS_DIR / f"{prefix}.query-{query_number:03d}.results.jsonl"
+                metrics = run_timed(
+                    ["/usr/local/bin/search-swe-query-cpu", str(SUBMISSION_DIR / "run.sh"), "--index-dir", str(INDEX_DIR),
+                     "--query-vectors", str(vectors_path),
+                     "--query-metadata", str(metadata_path),
+                     "--query-config", str(config_path),
+                     "--output", str(output_path), "--top-k", str(TOP_K)],
+                    timeout=QUERY_TIMEOUT_SECONDS,
+                    stdout_path=RESULTS_DIR / f"{prefix}.query-{query_number:03d}.stdout.log",
+                    stderr_path=RESULTS_DIR / f"{prefix}.query-{query_number:03d}.stderr.log",
+                    output_path=output_path,
+                    snapshot_path=snapshot_path,
+                )
+                output_error = metrics.get("output_error")
+                records.append((str(metadata_row["query_id"]), snapshot_path, metrics, output_error))
+                check_index_size(INDEX_DIR)
+            stop_submission_processes()
+            round_report["index_bytes"] = check_index_size(INDEX_DIR)
+            round_report["index_workspace_final"] = validate_index_workspace()
+            record_batches.append(records)
+
+        # Load the large corpus lookup only after all timed workloads and IPC end.
+        restart_submission_for_queries()
         doc_rows = load_doc_rows(corpus_rows)
         for query_id, relevant in ground_truth.items():
             unknown = relevant - doc_rows.keys()
             if unknown:
                 raise VerificationError(f"ground truth for {query_id!r} contains unknown document IDs")
-        results = [score_query(query_id, path, metrics, error, doc_rows, ground_truth)
-                   for query_id, path, metrics, error in records]
+        for round_report, records in zip(rounds, record_batches, strict=True):
+            results = [score_query(query_id, path, metrics, error, doc_rows, ground_truth)
+                       for query_id, path, metrics, error in records]
+            round_report["queries"] = results
+            round_report["scoring"] = summarize_scores(results)
+        selected = select_median_round(rounds)
+        results = selected["queries"]
         passed = sum(row["score"] for row in results)
-        aggregate = summarize_scores(results)
+        aggregate = selected["scoring"]
         metric = aggregate["accuracy_at_3"]
         report["resources_after"] = resource_snapshot()
         if oom_kills(report["resources_after"]) > oom_kills(resources_before):
             raise VerificationError("container memory limit caused an OOM kill")
         report.update({
             "valid": True, "score": 100.0 * aggregate["reward"], "reward": aggregate["reward"],
+            "selected_round": selected["round"],
+            "build": selected["build"],
+            "service_restart_before_queries": selected["service_restart_before_queries"],
+            "index_bytes_after_build": selected["index_bytes_after_build"],
+            "index_workspace_after_build": selected["index_workspace_after_build"],
+            "index_bytes": selected["index_bytes"],
+            "index_workspace_final": selected["index_workspace_final"],
             "scoring": {**aggregate, "p95_target_seconds": P95_TARGET_SECONDS,
                         "timing_end": "protected output capture after client exit",
                         "quantile": "nearest-rank ceil(0.95*N), one-based",
-                        "rounds": 1, "timeout_latency_seconds": QUERY_TIMEOUT_SECONDS},
+                        "rounds": MEASUREMENT_ROUNDS,
+                        "selection": "median round P95; accuracy from the same round; ties by round order",
+                        "selected_round": selected["round"],
+                        "round_p95_seconds": [row["scoring"]["p95_seconds"] for row in rounds],
+                        "timeout_latency_seconds": QUERY_TIMEOUT_SECONDS},
             "query_count": len(results), "passed_queries": passed,
             "all_cases_passed": passed == HIDDEN_QUERY_COUNT,
             "primary_metric": {

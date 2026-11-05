@@ -9,7 +9,7 @@
 | Authors | jianlyu |
 | Primary metric | nDCG_prime |
 | Compute | 2 CPUs; 4 GiB RAM; 64 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 19800 s |
+| Agent / verifier time limits | 7200 s / 67800 s |
 | Public queries | 5 |
 | Hidden queries | 76 |
 
@@ -34,7 +34,9 @@ The complete formula corpus must be searchable with only 34 MiB of prepared arti
 
 ## Verification Explanation
 
-The verifier maps returned formula instances to visual IDs, deduplicates them and computes nDCG prime using the official judgments. It averages across all 76 hidden questions, including failures, with compact-serving storage and runtime limits enforced. Final reward also requires the integrity audit to pass. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+The verifier builds once and runs five independent serving passes, with fresh processes/runtime directories, identical warmup and fixed query order. For each query, it scores the response associated with the median elapsed time; failed or invalid attempts rank after valid attempts within 50 ms. Fewer than three successful attempts gives that query zero. The response is selected by timing, never by relevance score. The verifier sorts instances by descending score, maps them to visual IDs, deduplicates and computes nDCG prime using the complete judgments. It averages across all 76 hidden questions, including failures. Final reward also requires one healthy, accepting integrity audit. See the [verification contract](raw-instruction.md#verification) and [current validation record](VALIDATION.md).
+
+Candidate deadlines remain 3,600 seconds for building, 120 seconds for each load and 30 seconds for each warmup. The maximum five-pass restart path permits 60,619 seconds of candidate work. The primary supervisor has 66,000 seconds for those stages, cleanup and scoring; the audit wrapper has 1,200 seconds, finalization has 30 seconds and the outer verifier has 67,800 seconds. Normal runs build only once; the larger supervisor budget accommodates the existing per-query recovery policy.
 
 Harbor enforces the agent deadline and transfers the available submission to the
 verifier. Agent command completion is not a separate scoring gate: the verifier
@@ -55,6 +57,8 @@ restoration paths. Keep verifier inputs outside agent mounts. Model cards,
 licenses and data-use restrictions are described in the resource document and
 [SOURCES.md](SOURCES.md).
 
+Public corpus files restore directly under `data/`; the five public queries and their judgments restore as `data/validation/queries.jsonl` and `data/validation/qrels.tsv`. Existing official HF files, immutable revisions, sizes and hashes are reused without changing data. Historical dataset filenames retain `public/dev/`; those remote filenames do not determine the local restored layout. Host FUSE tools are cached outside public inputs, under `jobs/.task-storage/large-scale-formula-retrieval/.tools/` by default.
+
 ### Run
 
 The task allocates 2 CPU cores, 4 GiB RAM and
@@ -66,13 +70,15 @@ trusted setup and checks.
 This task uses no GPU. Development and the timed final build may optionally use the OpenRouter/Jina APIs listed in [available resources](environment/docs/available_resources.md). Configure `OPENROUTER_API_KEY` and/or `JINA_API_KEY` for the services used; these submission credentials are separate from coding-agent and judge credentials. Follow the [submission API key profile](../../docs/evaluation/submission-models.md). Model-weight and extra-dataset/package downloads are prohibited. Loading, warmup and queries remain offline. API waits count toward the existing time budgets, and stored outputs count toward the existing storage limits.
 
 Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`,
-`dpkg-deb`, and root or sudo access. The standard launcher prepares fresh
+`dpkg-deb`, Landlock support, and root or sudo access. The standard launcher prepares fresh
 bounded agent, verifier and serving storage, chooses 2 logical CPUs from its
 available affinity, and unmounts storage after the run's containers exit.
 Backing images remain under `jobs/.task-storage/large-scale-formula-retrieval/`.
 Set `FORMULA_CPUSET` to preserve a particular 2-CPU allocation when reproducing
 a run. See [bounded task storage](../../docs/evaluation/runtime.md#bounded-task-storage)
 for host setup, permissions, recovery and caller-managed storage.
+
+Both Compose overlays require the selected CPU variable rather than assuming particular host CPU numbers. The standard launcher supplies it automatically. The 40 MiB serving filesystem is an enforced disk quota, not an optional tmpfs allocation; retain it on other supported hosts. CPU selection portability does not guarantee identical 50 ms performance across machines.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
@@ -82,6 +88,7 @@ Also configure `VERIFIER_OPENAI_API_KEY` and
 into the verifier. Its service timeout includes a separate 1200-second audit
 allowance; submission phase limits remain unchanged. A positive final reward
 requires a successful accepting audit of the protected trajectory and submission.
+The audit runs as UID 10002 with a filtered environment and filesystem restrictions. It can read the submission and a protected trajectory copy, write its own scratch/output, and cannot read hidden inputs or modify grading reports. Aggregate, raw and normalized criterion decisions must agree. Missing, malformed or inconsistent audits are infrastructure failures, while a confirmed rejection is a valid zero.
 Inspect `audit-status.json`, `audit.json` and `reward-details.json` alongside the
 deterministic report; missing or unhealthy audits cannot produce a positive reward.
 

@@ -19,6 +19,7 @@ SUB=Path('/app/submission')
 WORK=Path('/app/worker')
 PREPARE_SECONDS=3600.
 QUERY_SECONDS=1.
+QUERY_REPEATS=5
 
 
 def dump(path,obj):
@@ -81,20 +82,55 @@ class Resources:
     def __init__(self):
         pynvml.nvmlInit()
         if pynvml.nvmlDeviceGetCount()!=1:raise RuntimeError('Exactly one mapped GPU required')
-        self.gpu=pynvml.nvmlDeviceGetHandleByIndex(0)
-        self.peak_gpu=0;self.peak_disk=0;self.last_disk=0
-        self.fixed=sum(p.stat().st_size for root in [Path('/task/models'),Path('/task/corpus')] for p in root.rglob('*') if p.is_file())
+        self.peak_disk=0;self.last_disk=0
+        self.fixed=sum(p.stat().st_size for root in [Path('/task/models'),Path('/task/corpus'),Path('/task/data')] for p in root.rglob('*') if p.is_file())
     def check(self):
-        used=pynvml.nvmlDeviceGetMemoryInfo(self.gpu).used;self.peak_gpu=max(self.peak_gpu,used)
-        if used>40<<30:raise ResourceViolation('40 GiB physical GPU budget exceeded')
         if time.monotonic()-self.last_disk>=1:
             self.last_disk=time.monotonic()
-            total=self.fixed+sum(p.stat().st_size for p in Path('/app').rglob('*') if p.is_file() and not p.is_symlink())
+            total=self.fixed+sum(p.stat().st_size for root in [Path('/app'),Path('/tmp')] for p in root.rglob('*') if p.is_file() and not p.is_symlink())
             self.peak_disk=max(self.peak_disk,total)
             if total>32<<30:raise ResourceViolation('32 GiB task storage exceeded')
     def report(self):
-        return {'peak_gpu_bytes':self.peak_gpu,'peak_task_storage_bytes':self.peak_disk,
-                'gpu':pynvml.nvmlDeviceGetName(self.gpu),'gpu_uuid':pynvml.nvmlDeviceGetUUID(self.gpu)}
+        return {'peak_task_storage_bytes':self.peak_disk}
+
+
+def measure_query(group,version,docs,index,call,recover):
+    """Measure a fixed query five times; retain the median sample's ranking.
+
+    Timeouts count as slower than every completed measurement. Invalid outputs
+    invalidate the query rather than being voted away by successful repetitions.
+    """
+    samples=[];rankings=[];failures=[];invalid=False
+    for repeat in range(QUERY_REPEATS):
+        begin=time.monotonic();ranking=None;error=None;timed_out=False
+        try:
+            rows=[index[group['subset']+'/'+d] for d in group['candidates']]
+            documents=np.asarray(docs[rows])
+            vector=call({'query':group['query'],'instruction':group['instruction_'+version]},begin+QUERY_SECONDS)
+            ranking=rank_vectors(vector,documents,group['candidates'])
+            elapsed=time.monotonic()-begin
+            if elapsed>QUERY_SECONDS:
+                timed_out=True;error='Query encoding plus scoring exceeded 1 second'
+        except ResourceViolation:raise
+        except Exception as exc:
+            elapsed=time.monotonic()-begin;error=str(exc)
+            timed_out=isinstance(exc,TimeoutError)
+            invalid=not timed_out
+            # Recovery is outside the sample, but inside the verifier budget.
+            if isinstance(exc,(TimeoutError,BrokenPipeError,RuntimeError)):recover()
+        if error is not None:
+            failures.append({'key':group['key'],'version':version,'repeat':repeat+1,'error':error})
+        samples.append({'seconds':elapsed,'status':'invalid' if invalid else 'timeout' if timed_out else 'ok'})
+        rankings.append(ranking)
+        if invalid:break
+    median=None
+    if not invalid:
+        ordered=sorted(range(QUERY_REPEATS),key=lambda i:samples[i]['seconds'] if samples[i]['status']=='ok' else float('inf'))
+        selected=ordered[QUERY_REPEATS//2]
+        if samples[selected]['status']=='ok':median=selected
+    timing={'key':group['key'],'version':version,'seconds':samples[median]['seconds'] if median is not None else None,
+            'samples':samples,'selected_repeat':median+1 if median is not None else None}
+    return rankings[median] if median is not None else None,timing,failures
 
 
 def freeze_submission():
@@ -140,29 +176,15 @@ def evaluate(groups,output,anchors=None):
         for _ in range(3):w.call({'query':'Find information about road safety.','instruction':'Include reports comparing vehicles.'},deadline)
         prepare=time.monotonic()-started
         rankings={};timings=[];failures=[]
+        def recover():
+            nonlocal w
+            w.close();w=Worker('query',output,resources)
+            if not w.receive(time.monotonic()+60).get('ready'):raise RuntimeError('Worker recovery failed')
         for g in groups:
             result=[]
             for version in ['og','changed']:
-                begin=time.monotonic()
-                try:
-                    rows=[index[g['subset']+'/'+d] for d in g['candidates']]
-                    documents=np.asarray(docs[rows])
-                    vector=w.call({'query':g['query'],'instruction':g['instruction_'+version]},begin+QUERY_SECONDS)
-                    ranking=rank_vectors(vector,documents,g['candidates'])
-                    elapsed=time.monotonic()-begin
-                    if elapsed>QUERY_SECONDS:raise TimeoutError('Query encoding plus scoring exceeded 1 second')
-                    result.append(ranking)
-                except ResourceViolation:raise
-                except Exception as exc:
-                    elapsed=time.monotonic()-begin
-                    failures.append({'key':g['key'],'version':version,'error':str(exc)})
-                    result.append(None)
-                    # Timed-out/broken workers are killed and reloaded within the
-                    # same total verifier budget; no retry of this query group.
-                    if isinstance(exc,(TimeoutError,BrokenPipeError,RuntimeError)):
-                        w.close();w=Worker('query',output,resources)
-                        if not w.receive(time.monotonic()+60).get('ready'):raise RuntimeError('Worker recovery failed')
-                timings.append({'key':g['key'],'version':version,'seconds':elapsed})
+                ranking,timing,errors=measure_query(g,version,docs,index,lambda message,limit:w.call(message,limit),recover)
+                result.append(ranking);timings.append(timing);failures.extend(errors)
             if all(r is not None for r in result):rankings[g['key']]=result
         report=evaluate_pairs(groups,rankings)
         report.update(valid=True,prepare_seconds=prepare,total_seconds=time.monotonic()-started,timings=timings,failures=failures,resources=resources.report())
@@ -175,7 +197,7 @@ def evaluate(groups,output,anchors=None):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--groups',default='/task/public/dev-groups.json');p.add_argument('--output',default='/app/evaluation');p.add_argument('--anchors');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--groups',default='/task/data/validation/dev-groups.json');p.add_argument('--output',default='/app/evaluation');p.add_argument('--anchors');args=p.parse_args()
     try:
         report=evaluate(json.loads(Path(args.groups).read_text()),Path(args.output),json.loads(Path(args.anchors).read_text()) if args.anchors else None)
         print(json.dumps({k:report[k] for k in ['P','subsets','prepare_seconds','resources']}))

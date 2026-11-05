@@ -11,7 +11,7 @@ Run as root in the agent container, with output outside /app/submission:
 import argparse
 import hashlib
 import json
-from runtime_limits import LIMITS
+from runtime_limits import load_runtime_limits, select_cpus
 import math
 import os
 from pathlib import Path
@@ -168,7 +168,7 @@ def profile(args, calibration, dimension, output):
     state.chmod(0o755)
     events.chmod(0o755)
     os.chown(state, UID, UID)
-    cpus = set(calibration['cpu_affinity'])
+    cpus = set(select_cpus())
     limits = calibration['datasets'][str(dimension)]
     worker = Worker(args.command, state, output / 'stderr.log', cpus)
     result = {'dimension': dimension, 'cells': [], 'insert_seconds': [],
@@ -256,7 +256,7 @@ def profile(args, calibration, dimension, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dimensions', type=int, nargs='+', default=[1536, 3072])
-    parser.add_argument('--public-root', type=Path, default=Path('/task/public'))
+    parser.add_argument('--public-root', type=Path, default=Path('/task/data/corpus'))
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--stages', type=int, default=10)
     parser.add_argument('--batch-size', type=int, default=1000)
@@ -274,10 +274,10 @@ def main():
         parser.error('Run the profiling supervisor as root; the submission runs as UID 10001')
     args.output = args.output.resolve()
     args.public_root = args.public_root.resolve()
-    calibration = LIMITS
-    cpus = set(calibration['cpu_affinity'])
+    calibration = load_runtime_limits()
+    cpus = set(select_cpus())
     if len(cpus) != 16 or not cpus <= os.sched_getaffinity(0):
-        parser.error('Use the same 16-CPU allocation as calibration')
+        parser.error('At least 16 available logical CPUs are required')
     os.sched_setaffinity(0, cpus)
     if args.output.exists() and any(args.output.iterdir()):
         parser.error('Use a fresh output directory')

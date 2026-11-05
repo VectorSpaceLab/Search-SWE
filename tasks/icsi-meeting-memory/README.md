@@ -35,7 +35,7 @@ supported by that evidence.
 | --- | --- |
 | `data/history.jsonl` | Complete transcripts of 67 meetings |
 | `data/validation/queries.jsonl` | Five public development questions |
-| `data/validation/golden_answers.jsonl` | Public reference answers and required facts |
+| `data/validation/ground_truth.jsonl` | Public reference answers and required facts |
 | `data/validation/evidence.jsonl` | Supporting transcript excerpts |
 
 Public inputs are mounted read-only under `/task/data`. The 143 held-out
@@ -52,8 +52,9 @@ The 148 question-answer examples were authored for this task, are linked to
 transcript evidence, and are not original ICSI annotations. They have not
 received independent human certification.
 
-The history is pinned in [assets.json](assets.json). The public examples are restored from bundled
-`asset-metadata/validation/` files.
+The history and public examples are downloaded from immutable Hugging Face
+revisions pinned in [assets.json](assets.json). Public validation files are
+restored directly under `data/validation/`.
 
 #### Fixed Components and Allowed Changes
 
@@ -127,8 +128,13 @@ does not count. The answer judge checks the reference answer and required facts.
 Evidence is judged without the answer, and the answer is judged without the
 retrieved notes.
 
-EvidenceGroundedAnswerAccuracy is the mean of these joint binary outcomes over
-143 held-out questions.
+Evidence extraction and answer generation each run once per question. The fixed
+extracted evidence and fixed answer are each judged three times. In each round,
+both judgments must pass for a score of 1; otherwise that round scores 0. The
+question score is the arithmetic mean of the three round scores (0, 1/3, 2/3 or 1).
+EvidenceGroundedAnswerAccuracy is the mean of these question scores over
+143 held-out questions. Judge transport retries do not regenerate the answer
+or create additional samples; an exhausted judge failure invalidates the measurement.
 Evidence and answer accuracy are also reported separately. Semantic grading
 remains subject to model variability.
 
@@ -179,9 +185,8 @@ configuration, and the [asset guide](../../docs/evaluation/assets.md) for fixed 
 Optional retrieval calls use `JINA_API_KEY`. The verifier's answerer gateway
 requires `OPENROUTER_API_KEY`; configure it even for local-only retrieval.
 The CLI and native launcher check this requirement before starting.
-Evidence and answer grading use `ANSWER_JUDGE_MODEL_NAME`;
-the current configuration routes those calls through OpenRouter with
-`VERIFIER_OPENAI_API_KEY`. Trajectory auditing uses `VERIFIER_OPENAI_BASE_URL`
+Evidence and answer grading use `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL`
+and `ANSWER_JUDGE_API_KEY` from the repository `.env`. Trajectory auditing uses `VERIFIER_OPENAI_BASE_URL`
 and `VERIFIER_OPENAI_API_KEY`. These are verifier-only credentials and must not
 be exposed to submitted programs.
 

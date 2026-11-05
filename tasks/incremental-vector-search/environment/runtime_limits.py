@@ -1,122 +1,98 @@
-"""Fixed parameters for the current task contract."""
+"""Resource policy and machine-local preparation checks shared by both phases."""
+import hashlib
+import importlib
+import json
+import os
+from pathlib import Path
+import sys
 
-LIMITS = {'timing_policy': 'same-environment-exact-reference',
- 'exact_scan_fraction': 0.1,
- 'minimum_baseline_missing_neighbors': 100,
- 'scoring_policy': 'log-missed-neighbor-gain-over-public-reference',
- 'total_requested_neighbors': 25000000,
- 'cpu_affinity': [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79],
- 'runtime_signature': {'faiss_version': '1.15.0',
-                       'compile_options': 'OPTIMIZE AVX2',
-                       'binary_sha256': '6877715f011efe23f85510d735d6527da0aa8d3afa7b348e40e03dbadb8fbd1d',
-                       'probe_sha256': 'ef64e2e5a65559e1d01b0bbab6585917873817f096bceb5de19204ce39b23c48'},
- 'exact_reference_sha256': '543629acaf4ef31889fcc7d9b3c83c4c65894bc543ff5974493edd123cab4559',
- 'baseline': {'public_sha256': '697ee6df79a445fef5123d8c7635d9cf867f44a7087d41b9f55719e4f876e32b'},
- 'datasets': {'1536': {'build_seconds': 3600,
-                       'insert_seconds': 60,
-                       'baseline_micro_recall': 0.7219516,
-                       'baseline_missing_neighbors': 6951210,
-                       'full_scan_seconds': [[42.584686966612935,
-                                              39.27254658192396,
-                                              40.49104411713779,
-                                              40.34841833822429,
-                                              43.017962692305446],
-                                             [38.928436582908034,
-                                              40.06521698087454,
-                                              40.03607741743326,
-                                              40.51581412740052,
-                                              40.053497260436416],
-                                             [39.18229875154793,
-                                              39.66285829432309,
-                                              40.52265860885382,
-                                              40.77463525161147,
-                                              40.79195061326027],
-                                             [40.01796886138618,
-                                              39.903643971309066,
-                                              40.25220497697592,
-                                              40.57980656065047,
-                                              41.30843177251518],
-                                             [40.46622112393379,
-                                              40.061109187081456,
-                                              40.48763277567923,
-                                              41.463413471356034,
-                                              41.36211108788848],
-                                             [40.26445059105754,
-                                              42.943769162520766,
-                                              41.16918537206948,
-                                              41.551903357729316,
-                                              42.727139020338655],
-                                             [41.03202378563583,
-                                              43.629455622285604,
-                                              42.38461798802018,
-                                              43.73895697295666,
-                                              42.2832205761224],
-                                             [41.23908159136772,
-                                              43.22485597617924,
-                                              42.52350113913417,
-                                              42.05799907632172,
-                                              42.2827808521688],
-                                             [41.38408986851573,
-                                              42.46817663311958,
-                                              41.974029920995235,
-                                              42.595649318769574,
-                                              42.61213732138276],
-                                             [41.89087698049843,
-                                              42.014447091147304,
-                                              42.13179033622146,
-                                              42.72512187436223,
-                                              43.103363912552595]]},
-              '3072': {'build_seconds': 3600,
-                       'insert_seconds': 60,
-                       'baseline_micro_recall': 0.96192588,
-                       'baseline_missing_neighbors': 951853,
-                       'full_scan_seconds': [[76.10151059739292,
-                                              76.1005495171994,
-                                              77.00715263932943,
-                                              78.16704324446619,
-                                              77.76708373054862],
-                                             [76.92794871516526,
-                                              77.06702502071857,
-                                              78.03702309913933,
-                                              78.80062549002469,
-                                              79.89497471228242],
-                                             [80.97358454205096,
-                                              77.48965259082615,
-                                              79.26341284438968,
-                                              79.45457755960524,
-                                              79.35751200281084],
-                                             [78.58352464437485,
-                                              78.92420761659741,
-                                              78.93472793698311,
-                                              80.13360362499952,
-                                              82.58355748280883],
-                                             [81.29830072261393,
-                                              80.25662693940103,
-                                              81.51173945888877,
-                                              80.44034046679735,
-                                              80.85432496853173],
-                                             [79.00102978013456,
-                                              79.61569884233177,
-                                              80.57155237346888,
-                                              80.48350790701807,
-                                              80.84097822755575],
-                                             [79.43086094968021,
-                                              81.22849766910076,
-                                              80.69667440094054,
-                                              82.41513656824827,
-                                              81.60311904735863],
-                                             [81.69024149700999,
-                                              82.04874853976071,
-                                              82.15175892785192,
-                                              82.01780296862125,
-                                              82.44602065719664],
-                                             [81.04738471843302,
-                                              81.44045417942107,
-                                              83.19706254266202,
-                                              82.54712683148682,
-                                              83.20336914435029],
-                                             [81.5965235196054,
-                                              84.3046431466937,
-                                              86.05083680339158,
-                                              87.4362929686904,
-                                              83.94042574986815]]}}}
+CPU_COUNT = 16
+TIMING_REPEATS = 5
+EXACT_SCAN_FRACTION = 0.10
+BUILD_SECONDS = 3600
+INSERT_SECONDS = 60
+LIMITS_PATH = Path('/task/platform/limits.json')
+
+
+def digest(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def select_cpus():
+    available = sorted(os.sched_getaffinity(0))
+    if len(available) < CPU_COUNT:
+        raise RuntimeError(f'At least {CPU_COUNT} available logical CPUs are required')
+    return available[:CPU_COUNT]
+
+
+def kernel_signature():
+    import faiss
+    import numpy as np
+    wrapper = importlib.import_module(faiss.fvec_L2sqr.__module__)
+    binary = getattr(wrapper, '_' + wrapper.__name__.rsplit('.', 1)[-1])
+    rng = np.random.Generator(np.random.PCG64(260306660))
+    vectors = rng.random((9, 3072), dtype=np.float32)
+    probe = np.asarray([faiss.fvec_L2sqr(faiss.swig_ptr(vectors[0]),
+                        faiss.swig_ptr(vectors[i]), dim)
+                        for dim in (1536, 3072) for i in range(1, 9)], dtype='<f4')
+    return {'faiss_version': faiss.__version__,
+            'compile_options': faiss.get_compile_options().strip(),
+            'binary_sha256': digest(binary.__file__),
+            'probe_sha256': hashlib.sha256(probe.tobytes()).hexdigest()}
+
+
+def platform_fingerprint():
+    # CPU numbers are discovered locally, never prescribed by the task. Including
+    # them in this opaque cache key detects allocation changes after calibration.
+    cpus = select_cpus()
+    fields = {'processor', 'model name', 'cpu family', 'model', 'stepping',
+              'microcode', 'physical id', 'core id', 'flags'}
+    processors = []
+    for block in Path('/proc/cpuinfo').read_text().split('\n\n'):
+        record = {key.strip(): value.strip() for line in block.splitlines()
+                  if ':' in line for key, value in [line.split(':', 1)]
+                  if key.strip() in fields}
+        if record.get('processor', '').isdigit() and int(record['processor']) in cpus:
+            processors.append(record)
+    controls = {}
+    for name in ('cpu.max', 'memory.max'):
+        path = Path('/sys/fs/cgroup') / name
+        controls[name] = path.read_text().strip() if path.exists() else None
+    # Hardware identity is stable across a reboot. A boot ID would unnecessarily
+    # invalidate hours of reference measurements on an otherwise unchanged host.
+    identity = Path('/sys/class/dmi/id/product_uuid')
+    value = {'cpus': cpus, 'processors': processors, 'controls': controls,
+             'machine': os.uname().machine, 'kernel': os.uname().release,
+             'hardware': identity.read_text().strip() if identity.exists() else None}
+    return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
+
+
+def load_runtime_limits(path=None):
+    path = Path(path) if path is not None else LIMITS_PATH
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise RuntimeError('Platform preparation is missing or invalid; start this task through search-swe run or scripts/evaluation/run_task.py') from error
+    if value.get('schema_version') != 2 or value.get('timing_repeats') != TIMING_REPEATS:
+        raise RuntimeError('Formal verification must use five independent timing replays')
+    if value.get('platform_fingerprint') != platform_fingerprint():
+        raise RuntimeError('Machine or CPU allocation changed; restart through the evaluation launcher to prepare matching limits')
+    if value.get('runtime_signature') != kernel_signature():
+        raise RuntimeError('Faiss runtime changed; the evaluation launcher must regenerate exact answers and timing budgets')
+    reference = Path('/task/reference')
+    for name, expected in value.get('reference_sha256', {}).items():
+        if name not in ('exact_search.py', 'baseline_search.py') or digest(reference / name) != expected:
+            raise RuntimeError('Reference implementation changed; restart through the evaluation launcher')
+    if set(value.get('reference_sha256', {})) != {'exact_search.py', 'baseline_search.py'}:
+        raise RuntimeError('Platform preparation is missing reference checksums')
+    return value
+
+
+if __name__ == '__main__':
+    # Fail before the coding agent runs, rather than spending its budget on an
+    # unsupported or stale platform. Container commands retain their normal argv.
+    os.sched_setaffinity(0, select_cpus())
+    load_runtime_limits()
+    if len(sys.argv) > 1:
+        os.execvp(sys.argv[1], sys.argv[1:])

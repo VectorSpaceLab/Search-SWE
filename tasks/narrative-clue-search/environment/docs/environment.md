@@ -1,5 +1,11 @@
-# Environment
+# CPU Docker Environment
 
-The task uses Python 3.12 at `/opt/conda/bin/python` with CPU-only PyTorch, Transformers, SentenceTransformers, FlagEmbedding, NumPy, PyArrow and FAISS CPU. There are 8 CPU cores, 32 GiB RAM and 100 GiB working storage. No GPU is provided.
+Both agent and verifier containers have 8 CPUs, 32 GiB RAM and 100 GiB task storage, with no GPU.
 
-Task inputs and documents under `/task` are read-only. Work under `/app`. Use `/opt/conda/bin/python` when running Python.
+This image provides a Conda-managed Python 3.12 environment with CPU-only PyTorch and the common search, embedding, indexing, document-processing, media, HTTP, and service packages used by the tasks. Installed Python packages include `torch`, `torchvision`, `torchcodec`, `numpy`, `pyarrow`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `deepspeed`, `faiss-cpu`, `bm25s`, `rank-bm25`, `pyserini`, `hnswlib`, `qdrant-client`, `docling`, `marker-pdf`, `pdf2image`, `pypdfium2`, `CairoSVG`, `av`, `imageio`, `imageio-ffmpeg`, `tiktoken`, `fastapi`, `uvicorn`, `python-multipart`, `requests`, `aiohttp`, `openai`, and `pydantic-settings`.
+
+The task Python interpreter and its installed packages are available at `/opt/conda/bin/python`. Use `/opt/conda/bin/python` and `/opt/conda/bin/pip` when invoking Python or installing packages.
+
+The image also includes the Java 21 runtime, Node.js 24.16.0 with npm 11.13.0, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
+
+Task inputs and documentation under `/task` are read-only. During development, keep submission files under `/app`. During verification, `/app` is read-only; use the supplied index directory, `TMPDIR` and `XDG_CACHE_HOME` for generated files, temporary files and caches, and write results to the supplied output path.

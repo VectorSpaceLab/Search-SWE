@@ -98,7 +98,7 @@ examples are not available in the separate verifier.
 
 ## Environment and available resources
 
-The runtime provides one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and
+The runtime provides one GPU, 16 CPU cores, 32 GiB RAM and
 100 GiB storage. The local model is `/task/models/stella_en_400M_v5`.
 
 Read the following task-provided documents:

@@ -231,6 +231,44 @@ class TaskWorkflow(unittest.TestCase):
         self.assertTrue((output / self.task.name / entry["path"]).is_file())
         self.assertEqual(self.cli("assets/download_assets.py", "--task-path", self.source, "--verify-only").returncode, 0)
 
+    def test_launcher_prepares_before_harbor_but_not_during_preview(self):
+        tools = self.task / "tools"
+        tools.mkdir(exist_ok=True)
+        hook = tools / "prepare_task.py"
+        hook.write_text('''import argparse,json
+from pathlib import Path
+p=argparse.ArgumentParser()
+p.add_argument('--result-json',type=Path)
+p.add_argument('--cpu-set')
+a=p.parse_args()
+Path(__file__).with_name('prepared').touch()
+a.result_json.write_text(json.dumps({'environment': {'FIXTURE_PREPARED': 'ready'}}))
+''')
+        binary = self.root / "bin"
+        binary.mkdir()
+        harbor = binary / "harbor"
+        started = self.root / "harbor-started"
+        harbor.write_text(f"#!{sys.executable}\nimport os\nfrom pathlib import Path\nassert os.environ['FIXTURE_PREPARED']=='ready'\nPath({str(started)!r}).touch()\n")
+        harbor.chmod(0o755)
+        (self.repo / ".env").write_text("VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1\nVERIFIER_OPENAI_API_KEY=fixture-only\n")
+        arguments = ("evaluation/run_task.py", "--task-path", self.source, "--agent", "pi", "--model", "deepseek/deepseek-flash")
+        with patch.dict(os.environ, {"PATH": str(binary) + os.pathsep + os.environ.get("PATH", ""),
+                                     "DEEPSEEK_API_KEY": "fixture-only"}):
+            for option in ("--dry-run", "--check"):
+                result = self.cli(*arguments, option)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse((tools / "prepared").exists())
+                self.assertFalse(started.exists())
+            result = self.cli(*arguments)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(started.exists())
+            started.unlink()
+            hook.write_text("raise SystemExit(7)\n")
+            result = self.cli(*arguments)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("evaluation was not started", result.stderr)
+            self.assertFalse(started.exists())
+
     def test_personal_pinned_dataset_download_is_mocked_and_verified(self):
         entry, data = self.asset()
         source_file = data / entry["source"]["filename"]

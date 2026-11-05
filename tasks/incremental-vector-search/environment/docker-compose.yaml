@@ -1,13 +1,15 @@
 services:
   main:
-    cpuset: "64-79"
+    cpuset: "${INCREMENTAL_VECTOR_CPUSET:-}"
+    cpu_period: 100000
+    cpu_quota: 1600000
     pids_limit: 256
     mem_limit: 32g
     memswap_limit: 32g
     volumes:
     - type: bind
-      source: ../data/public
-      target: /task/public
+      source: ../data/corpus
+      target: /task/data/corpus
       read_only: true
       bind:
         create_host_path: false
@@ -32,6 +34,18 @@ services:
     - type: bind
       source: ./profile_public.py
       target: /task/tools/profile_public.py
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: "${INCREMENTAL_VECTOR_PLATFORM_ROOT:?Start through the evaluation launcher}/public"
+      target: /task/platform
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: "${INCREMENTAL_VECTOR_PLATFORM_ROOT:?Start through the evaluation launcher}/validation"
+      target: /task/data/validation
       read_only: true
       bind:
         create_host_path: false

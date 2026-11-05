@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Task | `instruction-following-embedding` |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Authors | jianlyu |
 | Primary metric | Harmonic mean of three positive subset p-MRR values (otherwise zero), gated by six nDCG@10 checks |
 | Compute | 16 CPUs; 32 GiB RAM; 32 GiB storage; 1 GPU |
@@ -25,6 +25,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
+| 2026-11-05 | 1.1.0 | Median query timing over five measurements; disk workspaces; GPU count-only requirement; restored public data; calibration metadata synchronized |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
@@ -35,6 +36,10 @@ A query-side adapter must follow retrieval instructions while retaining the fixe
 
 The verifier measures instruction-sensitive p-MRR on three subsets and uses their harmonic mean when all three are positive. Six nDCG@10 retention gates require at least 90% of the fixed relevance reference. Reward normalizes the resulting metric between frozen anchors after model, resource and integrity checks. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
 
+Documents are prepared once. Each query/instruction version is measured five times through the complete fixed encoding and ranking path, with a 1-second median limit. The median measurement supplies the ranking; timeouts stay in the sample population, and malformed output still invalidates the pair. This task has no answer/evidence LLM judge; its compliance audit is unchanged.
+
+The primary wrapper allows 5,000 seconds, including up to 3,600 seconds for preparation and 840 one-second query measurements (84 groups × 2 versions × 5). The remaining primary time covers setup, reporting and bounded worker recovery. Primary/audit/finalization wrappers plus kill grace total 7,015 seconds (5,000 + 15 + 1,950 + 15 + 30 + 5), leaving 185 seconds within the 7,200-second verifier limit. `/app` and `/tmp` use disk; the runtime checks their logical file sizes plus mounted data/models against 32 GiB. Artifact collection is a separate phase with its existing 600-second limit.
+
 ### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
@@ -42,13 +47,9 @@ Run from the repository root using the repository's existing Python environment:
 ```bash
 python scripts/assets/download_assets.py --task instruction-following-embedding
 python scripts/assets/download_assets.py --task instruction-following-embedding --verify-only
-python tasks/instruction-following-embedding/prepare_inputs.py
-python tasks/instruction-following-embedding/prepare_inputs.py --verify-only
 ```
 
-[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
-restoration paths. Keep verifier inputs outside agent mounts. Model cards,
-licenses and data-use restrictions are described in the resource document.
+[assets.json](assets.json) fixes file sizes, hashes and source revisions. Keep verifier inputs outside agent mounts. The three required corpora restore to `data/corpus/{robust04,core17,news21}.jsonl`; processed training data and public validation groups restore to `data/train.jsonl` and `data/validation/dev-groups.json`. Runtime restoration does not download raw preparation inputs or require a preprocessing step. Source and license information is recorded in `DATA_SOURCES.md`.
 
 ### Run
 
@@ -58,8 +59,8 @@ The task allocates 16 CPU cores, 32 GiB RAM and
 specified in the task contract; the verifier service timeout also includes its
 trusted setup and checks.
 
-Both phases require one A100 40GB GPU. Use `--gpu-device` to select the same
-host GPU for both phases.
+Both phases use one NVIDIA GPU with support for the fixed CUDA/BF16/SDPA runtime. Use `--gpu-device` to select the same
+host GPU for both phases. GPU model and memory capacity are not task requirements; changing hardware still requires runtime and timing validation.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
 authorized process environment, following the repository README.
@@ -91,7 +92,7 @@ directories as build contexts. Run the public helper and verifier with the task'
 resource controls and mounts. Tests that exercise process isolation or GPU
 enforcement belong in disposable task containers, not the shared host.
 
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device compatible with the task runtime. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 

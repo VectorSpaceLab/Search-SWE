@@ -6,7 +6,7 @@ Provide executable `/app/build.sh` and `/app/run.sh`, with all supporting code a
 
 Public requests and page-relevance annotations are at `/task/data/validation/queries.jsonl` and `/task/data/validation/labels.jsonl`. Use these examples to check the complete build and query path. The remaining requests and labels are not supplied.
 
-You have six hours for implementation and checking, eight CPU cores, 32 GiB RAM, 100 GiB storage and one 40 GiB GPU. The supplied encoders are fixed. An optional scoring or adaptation component may have up to five million trainable parameters and use up to 45 minutes of training. Per request, query-dependent page-token or region comparisons and learned pairwise scoring may inspect at most 40 candidate pages; corpus-wide text processing, global representations and gallery-only preprocessing are allowed. No external model, dataset or API is available.
+You have six hours for implementation and checking, eight CPU cores, 32 GiB RAM, 100 GiB storage and one GPU. The supplied encoders are fixed. Per request, query-dependent page-token or region comparisons and learned pairwise scoring may inspect at most 40 candidate pages; corpus-wide text processing, global representations and gallery-only preprocessing are allowed. No external model, dataset or API is available.
 
 The query workload contains at most 600 requests in two calls, each with an independent 2,700-second allowance. Completed valid rows remain usable if a call times out; missing or malformed rows are unsuccessful. Honor the supplied paths. The submitted system must work after a fresh start with the same inputs. Before starting, read `/task/docs/environment.md` and `/task/docs/available_resources.md`.
 

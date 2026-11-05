@@ -30,7 +30,7 @@ class RepeatedOutputTests(unittest.TestCase):
             for query_id in ("q1", "q2")
         ]
 
-    def run_fixture(self, first, second, second_status=0):
+    def run_fixture(self, first, second, second_status=0, extra_files=()):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             app = root / "app"
@@ -39,6 +39,8 @@ class RepeatedOutputTests(unittest.TestCase):
                 script = app / name
                 script.write_text("#!/bin/sh\nexit 0\n")
                 script.chmod(0o755)
+            for name in extra_files:
+                (app / name).write_bytes(b"ordinary non-model data\n")
             corpus = root / "corpus.jsonl"
             corpus.write_text(encode([
                 {"_id": f"d{i}", "text": f"document {i}"} for i in range(100)
@@ -123,9 +125,18 @@ class RepeatedOutputTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual(reward, 0.5)  # The second invocation would score 1.0.
 
+    def test_non_model_files_are_not_rejected_by_extension(self):
+        status, report, reward, _ = self.run_fixture(
+            encode(self.rows), encode(self.rows), extra_files=("rank.bin", "passages.pt")
+        )
+        self.assertEqual(status, 0)
+        self.assertTrue(report["valid"])
+        self.assertEqual(reward, 0.5)
+
     def test_second_round_is_checked_against_every_output_rule(self):
         mutations = [
             (lambda rows: rows.pop(), "expected 2 output rows"),
+            (lambda rows: rows.reverse(), "query order/ID mismatch"),
             (lambda rows: rows[0].update(query_id="other"), "query order/ID mismatch"),
             (lambda rows: rows[0]["results"].pop(), "expected exactly 5 results"),
             (lambda rows: rows[0]["results"][0].update(doc_id="unknown"), "outside the candidate pool"),

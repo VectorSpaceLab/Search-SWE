@@ -26,7 +26,7 @@ base_model = "NovaSearch/stella_en_400M_v5"
 zero_score_baseline = 0.310109
 index_build_timeout_seconds = 1200
 inference_timeout_seconds = 12
-gpu_hardware = "1 x NVIDIA A100 40GB"
+gpu_hardware = "one GPU"
 data_status = "Published derivative; screened test questions; unfiltered source examples except test-source isolation."
 
 [agent]

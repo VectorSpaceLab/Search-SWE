@@ -80,8 +80,14 @@ class RuntimeControls(unittest.TestCase):
         self.module()
         result = self.run_control()
         self.assertAlmostEqual(result["Q"], 1)
+        self.assertEqual(result["measurement_rounds"], 5)
         self.assertEqual(result["total_queries"], 32)
         self.assertEqual(result["valid_queries"], 32)
+        round_reports = [json.loads((ROOT / 'logs' / self.id().split('.')[-1] /
+                                     f'round-{number}' / 'evaluation.json').read_text())
+                         for number in range(1, 6)]
+        order = [row['query_id'] for row in result['queries']]
+        self.assertTrue(all([row['query_id'] for row in report['queries']] == order for report in round_reports))
         for row in result["queries"]:
             languages = ["ar", "zh", "en", "fr", "hi", "it", "ja", "pt", "ru", "es"] if row["dataset"] == "belebele" else ["ar", "zh", "en", "hi", "ru", "es"]
             family = row["query_id"].split("-")[1]
@@ -89,6 +95,28 @@ class RuntimeControls(unittest.TestCase):
             self.assertEqual(row["ranked_doc_ids"][:len(languages)], expected)
             self.assertEqual(len(row["ranked_doc_ids"]), min(20, 2 * len(languages)))
             self.assertEqual(len(set(row["ranked_doc_ids"])), len(row["ranked_doc_ids"]))
+
+    def test_rounds_use_fresh_workers_and_temporary_workspaces(self):
+        self.module(load="assert not os.path.exists('round-marker')\nopen('round-marker','w').write('loaded')\nprint(os.getcwd(), file=sys.stderr)\nreturn None")
+        self.assertEqual(self.run_control()['Q'], 1)
+        directories = [(ROOT / 'logs' / self.id().split('.')[-1] / f'round-{number}' /
+                        'worker.stderr.log').read_text().strip() for number in range(1, 6)]
+        self.assertEqual(len(set(directories)), 5)
+        self.assertTrue(all(not Path(directory).exists() for directory in directories))
+
+    def test_disk_storage_limit_includes_sparse_temporary_files(self):
+        self.module(load="with open('oversized-cache','wb') as handle:\n    handle.truncate(100 * 1024**3)\nreturn None")
+        with self.assertRaisesRegex(RuntimeError, 'storage exceeded'):
+            self.run_control()
+
+    def test_consistency_probe_timeout_does_not_abort_all_measurements(self):
+        # Two corpus batches, two batch probes, four warmups, then one query and its probe.
+        self.module(load="return {'calls': 0}", transform="state['calls'] += 1\nif state['calls'] == 10:\n    import time\n    time.sleep(60)\nreturn vectors.copy()")
+        report = self.run_control()
+        self.assertEqual(report['measurement_rounds'], 5)
+        self.assertEqual(report['total_queries'], 32)
+        self.assertEqual(report['valid_queries'], 1)
+        self.assertTrue(all(len(r['consistency_probe_failures']) == 1 for r in report['measurement_reports']))
 
     def test_nan_and_zero_document_outputs_rejected(self):
         for expression in ("return np.full_like(vectors, np.nan)", "return np.zeros_like(vectors)"):

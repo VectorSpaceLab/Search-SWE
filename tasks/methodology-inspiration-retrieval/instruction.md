@@ -4,7 +4,7 @@ Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the
 
 Use only the supplied task material and permitted APIs. Do not obtain external papers, datasets, additional pretrained weights, benchmark answers or hidden relevance judgments. External search services and hard-coded query-to-result mappings are prohibited. Keep credentials out of source code, logs and artifacts.
 
-You have 6 hours for development, with one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
+You have 6 hours for development, with one GPU, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
 
 Create the complete submission under `/app`, including executable `/app/build.sh` and `/app/run.sh`. The separate verifier receives these files but does not inherit installed packages or running processes. `/task` is read-only. During verification the submission runs as a non-root user with `/app` read-only; the corpus, local model and resource documents remain available, while the examples file does not. Keep generated files in the supplied index directory and write results to the requested output path.
 

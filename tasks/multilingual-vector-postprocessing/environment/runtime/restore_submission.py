@@ -1,4 +1,4 @@
-"""Trusted restoration from post-agent collected artifacts into fresh tmpfs."""
+"""Trusted restoration from collected artifacts into the verifier workspace."""
 import json
 import os
 from pathlib import Path

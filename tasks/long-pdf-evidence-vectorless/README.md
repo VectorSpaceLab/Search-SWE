@@ -9,7 +9,7 @@
 | Authors | Jianlyu |
 | Primary metric | SentenceEvidenceAccuracy |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 10800 s |
+| Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | single long PDF |
 | Hidden queries | 12 |
 
@@ -35,7 +35,7 @@ The CPU image provides 16 CPUs, 16 GiB RAM and 100 GiB storage, without a GPU. D
 
 The fresh separate verifier transfers `/app`, rebuilds the index, and runs submission commands as UID 10001. Up to five query processes share the index, each with 900 seconds and a shared 1,800-second deadline; cleanup has another 60 seconds. Failed or invalid queries remain in the twelve-query denominator with zero. The root-side grader reads a private corpus mount to verify fixed hashes and original sentence membership. Public validation and all judge credentials are excluded from submission processes.
 
-The answer judge uses OpenRouter `deepseek/deepseek-v4.1-flash`, effort `high`, temperature 0, two workers and at most two attempts/request, within 2,700 seconds. Complete evidence support earns 1; topical or incomplete evidence earns 0. API/parse failure invalidates the measurement and fails closed. The separate trajectory audit uses RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash`, bounded at 3,600 seconds. Only a valid binary audit pass preserves accuracy as the final 0–1 reward. The entire verifier has 10,800 seconds.
+The evidence judge uses the configured `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY`, with effort `high`, temperature 0, two workers and at most two attempts per judgment, within 5,400 seconds. Each fixed retrieved evidence set is judged three times: complete support earns 1; topical or incomplete evidence earns 0. A question receives the arithmetic mean of its three judgments, and the metric is the mean across all twelve questions. Any API/parse failure invalidates the measurement and fails closed. The separate trajectory audit runs once using RewardKit 0.2.0, LiteLLM 1.97.0 and Codex 0.164.0 with `deepseek/deepseek-v4.1-flash`, bounded at 3,600 seconds. Only a valid binary audit pass preserves accuracy as the final 0–1 reward. The entire verifier has 14,400 seconds.
 
 ### Evidence judge calibration
 
@@ -56,7 +56,7 @@ for local checks and the pending live calibration/re-evaluation handoff.
 
 ### Credentials and evaluation
 
-Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the coding agent; `ANSWER_JUDGE_API_KEY` for the semantic judge; and `VERIFIER_OPENAI_API_KEY` / `VERIFIER_OPENAI_BASE_URL` for the trajectory audit. Both judge endpoints are `https://openrouter.ai/api/v1`. Set `ANSWER_JUDGE_BASE_URL` to that endpoint and `ANSWER_JUDGE_MODEL_NAME` to `deepseek/deepseek-v4.1-flash` for launcher validation; the task also pins both values. Optional solver calls use the separate `OPENROUTER_API_KEY` and only the models/endpoints in [available_resources.md](environment/docs/available_resources.md). The judge model is not a solver resource. Never include credential values in this package or artifacts.
+Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the coding agent; `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY` for the evidence judge; and `VERIFIER_OPENAI_API_KEY` / `VERIFIER_OPENAI_BASE_URL` for the trajectory audit. All three evidence-judge settings are required and passed only to the verifier, with no fixed model or base URL. Optional solver calls use the separate `OPENROUTER_API_KEY` and only the models/endpoints in [available_resources.md](environment/docs/available_resources.md). The judge model is not a solver resource. Never include credential values in this package or artifacts.
 
 From the repository root, using the configured Python environment:
 
@@ -76,7 +76,7 @@ All four public inputs use the reviewed original task's published immutable pins
 
 Reviewed precedent: `tasks/long-pdf-evidence` at `f1c4f57`, selected for the same data, sentence-evidence scorer, semantic judge, CPU environment and submission interfaces. This variant preserves its own no-embedding policy, index-only boundary, build-worker termination, private grader corpus and strict binary audit gate. It does not inherit the original task's embedding APIs or persistent build service.
 
-Authoring and validation evidence is recorded outside the package in `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/`. All four assets, 20 task tests, 173 shared tests, both image builds and a disposable-container boundary check passed. At the contributor's request, this revision uses DeepSeek v4.1 Flash through OpenRouter for answer judging. A public positive/negative probe passed using the existing authorized verifier credential. The default local `.env` now also assigns that credential to answer judging; the separate solver credential is unchanged.
+Authoring and validation evidence is recorded outside the package in `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/`. All four assets, 20 task tests, 173 shared tests, both image builds and a disposable-container boundary check passed. At the contributor's request, that historical revision used DeepSeek v4.1 Flash through OpenRouter for answer judging. A public positive/negative probe passed using the existing authorized verifier credential. At that time, the default local `.env` also assigned that credential to answer judging; the separate solver credential was unchanged.
 
 The historical October 16 Codex + OpenRouter Luna max trial used 64 GiB RAM and completed verification with **SentenceEvidenceAccuracy = 0.25 (3/12)**, compliance audit **1**, and final reward **0.25**. All twelve hidden queries executed successfully in 438.15 seconds; output-invalid and answer-judge-error counts were both zero. The coding agent exhausted its 7,200-second development budget, so Harbor records `AgentTimeoutError` even though its saved submission received a valid score. This was one formal attempt with no retry, not an uninterrupted agent completion. Results are in `jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-20261016-attempt1/2026-10-16__20-03-01/`; the author report is `contributing/dev/long-pdf-evidence-vectorless/2026-10-16/RESULTS.md`.
 

@@ -4,7 +4,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import secrets
 import tempfile
 import threading
 import time
@@ -13,6 +12,11 @@ import numpy as np
 from threadpoolctl import threadpool_limits
 from metrics import aggregate, normalize, quality
 from process import TransformError, TransformProcess
+from storage import StorageBudget
+
+
+MEASUREMENT_ROUNDS = 5
+AUDIT_SEED = 0
 
 
 class ContractViolation(RuntimeError):
@@ -86,24 +90,29 @@ class Meter:
         self.memory_peak = 0
         self.nvml = None
         self.handle = None
+        self.storage = StorageBudget()
+        self.storage.check(force=True)
+        self.storage_error = None
         if require_gpu:
             import subprocess
-            devices = subprocess.check_output(["nvidia-smi", "--query-gpu=uuid,name,memory.total", "--format=csv,noheader,nounits"], text=True).strip().splitlines()
+            devices = subprocess.check_output(["nvidia-smi", "--query-gpu=uuid", "--format=csv,noheader,nounits"], text=True).strip().splitlines()
             if len(devices) != 1:
                 raise RuntimeError("Verifier infrastructure must expose exactly one reserved GPU")
-            uuid, name, memory = [s.strip() for s in devices[0].split(",")]
-            if "A100" not in name or not 39000 <= int(memory) <= 42000:
-                raise RuntimeError("Verifier requires the specified A100 40GB hardware")
+            uuid = devices[0].strip()
             import pynvml
             pynvml.nvmlInit()
             self.nvml = pynvml
             self.handle = pynvml.nvmlDeviceGetHandleByUUID(uuid)
-            self.gpu_uuid, self.gpu_name = uuid, name
+            self.gpu_uuid = uuid
         self.thread = threading.Thread(target=self.sample, daemon=True)
         self.thread.start()
 
     def sample(self):
         while not self.stopped.wait(.05):
+            try:
+                self.storage.check()
+            except Exception as error:
+                self.storage_error = error
             try:
                 if self.nvml:
                     self.gpu_peak = max(self.gpu_peak, self.nvml.nvmlDeviceGetMemoryInfo(self.handle).used)
@@ -112,6 +121,10 @@ class Meter:
                     self.memory_peak = max(self.memory_peak, int(path.read_text()))
             except (OSError, ValueError):
                 pass
+
+    def check(self):
+        if self.storage_error is not None:
+            raise ContractViolation(str(self.storage_error)) from self.storage_error
 
     def close(self):
         self.stopped.set()
@@ -126,12 +139,10 @@ def equivalent(a, b):
     return np.max(np.linalg.norm(normalize(a) - normalize(b), axis=1)) <= .01
 
 
-def evaluate(submission, corpus, query_root, development, output, *, sandbox=False,
-             require_gpu=True, preparation_seconds=1800, query_seconds=.5, frozen_status=None):
+def evaluate_once(submission, corpus, query_root, development, output, *, sandbox=False,
+                  require_gpu=True, preparation_seconds=1800, query_seconds=.5):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    if frozen_status:
-        verify_snapshot(submission, frozen_status)
     start = time.monotonic()
     prepare_deadline = start + preparation_seconds
     worker = None
@@ -139,7 +150,7 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
     temporary = tempfile.TemporaryDirectory(prefix="transform-work-", dir="/tmp")
     records = []
     caches = {}
-    audit_rng = np.random.default_rng(secrets.randbits(64))
+    audit_rng = np.random.default_rng(AUDIT_SEED)
     memory_events = Path("/sys/fs/cgroup/memory.events")
     before_events = memory_events.read_text() if memory_events.exists() else ""
     try:
@@ -149,6 +160,7 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
             metadata, raw = inputs(Path(corpus) / dataset, "documents")
             converted = []
             for begin in range(0, len(raw), 128):
+                meter.check()
                 converted.append(normalize(worker.transform(raw[begin:begin + 128],
                     [r["language"] for r in metadata[begin:begin + 128]], prepare_deadline)))
             converted = np.concatenate(converted)
@@ -167,6 +179,7 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
         if time.monotonic() > prepare_deadline:
             raise ContractViolation("Document preparation exceeded its limit")
         prepared = time.monotonic() - start
+        meter.check()
         queued = []
         for dataset in ("belebele", "xquad"):
             metadata, vectors = inputs(Path(query_root) / dataset, "queries")
@@ -183,7 +196,9 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
         audit_rng.shuffle(queued)
         longest = 0.
         failed = 0
+        probe_failures = []
         for index, (dataset, row, vector, relevant) in enumerate(queued):
+            meter.check()
             began = time.monotonic()
             valid, reason, ranked_ids = False, None, []
             if worker is not None:
@@ -222,20 +237,32 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
             if worker is not None and index % 127 == 0:
                 cache = caches[dataset]
                 i = int(audit_rng.integers(len(cache["raw"])))
-                check = worker.transform(cache["raw"][i:i + 1], [cache["metadata"][i]["language"]], time.monotonic() + query_seconds)
-                if not equivalent(check, cache["vectors"][i:i + 1]):
-                    raise ContractViolation("The frozen function changed during query evaluation")
+                try:
+                    check = worker.transform(cache["raw"][i:i + 1], [cache["metadata"][i]["language"]], time.monotonic() + query_seconds)
+                except (TimeoutError, RuntimeError, OSError) as error:
+                    # A transport/timing failure ends only this measurement round.
+                    # A successfully returned but changed vector remains a violation.
+                    probe_failures.append({"after_query": row["id"], "failure": type(error).__name__})
+                    worker.close()
+                    worker = None
+                else:
+                    if not equivalent(check, cache["vectors"][i:i + 1]):
+                        raise ContractViolation("The frozen function changed during query evaluation")
+        meter.check()
+        meter.storage.check(force=True)
         if memory_events.exists():
             def oom(text):
                 return int(dict(line.split() for line in text.splitlines()).get("oom_kill", "0"))
             if oom(memory_events.read_text()) > oom(before_events):
                 raise ContractViolation("Container memory limit was exceeded")
         report = {**aggregate(records), "valid_queries": len(records) - failed, "total_queries": len(records),
+                  "consistency_probe_failures": probe_failures,
                   "preparation_seconds": prepared, "max_query_seconds": longest,
                   "evaluation_seconds": time.monotonic() - start, "gpu_peak_bytes": meter.gpu_peak,
+                  "task_storage_peak_bytes": meter.storage.peak_bytes,
+                  "fixed_input_bytes": meter.storage.fixed_bytes,
                   "container_memory_sample_peak_bytes": meter.memory_peak,
                   "gpu_uuid": getattr(meter, "gpu_uuid", None),
-                  "gpu_name": getattr(meter, "gpu_name", None),
                   "cgroup_limits": {name: (Path("/sys/fs/cgroup") / name).read_text().strip()
                                     for name in ("cpu.max", "memory.max", "memory.swap.max", "pids.max")
                                     if (Path("/sys/fs/cgroup") / name).exists()},
@@ -247,6 +274,58 @@ def evaluate(submission, corpus, query_root, development, output, *, sandbox=Fal
             worker.close()
         meter.close()
         temporary.cleanup()
+
+
+def median_queries(rounds, query_seconds):
+    """Select each query's median timing sample, without consulting its quality."""
+    if len(rounds) != MEASUREMENT_ROUNDS:
+        raise ContractViolation("Five complete measurement rounds are required")
+    keys = [(r["dataset"], r["language"], r["query_id"]) for r in rounds[0]["queries"]]
+    for report in rounds:
+        if [(r["dataset"], r["language"], r["query_id"]) for r in report["queries"]] != keys:
+            raise ContractViolation("Measurement query populations or order differ")
+    records = []
+    for samples in zip(*(report["queries"] for report in rounds)):
+        # Failures occupy the deadline, not their often near-zero failure time.
+        durations = [min(query_seconds, max(0., r["seconds"])) if r["valid"]
+                     else query_seconds for r in samples]
+        selected = sorted(range(MEASUREMENT_ROUNDS),
+                          key=lambda i: (durations[i], not samples[i]["valid"], i))[2]
+        record = dict(samples[selected], seconds=durations[selected], selected_round=selected + 1,
+                      measurement_seconds=durations,
+                      measurement_valid=[r["valid"] for r in samples])
+        records.append(record)
+    return records
+
+
+def evaluate(submission, corpus, query_root, development, output, *, sandbox=False,
+             require_gpu=True, preparation_seconds=1800, query_seconds=.5, frozen_status=None):
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    if frozen_status:
+        verify_snapshot(submission, frozen_status)
+    rounds = []
+    for number in range(1, MEASUREMENT_ROUNDS + 1):
+        # Each round creates and closes its own worker, caches and temporary directory.
+        rounds.append(evaluate_once(submission, corpus, query_root, development,
+                                    output / f"round-{number}", sandbox=sandbox,
+                                    require_gpu=require_gpu, preparation_seconds=preparation_seconds,
+                                    query_seconds=query_seconds))
+    records = median_queries(rounds, query_seconds)
+    report = {**aggregate(records), "queries": records, "total_queries": len(records),
+              "valid_queries": sum(r["valid"] for r in records),
+              "measurement_rounds": MEASUREMENT_ROUNDS,
+              "measurement_aggregation": "per-query median duration; quality from the same sample",
+              "measurement_reports": [{k: v for k, v in r.items() if k != "queries"} for r in rounds],
+              "preparation_seconds": max(r["preparation_seconds"] for r in rounds),
+              "max_query_seconds": max(r["seconds"] for r in records),
+              "evaluation_seconds": sum(r["evaluation_seconds"] for r in rounds),
+              "gpu_uuid": rounds[0]["gpu_uuid"], "cgroup_limits": rounds[0]["cgroup_limits"],
+              "consistency_normalized_l2_tolerance": .01,
+              **{key: max(r[key] for r in rounds) for key in
+                 ("gpu_peak_bytes", "container_memory_sample_peak_bytes", "task_storage_peak_bytes", "fixed_input_bytes")}}
+    (output / "evaluation.json").write_text(json.dumps(report, indent=2, allow_nan=False))
+    return report
 
 
 def main():

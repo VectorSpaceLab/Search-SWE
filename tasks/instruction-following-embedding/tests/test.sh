@@ -6,7 +6,7 @@ printf '0\n' > /logs/verifier/reward.txt
 printf '{"retrieval_improvement":0,"integrity":0,"reward":0}\n' > /logs/verifier/reward.json
 cleanup() { pkill -KILL -u 10001 2>/dev/null || true; }
 trap 'cleanup; exit 143' TERM INT HUP
-/usr/bin/timeout --signal=TERM --kill-after=15s 4500s \
+/usr/bin/timeout --signal=TERM --kill-after=15s 5000s \
     /opt/conda/bin/python /tests/grade.py \
     > /logs/verifier/grader.stdout.log 2> /logs/verifier/grader.stderr.log
 status=$?

@@ -18,6 +18,7 @@ example_input_count = 10636
 hidden_query_count = 311
 query_model = "Qwen3-Embedding-0.6B"
 query_batch_timeout_sec = 20.0
+query_repeats = 5
 submission_build_timeout_sec = 3600.0
 data_status = "Frozen reviewed official-test subset; published public data assets; public examples supplied."
 
@@ -28,7 +29,9 @@ network_mode = "allowlist"
 allowed_hosts = ["openrouter.ai", "api.jina.ai"]
 
 [verifier]
-timeout_sec = 5100.0
+# Five fresh builds/batches: 5 * (3600 + 20) = 18100 s; primary wrapper 18600 s.
+# Plus the existing 1200 s audit, 60 s finalizer, termination grace and setup.
+timeout_sec = 20100.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

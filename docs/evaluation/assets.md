@@ -56,7 +56,7 @@ Docker builds, task scratch files and results.
 | `assets.json` | File paths, immutable sources, sizes, hashes and permissions |
 | `data/`, `models/` | Downloaded inputs, excluded from Git and Docker build contexts |
 | `model-metadata/` | Small bundled model metadata, restored through the manifest |
-| `tests/data/` | Hidden evaluation queries, labels and references, isolated from the agent |
+| `tests/data/` | Hidden evaluation queries, labels and references, isolated from the agent; large files may also be restored through `assets.json` |
 
 Agent and verifier mounts expose the inputs each phase needs. Repository files
 remain visible to repository readers even when excluded from the agent container.

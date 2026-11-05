@@ -16,7 +16,7 @@
 
 Build a working search engine that retrieves papers offering methodological
 inspiration for a research problem and motivation. The solver receives a fixed
-abstract collection, citation examples, Stella 400M, one A100 40GB and the
+abstract collection, citation examples, Stella 400M, one GPU and the
 documented OpenRouter/Jina APIs. No implementation or training procedure is
 required. Author: **Bingyu**.
 
@@ -28,7 +28,7 @@ required. Author: **Bingyu**.
 | Public examples | 19,613 original citation rows, 1,358 source groups |
 | Hidden evaluation | 122 proposals, 187 positive query/paper pairs |
 | Local model | `NovaSearch/stella_en_400M_v5`, official 1,024-dimensional projection |
-| Compute | One A100 40GB, 16 CPU cores, 32 GiB RAM, 100 GiB storage |
+| Compute | one GPU, 16 CPU cores, 32 GiB RAM, 100 GiB storage |
 | Development | 6 hours |
 | Build and initialization | 1,200 seconds |
 | Retrieval | 12 seconds for the entire batch, including API waiting and output |

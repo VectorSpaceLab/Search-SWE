@@ -23,8 +23,8 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ../data/examples.jsonl
-        target: /task/data/examples.jsonl
+        source: ../data/validation
+        target: /task/data/validation
         read_only: true
         bind:
           create_host_path: false

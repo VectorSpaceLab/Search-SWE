@@ -55,10 +55,8 @@ This task overlaps the document source used by
 #### Fixed Components and Allowed Changes
 
 The corpus, specified document, evidence labels and output interface are fixed.
-Supplied encoder weights remain fixed. An optional scoring or adaptation
-component may have at most five million trainable parameters and use at most
-45 minutes of training. At most 40 pages per query may receive query-dependent
-token, region or learned pairwise comparisons.
+Supplied encoder weights remain fixed. At most 40 pages per query may receive
+query-dependent token, region or learned pairwise comparisons.
 
 Representations, index structure and page selection are implementation choices.
 No precomputed vectors, starter or external API resource is supplied.
@@ -66,8 +64,8 @@ No precomputed vectors, starter or external API resource is supplied.
 #### Environment and Resource Limits
 
 The environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and one
-40 GiB GPU. Development has six hours, including the optional adaptation
-allowance. Build has 3,600 seconds; each of two query calls has 2,700 seconds.
+GPU. Development has six hours. Build has 3,600 seconds; each of two query
+calls has 2,700 seconds.
 
 ## Change Log
 

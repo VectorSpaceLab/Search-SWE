@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-set -u
+set -uo pipefail
 umask 077
 RESULTS_DIR=/logs/verifier/khmer-embedding-training-eval
 install -d -o root -g root -m 0700 /logs/verifier "$RESULTS_DIR"
 printf '0\n' > /logs/verifier/reward.txt
 printf '{"retrieval_improvement":0,"jailbreak_judge":0,"reward":0}\n' > /logs/verifier/reward.json
+rm -f "$RESULTS_DIR/evaluation.json" /logs/verifier/reward-details.json
+rm -f /audit/output/reward.json /audit/output/reward-details.json
 execution_error=
 if [[ -d /app && ! -L /app ]]; then
  chown -R root:submission /app
@@ -20,14 +22,18 @@ if [[ -d /logs/agent && ! -L /logs/agent ]]; then
  if [[ -f /logs/agent/trajectory.json ]]; then chmod 0600 /logs/agent/trajectory.json; fi
 fi
 for p in /tmp /var/tmp /run/lock; do [[ ! -d "$p" ]] || chmod 0755 "$p"; done
-cleanup() { pkill -TERM -u submission 2>/dev/null || true; sleep .2; pkill -KILL -u submission 2>/dev/null || true; pkill -TERM -u audit 2>/dev/null || true; }
+cleanup() {
+ for role in submission retrieval audit; do pkill -TERM -u "$role" 2>/dev/null || true; done
+ sleep .2
+ for role in submission retrieval audit; do pkill -KILL -u "$role" 2>/dev/null || true; done
+}
 trap cleanup EXIT
 trap 'exit 143' INT TERM HUP
-SEARCH_SWE_EXECUTION_ERROR="$execution_error" timeout --signal=TERM --kill-after=15s 46920s /opt/conda/bin/python /tests/grader.py
+SEARCH_SWE_EXECUTION_ERROR="$execution_error" timeout --signal=TERM --kill-after=15s 48000s /opt/conda/bin/python /tests/grader.py
 grader_status=$?
 cleanup
 judge_status=78
-if [[ "$grader_status" == 0 && -n "${OPENAI_API_KEY:-}" && "${OPENAI_BASE_URL%/}" == 'https://openrouter.ai/api/v1' && -f /logs/agent/trajectory.json ]]; then
+if [[ "$grader_status" == 0 && -n "${OPENAI_API_KEY:-}" && "${OPENAI_BASE_URL%/}" == 'https://openrouter.ai/api/v1' && -s /logs/agent/trajectory.json && ! -L /logs/agent/trajectory.json ]]; then
  # Make a root-owned snapshot. The judge receives no tests, labels, grading files or submission API key.
  install -d -o root -g audit -m 0750 /audit /audit/config /audit/config/jailbreak_judge
  install -d -o audit -g audit -m 0700 /audit/output /home/audit/tmp
@@ -43,6 +49,11 @@ if [[ "$grader_status" == 0 && -n "${OPENAI_API_KEY:-}" && "${OPENAI_BASE_URL%/}
 fi
 cleanup
 /opt/conda/bin/python /tests/collect_audit_logs.py
-SEARCH_SWE_JUDGE_STATUS="$judge_status" /opt/conda/bin/python /tests/finalize_reward.py
+SEARCH_SWE_PRIMARY_STATUS="$grader_status" SEARCH_SWE_JUDGE_STATUS="$judge_status" \
+ timeout --signal=TERM --kill-after=5s 30s /opt/conda/bin/python /tests/finalize_reward.py
 final_status=$?
+if (( final_status != 0 )); then
+ printf '0\n' > /logs/verifier/reward.txt
+ printf '{"retrieval_improvement":0,"jailbreak_judge":0,"reward":0}\n' > /logs/verifier/reward.json
+fi
 if (( grader_status != 0 || judge_status != 0 || final_status != 0 )); then exit 1; fi

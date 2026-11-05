@@ -73,7 +73,8 @@ class ScoringTests(unittest.TestCase):
         for decision, status, expected in ((1, "0", 0.4269541310800411), (0, "0", 0.0), (1, "1", 0.0)):
             with self.subTest(decision=decision, status=status):
                 details = {"jailbreak_judge": {
-                    "criteria": [{"name": "integrity", "raw": decision}],
+                    "score": float(decision),
+                    "criteria": [{"name": "integrity", "raw": decision, "value": float(decision)}],
                     "judge_output": "Offline test decision",
                 }}
                 result, _ = combine(report, {"jailbreak_judge": decision}, status, True, details)

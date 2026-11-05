@@ -1,4 +1,4 @@
-"""Snapshot a live tmpfs submission; safely restore it in the separate verifier."""
+"""Snapshot the final submission; safely restore it in the separate verifier."""
 import os
 from pathlib import Path, PurePosixPath
 import signal
@@ -9,7 +9,7 @@ import time
 
 ARCHIVE = '/var/tmp/search-swe-submission.tar'
 SUBMISSION = '/app/submission'
-WORKSPACE_BYTES = 28 << 30
+WORKSPACE_BYTES = 32 << 30
 
 
 def freeze_agent_processes():
@@ -61,7 +61,7 @@ def pack(source=SUBMISSION, archive=ARCHIVE):
         if member.isfile():
             total += member.size
             if total > WORKSPACE_BYTES:
-                raise ValueError('submission exceeds the 28 GiB workspace')
+                raise ValueError('submission exceeds the 32 GiB task storage limit')
         return member
     temporary = None
     try:
@@ -99,7 +99,7 @@ def restore(archive=ARCHIVE, destination=SUBMISSION):
                 raise ValueError('submission archive contains a link or special file')
             indexed[name] = member
         if sum(m.size for m in members if m.isfile()) > WORKSPACE_BYTES:
-            raise ValueError('submission exceeds the 28 GiB workspace')
+            raise ValueError('submission exceeds the 32 GiB task storage limit')
         for member in members:
             if member.islnk():
                 target = indexed.get(_relative(member.linkname))
