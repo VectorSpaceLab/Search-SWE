@@ -48,3 +48,7 @@ The eight pinned ViDoRe V3 dataset cards above declare CC BY 4.0 for generated a
 The manifest records exact task-relative paths and asset bytes. Source pins do
 not change the corpus, examples, labels or model weights. Original upstream
 source and model notices continue to apply.
+
+## Bundled model documentation
+
+`models/vision-backbone/README.md` is adapted for the task environment, retaining model metadata, source attribution, license information and citations. Original source: `vidore/colqwen2.5-base`, revision `92908120384b7a2110c5beda3ab29cbdb2c08e49`, file `README.md`. The task restores the bundled copy using the size and SHA-256 in `assets.json`.

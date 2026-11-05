@@ -36,7 +36,7 @@ class RuntimeTests(unittest.TestCase):
             def report(self): return {"fixture":"CPU protocol only; hardware/resource enforcement not exercised"}
         self.resources = evaluate.Resources
         evaluate.Resources = CPUFixtureResources
-        evaluate.PREPARE_SECONDS = 30
+        evaluate.PREPARE_SECONDS = 120
 
     def tearDown(self):
         evaluate.Resources = self.resources
@@ -64,6 +64,24 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual(report["reward"], 1.0)
         self.assertTrue(all(q["status"] == "ok" and q["output_count"] == 10000 for q in report["queries"]))
+
+    def test_prepare_once_and_fresh_scratch_per_measurement_pass(self):
+        report = self.run_submission(
+            "        import os\n"
+            "        from pathlib import Path\n"
+            "        scratch=Path(os.environ['TMPDIR'])\n"
+            "        marker=scratch/query['query_id']\n"
+            "        assert not marker.exists()\n"
+            "        marker.write_text('queried')\n"
+            "        return list(range(10000))\n",
+            "five-fresh-passes",
+            "    from pathlib import Path\n"
+            "    marker=Path(index_dir)/'prepared'\n"
+            "    assert not marker.exists()\n"
+            "    marker.write_text('prepared once')\n")
+        self.assertEqual(report['Q'], 1.0)
+        self.assertEqual(report['timing_repeats'], 5)
+        self.assertTrue(all(len(row['measurements']) == 5 for row in report['queries']))
 
     def test_native_and_subprocess_logs_do_not_corrupt_protocol(self):
         report = self.run_submission("        return list(range(10000))\n", "child-logging",
@@ -104,9 +122,9 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(all(q["status"] == "invalid" for q in report["queries"]))
 
     def test_timeout_and_descendant_cleanup(self):
-        report = self.run_submission("        import time,subprocess,sys\n        subprocess.Popen([sys.executable,'-c','import time;time.sleep(60)'])\n        time.sleep(3)\n        return []\n", "timeout")
+        report = self.run_submission("        import time,subprocess,sys\n        subprocess.Popen([sys.executable,'-c','import time;time.sleep(60)'])\n        time.sleep(4)\n        return []\n", "timeout")
         self.assertEqual(report["reward"], 0)
-        self.assertTrue(all(q["status"] == "timeout" for q in report["queries"]))
+        self.assertTrue(all(q["status"] == "invalid" and all(m["status"] == "timeout" for m in q["measurements"]) for q in report["queries"]))
         import psutil
         self.assertFalse(any(p.uids().real == 10001 and p.status() != psutil.STATUS_ZOMBIE for p in psutil.process_iter()))
 

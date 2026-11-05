@@ -29,7 +29,7 @@ network_mode = "allowlist"
 allowed_hosts = ["openrouter.ai", "api.jina.ai"]
 
 [verifier]
-timeout_sec = 5400.0
+timeout_sec = 7800.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

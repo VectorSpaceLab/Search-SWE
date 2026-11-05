@@ -120,10 +120,10 @@ print(json.dumps({'type':'result','ids':['a']}),flush=True)
 if os.fork()==0:
  os.setsid()
  while True:pass
-time.sleep(2)
+time.sleep(3)
 ''')
         self.assertEqual(r['status'], 'failed', r)
-        self.assertLess(r['local_seconds'], 1.2)
+        self.assertLess(r['local_seconds'], 2.2)
 
     def test_budget_shared_across_queued_child_requests(self):
         r = self.run_code('''

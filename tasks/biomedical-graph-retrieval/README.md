@@ -9,7 +9,7 @@
 | Authors | Cooki-e |
 | Primary metric | ExactSetAccuracy |
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 5400 s |
+| Agent / verifier time limits | 7200 s / 7800 s |
 | Dataset | Complete fixed biomedical graph with authored, verified questions |
 | Public queries | 8 |
 | Hidden queries | 20 |

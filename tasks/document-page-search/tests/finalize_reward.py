@@ -34,7 +34,7 @@ parsed = (
     isinstance(judge, (int, float))
     and not isinstance(judge, bool)
     and math.isfinite(judge)
-    and judge in (0, 1)
+    and judge in (0, 1/3, 2/3, 1)
 )
 trajectory_succeeded = os.environ.get("SEARCH_SWE_JUDGE_STATUS") == "0" and parsed
 judge_succeeded = trajectory_succeeded

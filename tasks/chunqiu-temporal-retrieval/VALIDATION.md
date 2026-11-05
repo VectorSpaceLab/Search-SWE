@@ -49,8 +49,7 @@ not been performed; the task is not claimed release-ready.
 
 The structured source and request were reviewed for goal, files, policy,
 transfer, read-only paths, build lifecycle, CLI, output, ranking, deadlines,
-failure scope and metric. Command fences are retained at the user's explicit
-request. The environment document matches `docker/gpu/environment.md` exactly.
+failure scope and metric.
 
 ## Executed checks
 

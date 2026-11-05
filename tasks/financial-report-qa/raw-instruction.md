@@ -93,3 +93,5 @@ Before implementing the system, read the following task-provided documents:
 These documents and the supplied inputs are read-only. Follow the task-specific resource restrictions.
 
 The documented OpenRouter and Jina APIs are available under their provider, model and endpoint restrictions. Use the supplied reports and permitted resources, and leave all files required by the build and query commands under `/app`.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

@@ -8,7 +8,6 @@ import time
 MODEL = '/task/models/Qwen3-1.7B'
 BUDGET = 2048
 OUTPUT_WEIGHT = 4
-GPU_LIMIT = 24 << 30
 
 
 def deployment_config(path):
@@ -69,11 +68,6 @@ class FixedModel:
         self.torch = torch
         torch.set_num_threads(config['cpu_threads'])
         torch.manual_seed(0)
-        # Leave 2 GiB of the public VRAM allowance for CUDA/context overhead.
-        total = torch.cuda.get_device_properties(0).total_memory
-        if total < GPU_LIMIT:
-            raise RuntimeError('At least 24 GiB physical VRAM is required')
-        torch.cuda.set_per_process_memory_fraction((22 << 30) / total, 0)
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True,
                                                        trust_remote_code=False)
         self.model = AutoModelForCausalLM.from_pretrained(

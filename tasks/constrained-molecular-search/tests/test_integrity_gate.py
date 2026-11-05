@@ -39,6 +39,16 @@ class IntegrityGateTests(unittest.TestCase):
         self.assertTrue(result['healthy'])
         self.assertFalse(result['infrastructure_error'])
 
+    def test_mixed_three_run_decision_is_a_healthy_rejection(self):
+        for mean in (1/3, 2/3):
+            evidence = details(1)
+            evidence['integrity_judge']['criteria'][0]['raw'] = mean
+            result = gate.finalize(self.report(.8), {'integrity_judge': mean},
+                                   '0', '0', True, evidence)
+            self.assertTrue(result['healthy'])
+            self.assertFalse(result['infrastructure_error'])
+            self.assertEqual(result['reward'], 0)
+
     def test_missing_failed_or_malformed_audit_fails_closed(self):
         for value in (None, True, False, .5, '1', float('nan'), {}, []):
             with self.subTest(decision=value):
@@ -90,6 +100,10 @@ class IntegrityGateTests(unittest.TestCase):
                 " Path(os.environ['CONTROL_FLOW_STATUS']).write_text(json.dumps({"
                 "'primary':os.environ['SEARCH_SWE_PRIMARY_STATUS'],"
                 "'judge':os.environ['SEARCH_SWE_JUDGE_STATUS']}))\n")
+            (tests/'judge_repeats.py').write_text(
+                "import runpy,sys\n"
+                "sys.argv = sys.argv[1:]\n"
+                "runpy.run_path(sys.argv[0], run_name='__main__')\n")
             (tests/'rewardkit_deepseek.py').write_text(
                 "import os\nfrom pathlib import Path\n"
                 "Path(os.environ['CONTROL_FLOW_MARKER']).write_text('called')\n")

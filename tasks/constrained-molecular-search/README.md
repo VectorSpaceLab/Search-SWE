@@ -9,7 +9,7 @@
 | Authors | jianlyu |
 | Primary metric | Macro mean Recall@10000; public proportional-budget Recall@279 |
 | Compute | 16 CPUs; 32 GiB RAM; 64 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 6300 s |
+| Agent / verifier time limits | 21600 s / 10500 s |
 
 Recover the truly feasible top 10,000 compounds from a complete molecular library under a two-second query deadline.
 
@@ -55,7 +55,7 @@ The task allocates 16 CPU cores, 32 GiB RAM and
 specified in the task contract; the verifier service timeout also includes its
 trusted setup and checks.
 
-Both phases require one A100 40GB GPU. Use `--gpu-device` to select the same
+Both phases require one GPU. Use `--gpu-device` to select the same
 host GPU for both phases.
 
 Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
@@ -63,7 +63,7 @@ authorized process environment, following the repository README.
 Also configure `VERIFIER_OPENAI_API_KEY` and
 `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` for the independent
 `deepseek/deepseek-v4.1-flash` integrity judge. These credentials are injected only
-into the verifier. Its service timeout includes a separate 1200-second audit
+into the verifier. Its service timeout includes a separate 3600-second audit
 allowance; submission phase limits remain unchanged. A positive final reward
 requires a successful accepting audit of the protected trajectory and submission.
 Inspect `audit-status.json`, `audit.json` and `reward-details.json` alongside the
@@ -98,3 +98,11 @@ enforcement belong in disposable task containers, not the shared host.
 ## References
 
 - [Task reference](https://proceedings.mlr.press/v306/pedawi26a.html).
+- [APEX source dataset](https://zenodo.org/records/17455955), CC BY 4.0.
+- [APEX source checkpoints](https://zenodo.org/records/17456522), CC BY-NC 4.0.
+
+## Repeated measurements
+
+Each request is measured five times in five complete passes. Prepare runs once. After preparation, generated artifacts become read-only; use TMPDIR for query-time writes. Each pass starts a fresh Searcher process and a cleared scratch directory, while initial preparation and all loads still share the 3600-second allowance. The median of the five complete-response times must be at most 2.0 seconds. Each individual measurement has a 3.0-second execution cap. All five measurements must return valid ID lists; otherwise the request scores zero. For a request passing these checks and the median limit, its recall is the arithmetic mean of the five recalls. Empty or small feasible sets remain supported and are used as unscored diagnostics.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

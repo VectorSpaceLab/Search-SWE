@@ -90,12 +90,12 @@ def run_audit() -> int:
                           "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy",
                           "https_proxy", "no_proxy", "LITELLM_LOCAL_MODEL_COST_MAP"}}
         result = subprocess.run([
-            "/usr/bin/timeout", "--signal=TERM", "--kill-after=30s", "3600s",
-            sys.executable, str(Path(__file__).with_name("rewardkit_deepseek.py")), str(judge_task),
+            "/usr/bin/timeout", "--signal=TERM", "--kill-after=30s", "10800s",
+            sys.executable, str(Path(__file__).with_name("judge_repeats.py")), str(Path(__file__).with_name("rewardkit_deepseek.py")), str(judge_task),
             "--workspace", "/app", "--output", str(AUDIT_PATH),
             "--max-concurrent-agent", "1", "--judge", "deepseek-codex",
             "--model", "deepseek/deepseek-v4.1-flash",
-        ], stdout=stdout, stderr=stderr, env=env, timeout=3660, check=False)
+        ], stdout=stdout, stderr=stderr, env=env, timeout=10860, check=False)
     return result.returncode
 
 
@@ -144,7 +144,7 @@ def main() -> int:
     print(json.dumps({"submission_returncode": completed.returncode if completed else None,
                       "audit_returncode": audit_status, "reward": reward}))
     # A clear audit rejection is a valid zero. Missing/broken audit is an error.
-    audit_valid = type(audit.get("jailbreak_judge")) in (int, float, bool) and audit.get("jailbreak_judge") in (0, 1)
+    audit_valid = type(audit.get("jailbreak_judge")) in (int, float, bool) and audit.get("jailbreak_judge") in (0, 1/3, 2/3, 1)
     return 0 if execution_ok and trajectory_present and audit_status == 0 and audit_valid else 1
 
 

@@ -43,7 +43,7 @@ An earlier author-only local A100 run substituted local BGE embeddings for the A
 
 ### Validation
 
-From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. Public upstream and published official HF inputs are permitted with immutable pins, exact filenames, sizes and hashes. Cross-task official asset reuse is supported from Search-SWE `ac7dcc1`; no duplicate publication is needed.
+From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. The input sources, immutable revisions, filenames, sizes and hashes are listed in `assets.json`.
 
 Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which preserves real Compose GPU reservations with the documented Harbor override.
 
@@ -100,8 +100,6 @@ and this complete regrade.
 
 ## References
 
-### Sources and structural references
+### Sources
 
-Corpus and train reuse the exact hashes and named paths from the current formal `tasks/code-embedding-finetuning/assets.json`, pinned to official dataset revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. The reranker retains its original `BAAI/bge-reranker-base` model revision `2cfc18c9415c912f9d8155881c133215df768a70`. The local embedding model is pinned to `BAAI/bge-base-en-v1.5` revision `a5beb1e3e68b9ab74eb54cfd186867f64f240e1a`; all eleven model/tokenizer/metadata files were downloaded and SHA-256 verified. No data/model bytes were republished. See [SOURCES.md](SOURCES.md) for provenance and usage terms. Published inputs may be reused at their original paths. The reused hidden split is runtime-isolated but visible in the repository and has a known contamination risk.
-
-Read-only references: `tasks/code-embedding-finetuning` for GPU training, corpus provenance, fixed-backbone model delivery and offline loading; `tasks/long-document-reranking` for candidate reranking and deterministic quality scoring. This task optimizes reranker weights with local embedding plus BM25 candidates, has no public validation split, and keeps its headroom-normalized reward instead of the reference metrics.
+Corpus and training inputs are pinned in `assets.json` to `search-swe/Search-SWE` revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. The reranker uses `BAAI/bge-reranker-base` revision `2cfc18c9415c912f9d8155881c133215df768a70`. The local embedding model is pinned to `BAAI/bge-base-en-v1.5` revision `a5beb1e3e68b9ab74eb54cfd186867f64f240e1a`. See [SOURCES.md](SOURCES.md) for provenance and usage terms.

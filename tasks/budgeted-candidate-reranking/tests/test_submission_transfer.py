@@ -1,4 +1,4 @@
-"""Exercise the archive boundary used when Docker cannot copy a live tmpfs."""
+"""Exercise submission archive collection and restoration."""
 import io
 import os
 from pathlib import Path

@@ -1,6 +1,6 @@
 # Data and model provenance
 
-The source is the official [ChunQiuTR repository](https://github.com/xbdxwyh/ChunQiuTR)
+The source is the [ChunQiuTR repository](https://github.com/xbdxwyh/ChunQiuTR)
 at commit `392d6ec8d62de8256b3b45578f7b4484c22042ce`, associated with
 [Wang et al., ChunQiuTR](https://aclanthology.org/2026.findings-acl.612/).
 

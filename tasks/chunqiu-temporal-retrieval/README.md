@@ -9,7 +9,7 @@
 | Authors | Bingyu |
 | Primary metric | Mean binary nDCG@10 |
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 3000 s |
+| Agent / verifier time limits | 21600 s / 6000 s |
 | Dataset | ChunQiuTR, audited event-only derivative |
 | Public queries | 0 |
 | Hidden queries | 775 |
@@ -21,7 +21,7 @@ No starter implementation or author baseline is included in the agent files.
 
 ### Data and audit
 
-Source: [official ChunQiuTR](https://github.com/xbdxwyh/ChunQiuTR/tree/392d6ec8d62de8256b3b45578f7b4484c22042ce),
+Source: [ChunQiuTR](https://github.com/xbdxwyh/ChunQiuTR/tree/392d6ec8d62de8256b3b45578f7b4484c22042ce),
 commit `392d6ec8d62de8256b3b45578f7b4484c22042ce`.
 [Paper](https://aclanthology.org/2026.findings-acl.612/).
 
@@ -68,7 +68,7 @@ See [LICENSE.data.md](LICENSE.data.md) for source and model notices. Public inpu
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Removed three hidden queries with unsupported April labels; retained 775 queries |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -103,15 +103,7 @@ mounted read-only. Public examples are not mounted in verification. Hidden
 labels, grader code, audit credentials, trajectories and reward logs remain
 root-private. Query order and request IDs are refreshed at verification time.
 
-### Structural references and validation
-
-Reviewed base: `46197a43f8cbb364e72b6d63d5db873ae7d2cac8`.
-`tasks/reasoning-query-rewriting` supplies the full-corpus CLI and separate
-verifier/API boundary; `tasks/query-encoder-alignment` supplies GPU/model-mount
-precedent. Current local quantity-aware-retrieval and decision-model-training
-provide the user-approved document style and whole-batch timing pattern.
-Data, thresholds and policies were established for this task. Command fences
-in instruction.md follow the user's explicit formatting preference.
+### Validation
 
 See [VALIDATION.md](VALIDATION.md) for executed commands, evidence and unrun
 layers. A local smoke implementation is not a coding-agent trial or proof of

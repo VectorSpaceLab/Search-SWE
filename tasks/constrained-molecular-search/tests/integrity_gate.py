@@ -1,4 +1,4 @@
-"""Protect audit evidence and publish rewards only after a healthy binary audit."""
+"""Protect audit evidence and publish rewards only after a healthy three-run audit."""
 import argparse
 import hashlib
 import json
@@ -98,11 +98,11 @@ def finalize(report, audit, primary_status, judge_status, evidence_valid, detail
         raw = criterion.get('raw')
         raw = {'yes': 1, 'no': 0}.get(raw.strip().lower()) if isinstance(raw, str) else raw
         parsed = (criterion.get('name') == 'integrity' and type(raw) in (int, float)
-                  and raw in (0, 1) and raw == decision
+                  and raw in (0, 1/3, 2/3, 1) and raw == decision
                   and isinstance(group.get('judge_output'), str) and bool(group['judge_output'].strip())
                   and not group.get('error'))
     audit_valid = (judge_status == '0' and evidence_valid and parsed
-                   and type(decision) in (int, float) and decision in (0, 1))
+                   and type(decision) in (int, float) and decision in (0, 1/3, 2/3, 1))
     passed = audit_valid and decision == 1
     healthy = primary_valid and audit_valid
     return {'reward': float(value) if primary_valid and passed else 0.0,

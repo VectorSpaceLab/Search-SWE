@@ -18,6 +18,7 @@ import time
 import faiss
 import numpy as np
 
+from repeated_measurements import TIMING_REPEATS, median_seconds, freeze_prepared, reset_scratch
 from checks import check_result
 from data_io import read_metadata, read_vectors
 
@@ -25,6 +26,7 @@ from data_io import read_metadata, read_vectors
 HIDDEN_QUERY_COUNT = 25
 BUILD_TIMEOUT_SECONDS = 600.0
 QUERY_TIMEOUT_SECONDS = 0.015
+QUERY_OBSERVATION_SECONDS = 1.0
 THREADS = 8
 
 
@@ -325,71 +327,90 @@ def run_stage(args, name, corpus, query_file, gold_file):
     corpus.rename(retired_input)
     retired_input.chmod(0o700)
 
+    freeze_prepared(index, "tmp", pwd.getpwnam(args.run_as).pw_uid if args.run_as else os.getuid())
     timings, details, initial_details = [], [], []
-    first_responses = {}
+    all_samples = [[], []]
+    all_responses = [[], []]
     load_times = []
-    phases = [queries, queries]
-    for phase, requests in enumerate(phases):
+    for phase in range(2):
         if phase:
             check_index_files(index)
             relocated = work / "restored-index"
             index.rename(relocated)
             index = relocated
-        ensure_owned(index / "tmp", args.run_as)
-        process = None
-        try:
-            for number, query in enumerate(requests):
-                if process is None:
-                    check_index_files(index)
-                    started = time.monotonic()
-                    process = Process([str(app / "run.sh"), "--index-dir", str(index), "--serve"],
-                                      app, index, args.report.parent / f"{name}-serve-{phase}-{number}.log",
-                                      args.run_as, THREADS, service=True)
-                    # Startup is bounded by test.sh's overall verifier timeout.
-                    # The per-query deadline starts when request() sends input.
-                    if process.readline() != {"status": "ready"}:
-                        raise ValueError("service must emit exactly {\"status\": \"ready\"} after loading")
-                    load_times.append(time.monotonic() - started)
-                detail, result, restart = score_query(
-                    process, query, gold[query["query_id"]], vectors, metadata,
-                    QUERY_TIMEOUT_SECONDS)
-                if restart:
+        for repeat in range(TIMING_REPEATS):
+            reset_scratch(index, "tmp", pwd.getpwnam(args.run_as).pw_uid if args.run_as else os.getuid())
+            phase_details, phase_responses = [], []
+            process = None
+            try:
+                for number, query in enumerate(queries):
+                    if process is None:
+                        check_index_files(index)
+                        started = time.monotonic()
+                        process = Process([str(app / "run.sh"), "--index-dir", str(index), "--serve"],
+                                          app, index, args.report.parent / f"{name}-serve-{phase}-{repeat}-{number}.log",
+                                          args.run_as, THREADS, service=True)
+                        if process.readline() != {"status": "ready"}:
+                            raise ValueError("service must emit exactly {\"status\": \"ready\"} after loading")
+                        load_times.append(time.monotonic() - started)
+                    detail, result, restart = score_query(process, query, gold[query["query_id"]],
+                                                         vectors, metadata, QUERY_OBSERVATION_SECONDS)
+                    if restart:
+                        process.close()
+                        process = None
+                    phase_details.append(detail)
+                    phase_responses.append(result)
+            finally:
+                if process is not None:
                     process.close()
-                    process = None
-                if phase == 0:
-                    if detail["score"]:
-                        first_responses[query["query_id"]] = result
-                    initial_details.append(detail)
-                    continue
-                detail["reload_score"] = detail["score"]
-                detail["first_pass_score"] = initial_details[number]["score"]
-                if not detail["first_pass_score"]:
-                    detail["score"] = 0
-                    detail["error"] = detail["error"] or "query failed before index relocation"
-                elif detail["score"] and result != first_responses[query["query_id"]]:
-                    detail["score"] = 0
-                    detail["error"] = "save/load relocation changed the answer to an identical query"
-                timings.append(detail["seconds"])
-                details.append(detail)
-        finally:
-            if process is not None:
-                process.close()
-    percentile = float(np.percentile(timings, 95)) if timings else 0.0
+            all_samples[phase].append(phase_details)
+            all_responses[phase].append(phase_responses)
+    for number, query in enumerate(queries):
+        summaries = []
+        responses = [all_responses[phase][repeat][number]
+                     for phase in range(2) for repeat in range(TIMING_REPEATS)]
+        consistent = all(result is not None and result == responses[0] for result in responses)
+        for phase in range(2):
+            samples = [all_samples[phase][repeat][number] for repeat in range(TIMING_REPEATS)]
+            elapsed = median_seconds([row["seconds"] if row["error"] is None else None for row in samples])
+            correct = all(row["score"] == 1 for row in samples)
+            timely = elapsed is not None and elapsed <= QUERY_TIMEOUT_SECONDS
+            error = next((row["error"] for row in samples if row["error"]), None)
+            if not timely:
+                error = error or "median query latency exceeds 15 ms"
+            if not consistent:
+                error = error or "repeated or relocated-index responses differ"
+            summaries.append({"query_id": query["query_id"], "group": gold[query["query_id"]]["group"],
+                              "recall": min(row["recall"] for row in samples),
+                              "seconds": elapsed if elapsed is not None else QUERY_OBSERVATION_SECONDS,
+                              "score": int(correct and timely and consistent), "error": error,
+                              "measurements": samples, "timing_repeats": TIMING_REPEATS,
+                              "timing_aggregation": "median"})
+        initial_details.append(summaries[0])
+        final = summaries[1]
+        final["reload_score"] = final["score"]
+        final["first_pass_score"] = summaries[0]["score"]
+        if not summaries[0]["score"]:
+            final["score"] = 0
+            final["error"] = final["error"] or "query failed before index relocation"
+        details.append(final)
+        timings.append(final["seconds"])
     check_index_files(index)
     grouped = defaultdict(list)
     for detail in details:
         grouped[detail["group"]].append(detail["score"])
+    raw_times = [sample["seconds"] for phase in all_samples for run in phase for sample in run]
     return {"query_count": len(queries),
             "mean_recall": float(np.mean([d["recall"] for d in details])),
             "mean_score": sum(d["score"] for d in details) / len(queries),
-            "groups": {g: {"count": len(values), "mean_score": float(np.mean(values))}
-                       for g, values in grouped.items()},
+            "groups": {g: {"count": len(v), "mean_score": float(np.mean(v))} for g, v in grouped.items()},
             "build_seconds": build_seconds, "load_seconds": load_times,
-            "query_seconds": sum(timings), "p95_seconds": percentile,
-            "max_query_seconds": max((detail["seconds"] for detail in details + initial_details), default=0.0),
-            "request_count_including_reload_checks": len(details) + len(initial_details),
-            "pre_reload_queries": initial_details,
-            "faiss": faiss_info, "queries": details}
+            "query_seconds": sum(raw_times), "p95_seconds": float(np.percentile(timings, 95)),
+            "max_query_seconds": max(raw_times, default=0.0),
+            "request_count_including_reload_checks": 2 * TIMING_REPEATS * len(queries),
+            "timing_repeats": TIMING_REPEATS, "timing_aggregation": "median",
+            "query_observation_seconds": QUERY_OBSERVATION_SECONDS,
+            "pre_reload_queries": initial_details, "faiss": faiss_info, "queries": details}
 
 
 def main():

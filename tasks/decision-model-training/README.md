@@ -55,10 +55,7 @@ The model must generalize across categorical, Boolean and ordinal decision tasks
 Author scripts, original downloads, sampling lineage, GPU experiments and all
 known-answer fixtures are in
 `../../../task_development/decision-model-training`, outside the task package.
-The accepted GPU reference structures are `code-embedding-finetuning` and
-`query-encoder-alignment` at base `73f1d8b8cac6e0e74669de481bd5c814a975e1a3`.
-This task uses deterministic accuracy and entirely offline verification rather
-than copying their API or model-judge configuration.
+Verification uses deterministic accuracy and runs entirely offline.
 
 Run from the repository root:
 

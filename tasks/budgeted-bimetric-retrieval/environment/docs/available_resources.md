@@ -1,90 +1,33 @@
-# Available retrieval resources
+# Available Resources
 
-Use only the supplied corpus, cheap document/query vectors and development
-labels. The data paths and formats are in the task instruction. No external
-retrieval/embedding/generative API, downloaded model, or GPU is provided.
+Use the supplied document collection, local vectors, development oracle and installed runtime.
 
-The development oracle is a separate container. Its only input beyond public
-data is the expensive document representation and the 500 development query
-representations. It has no test queries or test labels. It exposes a Unix-domain
-HTTP socket at `/run/oracle/oracle.sock`; there are no credentials or external
-endpoints. Import `call` from `/task/tools/oracle_client.py`.
+## Local resources
 
-`call('/begin', {'query_id': 'train-example'})` starts a session for a public development
-query (use its actual ID and ordinary JSON quotes). The response contains a
-`token`. Send `{'op':'score','token':token,'doc_ids':[... ]}` to `/score` within
-that session. The response preserves document order and reports `distances`,
-`used` and `remaining`. Every listed document costs one call, including duplicates.
-The limit is 20 and the session expires after two seconds. A session is global
-and sequential; simultaneous development clients are unsupported. A fresh
-public session may be started for another diagnostic run.
+- `/task/public/corpus.parquet`: document collection and task-local document IDs.
+- `/task/public/cheap.f32`: cheap document vectors.
+- `/task/public/dev-queries.jsonl`: development questions and their cheap query vectors.
+- `/task/public/dev-qrels.tsv`: development relevance labels.
+- `/task/public/config.json`: representation details and fixed scoring references.
 
-Final verification instead mediates score requests over the submission's stdin
-and stdout. It binds scores to the current hidden query and offers no reset,
-vector substitution, vector export or expensive full-corpus ANN operation.
-The expensive representation is private: do not access its files, bypass current-query/count controls, or access
-the verifier's labels, queries or reward files.
+Read `/task/docs/environment.md` for the installed Python environment, packages and system tools. Treat `/task` as read-only.
 
-Public simple baseline programs are under `/task/baseline`. They implement dense
-retrieval plus reranking, direct dense retrieval, lexical/dense fusion and
-two-round feedback retrieval. Their
-highest measured resource-valid quality defines the zero-credit reference B.
-The hybrid uses lexical weight 0.5, RRF k=60, top-1000 lexical/dense lists and a
-fixed 10,000,000 SQLite VM-step lexical limit, then scores at most 20 documents.
-These parameters were selected or timed using public development/training data.
-`/task/public/config.json` provides the frozen aggregate B and U values.
-`/task/tools/evaluate.py` exercises the public service and protocol;
-its output is diagnostic and does not replace final resource enforcement.
+## Development oracle
 
+The development oracle is a separate container. Its only input beyond public data is the expensive document representation and the 500 development query representations. It has no test queries or test labels. It exposes a Unix-domain HTTP socket at `/run/oracle/oracle.sock`; there are no credentials or external endpoints. Import `call` from `/task/tools/oracle_client.py`.
 
+`call('/begin', {'query_id': 'train-example'})` starts a session for a public development query (use its actual ID and ordinary JSON quotes). The response contains a `token`. Send `{'op':'score','token':token,'doc_ids':[... ]}` to `/score` within that session. The response preserves document order and reports `distances`, `used` and `remaining`. Every listed document costs one call, including duplicates. The limit is 20 and the session expires after two seconds. A session is global and sequential; simultaneous development clients are unsupported. A fresh public session may be started for another diagnostic run.
 
-The feedback baseline uses ten features from the supplied cheap vectors and a
-local lexical index. A small tree ranker is fitted using the 500 public development
-questions and labels. Prepare its submission during development:
+Final verification instead mediates score requests over the submission's stdin and stdout. It binds scores to the current hidden query and offers no reset, vector substitution, vector export or expensive full-corpus ANN operation. The expensive representation is private: do not access its files, bypass current-query/count controls, or access the verifier's labels, queries or reward files.
 
-```bash
-python /task/baseline/train_feedback.py --data-dir /task/public --output-dir /app/feedback-baseline
-```
+## Public tools and baselines
 
-The output directory must be empty. The command writes `model.pkl`,
-`feedback_baseline.py` and an executable `search.sh`. This script accepts the
-same `--data-dir`, `--index-dir` and `--mode build|load` arguments as your
-submission. Final build/load only builds the local index and loads the fitted
-parameters; model fitting happens during development.
+The optional baseline programs are under `/task/baseline`. `/task/tools/evaluate.py` exercises the public service and protocol. `/task/public/config.json` gives the supplied representations and fixed scoring references B and U. Inspect the baseline code for its implementation and command-line options.
 
-Alternatively, invoke the common baseline entrypoint with `--method feedback` and
-`--model-path /app/feedback-baseline/model.pkl`. The baseline scores ten candidates,
-uses their expensive distances to adjust cheap-vector scores with feedback weight
-80, and scores ten additional candidates. It returns the ten best expensive-distance
-results. The tree settings and feedback weight were selected on the public
-development set using five-fold validation.
+## Data and representation
 
-## Input representation and sources
+The corpus and public questions come from BEIR Natural Questions. Cheap vectors use TaylorAI/bge-micro-v2 (MIT); expensive vectors use Salesforce/SFR-Embedding-Mistral (CC BY-NC 4.0, research use). Corpus source terms are CC BY-SA 4.0. Task IDs are `doc{i}` in both matrices; `source_id` records the upstream ID. The supplied vectors define the task. The oracle computes Euclidean L2 using stored vectors converted to FP64. Use the supplied configuration for representation details. Source terms do not grant unrestricted redistribution of derived assets.
 
-The supplied 250,000-document corpus comes from BEIR Natural Questions,
-`BeIR/nq` revision `b7253e6c379163d024ddb1d6948152a91a2e3b46`.
-Its source terms are CC BY-SA 4.0. Row i has task ID `doc{i}` in both vector
-matrices; `source_id` is the upstream ID. Use task IDs in submitted results.
-The 500 public questions come from the official NQ training release. Their
-labels can be incomplete relevance judgments. Hidden evaluation uses all
-3,452 official test queries and their complete official qrels from
-`BeIR/nq-qrels` revision `519acd4e48bb3e5da22b2b888ce36c614f4f2bc9`.
-The corpus retains every labeled relevant document for both splits. No labels
-were generated by a language model.
+## Network and resource restrictions
 
-Cheap vectors use `TaylorAI/bge-micro-v2` revision
-`3edf6d7de0faa426b09780416fe61009f26ae589` (MIT): 384 dimensions,
-FP32 inference, mean pooling, 512-token truncation and no query prefix.
-Expensive vectors use `Salesforce/SFR-Embedding-Mistral` revision
-`33a60fe7b5e00b9414981280c571e8a4f9f42f1b` (CC BY-NC 4.0, research use):
-4,096 dimensions, BF16 inference, last-token pooling and 4,096-token truncation.
-These source notices do not grant unrestricted redistribution of derived assets.
-Model weights and GPUs are not supplied task resources.
-
-Documents are encoded as `title + " " + text`. The expensive query prefix is
-`Instruct: Given a question, retrieve Wikipedia passages that answer the question\nQuery: `.
-Outputs are converted to FP32, unit-normalized in FP32 and stored as little-endian
-FP32. The oracle converts the stored vectors to FP64 before subtraction, squared
-accumulation and square root to compute Euclidean L2. Supplied vectors define the
-task; no new model inference is performed. `/task/public/config.json` describes
-the representation and the fixed grading values.
+No external retrieval, embedding or generative API, task API key, downloaded model or GPU is available. The development oracle is accessible only through the local socket described above. Use only the supplied inputs, permitted development parameters and installed runtime.

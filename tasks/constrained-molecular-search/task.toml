@@ -25,7 +25,7 @@ user = "root"
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 6300.0
+timeout_sec = 10500.0
 user = "root"
 environment_mode = "separate"
 network_mode = "allowlist"

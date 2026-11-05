@@ -32,7 +32,7 @@ The solver supplies executable `/app/build.sh` and `/app/run.sh` with the comman
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Removed an unrelated five-line header region from test-009 reference labels |
+| 2026-10-28 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -73,7 +73,7 @@ A result contains up to five source regions and 500 distinct physical lines. Per
 
 Invalid or failed query outputs and timeouts score zero for that query. Build failure scores zero overall. A confirmed integrity violation invalidates the submission. Scoring is deterministic; no subjective answer judge is used. The API model allowlist is a task policy; the line scorer alone does not certify model/provider compliance.
 
-The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour development budget. Index construction and service readiness have 3,600 seconds. Each query invocation has 180 seconds including API waits and output writing, concurrency one. Both images use the standard CPU image. The resource documents match `agentic-search`; only its documented OpenRouter/Jina retrieval APIs and four Qwen generation models are allowed. Corpus or answer lookup on external sites is not permitted.
+The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour development budget. Index construction and service readiness have 3,600 seconds. Each query invocation has 180 seconds including API waits and output writing, concurrency one. Both images use the standard CPU image. Only the OpenRouter/Jina retrieval APIs and four Qwen generation models listed in this task's available_resources.md are allowed. Corpus or answer lookup on external sites is not permitted.
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
 
@@ -91,9 +91,9 @@ bash scripts/evaluation/run_task.sh --task code-context-retrieval --agent codex 
 
 ### Sources and reproduction
 
-[SWE-Explore paper](https://arxiv.org/abs/2606.07297), [official dataset](https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench), and [official implementation](https://github.com/Qiushao-E/SWE-Explore-Bench).
+[SWE-Explore paper](https://arxiv.org/abs/2606.07297), [SWE-Explore dataset](https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench), and [SWE-Explore implementation](https://github.com/Qiushao-E/SWE-Explore-Bench).
 
-Dataset revision: `bdb0ae45d7c337d9e1dc3ebfe2a0af6bc7c1fbd9`; release SHA-256: `dc4f114ececd0bfb987361c26ae5e2440456e2cccb36adfccb09ea5385aec202`. Official implementation revision: `5602f031f2d9562d0a805f83402b536e831a5a11`. Issues and base commits were joined by exact IDs to pinned SWE-bench Verified, Multilingual and Pro v1 releases. Attribution and per-snapshot origins are in `LICENSE.data.md`.
+Dataset revision: `bdb0ae45d7c337d9e1dc3ebfe2a0af6bc7c1fbd9`; release SHA-256: `dc4f114ececd0bfb987361c26ae5e2440456e2cccb36adfccb09ea5385aec202`. SWE-Explore implementation revision: `5602f031f2d9562d0a805f83402b536e831a5a11`. Issues and base commits were joined by exact IDs to pinned SWE-bench Verified, Multilingual and Pro v1 releases. Attribution and per-snapshot origins are in `LICENSE.data.md`.
 
 The authoring directory is `task_development/code-bug-localization`, adjacent to this Search-SWE checkout. It contains source downloads, the frozen selection, per-query baseline traces, review notes, export scripts, source hashes and author-only runtime fixtures. None is mounted into the solver environment. Reproduce the export with `python task_development/code-bug-localization/package_task.py` from the parent workspace; its input is the already frozen `selection/`.
 

@@ -13,7 +13,7 @@ import sys
 
 def run_judge(tests, workspace, output, logs):
     command = [
-        sys.executable, str(tests / "rewardkit_deepseek.py"), str(tests / "jailbreak_judge"),
+        sys.executable, str(tests / "judge_repeats.py"), str(tests / "rewardkit_deepseek.py"), str(tests / "jailbreak_judge"),
         "--workspace", str(workspace), "--output", str(output),
         "--max-concurrent-agent", "1", "--judge", "deepseek-codex",
         "--model", "deepseek/deepseek-v4.1-flash",
@@ -23,7 +23,7 @@ def run_judge(tests, workspace, output, logs):
         process = subprocess.Popen(command, stdout=stdout, stderr=stderr,
                                    start_new_session=True)
         try:
-            return process.wait(timeout=1230)
+            return process.wait(timeout=3690)
         finally:
             try:
                 os.killpg(process.pid, signal.SIGKILL)
@@ -63,8 +63,8 @@ def apply_gate(logs, trajectory, tests, workspace):
         result = json.loads(judge_output.read_text())
         # A single-directory RewardKit layout serializes its aggregate as reward.
         verdict = result.get("reward") if isinstance(result, dict) else None
-        if not isinstance(verdict, (bool, int, float)) or verdict not in (0, 1):
-            raise ValueError("Trajectory judge must return a binary aggregate reward")
+        if not isinstance(verdict, (bool, int, float)) or verdict not in (0, 1/3, 2/3, 1):
+            raise ValueError("Trajectory judge must return a finite mean in [0, 1]")
         reward["jailbreak_judge"] = float(verdict)
         reward["reward"] = score if verdict == 1 else 0.0
         status = {"status": "ok", "passed": verdict == 1}

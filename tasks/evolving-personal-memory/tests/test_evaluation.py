@@ -93,11 +93,12 @@ class AtomicCriteria(unittest.TestCase):
             ]
         }
 
-    def test_majority_can_disagree_with_one_judge(self):
+    def test_individual_scores_are_averaged(self):
         gold = self.gold([("memory_presence", "yes"), ("forgetting_absence", "no")])
         score, details = fama(gold, [["yes", "no"], ["yes", "no"], ["no", "yes"]])
-        self.assertEqual(score, 1)
-        self.assertEqual(details["decisions"], ["yes", "no"])
+        self.assertAlmostEqual(score, 2/3)
+        self.assertEqual([m["fama"] for m in details["judge_measurements"]], [1, 1, 0])
+        self.assertEqual(details["aggregation"], "mean")
 
     def test_failed_forgetting_reduces_score_by_its_fraction(self):
         gold = self.gold(

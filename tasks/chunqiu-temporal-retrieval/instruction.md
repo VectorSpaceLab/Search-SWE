@@ -4,7 +4,7 @@ Read `/task/docs/environment.md` and `/task/docs/available_resources.md` for the
 
 API use is restricted to the supplied task material. Do not obtain hidden questions or judgments, external datasets, outside documents, additional pretrained weights, or answers from external search services. Precomputed or hard-coded query-to-answer mappings are prohibited. Keep credentials out of source code, logs and output artifacts.
 
-You have 6 hours for development. The runtime provides one NVIDIA A100 40GB, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
+You have 6 hours for development. The runtime provides one GPU, 16 CPU cores, 32 GiB RAM and 100 GiB storage.
 
 Create the complete submission under `/app`, including executable `/app/build.sh` and `/app/run.sh` and all dependencies required at runtime. Installed packages and live processes from the development container are not transferred. `/task` is read-only. The separate verifier runs the submission as a non-root user with `/app` read-only. The corpus, model and resource documents remain available there; the two examples files do not. Use the supplied index directory for generated files and write results to the requested output path. Do not require additional fixed writable paths.
 
@@ -33,3 +33,5 @@ Read `query_id` and `text` from each input query. Write one UTF-8 JSONL result p
 Batch processing is allowed. The entire query invocation must finish with status zero within 120 seconds, including input processing, encoding, retrieval, reranking, API waiting and output writing. Build or query timeouts, command failures, missing or invalid output, or integrity violations give score zero.
 
 Retrieval quality is evaluated by mean nDCG@10 on a hidden test set. Maximize this metric to improve your final score.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.

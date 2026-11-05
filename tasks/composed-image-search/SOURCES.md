@@ -8,7 +8,7 @@ and environment documentation.
 
 [CIRCO](https://github.com/miccunifi/CIRCO) contributes 216 original
 multiple-positive requests over the COCO 2017 unlabeled gallery.
-[CIRR's official validation captions](https://github.com/Cuberick-Orion/CIRR/tree/cirr_dataset/captions)
+[CIRR validation captions](https://github.com/Cuberick-Orion/CIRR/tree/cirr_dataset/captions)
 contribute 4,181 original requests and 2,297 images, matched to the
 [fixed image mirror](https://huggingface.co/datasets/royokong/cirr_imgs/tree/7a25e03bc7640ef61d80b854e3c9762871d74a28).
 

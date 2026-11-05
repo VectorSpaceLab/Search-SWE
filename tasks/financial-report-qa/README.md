@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | EvidenceRecall@5 |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 12000 s |
+| Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | DocFinQA full reports aligned with original FinQA gold_inds |
 | Public queries | 5 |
 | Hidden queries | 4236 |
@@ -67,7 +67,6 @@ each of two query calls has 3,600 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Added reviewed alternative evidence locations for 18 held-out questions |
 | 2026-10-23 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation

@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | GoldRecall@5 |
 | Compute | 32 CPUs; 16 GiB RAM; 200 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 17100 s |
+| Agent / verifier time limits | 7200 s / 20000 s |
 | Dataset | BrowseComp-Plus |
 | Hidden queries | 20 |
 
@@ -95,7 +95,6 @@ to five workers. The service and index are shared, while input/output files are
 separate.
 
 Each result contains a query ID and exactly five distinct corpus IDs in `doc_ids`.
-This differs from the scored `results` objects used by several other tasks.
 See [instruction.md](instruction.md) for the exact contract.
 
 ### Evaluation

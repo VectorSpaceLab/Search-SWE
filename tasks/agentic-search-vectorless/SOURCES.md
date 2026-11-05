@@ -16,10 +16,10 @@ The immediate source records the BrowseComp-Plus corpus and a 20-question public
 
 Search-SWE `ac7dcc1` permits these three published inputs to retain their original `tasks/agentic-search/...` paths, immutable revisions, sizes and hashes. The package passed `--merge-ready` and full local asset verification on 2026-10-17. The earlier namespace restriction is resolved; no asset bytes or source entries changed.
 
-No duplicate upload is needed. New official uploads would use their publishing task's namespace; this package only references existing published files. Preserve the original provenance and applicable terms.
+This package references the input files pinned in `assets.json`. Their source provenance and usage terms apply.
 
 ## Usage terms and validation boundaries
 
-The official source notes that there is no blanket license for all materials; retain underlying source attribution and applicable terms. Reuse of a published mirror and hash agreement do not establish redistribution rights. No upload was performed. The hidden split remains excluded from agent mounts but is repository-visible, as disclosed in the package README.
+The `search-swe/Search-SWE` source documentation states that there is no blanket license for all materials; retain underlying source attribution and applicable terms. Reuse of a published mirror and hash agreement do not establish redistribution rights. No upload was performed. The hidden split is excluded from agent mounts but is visible in the repository.
 
 Local runtime files are checked with the repository downloader `--verify-only`. Remote metadata and small-file download checks are recorded in the author evidence for 2026-10-14; a metadata check of a large file is not a fresh full download. Asset verification does not establish task solvability or replace the configured-model trial.

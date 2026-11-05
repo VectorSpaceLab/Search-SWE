@@ -9,7 +9,7 @@
 | Authors | Haoran Jin |
 | Primary metric | FAMA |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
-| Agent / verifier time limits | 7200 s / 21600 s |
+| Agent / verifier time limits | 7200 s / 24000 s |
 | Dataset | Memora |
 | Hidden queries | 595 |
 
@@ -105,7 +105,7 @@ The full schema and invocation details are in [instruction.md](instruction.md).
 
 #### Search Quality
 
-Three independent judge configurations vote on each deduplicated criterion.
+Three independent judge configurations assess every answer against its memory and forgetting criteria. For each configuration, MPA and FAA are the respective pass rates, lambda is the fraction of forgetting criteria, and FAMA = max(0, MPA - lambda * (1 - FAA)). The answer's quality is the arithmetic mean of these three FAMA values. Raw task quality is the mean across test questions. A failed or incomplete judge call is an evaluation infrastructure failure.
 MPA measures passed memory criteria, FAA measures passed forgetting criteria,
 and lambda is the fraction of criteria that concern forgetting.
 
@@ -113,7 +113,7 @@ and lambda is the fraction of criteria that concern forgetting.
 FAMA = max(0, MPA - lambda * (1 - FAA))
 ```
 
-Final quality is mean FAMA over 595 held-out questions. Retrieval IDs assemble the answer request and are not a
+Final quality is the mean of the three-judge mean FAMA values over 595 held-out questions. Retrieval IDs assemble the answer request and are not a
 separate retrieval-quality metric. Record IDs are not appended to judged answer
 text.
 

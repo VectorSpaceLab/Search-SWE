@@ -211959,13 +211959,10 @@
     },
     {
       "path": "models/vision-backbone/README.md",
-      "size_bytes": 1694,
-      "sha256": "1a3da34628e2e4635c200b4a463c2681caf5b9b0d33025800924dccdc73d1004",
+      "size_bytes": 1482,
+      "sha256": "702584320819bde834c8700dbdcc829ddba156bdfd6d4fff4ef0e746c504a857",
       "source": {
-        "repo_id": "vidore/colqwen2.5-base",
-        "repo_type": "model",
-        "revision": "92908120384b7a2110c5beda3ab29cbdb2c08e49",
-        "filename": "README.md"
+        "local_path": "model-metadata/models/vision-backbone/README.md"
       }
     },
     {
