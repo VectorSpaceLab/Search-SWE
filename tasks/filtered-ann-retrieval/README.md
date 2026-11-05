@@ -44,8 +44,7 @@ image. Reference implementations remain outside the task package.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-11-04 | 1.0.0 | Adjusted hidden-test difficulty and composition to 30 queries; synchronized case-count checks |
-| 2026-10-23 | 1.0.0 | Added initial task |
+| 2026-11-04 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
