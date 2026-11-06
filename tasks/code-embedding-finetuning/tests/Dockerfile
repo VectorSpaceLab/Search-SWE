@@ -20,7 +20,7 @@ RUN set -eux; \
     "$root/bin/codex" --version | grep -Fx "codex-cli ${REWARDKIT_CODEX_VERSION}"
 
 COPY --chmod=755 test.sh run_evaluation.sh finalize_reward.py /tests/
-COPY --chmod=644 grader.py rewardkit_deepseek.py /tests/
+COPY --chmod=644 grader.py rewardkit_deepseek.py judge_repeats.py /tests/
 COPY --chmod=600 data/queries.jsonl data/ground_truth.jsonl /tests/data/
 COPY jailbreak_judge/ /tests/jailbreak_judge/
 

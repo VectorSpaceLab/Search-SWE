@@ -162,9 +162,10 @@ preserving CPU quotas, RAM limits and mounts. Coordinate native allocations
 with other users and keep placement fixed for timing comparisons.
 
 When a task declares an explicit CFS quota matching Harbor's CPU budget at a
-100 ms period, the adapter converts it to the equivalent `cpus` setting in a
-per-run Compose copy. Conflicting budgets or other periods stop startup;
-the task files and other resource limits remain unchanged.
+100 ms period, the adapter preserves that quota and sets `cpus: 0` in a per-run
+Compose copy to disable Harbor's duplicate NanoCPU limit. The CFS quota remains
+enforced even on Compose versions that ignore `cpus`. Conflicting budgets or
+other periods stop startup; task files and other resource limits remain unchanged.
 
 ## GPU tasks
 

@@ -54,11 +54,21 @@ class CpuAffinityTests(unittest.TestCase):
         before = copy.deepcopy(source)
         selected = normalize_compose_cpu_quota(source, 8)
         self.assertEqual(selected["services"]["main"],
-                         {"cpus": 8, "mem_limit": "32g", "volumes": ["./data:/data:ro"]})
+                         {"cpu_period": 100000, "cpu_quota": 800000, "cpus": 0,
+                          "mem_limit": "32g", "volumes": ["./data:/data:ro"]})
         self.assertEqual(selected["services"]["helper"], source["services"]["helper"])
         self.assertEqual(source, before)
         self.assertEqual(normalize_compose_cpu_quota(source, None), source)
         self.assertEqual(normalize_compose_cpu_quota(selected, 8), selected)
+        nano_only = {"services": {"main": {"cpus": 8, "mem_limit": "32g"}}}
+        self.assertEqual(normalize_compose_cpu_quota(nano_only, 8), nano_only)
+        for budget in (8, 16):
+            for nano in (0, budget):
+                source = {"services": {"main": {"cpu_period": 100000,
+                                                "cpu_quota": budget * 100000, "cpus": nano}}}
+                with self.subTest(budget=budget, nano=nano):
+                    main = normalize_compose_cpu_quota(source, budget)["services"]["main"]
+                    self.assertEqual(main, {"cpu_period": 100000, "cpu_quota": budget * 100000, "cpus": 0})
         for fields in ({"cpu_period": 50000, "cpu_quota": 400000},
                        {"cpu_period": 100000, "cpu_quota": 400000},
                        {"cpu_period": 100000}, {"cpu_quota": 800000},
@@ -87,9 +97,9 @@ class CpuAffinityTests(unittest.TestCase):
                             expected = copy.deepcopy(original)
                             main = expected["services"]["main"]
                             if "cpu_period" in main:
-                                self.assertEqual(main.pop("cpu_period"), 100000)
-                                self.assertEqual(main.pop("cpu_quota"), config.environment.cpus * 100000)
-                                main["cpus"] = config.environment.cpus
+                                self.assertEqual(main["cpu_period"], 100000)
+                                self.assertEqual(main["cpu_quota"], config.environment.cpus * 100000)
+                                main["cpus"] = 0
                             if cpu_set is not None:
                                 for service in expected["services"].values():
                                     service["cpuset"] = cpu_set
