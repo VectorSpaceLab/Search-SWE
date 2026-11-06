@@ -38,17 +38,18 @@ def select_compose_cpus(document, value):
 
 
 def normalize_compose_cpu_quota(document, cpus):
-    """Remove CFS fields that conflict with Harbor's equivalent NanoCPU limit."""
+    """Preserve explicit CFS limits without also applying Harbor's NanoCPU limit."""
     result = copy.deepcopy(document)
     main = result.get("services", {}).get("main", {})
     if cpus is None or not ({"cpu_period", "cpu_quota"} & main.keys()):
         return result
     period, quota = main.get("cpu_period"), main.get("cpu_quota")
-    # NanoCPUs uses a 100 ms period. Other periods or budgets cannot be
-    # silently replaced, even when their quota/period ratio happens to match.
+    # Only accept the same budget and period as Harbor's default CPU limit.
     if (type(period) is not int or type(quota) is not int or period != 100_000
-            or quota != cpus * period or float(main.get("cpus", cpus)) != cpus):
+            or quota != cpus * period or float(main.get("cpus", cpus)) not in (0, cpus)):
         raise ValueError("Explicit CFS quota must match Harbor's CPU budget at the 100 ms period")
-    del main["cpu_period"], main["cpu_quota"]
-    main["cpus"] = cpus
+    # Some Compose versions ignore `cpus`. Keep the explicit CFS limit and
+    # clear the equivalent NanoCPU field from Harbor's earlier overlay;
+    # Docker rejects two nonzero limits even when their budgets agree.
+    main["cpus"] = 0
     return result
