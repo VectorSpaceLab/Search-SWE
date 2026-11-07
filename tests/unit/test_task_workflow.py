@@ -31,6 +31,10 @@ class TaskWorkflow(unittest.TestCase):
         (self.repo / "tasks").mkdir(parents=True)
         (self.repo / "docker").mkdir()
         (self.repo / "docker/README.md").write_text("fixture")
+        for hardware in ("cpu", "gpu"):
+            summary = Path("docker") / hardware / "environment.md"
+            (self.repo / summary).parent.mkdir()
+            shutil.copyfile(SCRIPTS.parent / summary, self.repo / summary)
         self.git("init", "-q", "-b", "main")
         self.git("config", "user.name", "Maintainer")
         self.git("config", "user.email", "maintainer@example.test")
@@ -56,8 +60,34 @@ class TaskWorkflow(unittest.TestCase):
                               capture_output=True, text=True, **kwargs).stdout
 
     def scaffold(self, name, task_name="example-search"):
-        return subprocess.run([sys.executable, str(SCAFFOLD), task_name, "--repo-root", str(self.repo),
-                               "--author", f"{name} Example"], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(SCAFFOLD), task_name, "--repo-root", str(self.repo),
+                                 "--author", f"{name} Example"], capture_output=True, text=True)
+        if result.returncode == 0:
+            # Workflow fixtures represent authored tasks; the scaffold leaves
+            # the solver request empty until the author supplies it.
+            (self.repo / "tasks" / task_name / "instruction.md").write_text(
+                "Build an offline search program under /app using the installed runtime.\n")
+        return result
+
+    def test_scaffold_environment_summaries_and_required_instruction(self):
+        for hardware in ("cpu", "gpu"):
+            with self.subTest(hardware=hardware):
+                task_name = f"unfinished-{hardware}-search"
+                result = subprocess.run(
+                    [sys.executable, str(SCAFFOLD), task_name, "--repo-root", str(self.repo),
+                     "--author", "Alice Example", "--hardware", hardware],
+                    capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                task = self.repo / "tasks" / task_name
+                summary = (self.repo / "docker" / hardware / "environment.md").read_text().strip()
+                self.assertTrue((task / "environment/docs/environment.md").read_text().startswith(
+                    summary + "\n\n## Task resources\n"))
+                instruction = task / "instruction.md"
+                self.assertEqual(instruction.read_text(), "")
+                self.assertEqual(check_package(self.repo, task),
+                                 [f"{task_name}: missing or empty instruction.md"])
+                instruction.write_text("Build an offline search program under /app.\n")
+                self.assertEqual(check_package(self.repo, task), [])
 
     def cli(self, script, *args):
         env = {k: v for k, v in os.environ.items() if not k.startswith(("AGENT_", "CONTAINER_", "VERIFIER_"))}
