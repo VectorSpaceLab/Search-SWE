@@ -29,7 +29,7 @@ checkout/version providing `scripts/validation/check_tasks.py`,
 `scripts/evaluation/run_task.py` and their dependencies. Missing tools or an
 older workflow version stop that layer; do not improvise acceptance commands.
 Python 3.12+ and the host dependencies declared in `pyproject.toml` are target
-prerequisites; install with `python -m pip install -e .` from the trusted checkout.
+prerequisites; install with `pip install -e .` from the trusted checkout.
 These include Harbor, huggingface_hub, PyYAML and python-dotenv. Docker Engine/Compose,
 image access and appropriate GPU driver/Container Toolkit are needed for runtime.
 

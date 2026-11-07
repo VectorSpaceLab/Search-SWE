@@ -10,7 +10,7 @@ Verify the explicit checkout contains `scripts/validation/check_tasks.py`,
 `check_release.py`, `download_assets.py`, `run_task.py`/`run_task.sh`, and their
 imports. Use Python 3.12+ and the host dependencies declared in `pyproject.toml`,
 including Harbor, huggingface_hub, PyYAML for static Compose parsing, and
-python-dotenv for launcher configuration. Install with `python -m pip install -e .`
+python-dotenv for launcher configuration. Install with `pip install -e .`
 from the checkout root in an approved host virtual environment.
 Do not replace missing target tooling with invented commands.
 Docker Engine + Compose are needed for builds/trials, published image access for

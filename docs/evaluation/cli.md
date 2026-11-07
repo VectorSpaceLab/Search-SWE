@@ -18,7 +18,7 @@ search-swe run
 
 The Python package supplies the CLI; a separate checkout holds tasks, backend
 scripts, assets and results. CLI and checkout must share a release series,
-currently **0.2.x**. Patch versions within that series are compatible. For local
+currently **0.3.x**. Patch versions within that series are compatible. For local
 CLI development, install from the checkout with `pip install -e .`.
 
 On first interactive use, choose an existing checkout, clone to `~/Search-SWE`,
@@ -36,7 +36,7 @@ changing release series, preserving local work.
 
 ## Update tasks and inspect the checkout
 
-CLI 0.2.1+ provides repository updates and offline diagnostics:
+Inspect the selected checkout and update it between batches:
 
 ```bash
 search-swe info
@@ -78,9 +78,11 @@ keys to configure; `run` selects the tasks to evaluate. Use each command's
 `--help` for its flags.
 
 The default is **Codex + OpenRouter + `openai/gpt-6-luna`, `max` reasoning**.
-All three harnesses support OpenRouter. See the
+Codex, Claude Code and Pi provide integrated OpenRouter routes. All registered
+Harbor agents are available through `--provider native`; use `search-swe agents`
+to discover them. See the
 [agent/provider matrix](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md)
-for direct routes and model scope. `search-swe pi-models` lists Pi providers;
+for direct routes, model scope and [harness versions/cache](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md#harness-versions-and-installation). `search-swe pi-models` lists Pi providers;
 add `--provider NAME` for exact model IDs.
 
 ### OpenRouter model search
@@ -119,6 +121,8 @@ entered values only for that run.
 | Saved setting | Variable |
 | --- | --- |
 | Harness and provider | `SEARCH_SWE_AGENT`, `SEARCH_SWE_PROVIDER` |
+| Harness version override | `SEARCH_SWE_AGENT_VERSION` |
+| Native agent configuration | `SEARCH_SWE_AGENT_CONFIG` |
 | Model and reasoning | `AGENT_MODEL`, `AGENT_REASONING_EFFORT` / `PI_THINKING` |
 | Default parallelism | `SEARCH_SWE_CONCURRENCY` |
 
@@ -167,7 +171,9 @@ search-swe run code-embedding-finetuning --gpu-devices 0 --yes
 | `doctor` | Check the host and Docker using the checkout `.env` or `--env-file` |
 | `--yes` | Use arguments/saved settings; missing required variables produce a configuration error |
 | `--dry-run` | Preview settings, disk estimates and commands without prompts, writes, downloads, allocation or API calls |
-| `--offline` | Use cached assets/model metadata; submission-key checks and evaluation still need network |
+| `--offline` | Use cached assets/model metadata; harness setup, submission-key checks and evaluation may still need network |
+| `--agent-version VERSION` | Use an exact harness version; `default` selects the checkout registry default |
+| `--agent-config PATH` | Native agent JSON; relative paths resolve from the selected checkout |
 | `--task NAME` | Repeat to select tasks instead of positional names |
 
 ## Parallel execution and results

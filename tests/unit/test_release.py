@@ -352,7 +352,7 @@ class ReleasePackage(unittest.TestCase):
                 argv = shlex.split(result.stdout.splitlines()[-1])
                 self.assertEqual(
                     argv[argv.index("--agent") + 1],
-                    "scripts.evaluation.harbor_agents:PreinstalledPi",
+                    "scripts.evaluation.harbor_agents:ManagedPi",
                 )
                 self.assertEqual(argv[argv.index("-m") + 1], model)
                 self.assertIn("version=1.4.0", self.flag_values(argv, "--ak"))
@@ -391,7 +391,7 @@ class ReleasePackage(unittest.TestCase):
         argv = shlex.split(result.stdout.splitlines()[-1])
         self.assertEqual(
             argv[argv.index("--agent") + 1],
-            "scripts.evaluation.harbor_agents:PreinstalledClaudeCode",
+            "scripts.evaluation.harbor_agents:ManagedClaudeCode",
         )
         self.assertEqual(argv[argv.index("-m") + 1], "claude-sonnet-4-6")
         self.assertIn("version=2.1.309", self.flag_values(argv, "--ak"))

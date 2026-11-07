@@ -32,6 +32,8 @@ class RelocatedSkill(unittest.TestCase):
         (self.repo / "scripts/evaluation").mkdir(parents=True)
         (self.repo / "scripts/evaluation/harness_versions.py").write_text(
             'CODEX_VERSION="0.164.0"\nCLAUDE_CODE_VERSION="2.1.309"\nPI_VERSION="1.4.0"\n')
+        (self.repo / "src/search_swe/data").mkdir(parents=True)
+        (self.repo / "src/search_swe/data/harnesses.toml").write_text('[verifier]\ncodex_version="0.164.0"\n')
 
     def scaffold(self, name, *args, authors=True):
         return subprocess.run(
@@ -121,9 +123,9 @@ class RelocatedSkill(unittest.TestCase):
     def test_resources_pins_and_budget_propagate(self):
         # Change the target pin to prove generation uses the target, not the
         # installed skill's original version or execution of a Python module.
-        pins = self.repo / "scripts/evaluation/harness_versions.py"
-        pins.write_text('CODEX_VERSION="9.8.7"\nCLAUDE_CODE_VERSION="8.7.6"\nPI_VERSION="7.6.5"\n'
-                        'raise RuntimeError("must not execute target code")\n')
+        pins = self.repo / "src/search_swe/data/harnesses.toml"
+        pins.write_text('[agents.codex]\nversion="8.7.6"\n[verifier]\ncodex_version="9.8.7"\n')
+        (self.repo / "scripts/evaluation/harness_versions.py").write_text('raise RuntimeError("must not execute target code")\n')
         result = self.scaffold("custom-search", "--hardware", "gpu", "--cpus", "16",
                                "--memory-mb", "16384", "--storage-mb", "51200",
                                "--agent-timeout-sec", "21600", "--grader-timeout-sec", "9000",
@@ -142,9 +144,7 @@ class RelocatedSkill(unittest.TestCase):
             self.assertEqual(main["mem_limit"], main["memswap_limit"])
             self.assertEqual(main["deploy"]["resources"]["limits"]["memory"], main["mem_limit"])
             self.assertEqual(main["deploy"]["resources"]["reservations"]["devices"][0]["count"], 1)
-        self.assertIn("CODEX_VERSION=9.8.7", (task / "environment/Dockerfile").read_text())
-        self.assertIn("CLAUDE_CODE_VERSION=8.7.6", (task / "environment/Dockerfile").read_text())
-        self.assertIn("PI_VERSION=7.6.5", (task / "environment/Dockerfile").read_text())
+        self.assertNotIn("npm install", (task / "environment/Dockerfile").read_text())
         self.assertIn('CODEX_VERSION = "9.8.7"', (task / "tests/rewardkit_deepseek.py").read_text())
         self.assertIn("REWARDKIT_CODEX_VERSION=9.8.7", (task / "tests/Dockerfile").read_text())
         readme = (task / "README.md").read_text()
@@ -222,7 +222,7 @@ class RelocatedSkill(unittest.TestCase):
         for flag in ("--cpus", "--memory-mb", "--storage-mb", "--agent-timeout-sec",
                      "--grader-timeout-sec", "--judge-timeout-sec"):
             self.assertNotEqual(self.scaffold("invalid-search", flag, "0").returncode, 0)
-        (self.repo / "scripts/evaluation/harness_versions.py").unlink()
+        (self.repo / "src/search_swe/data/harnesses.toml").unlink()
         self.assertNotEqual(self.scaffold("invalid-search").returncode, 0)
         self.assertFalse((self.repo / "tasks/invalid-search").exists())
 

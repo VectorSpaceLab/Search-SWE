@@ -26,13 +26,13 @@ unattended execution, prepare the checkout first and pass `--repo PATH`.
 Use a Python 3.12+ host environment with the Search-SWE package installed. Check
 `search-swe --version` and `search-swe run --help`. Install the distribution with
 `pip install search-swe`. For local CLI development, use
-`python -m pip install -e /path/to/Search-SWE`. An installed skill provides
+`pip install -e /path/to/Search-SWE`. An installed skill provides
 instructions; the package supplies the executable.
 
-Use CLI 0.2.x and a checkout from the same release series. Resolve a version
+Use CLI 0.3.x and a checkout from the same release series. Resolve a version
 mismatch before configuration; preserve checkout changes when updating it.
 
-With CLI 0.2.1+, use `search-swe info --json` to inspect the selected checkout
+Use `search-swe info --json` to inspect the selected checkout
 and task count offline. To obtain new tasks, use `search-swe update --check
 --json`, then `search-swe update` between batches within the requested scope.
 Updates follow the current branch's upstream and require a clean fast-forward
@@ -45,18 +45,35 @@ These paths are relative to the benchmark checkout, not this installed skill.
 ## Resolve the requested experiment
 
 - Preserve the requested harness, provider, complete model ID, reasoning/thinking
-  level, task names, concurrency and CPU/GPU/RAM pool. Use existing configuration
+  level, harness version, task names, concurrency and CPU/GPU/RAM pool. Use existing configuration
   for omitted values, and identify material ambiguities before launching.
 - Discover names/resources with `search-swe --repo /path/to/Search-SWE list --json`.
   Inspect the selected task READMEs and `task.toml` for runtime and service needs.
-- Use `docs/evaluation/agents.md` for the harness/provider/model matrix. All three harnesses
-  support OpenRouter; Claude Code requires Messages/tool compatibility. Pi direct
+- Use `docs/evaluation/agents.md` for the harness/provider/model matrix. Discover Harbor
+  integrations using `search-swe agents --json`; select `--provider native` for native
+  agents and inspect `search-swe agents --agent NAME --json` for parameters and ATIF
+  support. Native authentication, kwargs, API hosts and credential files use
+  `--agent-config PATH`; credential values stay in agent-only `AGENT_*` variables.
+  Set cloud/OAuth selectors in that native env block for the selected account.
+  Preserve each task's trajectory requirements and the native agent's capabilities.
+  Tasks declaring `/logs/agent/trajectory.json` need `atif=true`; the CLI checks
+  this before asset preparation. Pi routes share the Search-SWE ATIF converter.
+  Codex, Claude Code and Pi also provide integrated OpenRouter routes;
+  Claude Code requires Messages/tool compatibility. Pi direct
   uses its bundled API-key provider catalog: `search-swe pi-models` lists providers,
   and `search-swe pi-models --provider NAME` lists model IDs. Configure only that
   provider's key and endpoint settings. For an ambiguous OpenRouter name, consult
   `https://openrouter.ai/api/v1/models` or cached catalog metadata described in
   the checkout's CLI guide, and resolve the full ID.
   Directory metadata alone is not proof of harness compatibility.
+- Use the checkout defaults in `src/search_swe/data/harnesses.toml` unless the
+  user requests a version. Pass `--agent-version VERSION` for an exact override or
+  `--agent-version default` to reset a saved pin. For centrally managed CLIs, the
+  shared installer verifies actual versions and records `harness.json` with the agent logs. Reuse its
+  private, image-specific cache (`SEARCH_SWE_HARNESS_CACHE`); allow disk/network
+  for a first install. Preserve the independent verifier judge pins. Other native
+  agents use Harbor installers and report limitations when version verification
+  is unavailable.
 - Use one model setting per batch and one attempt per selected task by default.
   For a requested model matrix, create separate batches and coordinate resources
   across them. The CLI coordinates allocations within one invocation.
@@ -151,8 +168,8 @@ and retain its asset checks and phase isolation.
 
 The CLI restores verified assets, prepares bounded storage where needed, and
 launches the task harness/verifier. `--offline` uses cached assets and model
-selection metadata; submission-key checks and evaluation still need network
-access. Use a fresh `--output`
+selection metadata; harness installation, submission-key checks and evaluation
+may still need network access. Use a fresh `--output`
 path or the generated `jobs/evaluations/<unique-run>/` directory. Output paths are
 relative to the invoking directory when supplied; use absolute paths for handoffs.
 

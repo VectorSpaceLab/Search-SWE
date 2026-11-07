@@ -59,7 +59,7 @@ For authentication, use a separate JSON file with
 symlinks and hard links are rejected. Relative auth paths resolve from the
 config file. Only the gateway receives these credentials.
 
-`EGRESS_CONFIG` paths resolve from the checkout. The native launcher's
+`EGRESS_CONFIG` paths resolve from the checkout. The single-task launcher's
 `--egress-config PATH` overrides it and resolves from the current directory.
 Its `--dry-run` checks policy/config compatibility without pulling images or
 reading proxy credentials. Configure image pulls and builds at the Docker
@@ -94,8 +94,12 @@ ports or paths.
 | `[agent]` | Agent-phase override, plus the launcher-selected coding-model host |
 | `[verifier]` | Separate verifier policy, including its required judge endpoints |
 
-The coding-model host comes from the selected direct endpoint, or `openrouter.ai`
-for OpenRouter. Agent tools are preinstalled in task images. A verifier's judge
+Coding-agent destinations follow the selected route: the provider endpoint for
+integrated routes, or the native agent's API/authentication hosts and explicit
+configuration. Trusted harness setup temporarily allows distribution hosts,
+then restores the task policy before coding begins, including on setup failure.
+Installed programs can be reused from the private host cache described in
+[harness installation](agents.md#harness-versions-and-installation). A verifier's judge
 access does not grant the submitted program that access; task-local confinement
 and separate credentials enforce submission permissions. Leave `CONTAINER_PROXY`
 unset and route proxies through the gateway configuration above.

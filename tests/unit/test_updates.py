@@ -30,7 +30,7 @@ class UpdateTests(unittest.TestCase):
         self.source = self.root / "upstream"
         self.source.mkdir()
         self.git(self.source, "init", "-q", "-b", "main")
-        (self.source / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.2.0"\n')
+        (self.source / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.0"\n')
         (self.source / "scripts/evaluation").mkdir(parents=True)
         (self.source / "scripts/evaluation/run_task.py").write_text("# fixture\n")
         (self.source / ".gitignore").write_text(".env\ntasks/*/data/\njobs/\n")
@@ -56,7 +56,7 @@ class UpdateTests(unittest.TestCase):
         (path / "task.toml").write_text('[environment]\ncpus=1\nmemory_mb=1024\n')
         (path / "assets.json").write_text('{"files": []}')
 
-    def advance(self, version="0.2.1"):
+    def advance(self, version="0.3.1"):
         (self.source / "pyproject.toml").write_text(f'[project]\nname="search-swe"\nversion="{version}"\n')
         self.task(self.source, "second-search")
         self.commit(self.source)
@@ -154,12 +154,12 @@ class UpdateTests(unittest.TestCase):
 
     def test_incompatible_upstream_is_detected_before_fast_forward(self):
         head = self.git(self.checkout, "rev-parse", "HEAD")
-        self.advance("0.3.0")
+        self.advance("0.4.0")
         self.assertEqual(updates.update(self.checkout, check=True)["status"], "incompatible")
         with self.assertRaisesRegex(ValueError, "incompatible with CLI"):
             updates.update(self.checkout)
         self.assertEqual(self.git(self.checkout, "rev-parse", "HEAD"), head)
-        self.assertEqual(repository.checkout_version(self.checkout), "0.2.0")
+        self.assertEqual(repository.checkout_version(self.checkout), "0.3.0")
         self.assertEqual(self.git(self.checkout, "for-each-ref", "--format=%(refname)", "refs/search-swe/"), "")
 
     def test_configured_upstream_and_removed_tasks_are_respected(self):

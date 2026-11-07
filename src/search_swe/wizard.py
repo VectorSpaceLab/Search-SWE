@@ -4,7 +4,7 @@ from pathlib import Path
 import questionary
 
 from .configuration import EFFORTS, Setting, default_model
-from . import pi_models
+from . import harbor_native, harnesses, pi_models
 from .model_catalog import MODEL_ID, ModelCompleter, eligible, load_models
 from .repository import clone_repo, is_repo, preference_path, remember_repo
 from .submission_models import model_ids, profile_for_key, setup_hint
@@ -56,27 +56,42 @@ def select_repository(*, offline=False):
         return root
 
 
-def select_setting(current, args):
-    harnesses = ["codex", "claude-code", "pi"]
-    agent = args.agent or ask(questionary.select("Harness", choices=harnesses,
-                            default=current.agent if current.agent in harnesses else "codex"))
-    providers = ["openrouter", "direct"]
-    default_provider = current.provider if agent == current.agent else "direct" if agent == "pi" else "openrouter"
+def select_setting(current, args, *, root=None):
+    agent_names = harbor_native.names()
+    agent = args.agent or ask(questionary.autocomplete("Harness (type to search Harbor agents)", choices=list(agent_names),
+                            default=current.agent if current.agent in agent_names else "codex", complete_while_typing=True,
+                            validate=lambda value: harbor_native.valid_name(value.strip()) or "Choose a registered Harbor agent"))
+    agent = agent.strip()
+    agent_version = getattr(args, "agent_version", None)
+    if agent_version is None and agent == current.agent:
+        agent_version = current.agent_version
+    selected_version = harnesses.resolve_version(agent, agent_version, root=root)
+    print(f"Harness version: {selected_version or 'Harbor native default'}; use --agent-version to override.")
+    providers = harbor_native.routes(agent)
+    default_provider = current.provider if agent == current.agent else harbor_native.default_route(agent)
     provider = args.provider or (providers[0] if len(providers) == 1 else
         ask(questionary.select("Provider", choices=providers,
                                default=default_provider if default_provider in providers else providers[0])))
     if provider not in providers:
-        raise ValueError("Choose an OpenRouter or direct provider route")
+        raise ValueError("Choose a provider route supported by this agent")
     same_route = (agent, provider) == (current.agent, current.provider)
     model, metadata = args.model, None
     if model is None and provider == "openrouter":
         default = current.model if same_route else default_model(agent, provider)
         model, metadata = openrouter_model(agent, default, args)
-    elif model is None and agent == "pi":
+    elif model is None and agent == "pi" and provider != "native":
         model = pi_model(current.model if same_route else "deepseek/deepseek-flash")
     elif model is None:
-        model = ask(questionary.text("Model ID for the direct endpoint",
-                    default=current.model if same_route else "", validate=lambda value: bool(value.strip()))).strip()
+        model = ask(questionary.text("Native model ID (optional when the agent supplies a default)" if provider == "native" else "Model ID for the direct endpoint",
+                    default=current.model if same_route else "", validate=lambda value: provider == "native" or bool(value.strip()))).strip()
+    config = None
+    if provider == "native":
+        print("Harbor native setup; see search-swe agents --agent " + agent + " and docs/evaluation/agents.md.")
+        config = str(args.agent_config) if getattr(args, "agent_config", None) else ask(questionary.path(
+            "Native agent JSON configuration (optional; Enter for defaults)",
+            default=(current.agent_config or "") if same_route else "")).strip() or None
+        effort = args.reasoning_effort or (current.effort if same_route and model == current.model else "default")
+        return Setting(agent, provider, model, effort, config, agent_version).validate()
     if agent == "pi" and provider == "direct":
         _, model_id, info = pi_models.selection(model)
         if not info["models"].get(model_id, {}).get("reasoning", True):
@@ -94,7 +109,7 @@ def select_setting(current, args):
                        *levels[1:]]
             effort = ask(questionary.select("Reasoning / thinking level", choices=choices,
                          default=default if default in levels else "default"))
-    return Setting(agent, provider, model, effort).validate()
+    return Setting(agent, provider, model, effort, agent_version=agent_version).validate()
 
 
 def pi_model(default):
@@ -159,7 +174,8 @@ def credential(name, env, updates, *, optional=False, edit=False):
             updates[name] = env[name] = env["AGENT_OPENROUTER_API_KEY"]
             return
     prompt = name + (" (optional; Enter to skip)" if optional else " (required)")
-    if name.endswith(("API_KEY", "TOKEN", "TOKEN_BEDROCK")):
+    from harbor.utils.env import is_sensitive_env_key
+    if is_sensitive_env_key(name) or name.endswith(("API_KEY", "TOKEN", "TOKEN_BEDROCK", "_PAT")):
         value = ask(questionary.password(prompt, validate=lambda v: True if optional or v.strip() else "A key is required"))
     else:
         defaults = {"AGENT_OPENAI_BASE_URL": "https://api.openai.com/v1",
@@ -176,6 +192,9 @@ def configure_agent(setting, env, updates, *, edit=False):
     if setting.agent == "pi" and setting.provider == "direct":
         provider, _, info = pi_models.selection(setting.model)
         print(f"Pi API-key setup: {info['name']} ({provider}). Only this provider's credentials are requested.")
+    if setting.provider == "native":
+        info = harbor_native.describe(setting.agent)
+        print(f"Harbor native agent: {setting.agent}; native ATIF: {info['native_atif']}. Task trajectory requirements remain in effect.")
     for name in sorted(setting.required(env)):
         credential(name, env, updates, edit=edit)
 

@@ -79,5 +79,6 @@ downloads, and local restoration options.
 
 Dataset provenance, processing details, and usage terms are documented in the
 task documentation and source dataset cards. Hidden evaluation queries and
-labels belong in the task package's `tests/data/` and are kept separate from the
-downloadable task data.
+labels belong in the task package's `tests/data/`; large private inputs may also
+be restored through `assets.json`. Phase-specific mounts keep verifier inputs
+isolated from the coding agent.

@@ -25,19 +25,30 @@ from search_swe.runner import doctor, run_batch
 
 
 class CliTests(unittest.TestCase):
+    def test_native_atif_mismatch_stops_before_asset_estimates_or_downloads(self):
+        (self.root / "scripts/evaluation/native_agents.py").touch()
+        task = self.root / "tasks/first-search/task.toml"
+        task.write_text('artifacts=["/logs/agent/trajectory.json"]\n' + task.read_text())
+        with patch("search_swe.runner.asset_plan", side_effect=AssertionError("assets prepared")), \
+                redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()) as error:
+            self.assertEqual(main(["run", "first-search", "--repo", str(self.root), "--agent", "aider",
+                                   "--provider", "native", "--model", "openai/gpt-4o", "--yes"]), 1)
+        self.assertIn("requires an ATIF", error.getvalue())
+        self.assertFalse((self.root / ".env").exists())
+
     def test_incompatible_checkout_fails_before_prompts_or_writes(self):
-        for version in ("0.1.0", "0.3.0"):
+        for version in ("0.2.2", "0.4.0"):
             (self.root / "pyproject.toml").write_text(f'[project]\nname="search-swe"\nversion="{version}"\n')
             with patch("search_swe.wizard.select_setting", side_effect=AssertionError("prompted")), \
                     redirect_stderr(io.StringIO()) as error:
                 self.assertEqual(main(["configure", "--repo", str(self.root), "--agent", "pi",
                                        "--provider", "direct", "--model", "google/gemini-2.5-flash", "--yes"]), 1)
-            self.assertIn("needs a 0.2.x checkout", error.getvalue())
+            self.assertIn("needs a 0.3.x checkout", error.getvalue())
             self.assertFalse((self.root / ".env").exists())
 
     def test_compatible_patch_checkout_is_accepted(self):
         from search_swe.repository import check_compatibility
-        (self.root / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.2.3"\n')
+        (self.root / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.1"\n')
         check_compatibility(self.root)
 
     def test_new_pi_model_is_checked_before_credentials_and_backend_preflight(self):

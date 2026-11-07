@@ -151,3 +151,34 @@ def convert_events(text, instruction, model_name, version):
             totals[f"total_{key}"] = sum(values)
     trajectory["final_metrics"] = totals
     return trajectory, error
+
+
+class PiTrajectory:
+    """Export Pi's actual event stream for both integrated and native routes."""
+    SUPPORTS_ATIF = True
+
+    async def run(self, instruction, environment, context):
+        from pathlib import Path
+        import tempfile
+        import uuid
+        from harbor.models.trajectories.trajectory import Trajectory
+        from scripts.evaluation.harness_install import execute
+
+        try:
+            await super().run(instruction, environment, context)
+        finally:
+            # Produce the artifact in the agent phase, before log freezing and
+            # collection into the separate verifier. Preserve interrupted runs.
+            with tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "pi.txt"
+                await environment.download_file("/logs/agent/pi.txt", output)
+                trajectory, error = convert_events(output.read_text(), instruction, self.model_name, self._version)
+                validated = Trajectory.model_validate(trajectory)
+                staged = "/logs/agent/.pi-trajectory-" + uuid.uuid4().hex + ".json"
+                await self._upload_config_text(environment, content=json.dumps(validated.to_json_dict(), ensure_ascii=False),
+                                               remote_path=staged, filename="trajectory.json")
+                # Replace any solver-created file with a fresh, root-owned
+                # artifact; a pre-existing open file descriptor stays detached.
+                await execute(environment, f"chown 0:0 {staged} && chmod 600 {staged} && mv -f {staged} /logs/agent/trajectory.json", user="root")
+        if error:
+            raise RuntimeError(f"Pi execution failed: {error}")

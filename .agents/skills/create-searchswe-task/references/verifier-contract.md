@@ -35,8 +35,10 @@ Write the task's actual inputs, permitted changes, models/APIs, output contract
 and prohibited circumvention in the audit rubric. Keep ordinary bugs and low
 quality separate from misconduct. Judge credentials are mapped only into the
 verifier; candidate commands receive a filtered environment without them.
-The generated default uses RewardKit 0.2.0 with Codex pinned from the target
-checkout and `deepseek/deepseek-v4.1-flash` via OpenRouter. Validate a changed
+The generated default uses RewardKit 0.2.0 with Codex pinned by the target
+checkout's `verifier.codex_version` in `src/search_swe/data/harnesses.toml`,
+and `deepseek/deepseek-v4.1-flash` via OpenRouter. This verifier pin is independent
+of coding-agent version selections. Validate a changed
 backend/model before use. Configure `VERIFIER_OPENAI_BASE_URL` and
 `VERIFIER_OPENAI_API_KEY` locally; follow the missing-key handoff in
 [model-evaluation.md](model-evaluation.md).

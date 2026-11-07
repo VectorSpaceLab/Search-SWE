@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import ast
 from datetime import date
 import json
 from pathlib import Path
 import re
 import sys
+import tomllib
 
 
 IMAGES = {
@@ -18,24 +18,15 @@ IMAGES = {
 }
 TASK_NAME = r"(?!all$)(?!task-)[a-z][a-z0-9]*(?:-[a-z0-9]+){0,4}"
 TEMPLATES = Path(__file__).resolve().parents[1] / "assets/task"
-PINS = ("CODEX_VERSION", "CLAUDE_CODE_VERSION", "PI_VERSION")
 
 
 def target_pins(root: Path) -> dict[str, str]:
-    """Read version constants without executing code from the target checkout."""
-    source = root / "scripts/evaluation/harness_versions.py"
-    values = {}
-    for node in ast.parse(source.read_text(), filename=str(source)).body:
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target = node.targets[0]
-            if isinstance(target, ast.Name) and target.id in PINS:
-                value = ast.literal_eval(node.value)
-                if not isinstance(value, str) or not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?", value):
-                    raise ValueError(f"Invalid harness pin: {target.id}")
-                values[target.id] = value
-    if set(values) != set(PINS):
-        raise ValueError("Target scripts/evaluation/harness_versions.py must define all three CLI pins")
-    return values
+    """Read the independent verifier default without executing target code."""
+    source = root / "src/search_swe/data/harnesses.toml"
+    value = tomllib.loads(source.read_text()).get("verifier", {}).get("codex_version")
+    if not isinstance(value, str) or not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?", value):
+        raise ValueError("Target src/search_swe/data/harnesses.toml must define verifier.codex_version")
+    return {"CODEX_VERSION": value}
 
 
 def files_for(args: argparse.Namespace, pins: dict[str, str]) -> dict[str, str]:

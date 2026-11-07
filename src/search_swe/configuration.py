@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 
 from dotenv.parser import parse_stream
-from . import pi_models
+from . import harbor_native, harnesses, pi_models
 
 
 DEFAULTS = {"AGENT_MODEL": "openai/gpt-6-luna", "SEARCH_SWE_AGENT": "codex",
@@ -18,6 +18,8 @@ EFFORTS = ["low", "medium", "high", "xhigh", "max"]
 
 
 def default_model(agent, provider):
+    if provider == "native":
+        return ""
     if provider == "openrouter":
         return "anthropic/claude-opus-5.5" if agent == "claude-code" else DEFAULTS["AGENT_MODEL"]
     if agent == "pi":
@@ -27,22 +29,26 @@ def default_model(agent, provider):
 
 def saved_setting(values):
     agent = values.get("SEARCH_SWE_AGENT") or "codex"
-    provider = values.get("SEARCH_SWE_PROVIDER") or ("direct" if agent == "pi" else "openrouter")
+    provider = values.get("SEARCH_SWE_PROVIDER") or harbor_native.default_route(agent)
     model = values.get("AGENT_MODEL") or default_model(agent, provider)
     effort = values.get("PI_THINKING" if agent == "pi" else "AGENT_REASONING_EFFORT")
     if not effort:
         effort = "max" if (agent, provider, model) == ("codex", "openrouter", DEFAULTS["AGENT_MODEL"]) else "default"
-    return Setting(agent, provider, model, effort)
+    return Setting(agent, provider, model, effort, values.get("SEARCH_SWE_AGENT_CONFIG") or None,
+                   values.get("SEARCH_SWE_AGENT_VERSION") or None)
 
 
 def resolve_setting(current, args):
     agent = args.agent or current.agent
-    provider = args.provider or (current.provider if agent == current.agent else
-                                 "direct" if agent == "pi" else "openrouter")
+    provider = args.provider or (current.provider if agent == current.agent else harbor_native.default_route(agent))
     same_route = (agent, provider) == (current.agent, current.provider)
-    model = args.model or (current.model if same_route else default_model(agent, provider))
+    model = args.model if args.model is not None else (current.model if same_route else default_model(agent, provider))
     effort = args.reasoning_effort or (current.effort if same_route and model == current.model else "default")
-    return Setting(agent, provider, model, effort).validate()
+    config = getattr(args, "agent_config", None)
+    config = str(config) if config is not None else current.agent_config if same_route else None
+    version = getattr(args, "agent_version", None)
+    version = version if version is not None else current.agent_version if agent == current.agent else None
+    return Setting(agent, provider, model, effort, config, version).validate()
 
 
 def bindings(path):
@@ -112,22 +118,36 @@ class Setting:
     provider: str = "openrouter"
     model: str = "openai/gpt-6-luna"
     effort: str = "max"
+    agent_config: str | None = None
+    agent_version: str | None = None
 
     def values(self):
         values = {"SEARCH_SWE_AGENT": self.agent, "SEARCH_SWE_PROVIDER": self.provider,
                   "AGENT_MODEL": self.model}
         values["PI_THINKING" if self.agent == "pi" else "AGENT_REASONING_EFFORT"] = self.effort
+        values["SEARCH_SWE_AGENT_CONFIG"] = self.agent_config or ""
+        values["SEARCH_SWE_AGENT_VERSION"] = self.agent_version or ""
         return values
 
     def flags(self):
-        args = ["--agent", self.agent, "--model", self.model]
+        args = ["--agent", self.agent]
+        if self.agent_version:
+            args.extend(["--agent-version", self.agent_version])
+        if self.model or self.provider == "native":
+            args.extend(["--model", self.model])
+        if self.provider == "native":
+            args.append("--native")
+            if self.agent_config:
+                args.extend(["--agent-config", self.agent_config])
         if self.provider == "openrouter":
             args.append("--openrouter")
-        if self.effort:
-            args.extend(["--thinking" if self.agent == "pi" else "--reasoning-effort", self.effort])
+        if self.effort and (self.provider != "native" or self.effort != "default"):
+            args.extend(["--thinking" if self.agent == "pi" and self.provider != "native" else "--reasoning-effort", self.effort])
         return args
 
     def required(self, env=None):
+        if self.provider == "native":
+            return harbor_native.plan(self.agent, self.model, env or {}, self.agent_config)["required"]
         if self.provider == "openrouter":
             return {"AGENT_OPENROUTER_API_KEY"}
         if self.agent == "codex":
@@ -137,20 +157,27 @@ class Setting:
         return pi_models.required_variables(self.model, env)
 
     def validate(self):
-        if self.agent not in ("codex", "claude-code", "pi") or self.provider not in ("openrouter", "direct"):
+        harbor_native.require_name(self.agent)
+        if self.agent_version:
+            harnesses.version_argument(self.agent_version)
+        if self.provider not in harbor_native.routes(self.agent):
             raise ValueError("Unsupported harness/provider")
-        if not self.model or not self.model.strip() or self.model != self.model.strip() or any(c.isspace() for c in self.model):
+        if ((not self.model and self.provider != "native") or self.model != self.model.strip()
+                or any(c.isspace() for c in self.model)):
             raise ValueError("Provide a model ID with --model or choose one in the interactive wizard")
         if self.provider == "openrouter":
             from .model_catalog import MODEL_ID
             if not MODEL_ID.fullmatch(self.model):
                 raise ValueError("OpenRouter requires a complete provider/model slug")
-        if self.agent == "pi":
+        if self.agent_config and self.provider != "native":
+            raise ValueError("--agent-config is used with --provider native")
+        if self.agent == "pi" and self.provider != "native":
             pi_models.selection(pi_models.native_model(self.model, self.provider))
         levels = ["default", "off", "minimal", *EFFORTS] if self.agent == "pi" else ["default", *EFFORTS]
         if self.effort and self.effort not in levels:
             raise ValueError("Unsupported reasoning/thinking level: " + self.effort)
-        self.required()
+        if self.provider != "native":
+            self.required()
         return self
 
     def public(self):

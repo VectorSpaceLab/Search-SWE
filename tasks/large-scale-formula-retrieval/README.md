@@ -26,7 +26,7 @@ failure behavior and public self-check commands.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-10-28 | 1.0.0 | Added initial task |
+| 2026-11-07 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -60,6 +60,13 @@ licenses and data-use restrictions are described in the resource document and
 Public corpus files restore directly under `data/`; the five public queries and their judgments restore as `data/validation/queries.jsonl` and `data/validation/qrels.tsv`. Existing official HF files, immutable revisions, sizes and hashes are reused without changing data. Historical dataset filenames retain `public/dev/`; those remote filenames do not determine the local restored layout. Host FUSE tools are cached outside public inputs, under `jobs/.task-storage/large-scale-formula-retrieval/.tools/` by default.
 
 ### Run
+
+Development logs from the selected harness share the bounded writable filesystem.
+After development ends, trusted collection freezes those logs and the private
+memory evidence; Harbor prepares the ATIF artifact for the separate verifier.
+Expanded archives are checked against the existing 512 MiB diagnostic reserve.
+An oversized archive is reported as an infrastructure error, with source logs
+retained in the run storage for inspection.
 
 The task allocates 2 CPU cores, 4 GiB RAM and
 64 GiB storage. Agent development has

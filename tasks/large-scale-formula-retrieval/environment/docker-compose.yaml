@@ -1,3 +1,7 @@
+x-search-swe:
+  bounded_agent_logs:
+    finalize: ["/opt/conda/bin/python", "/task/budget_evidence.py", "freeze"]
+
 services:
   main:
     cpuset: ${FORMULA_CPUSET:?Use the standard launcher or select two available CPUs}
