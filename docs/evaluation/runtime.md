@@ -1,10 +1,10 @@
-# Host setup and native launcher
+# Host setup and single-task launcher
 
 [Documentation index](../README.md)
 
 Use [the CLI](quickstart.md) for routine evaluations. This reference covers host
-requirements, manual credential setup and the single-task backend. Native
-commands below run from the checkout root; the CLI handles asset preparation,
+requirements, manual credential setup and the single-task backend. Run the
+backend commands below from the checkout root; the CLI handles asset preparation,
 configuration and batch scheduling automatically.
 
 ## Prerequisites
@@ -37,10 +37,11 @@ contains common settings; task-specific requirements live with the task.
 
 ## Environment-file behavior
 
-The native launcher reads the checkout `.env`, or `--env-file PATH`. Exported
+The single-task launcher reads the checkout `.env`, or `--env-file PATH`. Exported
 shell variables override file values; explicit flags override their corresponding
 settings. File values are literal, including `${VARIABLE}` text. Authentication
-comes from these variables rather than host Codex/Claude account files.
+uses these variables for the integrated routes. Native Harbor authentication
+uses the explicitly selected agent configuration and credential files.
 
 Keep credentials in ignored local files with mode `0600`, outside command-line
 arguments, logs, artifacts and image layers. `.env`, `.env.*` except `.env.example`,
@@ -49,10 +50,10 @@ with `search-swe configure TASK` or review them with `--edit-credentials`.
 
 ## Configure the coding agent
 
-The native backend uses `--openrouter` for OpenRouter; the CLI uses
+The single-task backend uses `--openrouter` for OpenRouter; the CLI uses
 `--provider openrouter`. These are the supported routes:
 
-| Native options | Model | Host credentials |
+| Launcher options | Model | Host credentials |
 | --- | --- | --- |
 | `--agent codex --openrouter` | Full OpenRouter ID | `AGENT_OPENROUTER_API_KEY` |
 | `--agent claude-code --openrouter` | Full OpenRouter ID with Messages/tool support | `AGENT_OPENROUTER_API_KEY` |
@@ -60,6 +61,18 @@ The native backend uses `--openrouter` for OpenRouter; the CLI uses
 | `--agent codex` | Direct endpoint's model ID | `AGENT_OPENAI_BASE_URL`, `AGENT_OPENAI_API_KEY` |
 | `--agent claude-code` | Official Anthropic model ID | `AGENT_ANTHROPIC_API_KEY` |
 | `--agent pi` | Pi `provider/model` ID | Selected provider's key and endpoint settings |
+| `--agent NAME --native` | Native Harbor model ID or agent default | Agent-only `AGENT_*` variables and optional `--agent-config PATH` |
+
+Use `search-swe agents` to discover Harbor's registered agents. Agents beyond the
+three integrated routes select native mode automatically in this backend.
+`--agent-version VERSION` or `SEARCH_SWE_AGENT_VERSION` overrides the central
+[harness default](agents.md#harness-versions-and-installation); `default` resets it.
+The five centrally managed CLIs are installed and version-verified during setup,
+with private image-specific caching. Other agents use Harbor's installers;
+explicit version requests require a verifiable CLI version command.
+Task and judge dependencies retain their own pins.
+`--agent-config` accepts native kwargs, agent env references, authentication
+files and exact API/setup domains; see [native agent setup](agents.md#harbor-native-agents).
 
 `--model` overrides `AGENT_MODEL`. For Codex/Claude, `--reasoning-effort` overrides
 `AGENT_REASONING_EFFORT`; Pi uses `--thinking` or `PI_THINKING`. `default` keeps
@@ -74,9 +87,10 @@ AGENT_OPENAI_BASE_URL=https://your-agent-endpoint.example/v1
 AGENT_OPENAI_API_KEY=YOUR_AGENT_KEY
 ```
 
-Use `AGENT_CODEX_CONFIG=provider.local.toml` for custom native TOML, or pass
-`--codex-config PATH`. Environment paths resolve from the checkout; CLI paths
-resolve from the current directory. See [custom configuration](#custom-codex-provider).
+Use `AGENT_CODEX_CONFIG=provider.local.toml` for custom Codex TOML, or pass
+`--codex-config PATH` to the backend. Environment paths resolve from the checkout;
+the backend flag resolves from the invoking directory. See
+[custom configuration](#custom-codex-provider).
 
 ### Coding agents through OpenRouter
 
@@ -94,16 +108,16 @@ from judge and submission credentials.
 ### Claude Code with the official Anthropic API
 
 Set `AGENT_ANTHROPIC_API_KEY`, select an Anthropic model with `--model`, and use
-`--agent claude-code`. The pinned Claude Code 2.1.309 accepts `low`, `medium`,
+`--agent claude-code`. The default Claude Code 2.1.309 accepts `low`, `medium`,
 `high`, `xhigh` and `max` effort, subject to model support. This route uses the
 official API and a key; the launcher removes inherited gateway, OAuth and cloud
 selectors. For OpenRouter, use the explicit route above.
 
-### Pi native providers
+### Pi API-key providers
 
 Find IDs with `search-swe pi-models --provider NAME`, configure that provider's
-key/settings, then use `--agent pi --model provider/model`. The pinned Pi 1.4.0
-catalog covers API-key providers. `--thinking` accepts `off`, `minimal`, `low`,
+key/settings, then use `--agent pi --model provider/model` (CLI: `--provider direct`).
+The bundled catalog follows Pi 1.4.0. `--thinking` accepts `off`, `minimal`, `low`,
 `medium`, `high`, `xhigh`, `max` or `default`; the provider applies supported levels.
 
 Pi records events in `agent/pi.txt`, sessions in `agent/pi/sessions/`, and an
@@ -156,9 +170,9 @@ launch, run `search-swe configure TASK` to check the selected submission keys.
 ## CPU allocation
 
 The CLI's `--cpu-set` defines a pool for the batch; it allocates disjoint sets
-to simultaneous tasks. Native `--cpu-set 0-7` assigns exactly the logical CPU
+to simultaneous tasks. Backend `--cpu-set 0-7` assigns exactly the logical CPU
 count declared by the selected task, across its services and both phases,
-preserving CPU quotas, RAM limits and mounts. Coordinate native allocations
+preserving CPU quotas, RAM limits and mounts. Coordinate these allocations
 with other users and keep placement fixed for timing comparisons.
 
 When a task declares an explicit CFS quota matching Harbor's CPU budget at a
@@ -179,12 +193,12 @@ nvidia-smi --query-gpu=index,uuid,name,memory.used --format=csv
 search-swe run code-embedding-finetuning --gpu-devices 2
 ```
 
-The CLI accepts a pool with `--gpu-devices`; the native launcher takes one host
+The CLI accepts a pool with `--gpu-devices`; the single-task launcher takes one host
 index or full UUID with `--gpu-device`. It resolves the UUID once and reuses it
 for both phases, recording generated configurations under the trial's `gpu/`
 directory. Inside the container, the exposed device is CUDA device 0.
-Omitting native `--gpu-device` uses the default single-GPU allocation. Use
-distinct devices and output directories for concurrent native runs.
+Omitting backend `--gpu-device` uses the default single-GPU allocation. Use
+distinct devices and output directories for concurrent backend runs.
 
 ### Harbor integration
 
@@ -206,10 +220,10 @@ FUSE with `sudo modprobe fuse`. First use downloads verified, pinned FUSE tools.
 Each launch creates storage under `jobs/.task-storage/<task-name>/`. Sparse
 images grow with use; reserve space for both phases plus inputs, Docker images
 and logs. A task's storage limit alone is not the total host disk requirement.
-Native launches choose logical CPUs from their allowed affinity; set the task's
+Backend launches choose logical CPUs from their allowed affinity; set the task's
 `*_CPUSET` for an explicit allocation. Independent launches need disjoint sets.
 
-Only the storage helper uses privilege; Harbor runs as the invoking user and
+Only the storage helper uses host root/sudo; Harbor runs as the invoking user and
 model keys stay outside the helper. Authenticate sudo before starting or arrange
 non-interactive sudo for unattended runs. An explicitly provided `*_STORAGE_ROOT`
 uses owner-managed storage and cleanup instead.
@@ -219,6 +233,28 @@ remain for inspection. If cleanup cannot confirm that containers are gone, or
 the launcher is killed, storage is retained with a recovery command. Stop/remove
 that run's containers, follow the printed `prepare_storage.py ... --unmount`
 command, then remove images only after mounts are released and results are saved.
+
+### Quota-backed harness logs
+
+A task can declare `x-search-swe.bounded_agent_logs.finalize` as an absolute argv
+list in its agent Compose file. The Search-SWE Docker adapter uses Harbor's
+non-mounted log transport for that environment. During development,
+`/logs/agent` points into the task's quota-backed storage, allowing the selected
+harness to create its own log and session layout.
+
+Before downloading logs, the adapter runs the trusted finalizer as root. It
+stops remaining solver processes, freezes raw logs and private resource evidence,
+and publishes a snapshot for Harbor to convert, archive and transfer to the
+separate verifier. Trusted host metadata is preserved during log merging.
+The adapter checks expanded archival size against the existing 512 MiB diagnostic
+reserve, including sparse files, repeated hardlinks and per-entry overhead.
+Checks run after the harness exports its logs and after host-side ATIF conversion.
+An oversized archive stops the trial as an infrastructure error before scoring;
+source logs remain in that run's bounded storage for inspection.
+The formula task's [Compose declaration](../../tasks/large-scale-formula-retrieval/environment/docker-compose.yaml)
+and [finalizer](../../tasks/large-scale-formula-retrieval/environment/budget_evidence.py)
+provide a working example. Task resource limits and audit requirements apply
+throughout this workflow.
 
 ## Runtime network enforcement
 
@@ -230,9 +266,9 @@ runtime permissions.
 
 ## Preview and launch
 
-For native backend development/debugging, restore and verify assets with the
+For backend development/debugging, restore and verify assets with the
 [asset tools](assets.md#commands), then configure credentials with
-`search-swe configure TASK_NAME`. The native launcher checks asset presence and
+`search-swe configure TASK_NAME`. The backend checks asset presence and
 size; asset restoration supplies the SHA-256 check.
 
 ```bash
@@ -251,7 +287,7 @@ verifier health as well as process status.
 
 ## Custom Codex provider
 
-Keep custom native settings in an ignored local TOML:
+Keep custom Codex settings in an ignored local TOML:
 
 ```toml
 model = "YOUR_MODEL_ID"

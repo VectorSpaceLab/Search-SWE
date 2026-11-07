@@ -82,8 +82,10 @@ with a **merge commit** to preserve original author history.
 
 The generated layout includes `tests/grader.py`, a bounded `tests/test.sh`,
 `tests/finalize_reward.py`, `tests/rewardkit_deepseek.py`,
-`tests/jailbreak_judge/codex.toml`, and `VALIDATION.md`. It installs coding CLIs
-using the target checkout's `scripts/evaluation/harness_versions.py` pins and includes the
+`tests/jailbreak_judge/codex.toml`, and `VALIDATION.md`. The shared launcher prepares
+the selected coding harness; centrally managed CLI defaults live in
+`src/search_swe/data/harnesses.toml`. The scaffold uses that registry's independent
+verifier Codex default. It includes the
 trajectory artifact and verifier-only judge credentials. Read
 [references/verifier-contract.md](references/verifier-contract.md) for the report
 contract and budget calculation. Choose CPU/RAM/storage and agent/grader/judge

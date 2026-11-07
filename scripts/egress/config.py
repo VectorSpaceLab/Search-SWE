@@ -177,6 +177,7 @@ def validate_task_networks(task_path, model_host, proxy_host=None, *, allow_publ
     from harbor.models.trial.config import AgentConfig, EnvironmentConfig
     from harbor.trial.network_policy import resolve_trial_network_plan
 
+    model_hosts = list(model_host) if isinstance(model_host, (list, tuple)) else [model_host] if model_host else []
     task = TaskConfig.model_validate_toml((Path(task_path) / "task.toml").read_text())
     if task.environment.os != TaskOS.LINUX:
         raise ValueError("Restricted egress currently requires Linux task environments")
@@ -187,7 +188,7 @@ def validate_task_networks(task_path, model_host, proxy_host=None, *, allow_publ
             raise ValueError("Restricted egress currently requires Linux verifier environments")
         mode = resolve_task_verifier_mode(task) if step is None else resolve_step_verifier_mode(task, step)
         plan = resolve_trial_network_plan(
-            task, AgentConfig(extra_allowed_hosts=[model_host] if model_host else []),
+            task, AgentConfig(extra_allowed_hosts=model_hosts),
             EnvironmentConfig(), step, verifier_mode=mode, env_config=verifier)
         for policy in (plan.agent_env_baseline, plan.agent_phase, plan.verifier_env_baseline, plan.verifier_phase):
             if policy is None:

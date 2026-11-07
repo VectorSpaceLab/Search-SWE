@@ -91,34 +91,21 @@ class TaskNetworkPolicies(unittest.TestCase):
                 self.assertTrue(doc.is_file())
                 self.assertTrue(doc.read_text().strip())
 
-    def test_agent_images_pin_all_preinstalled_clis(self):
+    def test_task_agent_images_leave_harness_installation_to_the_launcher(self):
         dockerfiles = sorted((REPO / "tasks").glob("*/environment/Dockerfile"))
         self.assertEqual(len(dockerfiles), len(TASKS))
         for dockerfile in dockerfiles:
-            text = dockerfile.read_text()
-            self.assertIn("@openai/codex@${SEARCH_SWE_CODEX_VERSION}", text)
-            self.assertIn(
-                "@anthropic-ai/claude-code@${SEARCH_SWE_CLAUDE_CODE_VERSION}",
-                text,
-            )
-            self.assertIn("@earendil-works/pi-coding-agent@${SEARCH_SWE_PI_VERSION}", text)
-            self.assertIn("SEARCH_SWE_CODEX_VERSION=0.164.0", text)
-            self.assertIn("SEARCH_SWE_CLAUDE_CODE_VERSION=2.1.309", text)
-            self.assertIn("SEARCH_SWE_PI_VERSION=1.4.0", text)
-            claude_install = text.split("&& npm install --global", 1)[1].split(
-                "&& codex --version", 1
-            )[0]
-            self.assertNotIn("--ignore-scripts", claude_install)
-            self.assertIn(
-                'test "$(claude --version)" = '
-                '"${SEARCH_SWE_CLAUDE_CODE_VERSION} (Claude Code)"',
-                text,
-            )
-            self.assertIn(
-                'claude --help | grep -F '
-                '"(low, medium, high, xhigh, max)" >/dev/null',
-                text,
-            )
+            with self.subTest(dockerfile=str(dockerfile)):
+                text = dockerfile.read_text()
+                for package in ("@openai/codex", "@anthropic-ai/claude-code", "@earendil-works/pi-coding-agent"):
+                    self.assertNotIn(package, text)
+                self.assertNotIn("SEARCH_SWE_CODEX_VERSION", text)
+        # The verifier's independent, fixed judge installation remains present.
+        pinned = [path for path in (REPO / "tasks").glob("*/tests/Dockerfile")
+                  if "REWARDKIT_CODEX_VERSION" in path.read_text()]
+        self.assertTrue(pinned)
+        for dockerfile in pinned:
+            self.assertIn("@openai/codex", dockerfile.read_text())
 
     def test_claude_effort_levels_are_supported_by_the_harbor_adapter(self):
         effort_flag = next(
@@ -139,117 +126,17 @@ class TaskNetworkPolicies(unittest.TestCase):
                     )
                     self.assertIn(f"--effort {effort}", agent.build_cli_flags())
 
-    def test_custom_agents_only_check_the_preinstalled_cli(self):
-        class FakeEnvironment:
-            def __init__(self, output):
-                self.output = output
-                self.commands = []
-
-            async def exec(self, command, **kwargs):
-                self.commands.append((command, kwargs))
-                return SimpleNamespace(return_code=0, stdout=self.output)
-
-        cases = (
-            (PreinstalledCodex, "0.164.0", "codex-cli 0.164.0\n", "codex --version"),
-            (
-                PreinstalledClaudeCode,
-                "2.1.309",
-                "2.1.309 (Claude Code)\n",
-                "claude --version",
-            ),
-            (PreinstalledPi, "1.4.0", "1.4.0\n", "pi --version"),
-        )
-        for agent_class, version, output, version_command in cases:
-            with self.subTest(agent=agent_class.__name__):
-                with tempfile.TemporaryDirectory() as directory:
-                    agent = agent_class(
-                        logs_dir=Path(directory), model_name="fixture", version=version
-                    )
-                    environment = FakeEnvironment(output)
-                    asyncio.run(agent.setup(environment))
-                commands = [command for command, _ in environment.commands]
-                self.assertEqual(len(commands), 2)
-                self.assertIn("mkdir -p /installed-agent", commands[0])
-                self.assertIn(version_command, commands[1])
-                self.assertFalse(
-                    any(
-                        token in command
-                        for command in commands
-                        for token in ("npm install", "curl", "bootstrap.sh")
-                    )
-                )
-
-    def test_codex_version_check_tolerates_warnings_but_rejects_ambiguity(self):
-        class FakeEnvironment:
-            def __init__(self, output, return_code=0):
-                self.output, self.return_code = output, return_code
-
-            async def exec(self, command, **kwargs):
-                return SimpleNamespace(return_code=self.return_code, stdout=self.output)
-
+    def test_codex_parser_tolerates_warnings_but_rejects_ambiguity(self):
         version = "codex-cli 0.164.0"
         with tempfile.TemporaryDirectory() as directory:
             for cls in (PreinstalledCodex, PreinstalledOpenRouterCodex):
                 agent = cls(logs_dir=Path(directory), model_name="fixture", version="0.164.0")
                 for output in (version, f"WARNING: PATH update failed\n{version}\n",
                                f"\r\n  {version}\r\nWARNING: ignored\r\n"):
-                    with self.subTest(agent=cls.__name__, output=output):
-                        asyncio.run(agent.install(FakeEnvironment(output)))
-                for output, code in (("", 0), (f"WARNING: expected {version}", 0),
-                                     ("codex-cli 0.163.0", 0), (f"{version}-alpha", 0),
-                                     (f"{version}\ncodex-cli 0.163.0", 0),
-                                     (f"{version}\n{version}", 0), (version, 1)):
-                    with self.subTest(agent=cls.__name__, output=output, code=code):
-                        with self.assertRaisesRegex(RuntimeError, "Task image must provide Codex"):
-                            asyncio.run(agent.install(FakeEnvironment(output, code)))
-
-    def test_preinstalled_claude_code_rejects_unsupported_wrong_or_missing_version(self):
-        class FakeEnvironment:
-            def __init__(self, return_code, output):
-                self.return_code = return_code
-                self.output = output
-
-            async def exec(self, command, **kwargs):
-                return SimpleNamespace(
-                    return_code=self.return_code,
-                    stdout=self.output,
-                )
-
-        with tempfile.TemporaryDirectory() as directory:
-            wrong_request = PreinstalledClaudeCode(
-                logs_dir=Path(directory),
-                model_name="fixture",
-                version="2.1.282",
-            )
-            with self.assertRaisesRegex(
-                RuntimeError, "Search-SWE requires Claude Code 2.1.309"
-            ):
-                asyncio.run(
-                    wrong_request.install(FakeEnvironment(0, "2.1.309 (Claude Code)"))
-                )
-
-            wrong_installed_cli = PreinstalledClaudeCode(
-                logs_dir=Path(directory),
-                model_name="fixture",
-                version="2.1.309",
-            )
-            with self.assertRaisesRegex(
-                RuntimeError,
-                "must provide Claude Code 2.1.309; found 2.1.282",
-            ):
-                asyncio.run(
-                    wrong_installed_cli.install(
-                        FakeEnvironment(0, "2.1.282 (Claude Code)")
-                    )
-                )
-
-            missing_cli = PreinstalledClaudeCode(
-                logs_dir=Path(directory),
-                model_name="fixture",
-                version="2.1.309",
-            )
-            with self.assertRaisesRegex(RuntimeError, "no usable CLI"):
-                asyncio.run(missing_cli.install(FakeEnvironment(127, "")))
+                    self.assertEqual(agent.parse_version(output), "0.164.0")
+                for output in ("", f"WARNING: expected {version}", f"{version}-alpha",
+                               f"{version}\ncodex-cli 0.163.0", f"{version}\n{version}"):
+                    self.assertEqual(agent.parse_version(output), "")
 
 
 class LauncherNetworkPolicy(unittest.TestCase):
@@ -312,9 +199,9 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 index = argv.index("--allow-agent-host")
                 self.assertEqual(argv[index + 1], expected_host)
                 expected_import = {
-                    "pi": "scripts.evaluation.harbor_agents:PreinstalledPi",
-                    "codex": "scripts.evaluation.harbor_agents:PreinstalledCodex",
-                    "claude-code": "scripts.evaluation.harbor_agents:PreinstalledClaudeCode",
+                    "pi": "scripts.evaluation.harbor_agents:ManagedPi",
+                    "codex": "scripts.evaluation.harbor_agents:ManagedCodex",
+                    "claude-code": "scripts.evaluation.harbor_agents:ManagedClaudeCode",
                 }[agent]
                 self.assertEqual(argv[argv.index("--agent") + 1], expected_import)
 
@@ -354,6 +241,23 @@ class LauncherNetworkPolicy(unittest.TestCase):
             ["ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}"],
         )
 
+    def test_harness_version_override_reaches_harbor(self):
+        cases = (
+            ({"SEARCH_SWE_AGENT_VERSION": "0.163.0"}, (), "0.163.0"),
+            ({"SEARCH_SWE_AGENT_VERSION": "0.163.0"}, ("--agent-version", "0.164.0"), "0.164.0"),
+            ({"SEARCH_SWE_AGENT_VERSION": "0.163.0"}, ("--agent-version", "default"), "0.164.0"),
+        )
+        for values, flags, expected in cases:
+            with self.subTest(flags=flags):
+                result = self.run_preview("memory-constrained-dense-retrieval", "codex", "openai/gpt-6-luna",
+                                          values, ("--openrouter", *flags))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("version=" + expected, self.flag_values(self.argv(result), "--ak"))
+        invalid = self.run_preview("memory-constrained-dense-retrieval", "codex", "openai/gpt-6-luna",
+                                   {}, ("--openrouter", "--agent-version", "latest"))
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertIn("exact harness version", invalid.stderr)
+
     def test_openrouter_agent_routes_are_isolated_from_other_keys(self):
         values = {
             "AGENT_OPENROUTER_API_KEY": "fixture-openrouter-agent-key",
@@ -365,15 +269,15 @@ class LauncherNetworkPolicy(unittest.TestCase):
             "ANSWER_JUDGE_API_KEY": "fixture-answer-key",
         }
         for agent, model, agent_class, expected_env in (
-            ("codex", "openai/gpt-6-astra", "PreinstalledOpenRouterCodex",
+            ("codex", "openai/gpt-6-astra", "ManagedOpenRouterCodex",
              ["OPENAI_API_KEY=${AGENT_OPENROUTER_API_KEY}"]),
-            ("claude-code", "anthropic/claude-opus-5.5", "PreinstalledOpenRouterClaudeCode",
+            ("claude-code", "anthropic/claude-opus-5.5", "ManagedOpenRouterClaudeCode",
              ["ANTHROPIC_AUTH_TOKEN=${AGENT_OPENROUTER_API_KEY}",
               "ANTHROPIC_BASE_URL=https://openrouter.ai/api"]),
-            ("claude-code", "openai/gpt-6-luna", "PreinstalledOpenRouterClaudeCode",
+            ("claude-code", "openai/gpt-6-luna", "ManagedOpenRouterClaudeCode",
              ["ANTHROPIC_AUTH_TOKEN=${AGENT_OPENROUTER_API_KEY}",
               "ANTHROPIC_BASE_URL=https://openrouter.ai/api"]),
-            ("pi", "openai/gpt-6-luna", "PreinstalledPi",
+            ("pi", "openai/gpt-6-luna", "ManagedPi",
              ["OPENROUTER_API_KEY=${AGENT_OPENROUTER_API_KEY}"]),
         ):
             with self.subTest(agent=agent):

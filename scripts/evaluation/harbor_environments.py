@@ -22,6 +22,7 @@ from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
 from environments.egress.gateway import LEASE_SECONDS
 from scripts.evaluation.gpu_device import GPU_UUID, select_compose_gpu
 from scripts.evaluation.cpu_affinity import normalize_compose_cpu_quota, parse_cpu_set, select_compose_cpus
+from scripts.evaluation.bounded_logs import BoundedLogs
 
 
 # Containerd creation/removal can exceed a minute on busy hosts. These bounded
@@ -55,7 +56,7 @@ def gateway_image_info(reference):
     return docker_json("image", "inspect", reference)[0]
 
 
-class GpuDocker(DockerEnvironment):
+class GpuDocker(BoundedLogs, DockerEnvironment):
     """Select task CPU/GPU devices in independent per-phase Compose copies."""
 
     def __init__(self, *args, gpu_device=None, cpu_set=None, **kwargs):
@@ -143,7 +144,7 @@ class PhaseScopedDocker(GpuDocker):
     def capabilities(self):
         return EnvironmentCapabilities(disable_internet=True, network_allowlist=True,
                                        network_allowlist_hostnames=True, dynamic_network_policy=True,
-                                       mounted=True, docker_compose=True)
+                                       mounted=not bool(getattr(self, "_bounded_agent_logs", None)), docker_compose=True)
 
     def _check_policy(self, policy):
         if (policy.network_mode == NetworkMode.PUBLIC

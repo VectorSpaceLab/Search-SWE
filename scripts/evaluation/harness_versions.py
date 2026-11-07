@@ -1,6 +1,10 @@
-"""Pinned coding-agent CLIs installed in every task's agent image."""
+"""Harness defaults read from the shared data-only registry."""
 
-CODEX_VERSION = "0.164.0"
-CLAUDE_CODE_VERSION = "2.1.309"
-PI_VERSION = "1.4.0"
+from pathlib import Path
+import tomllib
+
+_REGISTRY = tomllib.loads((Path(__file__).resolve().parents[2] / "src/search_swe/data/harnesses.toml").read_text())
+CODEX_VERSION = _REGISTRY["agents"]["codex"]["version"]
+CLAUDE_CODE_VERSION = _REGISTRY["agents"]["claude-code"]["version"]
+PI_VERSION = _REGISTRY["agents"]["pi"]["version"]
 PI_THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh", "max")

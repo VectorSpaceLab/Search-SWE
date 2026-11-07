@@ -73,13 +73,13 @@ class RepositoryTests(unittest.TestCase):
                 patch.object(wizard, "select_setting", side_effect=AssertionError("model prompt")), \
                 redirect_stderr(io.StringIO()) as error:
             self.assertEqual(main(["configure"]), 1)
-        self.assertIn("needs a 0.2.x checkout", error.getvalue())
+        self.assertIn("needs a 0.3.x checkout", error.getvalue())
         self.assertEqual((existing / ".env").read_text(), "KEEP=original\n")
 
     def test_incomplete_current_checkout_is_identified_but_cannot_configure(self):
         existing = self.checkout(self.root / "incomplete")
         (existing / "scripts/evaluation/run_task.py").unlink()
-        (existing / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.2.0"\n')
+        (existing / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.0"\n')
         self.assertEqual(repository.find_repo(existing), existing)
         with self.assertRaisesRegex(ValueError, "missing its evaluation launcher"):
             repository.check_compatibility(existing)
@@ -95,7 +95,7 @@ class RepositoryTests(unittest.TestCase):
         existing = self.checkout(self.root / "malformed")
         for contents in ('project=[]', 'project="invalid"', '[project]\nname="search-swe"\n'):
             (existing / "pyproject.toml").write_text(contents)
-            with self.assertRaisesRegex(ValueError, "needs a 0.2.x checkout"):
+            with self.assertRaisesRegex(ValueError, "needs a 0.3.x checkout"):
                 repository.check_compatibility(existing)
 
     def test_missing_stale_and_invalid_preferences_allow_setup_again(self):

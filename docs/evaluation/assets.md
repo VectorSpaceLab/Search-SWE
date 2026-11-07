@@ -4,7 +4,7 @@
 
 `search-swe run` restores and verifies the selected tasks' inputs automatically.
 Use this guide for disk planning, standalone preparation, local copies and repair.
-Run native download commands from the checkout root after [installation](quickstart.md).
+Run standalone download commands from the checkout root after [installation](quickstart.md).
 
 ## Commands
 
@@ -40,7 +40,7 @@ and free capacity before downloading. Preview with `search-swe run TASK --dry-ru
 | `~/.cache/huggingface/hub` by default | Additional HF cache; set `HF_HUB_CACHE` in the shell or CLI `.env` to relocate it |
 | Jobs and Docker storage | Logs, outputs, images and writable task storage; reserve capacity separately |
 
-`HF_HOME` and `XDG_CACHE_HOME` also affect the default cache. Native download
+`HF_HOME` and `XDG_CACHE_HOME` also affect the default cache. Standalone download
 scripts use shell variables or `--cache-dir`; they do not load `.env`.
 
 Estimates reuse existing files/shared cache sources and include atomic

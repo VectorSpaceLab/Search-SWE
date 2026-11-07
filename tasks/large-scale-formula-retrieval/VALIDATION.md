@@ -111,3 +111,74 @@ No live provider request, full-corpus API-assisted build, fresh coding-model eva
 ## PR preparation — 2026-11-04
 
 Current instruction SHA-256: `ccb47bcc1b7c813ee2c6814bd7b119cbeb51dda071c17b182c13b34f9d8a57aa`. The current task package passed the static checker with 0 errors. The runtime tests above precede the final prose rewrite; a fresh coding-agent/verifier run remains pending.
+
+## Harness log transport — 2026-11-07
+
+Development logs now use a harness-independent directory on the existing
+quota-backed filesystem. A trusted finalizer stops remaining solver processes,
+snapshots regular log files and private memory evidence, then lets Harbor
+convert and transfer the ATIF artifact to the independent verifier. The solver
+cannot write to the archival directory after finalization. Pi's integrated and
+native routes share the Search-SWE ATIF converter.
+
+Completed checks:
+
+- `tests/integration/bounded_logs.py`: Codex, Claude Code, Pi (integrated and
+  native), Antigravity CLI and Gemini CLI passed their real Harbor run,
+  conversion, artifact-transfer and independent-verifier lifecycle with
+  synthetic CLI executables. The small ext4/FUSE fixture uses a 64 MiB
+  development filesystem and the task's existing 40 MiB serving filesystem.
+  Each case confirmed ENOSPC for oversized logs, protected private evidence,
+  preserved trusted host metadata and rejection of unsafe log links/FIFOs.
+  The verifier ran the task's actual trajectory-protection and development
+  evidence checks. No coding-model or judge API requests were made.
+- In the cached task verifier image, with network disabled, 2 CPUs and 4 GiB
+  RAM: `python -m unittest test_development test_scoring test_ipc_cleanup
+  test_integrity_gate` passed all 26 tests.
+- `python scripts/validation/check_tasks.py tasks/large-scale-formula-retrieval`:
+  0 errors. `python scripts/validation/check_release.py`: 0 errors, 0 warnings.
+- `python -m unittest discover -s tests/unit`: all 400 repository tests passed,
+  including bounded log transport, safe snapshots, stopping background writers,
+  ATIF provenance and both Pi routes.
+
+Task instructions, resource limits, inputs and scoring/verifier code are
+unchanged by this infrastructure repair. These checks establish harness log
+compatibility; they do not constitute a full-corpus run or a new model score.
+Historical trajectories and benchmark results were not modified.
+
+## Follow-up review fixes — 2026-11-07
+
+Archive preflight charges each regular path's expanded size, including sparse
+holes, repeated hardlinks, allocated blocks and directory/file metadata. The
+container snapshot and host merge use the existing 512 MiB diagnostic reserve
+as their archival safety budget. Finalization runs after harness export and
+fails the agent phase before Harbor's best-effort log download can hide an
+error. Host-generated trajectories are checked both at run completion and after
+post-run conversion. Source logs are retained on failure.
+
+Antigravity collection compares file identities and content fingerprints from
+before and after the run, including SQLite WAL updates and legacy JSON/JSONL
+sessions. Unchanged old sessions are excluded independently of their timestamps.
+Harbor still performs the native-event-to-ATIF conversion.
+
+Completed checks:
+
+- Full repository suite: 417 tests passed. All 60 targeted log, Antigravity,
+  Pi and native-agent regressions also passed. Cases include sparse-file and hardlink
+  expansion, metadata overhead, same-size/same-timestamp content updates,
+  replacement inodes, old-session exclusion, legacy sessions and SQLite WALs.
+- Docker/FUSE negative fixture: a 1 GiB sparse log with zero allocated data
+  blocks was rejected before expansion. The original file remained in run
+  storage, the trial recorded an infrastructure exception, and the independent
+  verifier did not start. Command: `python tests/integration/bounded_logs.py
+  --output <fresh-directory> --tools-cache <verified-cache> --agents codex
+  --archive-failure`.
+- All six Docker/Harbor success routes passed again: Codex, Claude Code, Pi
+  integrated/native, Antigravity and Gemini. The Antigravity transcript and run
+  marker were forced to have identical nanosecond timestamp values, with no
+  sleep workaround. Its real Harbor converter produced ATIF and the independent
+  verifier accepted the protected trace and private development evidence.
+- Task static check: 0 errors. Repository release check: 0 errors, 0 warnings.
+
+The task's instructions, numerical/resource settings, scoring code and assets
+are unchanged. No model/judge API calls or benchmark-result updates were made.

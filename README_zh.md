@@ -36,12 +36,12 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 
 ## 🚀 快速开始
 
-使用安装了 **Python 3.12+、Git 和 Docker** 的原生 Linux x86_64 主机，并为所选任务
+使用安装了 **Python 3.12+、Git 和本地 rootful Docker** 的原生 Linux x86_64 主机，并为所选任务
 准备所需的 CPU、内存，以及 GPU（如需）。
 
 ### 通过 CLI 运行
 
-使用 **0.2.x** 版本的 CLI 和同一版本系列的 checkout。
+使用 **0.3.x** 版本的 CLI 和同一版本系列的 checkout。
 
 ```bash
 pip install search-swe
@@ -87,7 +87,7 @@ gh skill install VectorSpaceLab/Search-SWE skills/run-searchswe-evaluation --age
 
 - **首次运行评测：**[快速开始](docs/evaluation/quickstart.md)，包含 CLI 与 agent 两种方式。
 - **选择评测 setting：**[支持的智能体与 provider](docs/evaluation/agents.md)。
-- **配置运行主机：**[凭证、GPU 与原生启动器](docs/evaluation/runtime.md)。
+- **配置运行主机：**[凭证、GPU 与单任务启动器](docs/evaluation/runtime.md)。
 - **贡献任务：**[任务构建、模型反馈与审查](docs/contributing/tasks.md)。
 
 任务介绍和评测结果可在[项目主页](https://search-swe.github.io/)查看，主页由

@@ -17,7 +17,7 @@ pip install search-swe
 The CLI uses a separate Search-SWE checkout for tasks, data and results. On first
 interactive use, choose an existing checkout or clone to `~/Search-SWE` or a
 custom path. The CLI remembers it. CLI and checkout must use the same release
-series, currently 0.2.x.
+series, currently 0.3.x.
 
 Use `search-swe info` to inspect that checkout. Between evaluation batches,
 `search-swe update --check` previews new tasks and `search-swe update` applies

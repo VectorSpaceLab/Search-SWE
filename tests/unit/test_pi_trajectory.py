@@ -1,6 +1,7 @@
 import json
 import unittest
 from unittest.mock import AsyncMock, patch
+from types import SimpleNamespace
 
 from harbor.models.trajectories.trajectory import Trajectory
 from scripts.evaluation.harbor_agents import PreinstalledPi, Pi
@@ -205,12 +206,35 @@ class PiTrajectoryTests(unittest.TestCase):
 
 
 class AdapterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_native_pi_uses_the_same_converter_and_preserves_native_auth(self):
+        from pathlib import Path
+        from scripts.evaluation.native_agents import NativeAgent
+        agent = NativeAgent(search_swe_native_name="pi", logs_dir=Path("/tmp"), model_name="openai/gpt-4o",
+                            extra_env={"OPENAI_API_KEY": "fixture-agent"})
+        self.assertTrue(agent.SUPPORTS_ATIF)
+        agent._upload_config_text = AsyncMock()
+        environment = AsyncMock()
+        environment.exec.return_value = SimpleNamespace(return_code=0, stdout="", stderr="")
+        async def download(remote, local):
+            local.write_text(with_session(stream(
+                {"role": "user", "content": [{"type": "text", "text": "task"}]},
+                {"role": "assistant", "content": [{"type": "text", "text": "done"}], "stopReason": "stop"})))
+        environment.download_file.side_effect = download
+        with patch.object(Pi, "run", new_callable=AsyncMock):
+            await agent.run("task", environment, None)
+        exported = json.loads(agent._upload_config_text.call_args.kwargs["content"])
+        self.assertEqual(exported["session_id"], "pi-test-session")
+        self.assertEqual(agent.extra_env, {"OPENAI_API_KEY": "fixture-agent"})
+        Trajectory.model_validate(exported)
+
     async def test_exports_before_raising(self):
         agent = object.__new__(PreinstalledPi)
         agent.model_name = "deepseek/deepseek-flash"
         agent._model_config = None
+        agent._version = "1.4.0"
         agent._upload_config_text = AsyncMock()
         environment = AsyncMock()
+        environment.exec.return_value = SimpleNamespace(return_code=0, stdout="", stderr="")
 
         async def download(remote, local):
             local.write_text(stream({"role": "assistant", "content": [], "stopReason": "error", "errorMessage": "timeout"}))
@@ -220,7 +244,8 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(RuntimeError, "timeout"):
                 await agent.run("task", environment, None)
         uploaded = agent._upload_config_text.call_args.kwargs
-        self.assertEqual(uploaded["remote_path"], "/logs/agent/trajectory.json")
+        self.assertTrue(uploaded["remote_path"].startswith("/logs/agent/.pi-trajectory-"))
+        self.assertIn("mv -f", environment.exec.call_args.kwargs["command"])
         Trajectory.model_validate_json(uploaded["content"])
         self.assertIsInstance(json.loads(uploaded["content"])["trajectory_id"], str)
 
@@ -228,8 +253,10 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
         agent = object.__new__(PreinstalledPi)
         agent.model_name = "deepseek/deepseek-flash"
         agent._model_config = None
+        agent._version = "1.4.0"
         agent._upload_config_text = AsyncMock()
         environment = AsyncMock()
+        environment.exec.return_value = SimpleNamespace(return_code=0, stdout="", stderr="")
 
         async def download(remote, local):
             local.write_text(with_session(stream(

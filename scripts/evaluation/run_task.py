@@ -2,6 +2,7 @@
 """Launch a Search-SWE task with separately configured agent and judge services."""
 
 import argparse
+from contextlib import contextmanager, nullcontext
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import tomllib
 from urllib.parse import urlsplit
 
@@ -17,12 +19,12 @@ REPO = Path(__file__).resolve().parents[2]
 # Direct script execution and Harbor subprocesses use this checkout's modules.
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "src"))
-from search_swe import pi_models
+from search_swe import harbor_native, harnesses, pi_models
 from scripts.evaluation.docker_dns import parse_servers
 from scripts.task_paths import select_task, task_key
 from scripts.assets.download_assets import destination_path, read_manifest, relative_path
 from scripts.evaluation.gpu_device import resolve_gpu_device, validate_gpu_device
-from scripts.evaluation.harness_versions import CODEX_VERSION, CLAUDE_CODE_VERSION, PI_VERSION, PI_THINKING_LEVELS
+from scripts.evaluation.harness_versions import PI_THINKING_LEVELS
 from scripts.evaluation.task_storage import StoragePlan, prepared_storage, run_command
 from scripts.evaluation.task_preparation import prepare_task
 from scripts.evaluation.cpu_affinity import validate_cpu_set
@@ -47,15 +49,42 @@ CLAUDE_HOST_ENV_VARS = (
     "AWS_BEARER_TOKEN_BEDROCK",
 )
 AGENT_IMPORTS = {
-    "claude-code": "scripts.evaluation.harbor_agents:PreinstalledClaudeCode",
-    "codex": "scripts.evaluation.harbor_agents:PreinstalledCodex",
-    "pi": "scripts.evaluation.harbor_agents:PreinstalledPi",
+    "claude-code": "scripts.evaluation.harbor_agents:ManagedClaudeCode",
+    "codex": "scripts.evaluation.harbor_agents:ManagedCodex",
+    "pi": "scripts.evaluation.harbor_agents:ManagedPi",
 }
 OPENROUTER_AGENT_IMPORTS = {
-    "codex": "scripts.evaluation.harbor_agents:PreinstalledOpenRouterCodex",
-    "claude-code": "scripts.evaluation.harbor_agents:PreinstalledOpenRouterClaudeCode",
-    "pi": "scripts.evaluation.harbor_agents:PreinstalledPi",
+    "codex": "scripts.evaluation.harbor_agents:ManagedOpenRouterCodex",
+    "claude-code": "scripts.evaluation.harbor_agents:ManagedOpenRouterClaudeCode",
+    "pi": "scripts.evaluation.harbor_agents:ManagedPi",
 }
+
+
+@contextmanager
+def native_job(command, name, model, plan, env):
+    """Keep native kwargs and resolved auth-file paths out of process arguments."""
+    files = [{"source": str(Path(env[harbor_native.REFERENCE.fullmatch(source)[1]]).expanduser().resolve()), "target": target}
+             for source, target in plan["files"].items()]
+    agent = {"model_name": model or None, "env": plan["env"],
+             "extra_allowed_hosts": plan["hosts"], "kwargs": dict(plan["kwargs"])}
+    if name in ("oracle", "nop"):
+        agent["name"] = name
+    else:
+        agent["import_path"] = "scripts.evaluation.native_agents:NativeAgent"
+        agent["kwargs"].update(search_swe_native_name=name, search_swe_setup_hosts=plan["setup_hosts"],
+                               search_swe_files=files)
+    with tempfile.TemporaryDirectory(prefix="search-swe-agent-") as directory:
+        path = Path(directory) / "job.json"
+        path.write_text(json.dumps({"agents": [agent]}))
+        path.chmod(0o600)
+        argv = list(command)
+        index = argv.index("--agent")
+        del argv[index:index + 2]
+        if "-m" in argv:
+            index = argv.index("-m")
+            del argv[index:index + 2]
+        argv.extend(["--config", str(path)])
+        yield argv
 
 
 def endpoint_hostname(value, variable):
@@ -102,7 +131,10 @@ def main():
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--task", choices=TASKS, help="Task name (for example reasoning-query-rewriting)")
     selection.add_argument("--task-path", help="Repository-relative tasks/<task-name>")
-    parser.add_argument("--agent", default="codex", choices=tuple(AGENT_IMPORTS))
+    parser.add_argument("--agent", default="codex", type=harbor_native.agent_argument)
+    parser.add_argument("--agent-version", help="Exact harness version; defaults to the central registry")
+    parser.add_argument("--native", action="store_true", help="Use Harbor's native agent, authentication and parameters")
+    parser.add_argument("--agent-config", type=Path, help="Native agent configuration JSON")
     parser.add_argument(
         "--openrouter", action="store_true",
         help="Route the selected harness through OpenRouter using AGENT_OPENROUTER_API_KEY",
@@ -128,6 +160,14 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     parser.add_argument("--check", action="store_true", help="Validate model, credentials and configuration without restoring assets or launching")
     args = parser.parse_args()
+    if args.agent not in AGENT_IMPORTS:
+        args.native = True
+    if args.native and args.openrouter:
+        parser.error("Use --native with Harbor's own model/provider configuration, or --openrouter with the integrated route")
+    if args.agent_config and not args.native:
+        parser.error("--agent-config requires --native")
+    if args.native and any(value is not None for value in (args.thinking, args.pi_model_config, args.codex_config)):
+        parser.error("Use native kwargs in --agent-config for native agent-specific options")
     if args.agent != "pi" and (args.pi_model_config is not None or args.offline_models):
         parser.error("--pi-model-config and --offline-models are only valid with --agent pi")
 
@@ -143,6 +183,14 @@ def main():
     elif args.env_file is not None:
         parser.error(f"Environment file does not exist: {env_file}")
     env = {**file_env, **os.environ}
+    try:
+        native_options = harbor_native.load_options(args.agent_config) if args.native else {}
+        requested_version = args.agent_version if args.agent_version is not None else env.get("SEARCH_SWE_AGENT_VERSION") or None
+        agent_version = harnesses.resolve_version(args.agent, requested_version,
+                            native_options.get("kwargs", {}).get("version"), REPO)
+        harnesses.install_spec(args.agent, agent_version, REPO)
+    except ValueError as error:
+        parser.error(str(error))
     egress_path = args.egress_config or (REPO / env["EGRESS_CONFIG"] if env.get("EGRESS_CONFIG") else None)
     dns_servers = None
     if dns_value := (args.container_dns or env.get("CONTAINER_DNS")):
@@ -150,8 +198,8 @@ def main():
             dns_servers = parse_servers(dns_value)
         except ValueError as error:
             parser.error(f"Invalid CONTAINER_DNS: {error}")
-    model = args.model or env.get("AGENT_MODEL")
-    if not model:
+    model = args.model if args.model is not None else env.get("AGENT_MODEL") or ""
+    if not model and not args.native:
         parser.error("Set --model or AGENT_MODEL")
     if args.openrouter:
         if args.agent not in OPENROUTER_AGENT_IMPORTS:
@@ -160,14 +208,14 @@ def main():
             parser.error("OpenRouter requires a complete provider/model slug in --model or AGENT_MODEL")
         if args.agent == "codex" and args.codex_config is not None:
             parser.error("--openrouter uses its own Codex config; omit --codex-config")
-    if args.agent == "pi":
+    if args.native:
+        pass
+    elif args.agent == "pi":
         model = pi_models.native_model(model, "openrouter" if args.openrouter else "direct")
         try:
             pi_models.selection(model)
         except ValueError as error:
             parser.error(str(error))
-        if pi_models.catalog()["version"] != PI_VERSION:
-            parser.error("Pi catalog and harness pins differ; regenerate the catalog")
         if args.reasoning_effort is not None:
             parser.error(
                 "--reasoning-effort is only valid with --agent codex or claude-code"
@@ -193,6 +241,7 @@ def main():
         parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
     try:
+        harbor_native.check_trajectory_support(args.agent, args.native, task_config)
         storage = StoragePlan.discover(task, task_config)
     except ValueError as error:
         parser.error(str(error))
@@ -216,11 +265,13 @@ def main():
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
         "--agent",
-        (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
+        args.agent if args.native else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
         "--force-build", "--yes", "-o", str(output),
-        "--agent-setup-timeout-multiplier", "3", "-m", model,
+        "--agent-setup-timeout-multiplier", "3",
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
     ]
+    if model:
+        command.extend(["-m", model])
     # Harbor 0.22.0 rejects Docker tasks with gpus > 0 before Compose starts
     # and does not translate that field into a Docker GPU request. Preserve the
     # truthful task metadata while the task's Compose overlays allocate the GPU.
@@ -228,8 +279,23 @@ def main():
         command.extend(["--override-gpus", "0"])
     required = []
     agent_host = None
-    if args.agent == "codex":
-        command.extend(["--ak", f"version={CODEX_VERSION}"])
+    native = None
+    if args.native:
+        try:
+            native = harbor_native.plan(args.agent, model, env, args.agent_config)
+            if agent_version:
+                native["kwargs"]["version"] = agent_version
+            else:
+                native["kwargs"].pop("version", None)
+            if args.reasoning_effort and args.reasoning_effort != "default":
+                if "reasoning_effort" not in harbor_native.describe(args.agent)["kwargs"]:
+                    parser.error("This native agent uses its own thinking controls; configure its supported kwargs in --agent-config")
+                native["kwargs"]["reasoning_effort"] = args.reasoning_effort
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
+        required.extend(native["required"])
+    elif args.agent == "codex":
+        command.extend(["--ak", f"version={agent_version}"])
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={'null' if effort == 'default' else effort}"])
@@ -259,7 +325,7 @@ def main():
             except ValueError as error:
                 parser.error(str(error))
     elif args.agent == "claude-code":
-        command.extend(["--ak", f"version={CLAUDE_CODE_VERSION}"])
+        command.extend(["--ak", f"version={agent_version}"])
         effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT")
         if effort:
             command.extend(["--ak", f"reasoning_effort={'null' if effort == 'default' else effort}"])
@@ -280,7 +346,7 @@ def main():
             parser.error(
                 "PI_THINKING must be one of: default, " + ", ".join(PI_THINKING_LEVELS)
             )
-        command.extend(["--ak", f"version={PI_VERSION}"])
+        command.extend(["--ak", f"version={agent_version}"])
         if thinking:
             command.extend(["--ak", f"thinking={'null' if thinking == 'default' else thinking}"])
         required.extend(pi_models.required_variables(model, env))
@@ -302,13 +368,15 @@ def main():
     )
     agent_requires_host = any(step.get("agent", {}).get("network_mode", agent_network_mode) != "public"
                               for step in task_config.get("steps") or [{}])
+    agent_hosts = native["hosts"] if native else [agent_host] if agent_host else []
     if agent_requires_host:
-        if agent_host is None:
+        if not agent_hosts and not args.native:
             parser.error(
                 "Set AGENT_OPENAI_BASE_URL so Harbor can allow only the selected "
                 "coding-model host"
             )
-        command.extend(["--allow-agent-host", agent_host])
+        for host in agent_hosts:
+            command.extend(["--allow-agent-host", host])
 
     if "OPENAI_API_KEY" in verifier_env:
         for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
@@ -354,7 +422,7 @@ def main():
             egress = load_config(egress_path)
         else:
             egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
-        restricted = validate_task_networks(task, agent_host, egress.settings.get("upstream_host"),
+        restricted = validate_task_networks(task, agent_hosts, egress.settings.get("upstream_host"),
                                             allow_public=egress.settings.get("transport") == "direct")
     except (OSError, ValueError) as error:
         parser.error(str(error))
@@ -393,11 +461,12 @@ def main():
         command.extend(["--environment-kwarg", f"gpu_device={args.gpu_device}"])
 
     # This launcher uses explicit API keys, without consulting a host auth.json.
-    env.pop("CODEX_AUTH_JSON_PATH", None)
-    env.pop("CODEX_FORCE_AUTH_JSON", None)
+    if not args.native:
+        env.pop("CODEX_AUTH_JSON_PATH", None)
+        env.pop("CODEX_FORCE_AUTH_JSON", None)
     if args.openrouter:
         env.pop("OPENAI_BASE_URL", None)
-    if args.agent == "claude-code":
+    if args.agent == "claude-code" and not args.native:
         for name in CLAUDE_HOST_ENV_VARS:
             env.pop(name, None)
 
@@ -418,12 +487,20 @@ def main():
         if dns_servers:
             print("Trusted gateway DNS servers: " + ", ".join(dns_servers))
         print("Environment values are passed to Harbor separately from the command:")
+        if native:
+            print(f"Native agent config: {args.agent_config or 'defaults'}; agent env: {', '.join(sorted(native['env'])) or 'none'}")
+            print("Native parameters and authentication-file bindings are passed in a private generated job configuration.")
         print(shlex.join(command))
         return 0
 
     missing = sorted({name for name in required if not env.get(name, "").strip()})
     if missing:
         parser.error("Set the following variables in .env or the shell: " + ", ".join(missing))
+    if native:
+        for reference in native["files"]:
+            name = harbor_native.REFERENCE.fullmatch(reference)[1]
+            if not Path(env[name]).expanduser().is_file():
+                parser.error(f"Native authentication file configured by {name} is not a readable regular file")
     if args.check:
         print("Model, credentials and configuration checks passed; no evaluation started.")
         return 0
@@ -461,6 +538,15 @@ def main():
         prepare_task(task, env, cpu_set=args.cpu_set)
     except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
         parser.error(str(error))
+    if native:
+        with native_job(command, args.agent, model, native, env) as native_command:
+            if storage:
+                try:
+                    with prepared_storage(storage, env):
+                        return run_command(native_command, env, REPO)
+                except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+                    parser.error(str(error))
+            return run_command(native_command, env, REPO)
     if storage:
         try:
             with prepared_storage(storage, env):

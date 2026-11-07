@@ -10,10 +10,10 @@ task with the CLI or your coding agent.
 | --- | --- |
 | [Quick start](evaluation/quickstart.md) | Install, choose CLI or agent operation, and inspect your first results |
 | [CLI reference](evaluation/cli.md) | Configure settings, select tasks, and schedule sequential or parallel batches |
-| [Supported agents and providers](evaluation/agents.md) | Choose a harness, model and provider, including Pi's API-key providers |
+| [Supported agents and providers](evaluation/agents.md) | Discover Harbor agents, choose provider routes, and configure harness versions and authentication |
 | [Submission model access](evaluation/submission-models.md) | Apply the required OpenRouter model allowlists to submission API keys |
 | [Data and models](evaluation/assets.md) | Plan disk space, download, verify, and restore fixed inputs |
-| [Host setup and native launcher](evaluation/runtime.md) | Configure credentials, CPU/GPU allocation and task storage, or run a single task directly |
+| [Host setup and single-task launcher](evaluation/runtime.md) | Configure credentials, CPU/GPU allocation and task storage, or run a single task directly |
 | [Network policy](evaluation/network.md) | Configure runtime allowlists, direct gateway access and proxy egress |
 
 Each task's `README.md`, `instruction.md` and `task.toml` under

@@ -39,12 +39,12 @@ See the [benchmark design](docs/benchmark.md) for evaluation details and data pr
 
 ## 🚀 Quick Start
 
-Use a native Linux x86_64 host with **Python 3.12+, Git, and Docker**, plus the
+Use a native Linux x86_64 host with **Python 3.12+, Git, and local rootful Docker**, plus the
 CPU/RAM and optional GPU resources required by your chosen tasks.
 
 ### Run with the CLI
 
-Use CLI **0.2.x** with a checkout from the same release series.
+Use CLI **0.3.x** with a checkout from the same release series.
 
 ```bash
 pip install search-swe
@@ -93,7 +93,7 @@ Start at the [documentation index](docs/README.md). Common reading paths:
 
 - **Run your first evaluation:** [quick start](docs/evaluation/quickstart.md), with CLI and agent workflows.
 - **Choose a setting:** [supported agents and providers](docs/evaluation/agents.md).
-- **Configure the host:** [credentials, GPU and native launcher](docs/evaluation/runtime.md).
+- **Configure the host:** [credentials, GPU and single-task launcher](docs/evaluation/runtime.md).
 - **Contribute a task:** [authoring, model feedback and review](docs/contributing/tasks.md).
 
 For task descriptions and results, visit the

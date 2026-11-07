@@ -12,6 +12,12 @@ available in the [Docker Hub repository](https://hub.docker.com/r/hanhainebula/s
 Each context contains its `Dockerfile`, pinned `requirements.txt`, and an
 `environment.md` package/runtime summary. Both images target `linux/amd64`.
 
+Task Dockerfiles add task dependencies to these bases. The shared launcher
+installs the selected coding harness during setup using the central registry,
+verifies its version and caches it per task image. See
+[harness versions](../docs/evaluation/agents.md#harness-versions-and-installation).
+Verifier images retain their independent judge dependencies.
+
 Build from the repository root:
 
 ```bash

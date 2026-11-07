@@ -12,7 +12,7 @@ working directory, or `python -m scripts.<group>.<module>` from the checkout.
 
 | Directory | Responsibilities | Entry points |
 | --- | --- | --- |
-| [evaluation/](evaluation/) | Single-task launcher, Harbor adapters, CPU/GPU allocation, storage, harness pins and Pi metadata | `run_task.py`, `run_task.sh`, `update_pi_catalog.mjs` |
+| [evaluation/](evaluation/) | Single-task launcher, Harbor adapters, CPU/GPU allocation, storage, harness installation/cache and Pi metadata | `run_task.py`, `run_task.sh`, `update_pi_catalog.mjs` |
 | [assets/](assets/) | Download and verify fixed inputs, estimate disk usage, stage HF publication files | `download_assets.py`, `download_models.py`, `prepare_hf_upload.py` |
 | [validation/](validation/) | Static task-package and release checks | `check_tasks.py`, `check_release.py` |
 | [egress/](egress/) | Runtime network policy, gateway builds and owned-resource recovery | `build_egress_component.py`, `build_egress_gateway.py`, `egress_cleanup.py` |
@@ -37,6 +37,13 @@ covers task validation and model feedback. HF staging is documented in the
 [maintainer asset publication workflow](../.agents/skills/maintain-searchswe-task/references/publication.md);
 gateway builds and Docker checks are in the [egress guide](../environments/egress/README.md).
 
+Harness defaults and installation recipes live in
+[`src/search_swe/data/harnesses.toml`](../src/search_swe/data/harnesses.toml).
+`evaluation/harness_install.py` installs and verifies managed CLIs using a private,
+image-specific cache; `evaluation/harness_versions.py` exposes defaults to helpers.
+See [harness versions](../docs/evaluation/agents.md#harness-versions-and-installation)
+for runtime overrides and the independent verifier pin.
+
 ## Tests and maintenance
 
 Repository regressions and Docker integration fixtures live in [`tests/`](../tests/).
@@ -50,7 +57,7 @@ version contract aligned; checkout tools are provided by the repository, while
 
 ### Update the Pi catalog
 
-Align `scripts/evaluation/harness_versions.py` and the task-image Pi version,
+Update `[agents.pi].version` in `src/search_swe/data/harnesses.toml`,
 then regenerate the catalog from the matching installed package:
 
 ```bash

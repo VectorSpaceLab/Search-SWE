@@ -39,6 +39,8 @@ complete its prompts and verifier before running the task.
 Define a concrete engineering goal, starting inputs, submission interface,
 measurable outcomes and resource budget. Keep an ordinary task contribution
 within its package and reuse the [shared CPU/GPU images](../../docker/README.md).
+The launcher prepares the selected coding harness; task Dockerfiles add the
+task's dependencies. Verifier judge dependencies keep their independent pins.
 
 | File or directory | What to provide |
 | --- | --- |

@@ -1,6 +1,7 @@
 """Command-line entrypoint for configuration and evaluation batches."""
 
 import argparse
+from dataclasses import replace
 import json
 import math
 import os
@@ -17,6 +18,7 @@ from .submission_checks import verify_submission_keys
 from . import runner
 from . import pi_models
 from . import updates
+from . import harbor_native, harnesses
 
 
 def positive_int(value):
@@ -53,6 +55,7 @@ def parser():
         "update": "Fetch the current branch's upstream and apply a compatible fast-forward update.",
         "submission-models": "Show the fixed OpenRouter submission-key allowlists; works offline without a checkout.",
         "pi-models": "List Pi's supported API-key providers or their models; works offline without a checkout.",
+        "agents": "List Harbor's registered agents and their native capabilities; works offline without a checkout.",
     }
     examples = {
         "run": "Examples:\n  search-swe run\n  search-swe run reasoning-query-rewriting --yes\n  search-swe run code-embedding-finetuning --gpu-devices 0 --yes",
@@ -61,14 +64,16 @@ def parser():
     for name, description in descriptions.items():
         command = commands.add_parser(name, help=description, description=description,
                                       epilog=examples.get(name), formatter_class=argparse.RawDescriptionHelpFormatter)
-        if name not in ("submission-models", "pi-models"):
+        if name not in ("submission-models", "pi-models", "agents"):
             command.add_argument("--repo", type=Path, default=argparse.SUPPRESS, help="Search-SWE checkout (or SEARCH_SWE_REPO)")
-        if name in ("list", "doctor", "info", "update", "submission-models", "pi-models"):
+        if name in ("list", "doctor", "info", "update", "submission-models", "pi-models", "agents"):
             command.add_argument("--json", action="store_true", help="Print the result as JSON")
         if name == "submission-models":
             command.add_argument("--profile", choices=tuple(PROFILES), default="shared", help="Submission-key profile; default shared")
         if name == "pi-models":
             command.add_argument("--provider", help="Pi provider ID, e.g. google; omit to list providers")
+        if name == "agents":
+            command.add_argument("--agent", help="Show one registered agent's native parameters, including ACP registry names")
         if name == "list":
             command.add_argument("--hardware", choices=("cpu", "gpu"), help="Show only CPU or GPU tasks")
         if name == "doctor":
@@ -81,8 +86,10 @@ def parser():
         command.add_argument("tasks", nargs="*", help="Tasks to evaluate; omit for interactive selection" if name == "run" else "Optional tasks whose service credentials should be configured")
         command.add_argument("--task", action="append", default=[], help="Select a task; repeat for multiple tasks")
         setting = command.add_argument_group("model setting")
-        setting.add_argument("--agent", choices=("codex", "claude-code", "pi"), help="Coding-agent harness; saved value or codex")
-        setting.add_argument("--provider", choices=("openrouter", "direct"), help="API route: OpenRouter or a direct provider")
+        setting.add_argument("--agent", type=harbor_native.agent_argument, help="Harbor agent name; use search-swe agents to list integrations")
+        setting.add_argument("--provider", choices=("openrouter", "direct", "native"), help="OpenRouter/direct integration or Harbor's native agent route")
+        setting.add_argument("--agent-config", type=Path, help="Native agent JSON: kwargs, env references, endpoint hosts and authentication files")
+        setting.add_argument("--agent-version", help="Exact harness version; default selects the repository default")
         setting.add_argument("--model", help="Model ID; OpenRouter uses provider/model")
         setting.add_argument("--reasoning-effort", help="Reasoning / Pi thinking level; default omits the override")
         setting.add_argument("--refresh-models", action="store_true", help="Refresh the OpenRouter catalog during interactive selection")
@@ -133,13 +140,23 @@ def configure_run(args, root):
     if interactive:
         from . import wizard
         print("Search-SWE evaluation setup. API keys are entered privately and never displayed.")
-        setting = wizard.select_setting(current, args)
+        setting = wizard.select_setting(current, args, root=root)
     else:
         setting = resolve_setting(current, args)
+    if setting.provider == "native" and not (root / "scripts/evaluation/native_agents.py").is_file():
+        raise ValueError("This checkout needs the Harbor native agent backend; update it with search-swe update before using --provider native")
+    if setting.agent_config:
+        config_path = Path(setting.agent_config).expanduser()
+        setting = replace(setting, agent_config=str((root / config_path).resolve()))
     updates.update(setting.values())
     env.update(updates)
+    configured_version = (harbor_native.load_options(setting.agent_config).get("kwargs", {}).get("version")
+                          if setting.agent_config else None)
+    resolved_version = harnesses.resolve_version(setting.agent, setting.agent_version, configured_version, root)
+    harnesses.install_spec(setting.agent, resolved_version, root)
+    setting = replace(setting, agent_version=resolved_version)
     model_config = None
-    if setting.agent == "pi" and not args.dry_run:
+    if setting.agent == "pi" and setting.provider != "native" and not args.dry_run:
         model_config = pi_models.resolve_model_config(pi_models.native_model(setting.model, setting.provider),
                                                       offline=args.offline,
                                                       refresh=args.refresh_models and (not interactive or args.model is not None))
@@ -149,6 +166,8 @@ def configure_run(args, root):
         tasks = wizard.select_tasks(catalog, required=args.command == "run")
     if not tasks and args.command == "run":
         raise ValueError("Select at least one task; use search-swe list")
+    for task in tasks:
+        harbor_native.check_trajectory_support(setting.agent, setting.provider == "native", task.config)
     storage = None
     if args.command == "run":
         print("Estimating asset storage from manifests and local cache (no downloads)...", flush=True)
@@ -172,6 +191,9 @@ def configure_run(args, root):
             updates.setdefault(key, env[key])
     summary = {"setting": setting.public(), "tasks": [task.name for task in tasks],
                "concurrency": concurrency, "env_file": str(path)}
+    if setting.provider == "native":
+        summary["native_agent"] = {"native_atif": harbor_native.describe(setting.agent)["native_atif"],
+                                   "configuration_file": setting.agent_config}
     if args.command == "run":
         summary.update(asset_gib=round(sum(task.asset_bytes for task in tasks) / 2**30, 2),
                        resource_pool={"cpus": args.cpu_set or "auto", "gpus": args.gpu_devices or "auto",
@@ -200,9 +222,13 @@ def configure_run(args, root):
         command = ["search-swe", "configure", "--repo", str(root), "--env-file", str(path),
                    "--agent", setting.agent, "--provider", setting.provider, "--model", setting.model,
                    "--reasoning-effort", setting.effort, *[task.name for task in tasks]]
+        if setting.agent_config:
+            command.extend(["--agent-config", setting.agent_config])
+        if setting.agent_version:
+            command.extend(["--agent-version", setting.agent_version])
         raise ValueError("Missing variables for this selection: " + ", ".join(missing) +
                          "\nFill them in the selected environment file, or run: " + shlex.join(command))
-    if setting.agent == "pi":
+    if setting.agent == "pi" and setting.provider != "native":
         pi_models.agent_host(pi_models.native_model(setting.model, setting.provider), env)
     runner.preflight(root, tasks, setting, env, model_config=model_config)
     pool = None
@@ -244,6 +270,15 @@ def main(argv=None):
     if args.command is None:
         args = command_parser.parse_args([*arguments, "run"])
     try:
+        if args.command == "agents":
+            try:
+                agent_root = find_repo(args.repo)
+            except ValueError:
+                if args.repo:
+                    raise
+                agent_root = None
+            harbor_native.display(args.agent, as_json=args.json, root=agent_root)
+            return 0
         if args.command == "pi-models":
             pi_models.display(args.provider, as_json=args.json)
             return 0

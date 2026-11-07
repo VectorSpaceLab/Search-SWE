@@ -1,0 +1,42 @@
+schema_version = 1
+
+[agents.codex]
+version = "0.164.0"
+installer = "npm"
+package = "@openai/codex"
+command = "codex"
+ignore_scripts = true
+extra_packages = ["@openai/codex-linux-x64@npm:@openai/codex@{version}-linux-x64"]
+
+[agents.claude-code]
+version = "2.1.309"
+installer = "npm"
+package = "@anthropic-ai/claude-code"
+command = "claude"
+
+[agents.pi]
+version = "1.4.0"
+installer = "npm"
+package = "@earendil-works/pi-coding-agent"
+command = "pi"
+ignore_scripts = true
+
+[agents.gemini-cli]
+version = "0.67.0"
+installer = "npm"
+package = "@google/gemini-cli"
+command = "gemini"
+
+[agents.antigravity-cli]
+version = "1.5.2"
+installer = "archive"
+command = "agy"
+member = "antigravity"
+
+[agents.antigravity-cli.releases."1.5.2"]
+url = "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.5.2-4951595792859136/linux-x64/cli_linux_x64.tar.gz"
+sha512 = "aa876c0813572efaf85ed47983cc937414705d40490cbdb54f6e255656a4f8744ae38e457823e924fa8270b348124e0521d3cda3fec6824bb2d14b98a7a05baa"
+
+# Verifier defaults are independent of coding-agent versions and run overrides.
+[verifier]
+codex_version = "0.164.0"

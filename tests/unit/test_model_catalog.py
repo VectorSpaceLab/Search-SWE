@@ -107,7 +107,8 @@ class ModelCatalogTests(unittest.TestCase):
                 patch("search_swe.wizard.questionary.autocomplete") as autocomplete, redirect_stdout(io.StringIO()):
             setting = select_setting(Setting(), parser().parse_args(["configure"]))
         self.assertEqual(setting, Setting("claude-code", "openrouter", "anthropic/claude-new", "default"))
-        self.assertEqual([call.args[0] for call in select.call_args_list], ["Harness", "Provider", "Reasoning / thinking level"])
+        self.assertEqual([call.args[0] for call in select.call_args_list], ["Provider", "Reasoning / thinking level"])
+        self.assertIn("antigravity-cli", autocomplete.call_args_list[0].kwargs["choices"])
         options = autocomplete.call_args.kwargs
         models = options["completer"].models
         self.assertEqual([model["id"] for model in models], ["anthropic/claude-new", "vendor/plain", "~vendor/solver-latest"])
@@ -120,7 +121,7 @@ class ModelCatalogTests(unittest.TestCase):
                 patch("search_swe.wizard.questionary.select") as select, \
                 patch("search_swe.wizard.questionary.autocomplete"), redirect_stdout(io.StringIO()):
             self.assertEqual(select_setting(Setting(), parser().parse_args(["configure"])).effort, "default")
-        self.assertEqual(select.call_count, 2)
+        self.assertEqual(select.call_count, 1)
         with patch("search_swe.wizard.load_models", return_value=(parse_models(fixture()), "cache")), \
                 patch("search_swe.wizard.ask", return_value="vendor/plain"), redirect_stdout(io.StringIO()):
             setting = select_setting(Setting(), parser().parse_args(["configure", "--agent", "pi", "--provider", "openrouter"]))

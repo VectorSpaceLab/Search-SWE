@@ -186,14 +186,28 @@ For a local GPU trial, use the shared launcher's optional
 `--gpu-device <host-index-or-UUID>`. It carries one resolved UUID into both
 phases using per-run Compose copies. Keep the package's default `count: 1`
 requests and document any task-specific GPU capacity requirement in its README.
-Install the target checkout's pinned coding-agent CLIs in the agent Dockerfile;
-the current versions are defined in `scripts/evaluation/harness_versions.py`.
+The agent Dockerfile installs the task's dependencies. The shared launcher
+prepares the selected harness before the coding-agent time limit. Centrally
+managed CLIs use `src/search_swe/data/harnesses.toml`, actual-version verification
+and a cache scoped to the task image and harness version. Other native agents
+use Harbor's installers and supported version controls; see
+`docs/evaluation/agents.md#harness-versions-and-installation`.
 
 Choose resources from the task workload. Keep CPU/RAM values in TOML, both
 Compose overlays and resource docs consistent, including explicit swap limits
 and any cgroup/RSS guards. Validate actual enforcement where the metric depends
 on it. Derive each supervisor window from all nested stages, repeats and
 cleanup rather than copying another task's timeout.
+
+For quota-backed development logs, provide a harness-independent `/logs/agent`
+directory on the bounded filesystem and a trusted root finalizer. The Docker
+adapter supports `x-search-swe.bounded_agent_logs.finalize` in Compose, preserves
+Harbor's download → ATIF conversion → upload → verifier lifecycle, and checks
+expanded log archives against a 512 MiB diagnostic reserve. The finalizer
+must check expansion before copying outside the bounded filesystem; oversized
+archives must stop the trial as infrastructure errors with source logs retained.
+See `docs/evaluation/runtime.md#quota-backed-harness-logs` and the reviewed formula
+task's environment for the log snapshot, private evidence and quota controls.
 
 Pin task-specific package and system dependencies. Do not use `latest`, clone a
 moving branch during a build, copy a host virtual environment, or depend on a
