@@ -29,6 +29,12 @@ class RelocatedSkill(unittest.TestCase):
         (self.repo / "tasks").mkdir(parents=True)
         (self.repo / "docker").mkdir()
         (self.repo / "docker/README.md").write_text("# Project fixture\n")
+        for hardware in ("cpu", "gpu"):
+            summary = self.repo / "docker" / hardware / "environment.md"
+            summary.parent.mkdir()
+            summary.write_text(
+                f"# {hardware.upper()} Docker Environment\n\n"
+                f"Target-checkout {hardware} runtime inventory.\n")
         (self.repo / "scripts/evaluation").mkdir(parents=True)
         (self.repo / "scripts/evaluation/harness_versions.py").write_text(
             'CODEX_VERSION="0.164.0"\nCLAUDE_CODE_VERSION="2.1.309"\nPI_VERSION="1.4.0"\n')
@@ -53,6 +59,11 @@ class RelocatedSkill(unittest.TestCase):
                 task = self.repo / "tasks" / name
                 self.assertNotEqual((task / "raw-instruction.md").read_text(),
                                     (task / "instruction.md").read_text())
+                self.assertEqual((task / "instruction.md").read_text(), "")
+                summary = (self.repo / "docker" / hardware / "environment.md").read_text().strip()
+                environment_doc = (task / "environment/docs/environment.md").read_text()
+                self.assertTrue(environment_doc.startswith(summary + "\n\n## Task resources\n"))
+                self.assertIn(f"and {gpus} GPUs", environment_doc)
                 config = tomllib.loads((task / "task.toml").read_text())
                 self.assertEqual(config["task"]["name"], f"search-swe/{name}")
                 self.assertEqual([a["name"] for a in config["task"]["authors"]],
@@ -147,6 +158,9 @@ class RelocatedSkill(unittest.TestCase):
         self.assertNotIn("npm install", (task / "environment/Dockerfile").read_text())
         self.assertIn('CODEX_VERSION = "9.8.7"', (task / "tests/rewardkit_deepseek.py").read_text())
         self.assertIn("REWARDKIT_CODEX_VERSION=9.8.7", (task / "tests/Dockerfile").read_text())
+        environment_doc = (task / "environment/docs/environment.md").read_text()
+        self.assertIn("16 CPUs, 16384 MiB RAM, 51200 MiB storage", environment_doc)
+        self.assertIn("21600 seconds", environment_doc)
         readme = (task / "README.md").read_text()
         self.assertEqual(readme.splitlines()[0], "# Custom Search")
         self.assertEqual((task / "raw-instruction.md").read_text().splitlines()[0], "# Custom Search")
@@ -154,6 +168,53 @@ class RelocatedSkill(unittest.TestCase):
         self.assertIn("16384 MiB", readme)
         self.assertEqual(re.findall(r"^## (.+)$", readme, re.M),
                          ["Task Metadata", "Change Log", "Difficulty Explanation", "Verification Explanation", "References"])
+
+    def test_shared_summary_is_read_from_target_checkout(self):
+        summary = self.repo / "docker/gpu/environment.md"
+        summary.write_text("# GPU Docker Environment\n\nCustom installed GPU packages.\n")
+        result = self.scaffold("target-summary", "--hardware", "gpu")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        document = (self.repo / "tasks/target-summary/environment/docs/environment.md").read_text()
+        self.assertTrue(document.startswith(summary.read_text().strip() + "\n\n## Task resources\n"))
+        self.assertNotIn("Target-checkout cpu", document)
+
+    def test_missing_or_wrong_shared_summary_leaves_no_package(self):
+        summary = self.repo / "docker/gpu/environment.md"
+        summary.unlink()
+        result = self.scaffold("missing-summary", "--hardware", "gpu")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(str(summary), result.stderr)
+        self.assertFalse((self.repo / "tasks/missing-summary").exists())
+        summary.write_text("# CPU Docker Environment\n\nWrong hardware.\n")
+        result = self.scaffold("wrong-summary", "--hardware", "gpu")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Expected the shared gpu environment summary", result.stderr)
+        self.assertFalse((self.repo / "tasks/wrong-summary").exists())
+        self.assertEqual(self.scaffold("cpu-summary", "--hardware", "cpu").returncode, 0)
+
+    def test_author_guidance_stays_outside_default_solver_mounts(self):
+        result = self.scaffold("visible-docs")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        task = self.repo / "tasks/visible-docs"
+        compose = yaml.safe_load((task / "environment/docker-compose.yaml").read_text())
+        mounts = compose["services"]["main"]["volumes"]
+        self.assertEqual([(m["source"], m["target"]) for m in mounts], [("./docs", "/task/docs")])
+        self.assertTrue(mounts[0]["read_only"])
+        self.assertFalse(mounts[0]["bind"]["create_host_path"])
+        dockerfile = (task / "environment/Dockerfile").read_text()
+        self.assertIsNone(re.search(r"^(?:COPY|ADD)\b", dockerfile, re.M))
+        self.assertIn("initially\nempty `instruction.md`", (task / "README.md").read_text())
+        self.assertIn("visibility audit", (task / "VALIDATION.md").read_text())
+        resources = (task / "environment/docs/available_resources.md").read_text()
+        self.assertEqual(re.findall(r"^## (.+)$", resources, re.M),
+                         ["Local resources", "Network and resource restrictions"])
+        self.assertIn("Submitted programs operate offline", resources)
+        for document in (task / "environment/docs").glob("*.md"):
+            text = document.read_text()
+            for old_prompt in ("Describe task-specific additions", "Replace this scaffold",
+                               "instruction-rewrite.md", "VALIDATION.md", "grader", "rubric"):
+                self.assertNotIn(old_prompt, text, document)
+            self.assertNotRegex(text, r"@@[A-Z_]+@@")
 
     def test_entrypoint_preserves_scores_and_reports_unavailable_judge(self):
         for label, metric, decision, judge_fails, exit_code in [

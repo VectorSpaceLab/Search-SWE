@@ -28,6 +28,10 @@ missing or incompatible tools block that validation, not justify replacements.
    Independently identify the closest reviewed task precedent on the base branch.
    Check the contributor's references, structural reuse and deviations against
    current contracts, and verify task-specific values independently.
+   Check the agent Dockerfile's task-only additions, independent verifier pins,
+   environment/resource document layout and complete solver-visible audience.
+   Benchmark-author/developer/maintainer directions and review notes must stay
+   outside agent images, mounts and linked documents.
    Keep ordinary task contributions inside their package; shared inventories
    must not need edits.
    Check model-trial evidence and feedback against the final task revision.

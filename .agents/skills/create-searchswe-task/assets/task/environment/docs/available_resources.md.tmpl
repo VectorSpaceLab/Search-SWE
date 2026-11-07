@@ -1,11 +1,13 @@
 # Available Resources
 
-Use the supplied local inputs and installed runtime. This initial package
-exposes no submission API credentials or network access. Describe the actual
-public inputs, local models and usage restrictions before publishing the task.
+Use the installed runtime described in `/task/docs/environment.md`.
 
-The coding agent's own model transport is a phase-scoped framework connection.
-The trajectory judge's OpenRouter credentials are verifier-only. Neither grants
-the submitted program API access. If the task supplies submission APIs, list
-only the approved endpoints/models and variable names, then align their phase
-allowlists and credential mappings. Credential values stay in local configuration.
+## Local resources
+
+The runtime provides the installed Python packages and system tools. Use `/app`
+for your implementation and generated files.
+
+## Network and resource restrictions
+
+Submitted programs operate offline. No task-specific datasets, model weights or
+submission API credentials are supplied.

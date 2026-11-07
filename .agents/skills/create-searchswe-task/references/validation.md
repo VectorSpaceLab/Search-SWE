@@ -12,6 +12,8 @@ imports. Use Python 3.12+ and the host dependencies declared in `pyproject.toml`
 including Harbor, huggingface_hub, PyYAML for static Compose parsing, and
 python-dotenv for launcher configuration. Install with `pip install -e .`
 from the checkout root in an approved host virtual environment.
+The scaffolder also reads the selected `docker/cpu/environment.md` or
+`docker/gpu/environment.md` for its shared runtime summary.
 Do not replace missing target tooling with invented commands.
 Docker Engine + Compose are needed for builds/trials, published image access for
 pulls, and NVIDIA driver/Container Toolkit for GPU execution. Check provider,
@@ -36,8 +38,15 @@ for an authorized remote inspection or PR handoff, not local task authoring.
 - Parse `task.toml` and `assets.json`; verify unique name, objective and keywords,
   separate verifier, artifact paths, and all five CPU/GPU configuration points.
 - Check the new-task layout includes `VALIDATION.md`, the task-specific grader,
-  finalizer and trajectory rubric/backend. Confirm agent CLI pins come from the
-  target checkout and that both Docker build contexts filter secrets/caches.
+  finalizer and trajectory rubric/backend. Confirm coding-harness setup follows
+  the target checkout's launcher/registry and verifier pins remain independent.
+  Check that both Docker build contexts filter secrets/caches.
+- Compare the environment document with the selected shared CPU/GPU summary and
+  task additions; check resource-document sections against the actual local/API
+  policy. Audit every visible Markdown file and its links for the solver audience:
+  benchmark-author instructions, unfinished authoring prompts and review/repair
+  notes must stay outside agent COPY/mount/link visibility. The scaffold's empty
+  `instruction.md` must be completed before static acceptance or a model run.
 - Validate the budget table from [verifier-contract.md](verifier-contract.md):
   nested candidate stages fit the primary window, and primary/judge wrappers
   plus setup, finalization and cleanup fit the outer verifier timeout.

@@ -91,7 +91,8 @@ trajectory artifact and verifier-only judge credentials. Read
 contract and budget calculation. Choose CPU/RAM/storage and agent/grader/judge
 timeouts using the helper options and the actual workload.
 
-The scaffold is **not a finished task**: its grader fails until implemented, its
+The scaffold leaves `instruction.md` empty for the final solver request. It is
+**not a finished task**: its grader fails until implemented, its
 asset manifest is empty, data/model mounts are absent, and the instruction and
 task-specific audit rubric need completion. Replace them and validate the
 generated budgets, authors, artifacts and network settings. The shared image
@@ -117,7 +118,12 @@ Follow the detailed rules in `references/task-authoring.md`:
    [references/assets-and-resources.md](references/assets-and-resources.md).
    Build exact manifests and read-only phase-specific mounts. Keep hidden inputs,
    solutions, and judge credentials out of the agent environment.
-3. Write visible environment/resource docs matching what is actually provided.
+3. Write the environment/resource docs using the
+   [document layout and audience contract](references/task-authoring.md#environment-document-layout):
+   shared CPU/GPU runtime summary followed by task resources, and resource-policy
+   sections matching actual inputs/APIs. `instruction.md` and all agent-visible
+   Markdown must address the solver; keep benchmark-author/developer/maintainer
+   instructions and review notes outside the agent's images, mounts and links.
 4. Implement the separate verifier: copy tests into its image, explicitly
    transfer submission artifacts, run untrusted code without grading privileges,
    bound execution, and initialize reward to zero. A separate container does not

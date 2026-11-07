@@ -23,6 +23,16 @@ used for the rewrite so changes can be reviewed.
 
 ## Write the request
 
+Address the evaluated solver throughout `instruction.md` and every document it
+can read, including mounted environment/resource docs, starter READMEs and
+agent-visible `AGENTS.md`. Benchmark-author instructions, packaging TODOs,
+grader/rubric setup, HF publication/PR operations, host credential setup and
+validation or repair commentary must not appear there. Keep that material in
+author-facing records outside the agent's COPY/mount/link visibility. The
+solver's implementation work, development budget and public acceptance criteria
+are legitimate task content. Use the environment-document layout and audience
+contract in [task-authoring.md](task-authoring.md#environment-document-layout).
+
 Write the request a user would give their coding agent while working on a
 concrete problem. Begin with the work they need to do, the material or system
 already available, and how they will use the result. The opening should make
@@ -94,11 +104,14 @@ need and the intended use of the results are apparent, and remain connected
 to the data, resources, constraints and measurable outcome through the body.
 Check that there is no self-introduction, invented identity or extra obligation
 introduced by the context. Removing a persona must not erase the work situation.
+Read all reachable solver-facing Markdown for its audience: remove instructions
+to benchmark authors or maintainers while preserving every solver requirement.
 
 Literal comparisons of paths, flags, IDs and numbers catch omissions but cannot
 prove semantic equivalence. Inspect negations, exceptions, time accounting,
 cardinality and failure scope manually. Check the agent Docker context and
-mounts to confirm the structured source and review notes are not exposed.
+mounts and linked files to confirm the structured source and author/review notes
+are not exposed.
 
 Then evaluate the final prose version using [model-evaluation.md](model-evaluation.md).
 If the trajectory reveals ambiguity or a lost condition, repair the source or

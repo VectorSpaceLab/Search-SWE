@@ -10,6 +10,7 @@ workflow/tool modifications need independent scrutiny, not implicit acceptance.
 | Repository precedent | For each new task, the contributor names one or two closest reviewed `tasks/` packages already merged into the base branch or states that none is close, and explains matching dimensions, structural reuse and intentional differences. Independently inspect the closest analogue by objective, grading/judge shape, resources, hardware and data/artifact layout. Current contracts and validators override legacy examples. Reject unexplained copying of task-specific IDs/authors, datasets or HF pins, thresholds/baselines, allowlists, budgets, licenses/provenance or hidden evaluation design. Merely existing on main is not proof that a pattern remains valid. |
 | Instructions | Compare `raw-instruction.md` with the final `instruction.md`: the agent-facing version starts from a concrete work need and preserves the goal, starting state, input/output schema and paths, executable interface, artifacts, thresholds and constraints. Both match every graded requirement. No secret-only correctness requirement or hidden solution hints. |
 | Objective/resources | Clear goal, starting state and measured outcomes. Supply a meaningful baseline when grading improvement. CPU default, GPU only for execution. Both Dockerfiles, both Compose reservations and `gpus` agree. Visible tools/API/model docs match injected resources and budgets. Pin dependencies/images; inspect build contexts. |
+| Environment format/audience | Agent Dockerfile uses the matching published base with task-specific additions; coding harnesses follow the launcher/registry and verifier judge pins stay independent. Check the environment/resource document layout below and all solver-visible Markdown, including linked starter READMEs/AGENTS.md. Benchmark-author/developer/maintainer instructions, scaffolding TODOs and review/repair notes are forbidden in that visibility. |
 | Task README | One task title followed by `Task Metadata`, `Change Log`, `Difficulty Explanation`, `Verification Explanation`, and `References`. Current version matches `task.toml`; new tasks start at `1.0.0` with a dated `Added initial task` entry. Difficulty and validation claims match evidence. References identify existing paper/data/method sources, or `None`. Historical trial versions and fingerprints remain accurate. |
 | Solvability | Real known-good submission through the same separate verifier/artifact-transfer interface, expected vs observed reward and an authorized coding-agent trial. A scaffold's always-zero test, empty manifest, dry-run or static pass is not a working benchmark. No public author-only solution without approval. |
 | Model feedback | Trajectory, score and judge health inspected; task-setting changes explained, or a reason recorded for retaining the setting. Substantive task/scoring changes have relevant checks and a new model trial within the authorized budget, tied to the final evaluated revision. Missing evidence remains explicit; a valid low score alone is not a reason to weaken the task. |
@@ -19,6 +20,33 @@ workflow/tool modifications need independent scrutiny, not implicit acceptance.
 | Network/credentials | Narrow phase-specific allowlists, exact providers/models, no unauthorized calls/spend, runtime-only secret injection, judge keys filtered from submitted processes, no tokens in image/history/logs/artifacts or CLI args. Verify actual backend enforcement. |
 | Data/license | Actual bytes match manifest size/SHA-256; immutable 40-hex HF pins; dataset/model/local metadata paths valid. Public upstream HF datasets may be used directly. Published official inputs may be shared across tasks at their original `tasks/<source-task-name>/...` paths; new uploads use the publishing task's namespace. Document provenance and usage terms, including derived data/models; review redistribution rights for uploaded or mirrored files. No guessed license. |
 | Reproducibility | Fresh downloads/hash verification, read-only minimal mounts with missing bind paths failing closed, no host venv/cache dependence, resource/time limits, deterministic grading or justified pinned judge, repeatability and failure diagnoses. |
+
+## Agent environment files
+
+The agent Dockerfile starts with the matching pinned CPU/GPU base, followed by
+task dependencies, copies, permissions and working-directory settings as needed.
+Coding-harness versions/installers are supplied by the trusted launcher;
+the verifier retains its separately pinned grader/judge dependencies.
+
+Check `environment/docs/environment.md` against the selected target checkout's
+`docker/cpu/environment.md` or `docker/gpu/environment.md` and the actual image.
+It uses `# CPU Docker Environment` or `# GPU Docker Environment`, the shared
+software summary, then `## Task resources` for actual budgets, installed additions,
+visible paths/permissions and public commands. Specialized sections may follow.
+
+`available_resources.md` uses `# Available Resources`, with local resources and
+network/resource restrictions, plus retrieval and generative LLM sections only
+when permitted. Local-only tasks state that policy explicitly. API tasks list
+the exact providers/endpoints, generation model IDs, permitted operations and
+injected submission variable names, consistently with the instruction and mounts.
+
+Read `instruction.md` and every Markdown file reachable through agent COPYs,
+mounts and links as the evaluated solver. Task work, development budgets and
+public acceptance criteria belong there. Benchmark packaging instructions,
+authoring TODOs, PR/HF publication steps, host key setup, review commentary and
+repair history belong in author-facing records outside that visibility.
+Inspect the actual image/mount layout; README or AGENTS filenames do not establish
+the audience or isolation by themselves.
 
 ## Target tools and staged checks
 
@@ -67,8 +95,10 @@ while **both** Compose overlays still request the GPU; recheck on version change
 For explicit selection, use `--gpu-device <host-index-or-UUID>` with the trusted
 launcher. Verify that the generated phase configurations expose the same UUID
 and retain task mounts and network controls; package defaults use `count: 1`.
-The launcher does not support `--agent oracle`; a known-good implementation must
-be tested separately through the real verifier, in an author-only copy.
+`oracle` and `nop` are development helpers. A known-good implementation can
+exercise primary grading in an author-only copy; required trajectory audits
+still need their declared real ATIF input. Final model evidence uses the agreed
+coding-agent trial and its complete verifier path.
 
 ## Model evidence and local credential setup
 
@@ -81,9 +111,10 @@ task-setting defects and review the resulting corrections. Revalidate changed
 interfaces, resources or scoring with affected checks and a fresh model trial
 within the agreed budget. Retain valid low scores as evidence.
 
-For an authorized maintainer trial, select the agreed Codex, Pi or Claude Code
-agent, model and supported effort settings using the trusted checkout's
-`docs/evaluation/runtime.md`, `.env.example` and task configuration. Check the required
+For an authorized maintainer trial, discover agents with `search-swe agents` and
+select the agreed harness, provider, model and supported effort using the trusted
+checkout's `docs/evaluation/agents.md`, `docs/evaluation/runtime.md`, `.env.example`
+and task configuration. Audit tasks require an ATIF-capable route. Check the required
 agent, submission API, trajectory-judge and answer-judge credential groups
 separately. Reuse configured, authorized keys and check presence without printing
 values. If keys are missing, tell the contributor or operator the exact variable

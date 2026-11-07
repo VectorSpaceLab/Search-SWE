@@ -153,6 +153,13 @@ The repository supplies two shared base images. They already contain the common
 Search-SWE runtime; task Dockerfiles should add only task-specific files and
 pinned dependencies.
 
+Start the agent Dockerfile with the selected published `FROM`, then group its
+task-specific dependency installation, file copies, permissions and working
+directory settings. Coding-harness defaults and installation belong to the
+shared launcher and central registry. The separate `tests/Dockerfile` supplies
+its grader and independently pinned judge dependencies. Keep both build contexts
+limited to the files needed by their respective phase.
+
 | Hardware | First line of both Dockerfiles | `task.toml` |
 | --- | --- | --- |
 | CPU (default) | `FROM docker.io/hanhainebula/search-swe-base:cpu-py3.12-1.0.0` | `gpus = 0` |
@@ -278,12 +285,57 @@ mention `solution/`, reveal hidden cases/labels, or tell the agent how reward is
 implemented. Keep the structured source outside agent mounts and Docker COPY
 paths; never point the rewritten instruction to it as an easier alternate task.
 
-Keep `environment/docs/environment.md` synchronized with the actual base image,
-task additions, paths, CPU/GPU capability, and available commands. An
-`available_resources.md` must list only APIs/models/endpoints actually injected
-for that task, including restrictions and environment-variable names but never
-credential values. Keep agent credentials separate from verifier/judge
-credentials in `task.toml`.
+### Environment document layout
+
+`environment/docs/environment.md` starts with `# CPU Docker Environment` or
+`# GPU Docker Environment`. Use the selected target checkout's
+`docker/cpu/environment.md` or `docker/gpu/environment.md` as the shared software
+summary, aligned with the published image in `docker/README.md`. The scaffolder
+reads this target file, so relocated skills follow that checkout's runtime.
+Check the inventory against the actual image; append task-specific additions
+under `## Task resources` rather than mixing task setup into the shared summary.
+Describe the actual CPU/GPU, RAM/storage/time budgets, installed additions,
+visible paths and permissions, working directory and public self-check commands.
+Additional task-specific sections may follow when useful.
+
+`environment/docs/available_resources.md` uses `# Available Resources`, a short
+statement of the permitted resources, and these sections where applicable:
+
+- `## Local resources`: supplied public inputs, local models, starter code and
+  public tools, using their actual container paths and access modes.
+- `## Retrieval resources`: approved embedding/retrieval/reranking services,
+  endpoints and model-selection rules, when such services are permitted.
+- `## Generative LLM resources`: the complete permitted generation model IDs,
+  provider and endpoint, when generation is permitted.
+- `## Network and resource restrictions`: the allowed operations and hosts,
+  injected submission credential names, and applicable limits/failure rules.
+  State offline/local-only operation when no external service is supplied.
+
+Use only the sections the task needs; add specialized sections for an oracle,
+baseline, data semantics or other real resource. List resources actually
+provided to the solver, consistent with the image, manifest, mounts,
+`task.toml` and instruction. State credential variable names and how submitted
+code reads them, keeping values and host-side setup outside these documents.
+
+### Reader and visibility boundary
+
+`instruction.md` and every Markdown file copied, mounted or linked into the
+agent's workspace address the evaluated solver. This includes the two environment
+documents, starter READMEs and any agent-visible `AGENTS.md`. They describe the
+work, interfaces, available tools/data, permissions and public acceptance criteria.
+Descriptions of the solver's development budget and public evaluation behavior
+remain part of that contract.
+
+Benchmark-author/developer/maintainer instructions are forbidden in these
+solver-facing documents: scaffold TODOs, directions to finish a grader or rubric,
+HF publication/PR steps, host credential setup, validation/review commentary and
+historical repair notes belong in author-facing README/VALIDATION or other
+review records outside agent images and mounts. Audit linked files and the
+complete Docker COPY/mount tree as well as `instruction.md`; a file's name alone
+does not make it author-only. The scaffold leaves `instruction.md` empty until
+the author writes the final request; writing guidance lives in its README.
+
+Keep agent credentials separate from verifier/judge credentials in `task.toml`.
 
 Choose the narrowest applicable resource profile: no external resource,
 retrieval/embedding/reranking only, generative LLM only, or both retrieval and

@@ -29,7 +29,16 @@ def target_pins(root: Path) -> dict[str, str]:
     return {"CODEX_VERSION": value}
 
 
-def files_for(args: argparse.Namespace, pins: dict[str, str]) -> dict[str, str]:
+def target_environment(root: Path, hardware: str) -> str:
+    """Read the selected checkout's shared image summary as Markdown data."""
+    source = root / "docker" / hardware / "environment.md"
+    text = source.read_text().strip()
+    if not text.startswith(f"# {hardware.upper()} Docker Environment\n"):
+        raise ValueError(f"Expected the shared {hardware} environment summary in {source}")
+    return text
+
+
+def files_for(args: argparse.Namespace, pins: dict[str, str], base_environment: str) -> dict[str, str]:
     # These are supervisor allowances, distinct from submission-phase budgets
     # that the contributor must design and enforce inside grader.py.
     judge_supervisor = args.judge_timeout_sec + 300
@@ -52,7 +61,7 @@ def files_for(args: argparse.Namespace, pins: dict[str, str]) -> dict[str, str]:
         "AUTHORS_MD": ", ".join(name.replace("|", "\\|") for name in args.author),
         "DATE": date.today().isoformat(),
         "IMAGE": IMAGES[args.hardware],
-        "HARDWARE": args.hardware.upper(),
+        "BASE_ENVIRONMENT": base_environment,
         "GPUS": str(int(args.hardware == "gpu")),
         "GPU_RESERVATION": gpu_reservation,
         "CPUS": str(args.cpus),
@@ -128,7 +137,7 @@ def main() -> int:
         print(f"error: task name already exists; refusing overwrite: {destination}", file=sys.stderr)
         return 1
     try:
-        generated = files_for(args, target_pins(root))
+        generated = files_for(args, target_pins(root), target_environment(root, args.hardware))
     except (OSError, ValueError, SyntaxError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

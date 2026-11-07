@@ -41,6 +41,19 @@ Choose resource limits from the workload and validate their enforcement.
 
 ### Local validation
 
+Complete `raw-instruction.md`, then write the solver's request in the initially
+empty `instruction.md`, following the authoring skill's instruction-rewrite
+reference. The request must describe the real work, exact interfaces, resources,
+constraints and acceptance criteria in connected prose.
+
+The generated `environment/docs/environment.md` starts with the target checkout's
+shared CPU/GPU summary and a `Task resources` section. Add actual task dependencies,
+paths and public commands there. In `available_resources.md`, describe the final
+local inputs and resource policy; add retrieval or generative API sections only
+when those services are permitted. Both documents address the solver directly.
+Keep package-authoring guidance and validation records here or in `VALIDATION.md`,
+outside the agent's images and mounts.
+
 Configure coding-agent credentials and verifier-only `VERIFIER_OPENAI_BASE_URL`
 (`https://openrouter.ai/api/v1`) and `VERIFIER_OPENAI_API_KEY` in an ignored local
 `.env`. Submission APIs, if supplied, have separate documented credentials.
