@@ -2,6 +2,8 @@
 name: run-searchswe-evaluation
 description: Configure, launch, monitor and summarize evaluations of existing Search-SWE tasks using the search-swe CLI. Use when the user specifies models, harnesses, providers, tasks or resource settings for benchmark runs, including preparation-only requests.
 license: Apache-2.0
+metadata:
+  version: "0.3.0"
 ---
 
 # Run Search-SWE evaluations
@@ -29,8 +31,19 @@ Use a Python 3.12+ host environment with the Search-SWE package installed. Check
 `pip install -e /path/to/Search-SWE`. An installed skill provides
 instructions; the package supplies the executable.
 
-Use CLI 0.3.x and a checkout from the same release series. Resolve a version
-mismatch before configuration; preserve checkout changes when updating it.
+The skill's `metadata.version` follows the CLI release. This revision supports
+CLI 0.3.x and a checkout from the same release series. Resolve a version mismatch
+before configuration; preserve checkout changes when updating it.
+
+For a project skill installed through `npx skills`, run `npx skills check -p`
+from that agent workspace to check updates and
+`npx skills update run-searchswe-evaluation -p` to refresh this skill. Use `-g`
+instead of `-p` for a global installation. GitHub installs track content from
+their recorded Git source; the version metadata identifies the CLI release.
+Local-path installs can be refreshed by repeating the original `skills add`
+command. Reload skills or start a new agent session afterward. Keep the Python
+package upgrade and checkout update as separate operations within the user's
+scope, then recheck release-series compatibility.
 
 Use `search-swe info --json` to inspect the selected checkout
 and task count offline. To obtain new tasks, use `search-swe update --check
@@ -49,23 +62,10 @@ These paths are relative to the benchmark checkout, not this installed skill.
   for omitted values, and identify material ambiguities before launching.
 - Discover names/resources with `search-swe --repo /path/to/Search-SWE list --json`.
   Inspect the selected task READMEs and `task.toml` for runtime and service needs.
-- Use `docs/evaluation/agents.md` for the harness/provider/model matrix. Discover Harbor
-  integrations using `search-swe agents --json`; select `--provider native` for native
-  agents and inspect `search-swe agents --agent NAME --json` for parameters and ATIF
-  support. Native authentication, kwargs, API hosts and credential files use
-  `--agent-config PATH`; credential values stay in agent-only `AGENT_*` variables.
-  Set cloud/OAuth selectors in that native env block for the selected account.
-  Preserve each task's trajectory requirements and the native agent's capabilities.
-  Tasks declaring `/logs/agent/trajectory.json` need `atif=true`; the CLI checks
-  this before asset preparation. Pi routes share the Search-SWE ATIF converter.
-  Codex, Claude Code and Pi also provide integrated OpenRouter routes;
-  Claude Code requires Messages/tool compatibility. Pi direct
-  uses its bundled API-key provider catalog: `search-swe pi-models` lists providers,
-  and `search-swe pi-models --provider NAME` lists model IDs. Configure only that
-  provider's key and endpoint settings. For an ambiguous OpenRouter name, consult
-  `https://openrouter.ai/api/v1/models` or cached catalog metadata described in
-  the checkout's CLI guide, and resolve the full ID.
-  Directory metadata alone is not proof of harness compatibility.
+- Discover harnesses with `search-swe --repo /path/to/Search-SWE agents --json`.
+  Inspect `agents --agent NAME --json` for its routes, native parameters, default
+  version and ATIF support. Follow the route guidance below and the selected
+  checkout's `docs/evaluation/agents.md` for model and authentication details.
 - Use the checkout defaults in `src/search_swe/data/harnesses.toml` unless the
   user requests a version. Pass `--agent-version VERSION` for an exact override or
   `--agent-version default` to reset a saved pin. For centrally managed CLIs, the
@@ -85,6 +85,47 @@ A request to run a concrete experiment authorizes that batch. Continue once its
 configuration is ready; ask for missing choices, credentials or resource access
 that actually block it. For a preparation-only request, finish configuration and
 the command preview without launching an evaluation.
+
+## Harness and provider routes
+
+`--provider` selects the adapter route used to connect the harness and model:
+
+| Harness | Available routes |
+| --- | --- |
+| Codex, Claude Code, Pi | `direct`, `openrouter`, `native` |
+| Other registered Harbor agents, including Antigravity and Gemini CLI | `native` |
+
+`direct` and `openrouter` use Search-SWE's integrated adapters. Codex direct uses
+`AGENT_OPENAI_API_KEY` and `AGENT_OPENAI_BASE_URL`; Claude Code direct uses
+`AGENT_ANTHROPIC_API_KEY`. Pi direct uses its bundled API-key provider catalog:
+`search-swe pi-models` lists providers, and `pi-models --provider NAME` lists IDs
+and run flags. Configure the chosen provider's key and endpoint settings.
+Integrated OpenRouter routes use `AGENT_OPENROUTER_API_KEY`; models need the
+selected harness's Responses, Messages or Chat Completions/tool compatibility.
+For an ambiguous name, resolve the full ID using the live/cached catalog described
+in the CLI guide. Catalog metadata alone is not proof of compatibility.
+
+`native` uses Harbor's selected agent adapter, including for Codex, Claude Code
+and Pi. The actual service, model-name convention and authentication depend on
+that harness. Common API credentials are mapped automatically from `AGENT_*`
+variables; for example, Antigravity CLI uses `AGENT_GEMINI_API_KEY` for the Gemini
+API. Request only the missing credentials for the selected route and tasks.
+Use a native default with `--model ''` only when that harness supplies one.
+
+Use `--agent-config PATH` for additional native kwargs, custom authentication,
+API hosts or credential files, following the native configuration section in
+`docs/evaluation/agents.md`. Reference secrets as `${AGENT_VARIABLE_NAME}`;
+keep their values in private configuration. An explicit native `env` block
+selects its own authentication strategy, so include the bindings and cloud/OAuth
+selectors required for that account. Native runs isolate host auth; a host login
+alone does not configure the container. Native `--reasoning-effort LEVEL` requires
+`reasoning_effort` in the advertised kwargs and a level supported by that harness
+and model; other thinking controls use their native JSON kwargs.
+
+Preserve each task's trajectory requirements. Tasks declaring
+`/logs/agent/trajectory.json` need `atif=true`; the CLI checks this before asset
+preparation. Pi routes share the Search-SWE ATIF converter. Capture the effective
+route, CLI version and model in the run evidence.
 
 ## Prepare configuration and resources
 
@@ -158,6 +199,15 @@ wizard waiting on an agent tool's stdin. For example, from the selected checkout
 search-swe run agentic-search agentic-search-vectorless \
   --agent codex --provider openrouter --model openai/gpt-6-luna \
   --reasoning-effort max --concurrency 2 --dry-run
+```
+
+For Antigravity CLI through the Gemini API, using a key with access to the
+requested model:
+
+```bash
+search-swe run agentic-search \
+  --agent antigravity-cli --provider native --model gemini/gemini-4-argon \
+  --reasoning-effort high --dry-run
 ```
 
 After configuration and resources are ready, replace `--dry-run` with `--yes` for

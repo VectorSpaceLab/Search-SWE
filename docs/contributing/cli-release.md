@@ -4,8 +4,11 @@
 
 This guide is for maintainers releasing `search-swe` to PyPI.
 
-Choose an unused package version and set it in both `pyproject.toml` and
-`src/search_swe/__init__.py`. Task versions are managed independently. The PyPI
+Choose an unused package version and set it in `pyproject.toml`,
+`src/search_swe/__init__.py` and `metadata.version` in
+`skills/run-searchswe-evaluation/SKILL.md`. Review the skill's commands and
+CLI/checkout compatibility text in the skill and evaluation guides for that
+release. Task versions are managed independently. The PyPI
 project description comes from `docs/evaluation/cli.md`, as configured by the `readme` field
 in `pyproject.toml`; review that user-facing guide before building.
 

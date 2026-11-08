@@ -98,6 +98,25 @@ GitHub CLI selects the latest release, falling back to the default branch;
 `--pin FULL_COMMIT_SHA` selects a revision. With `npx skills`, use a GitHub tree
 URL for a branch or tag. Match the skill to your CLI and checkout.
 
+### Update the skill
+
+The skill records its matching CLI release in `SKILL.md` as `metadata.version`
+(currently `0.3.0`), with compatible CLI/checkout series `0.3.x`.
+For a project installation, run these commands in your coordinating agent's
+workspace:
+
+```bash
+npx skills check -p
+npx skills update run-searchswe-evaluation -p
+```
+
+Use `-g` instead of `-p` for a global installation. GitHub skill updates follow
+the recorded source's content changes; version metadata records CLI alignment.
+Refresh a local-path installation by repeating its original `skills add` command.
+Reload skills or start a new agent session after updating. The skill, Python
+package and task checkout are updated separately; keep their release series
+aligned. See the [Skills update commands](https://github.com/vercel-labs/skills/blob/main/docs/commands.md#skills-update).
+
 ## Run with saved settings
 
 ```bash
