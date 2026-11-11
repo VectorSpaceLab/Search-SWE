@@ -116,7 +116,8 @@ def sandbox(cpu_ids, work, allow_api=False):
 
 
 def submission_env(work, cpu_ids, allow_api=False):
-    env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': str(work),
+    env = {'JAVA_HOME': '/opt/java/openjdk',
+           'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': str(work),
            'TMPDIR': str(work), 'XDG_CACHE_HOME': str(work), 'LANG': 'C.UTF-8',
            'OMP_NUM_THREADS': str(len(cpu_ids)), 'OPENBLAS_NUM_THREADS': str(len(cpu_ids)), 'MKL_NUM_THREADS': str(len(cpu_ids)),
            'OMP_PROC_BIND': 'false', 'KMP_AFFINITY': 'disabled',

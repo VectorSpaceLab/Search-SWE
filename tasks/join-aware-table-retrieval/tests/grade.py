@@ -26,7 +26,8 @@ QUERY_SECONDS = 20.0
 MAX_LINE = 65536
 MAX_INDEX = 8 * 1024**3
 ENV = {'HOME': '/home/submission', 'USER': 'submission', 'LOGNAME': 'submission',
-       'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
+       'JAVA_HOME': '/opt/java/openjdk',
+       'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
        'PYTHONUNBUFFERED': '1', 'OMP_NUM_THREADS': '16', 'OPENBLAS_NUM_THREADS': '16',
        'TOKENIZERS_PARALLELISM': 'false', 'TMPDIR': '/work/tmp'}
 

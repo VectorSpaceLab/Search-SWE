@@ -27,7 +27,8 @@ UNTRUSTED_GID = 65534
 
 def submission_env() -> dict[str, str]:
     env = {"HOME": "/tmp/agentic-search-vectorless-submission-home", "TMPDIR": "/tmp",
-           "PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8",
+           "JAVA_HOME": "/opt/java/openjdk",
+           "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8",
            "TOKENIZERS_PARALLELISM": "false", "PYTHONUNBUFFERED": "1"}
     for key in AGENT_API_NAMES | {"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
                                   "http_proxy", "https_proxy", "no_proxy"}:

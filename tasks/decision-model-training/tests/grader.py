@@ -42,7 +42,8 @@ def stop_children():
 
 
 def child_command(command, runtime):
-    environment = {"PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin",
+    environment = {"JAVA_HOME": "/opt/java/openjdk",
+                   "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin",
         "USER": "submission", "LOGNAME": "submission", "HOME": str(runtime),
         "LANG": "C.UTF-8", "PYTHONUNBUFFERED": "1", "PYTHONDONTWRITEBYTECODE": "1",
         "OMP_NUM_THREADS": "16", "MKL_NUM_THREADS": "16", "OPENBLAS_NUM_THREADS": "1",

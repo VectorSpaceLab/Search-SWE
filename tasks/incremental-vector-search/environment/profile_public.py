@@ -61,7 +61,8 @@ class Worker:
             os.setuid(UID)
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
             resource.setrlimit(resource.RLIMIT_FSIZE, (32 * 1024**3,) * 2)
-        env = {'PATH': '/opt/conda/bin:/usr/bin:/bin', 'HOME': str(state),
+        env = {'JAVA_HOME': '/opt/java/openjdk',
+               'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/bin:/bin', 'HOME': str(state),
                'TMPDIR': str(state), 'OMP_NUM_THREADS': '16',
                'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1',
                'KMP_AFFINITY': 'disabled', 'OMP_PROC_BIND': 'false',

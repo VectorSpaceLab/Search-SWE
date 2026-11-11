@@ -23,7 +23,8 @@ cleanup() {
     exit "$status"
 }
 trap cleanup EXIT
-if ! /usr/bin/env -i PATH=/opt/conda/bin:/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
+if ! /usr/bin/env -i PATH=/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
+    JAVA_HOME=/opt/java/openjdk \
     /opt/conda/bin/python /tests/evaluate.py; then exit 1; fi
 
 # The trajectory judge is verifier-side and runs only after all submission

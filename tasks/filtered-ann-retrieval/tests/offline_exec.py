@@ -65,7 +65,7 @@ def restrict_service_files(app, index):
         allow(index, writable)
         # Interpreter, shared libraries and read-only system configuration.
         # Do not allow /task, /tmp, /home, /dev/shm or a common ancestor of index.
-        for path in ("/usr", "/bin", "/sbin", "/lib", "/lib64", "/opt/conda",
+        for path in ("/usr", "/bin", "/sbin", "/lib", "/lib64", "/opt/conda", "/opt/java",
                      "/etc/ld.so.cache", "/etc/localtime", "/etc/nsswitch.conf",
                      "/etc/passwd", "/etc/group", "/proc/self", "/proc/cpuinfo",
                      "/proc/meminfo", "/sys/devices/system/cpu"):

@@ -122,7 +122,8 @@ def main():
             os.chown(scratch, 10001, 10001)
             output = scratch / "results.jsonl"
             env = {"HOME": str(scratch), "TMPDIR": str(scratch),
-                   "PATH": "/opt/conda/bin:/usr/bin:/bin", "LD_LIBRARY_PATH": "/opt/conda/lib",
+                   "JAVA_HOME": "/opt/java/openjdk",
+                   "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/bin:/bin", "LD_LIBRARY_PATH": "/opt/conda/lib",
                    "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "HF_HUB_OFFLINE": "1",
                    "TRANSFORMERS_OFFLINE": "1", "PYTHONDONTWRITEBYTECODE": "1",
                    "PYTHONUNBUFFERED": "1", "OMP_NUM_THREADS": "8", "OPENBLAS_NUM_THREADS": "8"}

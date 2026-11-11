@@ -187,7 +187,7 @@ class Worker:
             "PATH", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES",
             "NVIDIA_DRIVER_CAPABILITIES") if name in os.environ}
         scratch = work / "scratch" if (work / "scratch").exists() else work
-        env.update(HOME=str(scratch), TMPDIR=str(scratch), XDG_CACHE_HOME=str(scratch),
+        env.update(JAVA_HOME="/opt/java/openjdk", HOME=str(scratch), TMPDIR=str(scratch), XDG_CACHE_HOME=str(scratch),
                    MOLECULE_WORK_DIR=str(work), MOLECULE_LIBRARY_DIR=str(library_dir),
                    PYTHONUNBUFFERED="1", PYTHONDONTWRITEBYTECODE="1",
                    HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", OMP_NUM_THREADS="16",

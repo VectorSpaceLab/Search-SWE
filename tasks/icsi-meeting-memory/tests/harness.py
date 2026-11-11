@@ -9,6 +9,7 @@ from jina_gateway import JinaGateway
 HERE = Path(__file__).resolve().parent
 RUNTIME = [
     "/opt/conda",
+    "/opt/java",
     "/usr",
     "/bin",
     "/lib",
@@ -123,7 +124,8 @@ def invoke(argv, read, work, log, label, timeout, gateway=None):
     work.mkdir(mode=0o700, exist_ok=True)
     own(work, 10001, 10001)
     env = {
-        "PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin",
+        "JAVA_HOME": "/opt/java/openjdk",
+        "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin",
         "HOME": str(work),
         "TMPDIR": str(work),
         "LANG": "C.UTF-8",
