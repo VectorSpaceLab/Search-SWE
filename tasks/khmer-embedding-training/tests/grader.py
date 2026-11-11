@@ -75,7 +75,8 @@ def run_stage(user, argv, work, log, timeout):
     env = {
         "HOME": str(work),
         "USER": user,
-        "PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin",
+        "JAVA_HOME": "/opt/java/openjdk",
+        "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin",
         "LANG": "C.UTF-8",
         "TMPDIR": str(work / "tmp"),
         "HF_HUB_OFFLINE": "1",

@@ -204,7 +204,8 @@ for name in sys.argv[2:]:
 
 
 def candidate_environment(index):
-    result = {"PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin", "HOME": str(index / "home"),
+    result = {"JAVA_HOME": "/opt/java/openjdk",
+              "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin", "HOME": str(index / "home"),
               "USER": "submission", "LOGNAME": "submission", "LANG": "C.UTF-8",
               "TMPDIR": str(index / "tmp"), "XDG_CACHE_HOME": str(index / "cache"),
               "HF_HOME": str(index / "hf"), "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",

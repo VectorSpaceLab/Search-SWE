@@ -17,7 +17,8 @@ MAX_OUTPUT_BYTES = 64 * 1024 * 1024
 def submission_env():
     env = {
         "HOME": "/home/submission", "USER": "submission", "LOGNAME": "submission",
-        "PATH": "/opt/conda/bin:/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8",
+        "JAVA_HOME": "/opt/java/openjdk",
+        "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8",
         "PYTHONUNBUFFERED": "1",
     }
     for key in ("OPENROUTER_API_KEY", "JINA_API_KEY", "HTTP_PROXY", "HTTPS_PROXY",

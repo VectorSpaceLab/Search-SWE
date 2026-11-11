@@ -41,7 +41,8 @@ def read_jsonl(path):
 
 
 def child_command(command):
-    environment = ["PATH=/opt/conda/bin:/usr/local/bin:/usr/bin:/bin", "USER=submission",
+    environment = ["JAVA_HOME=/opt/java/openjdk",
+                   "PATH=/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin", "USER=submission",
         "LOGNAME=submission", f"HOME={INDEX}", "LANG=C.UTF-8", "PYTHONUNBUFFERED=1",
         "PYTHONDONTWRITEBYTECODE=1", "TOKENIZERS_PARALLELISM=false",
         "OMP_NUM_THREADS=2", "OPENBLAS_NUM_THREADS=1", "HF_HUB_OFFLINE=1",

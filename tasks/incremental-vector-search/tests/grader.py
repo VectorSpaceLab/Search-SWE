@@ -204,7 +204,8 @@ def evaluate_dataset(dim, limits, *, initial_count=105_000, batch_size=1000, sta
             if peak_disk > 32 * GIB:
                 raise ValueError("Dataset exceeded 32 GiB storage")
 
-    env = {"PATH": "/opt/conda/bin:/usr/bin:/bin", "HOME": "/work/state",
+    env = {"JAVA_HOME": "/opt/java/openjdk",
+           "PATH": "/opt/conda/bin:/opt/java/openjdk/bin:/usr/bin:/bin", "HOME": "/work/state",
            "TMPDIR": "/work/state", "OMP_NUM_THREADS": "16", "OPENBLAS_NUM_THREADS": "1",
            "MKL_NUM_THREADS": "1", "KMP_AFFINITY": "disabled", "OMP_PROC_BIND": "false",
            "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"}

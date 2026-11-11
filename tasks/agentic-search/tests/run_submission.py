@@ -32,6 +32,7 @@ def submission_env() -> dict[str, str]:
     # Judge/coding-agent credentials and endpoint settings never cross this boundary.
     names = AGENT_API_NAMES | {"PATH", "LANG", "LC_ALL", "PYTHONUNBUFFERED", "REACT_MODEL"}
     env = {name: os.environ[name] for name in names if name in os.environ}
+    env["JAVA_HOME"] = "/opt/java/openjdk"
     env["HOME"] = "/tmp/agentic-search-submission-home"
     env["TMPDIR"] = "/tmp"
     return env

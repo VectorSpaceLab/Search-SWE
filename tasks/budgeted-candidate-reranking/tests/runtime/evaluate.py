@@ -245,7 +245,8 @@ def run_query(query, submission, backend, output, resources):
     excluded = 0
     stderr = (output / (query['query_id']+'.stderr')).open('wb')
     cpus = sorted(os.sched_getaffinity(0))[:16]
-    env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': '/work',
+    env = {'JAVA_HOME': '/opt/java/openjdk',
+           'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': '/work',
            'TMPDIR': '/work', 'XDG_CACHE_HOME': '/work', 'LANG': 'C.UTF-8',
            'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONUNBUFFERED': '1',
            'OMP_NUM_THREADS': str(len(cpus)), 'OPENBLAS_NUM_THREADS': str(len(cpus))}

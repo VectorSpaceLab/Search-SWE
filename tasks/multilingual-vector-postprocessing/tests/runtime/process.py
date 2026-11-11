@@ -28,7 +28,7 @@ class TransformProcess:
         work.mkdir(parents=True, exist_ok=True)
         work.chmod(0o777)
         environment = {k: os.environ[k] for k in ("PATH", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "NVIDIA_DRIVER_CAPABILITIES", "SEARCH_SWE_VERIFIER_SANDBOX") if k in os.environ}
-        environment.update(HOME=str(work), TMPDIR=str(work), XDG_CACHE_HOME=str(work / "cache"),
+        environment.update(JAVA_HOME="/opt/java/openjdk", HOME=str(work), TMPDIR=str(work), XDG_CACHE_HOME=str(work / "cache"),
                            CUDA_CACHE_PATH=str(work / "cuda-cache"), TRITON_CACHE_DIR=str(work / "triton-cache"),
                            OMP_NUM_THREADS="16", OPENBLAS_NUM_THREADS="16", MKL_NUM_THREADS="16",
                            PYTHONNOUSERSITE="1", PYTHONDONTWRITEBYTECODE="1", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1")

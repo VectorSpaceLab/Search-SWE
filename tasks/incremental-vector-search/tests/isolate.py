@@ -8,7 +8,7 @@ from confinement import ALL, EXECUTE, READ, READ_DIR, WRITE, confine, restrict_p
 
 
 def main():
-    runtime = ["/usr", "/bin", "/lib", "/lib64", "/opt/conda", "/etc/ld.so.cache",
+    runtime = ["/usr", "/bin", "/lib", "/lib64", "/opt/conda", "/opt/java", "/etc/ld.so.cache",
                "/etc/localtime", "/proc/cpuinfo", "/proc/meminfo", "/sys/devices/system/cpu"]
     rules = [(p, READ | READ_DIR | EXECUTE) for p in runtime if Path(p).exists()]
     rules += [("/app/submission", READ | READ_DIR | EXECUTE),

@@ -118,7 +118,8 @@ class Worker:
         self.log = log.open('wb', buffering=0)
         self.logged = 0
         scratch = str(Path(work)/'scratch') if (Path(work)/'scratch').exists() else work
-        env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': scratch,
+        env = {'JAVA_HOME': '/opt/java/openjdk',
+               'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin', 'HOME': scratch,
                'TMPDIR': scratch, 'XDG_CACHE_HOME': scratch, 'PYTHONDONTWRITEBYTECODE': '1',
                'PYTHONUNBUFFERED': '1', 'LANG': 'C.UTF-8', 'OMP_NUM_THREADS': str(len(cpus)),
                'OPENBLAS_NUM_THREADS': str(len(cpus)), 'MKL_NUM_THREADS': str(len(cpus)),

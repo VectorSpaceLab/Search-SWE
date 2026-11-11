@@ -84,7 +84,8 @@ def prepare():
 
 def child_env():
     env = {'HOME': str(INDEX), 'USER': 'submission', 'LOGNAME': 'submission',
-           'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
+           'JAVA_HOME': '/opt/java/openjdk',
+           'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
            'TMPDIR': str(INDEX / 'tmp'), 'XDG_CACHE_HOME': str(INDEX / 'cache'),
            'PYTHONUNBUFFERED': '1', 'PYTHONDONTWRITEBYTECODE': '1',
            'OMP_NUM_THREADS': '16', 'OPENBLAS_NUM_THREADS': '16',

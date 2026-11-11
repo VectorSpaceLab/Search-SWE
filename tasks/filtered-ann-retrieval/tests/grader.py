@@ -121,7 +121,8 @@ class Process:
         self.run_as = run_as
         self.log = log.open("wb")
         environment = {
-            "PATH": f"{Path(sys.executable).parent}:/usr/local/bin:/usr/bin:/bin",
+            "JAVA_HOME": "/opt/java/openjdk",
+            "PATH": f"{Path(sys.executable).parent}:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin",
             "HOME": str(work), "TMPDIR": str(work / "tmp"),
             "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
             "PYTHONUNBUFFERED": "1", "PYTHONDONTWRITEBYTECODE": "1",

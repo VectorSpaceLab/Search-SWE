@@ -126,7 +126,7 @@ def confine(rules):
 
 def launch(command, readable, writable, cwd, cpu):
     rules = [(p, READ | READ_DIR | EXECUTE) for p in
-             ["/usr", "/opt/conda", "/bin", "/lib", "/lib64", "/etc", "/sys/devices/system/cpu"]
+             ["/usr", "/opt/conda", "/opt/java", "/bin", "/lib", "/lib64", "/etc", "/sys/devices/system/cpu"]
              if Path(p).exists()]
     rules += [(str(p), READ | READ_DIR | EXECUTE) for p in readable]
     rules += [(str(p), ALL) for p in writable]

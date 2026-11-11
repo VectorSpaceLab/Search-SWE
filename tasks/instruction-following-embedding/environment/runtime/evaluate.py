@@ -41,7 +41,7 @@ class Worker:
         self.work.chmod(0o700);os.chown(self.work,UID,UID)
         self.log=open(output/f'{role}-worker.stderr','ab')
         env={k:os.environ[k] for k in ['PATH','LD_LIBRARY_PATH','CUDA_VISIBLE_DEVICES','NVIDIA_VISIBLE_DEVICES','NVIDIA_DRIVER_CAPABILITIES'] if k in os.environ}
-        env.update(HOME=str(self.work),TMPDIR=str(self.work),ENCODER_WORK_DIR=str(self.work),XDG_CACHE_HOME=str(self.work/'cache'),HF_HOME=str(self.work/'hf'),
+        env.update(JAVA_HOME='/opt/java/openjdk', HOME=str(self.work),TMPDIR=str(self.work),ENCODER_WORK_DIR=str(self.work),XDG_CACHE_HOME=str(self.work/'cache'),HF_HOME=str(self.work/'hf'),
                    OMP_NUM_THREADS='16',OPENBLAS_NUM_THREADS='16',MKL_NUM_THREADS='16',TOKENIZERS_PARALLELISM='false',PYTHONUNBUFFERED='1',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1')
         self.p=subprocess.Popen(['/opt/conda/bin/python','/task/runtime/worker.py',role],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=self.log,env=env,bufsize=0)
         os.set_blocking(self.p.stdin.fileno(),False)

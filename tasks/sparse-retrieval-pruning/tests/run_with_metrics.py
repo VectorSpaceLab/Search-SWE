@@ -24,7 +24,8 @@ def stop_members():
 
 
 def run(command, *, metrics_path, log_prefix, timeout, readable, writable, scratch, cpu):
-    env = {'PATH': '/opt/conda/bin:/usr/local/bin:/usr/bin:/bin',
+    env = {'JAVA_HOME': '/opt/java/openjdk',
+           'PATH': '/opt/conda/bin:/opt/java/openjdk/bin:/usr/local/bin:/usr/bin:/bin',
            'HOME': str(scratch), 'TMPDIR': str(scratch), 'LANG': 'C.UTF-8',
            'USER': 'submission', 'LOGNAME': 'submission', 'PYTHONUNBUFFERED': '1',
            'PYTHONDONTWRITEBYTECODE': '1'}
