@@ -4,8 +4,10 @@ import ast
 import inspect
 import os
 from pathlib import Path
+import tempfile
+import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,6 +76,38 @@ class SubmissionJavaTests(unittest.TestCase):
                     self.assertIn(f"{JAVA_HOME}/bin", environment["PATH"].split(":"))
                     for key in parent.keys() - {"PATH", "JAVA_HOME"}:
                         self.assertNotIn(key, environment)
+
+    def test_budgeted_reranking_public_and_verifier_query_environments(self):
+        task = ROOT / "tasks/budgeted-candidate-reranking"
+        parent = {"JAVA_HOME": "/unrelated-parent-java", "PATH": "/parent/bin",
+                  "OPENAI_API_KEY": "coding-fixture", "VERIFIER_OPENAI_API_KEY": "judge-fixture"}
+        for phase in ("environment", "tests"):
+            path = task / phase / "runtime/evaluate.py"
+            tree = ast.parse(path.read_text(), filename=str(path))
+            function = next(node for node in tree.body
+                            if isinstance(node, ast.FunctionDef) and node.name == "run_query")
+            namespace = {"Path": Mock(), "shutil": Mock(), "isolation": Mock(UID=10001),
+                         "os": Mock(sched_getaffinity=Mock(return_value={0, 1})),
+                         "time": time, "subprocess": Mock(PIPE=-1)}
+            spawn = namespace["subprocess"].Popen
+            spawn.side_effect = RuntimeError("fixture stopped before launch")
+            # Exercise the actual query launcher without /work mutations, UID
+            # changes, model imports or running a submitted command on the host.
+            module = ast.Module(body=[function], type_ignores=[])
+            exec(compile(module, str(path), "exec"), namespace)
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as directory, \
+                    patch.dict(os.environ, parent, clear=True):
+                output = Path(directory)
+                report = namespace["run_query"]({"query_id": "fixture"}, output, None, output, Mock())
+                self.assertEqual(report["error"], "fixture stopped before launch")
+                spawn.assert_called_once()
+                environment = spawn.call_args.kwargs["env"]
+                self.assertEqual(environment["JAVA_HOME"], JAVA_HOME)
+                self.assertIn(f"{JAVA_HOME}/bin", environment["PATH"].split(":"))
+                self.assertEqual(environment["OMP_NUM_THREADS"], "2")
+                self.assertEqual(environment["HOME"], "/work")
+                self.assertNotIn("OPENAI_API_KEY", environment)
+                self.assertNotIn("VERIFIER_OPENAI_API_KEY", environment)
 
 
 if __name__ == "__main__":
