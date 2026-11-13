@@ -142,6 +142,106 @@ routes share the Search-SWE event-stream-to-ATIF converter.
 Inspect the chosen agent's official
 setup when it needs project files, a subscription or cloud credentials.
 
+## Claude Code and Codex subscriptions
+
+Both use `--provider native` with explicit credentials in `--agent-config`.
+Prepare the following files in your Search-SWE checkout; the CLI reads its `.env`.
+Choose a task and a model available to your subscription, using the harness's
+model ID. Add `--dry-run` to preview either command, or replace `run` with
+`configure` to save the setting before launching.
+
+### Claude Code
+
+With Claude Code installed on the host, run `claude setup-token` and sign in to
+your subscription account. Put the resulting token in the checkout's private
+`.env`:
+
+```dotenv
+AGENT_CLAUDE_CODE_OAUTH_TOKEN=YOUR_SUBSCRIPTION_TOKEN
+```
+
+Create `.env.claude-subscription.json`:
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "${AGENT_CLAUDE_CODE_OAUTH_TOKEN}",
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com"
+  },
+  "extra_allowed_hosts": [
+    "claude.ai", "claude.com", "platform.claude.com", "console.anthropic.com"
+  ]
+}
+```
+
+```bash
+search-swe run TASK --agent claude-code --provider native \
+  --model CLAUDE_MODEL_ID --reasoning-effort default \
+  --agent-config .env.claude-subscription.json --concurrency 1
+```
+
+The explicit `env` selects OAuth credentials; the URL keeps requests on the
+official service even if an API endpoint was saved for another setting. Generate
+a new token when it expires. See Claude Code's
+[setup-token command](https://code.claude.com/docs/en/cli-reference) and
+[OAuth token configuration](https://code.claude.com/docs/en/env-vars#variables).
+
+### Codex
+
+With Codex installed on the host, sign in with ChatGPT using file-based storage:
+
+```bash
+codex -c 'cli_auth_credentials_store="file"' login
+```
+
+For a headless host, add `--device-auth` if your account enables device login,
+or securely copy the login file from a machine with a browser. The file is
+`auth.json` under your `CODEX_HOME` (normally `~/.codex`). Set its **absolute host
+path** in the checkout's private `.env`; environment-file values are literal:
+
+```dotenv
+AGENT_CODEX_AUTH_JSON_PATH=/absolute/path/to/.codex/auth.json
+```
+
+Create `.env.codex-subscription.json`:
+
+```json
+{
+  "env": {
+    "CODEX_AUTH_JSON_PATH": "${AGENT_CODEX_AUTH_JSON_PATH}",
+    "OPENAI_BASE_URL": "",
+    "OPENAI_API_BASE": ""
+  },
+  "extra_allowed_hosts": ["chatgpt.com", "auth.openai.com"]
+}
+```
+
+```bash
+search-swe run TASK --agent codex --provider native \
+  --model CODEX_MODEL_ID --reasoning-effort default \
+  --agent-config .env.codex-subscription.json --concurrency 1
+```
+
+Harbor uploads the host's login file into each task container. Empty endpoint
+overrides let Codex use its subscription endpoint even when other API addresses
+are saved. This is a copy: refreshed container credentials are not written back
+to the host file. Renew the host login if later runs report expired or revoked
+credentials. See [Codex authentication](https://learn.chatgpt.com/docs/auth).
+
+### Scope and checks
+
+Keep `.env` and the login file private with mode `0600`. The `.env.*.json` files
+above are Git-ignored and contain references rather than credential values.
+Subscription access covers the **coding agent**; selected tasks still need their
+own judge and submission API credentials. Model access and usage limits follow
+your account, so start with one task at a time.
+
+The examples have been checked offline against the native configuration and
+Harbor authentication paths; a real subscription evaluation has not been run.
+`--dry-run` checks configuration without testing account access. Additional
+account-specific authentication domains belong in `extra_allowed_hosts`; see
+the [network guide](network.md) for host proxy setup.
+
 ## Integrated OpenRouter routes
 
 OpenRouter selection supports search and manual IDs. Suggestions use the

@@ -73,6 +73,8 @@ explicit version requests require a verifiable CLI version command.
 Task and judge dependencies retain their own pins.
 `--agent-config` accepts native kwargs, agent env references, authentication
 files and exact API/setup domains; see [native agent setup](agents.md#harbor-native-agents).
+Claude Code and Codex subscriptions use the
+[native subscription configuration](agents.md#claude-code-and-codex-subscriptions).
 
 `--model` overrides `AGENT_MODEL`. For Codex/Claude, `--reasoning-effort` overrides
 `AGENT_REASONING_EFFORT`; Pi uses `--thinking` or `PI_THINKING`. `default` keeps

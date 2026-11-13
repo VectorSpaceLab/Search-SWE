@@ -38,6 +38,10 @@ search-swe run
 4. Choose sequential or parallel execution, review resources, and confirm
    saving settings and starting the run.
 
+To use a Claude Code or Codex subscription, follow the
+[subscription setup](agents.md#claude-code-and-codex-subscriptions) for the
+`native` route.
+
 **Enabled OpenRouter submission keys require the exact model allowlists:** 47
 models for the shared key and 17 for reasoning-query-rewriting. Configure these
 in OpenRouter using the [key setup guide](submission-models.md); the CLI checks
