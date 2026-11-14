@@ -1,9 +1,5 @@
 {
   "version": "ridge-v1",
-  "accuracy_at_1": 0.62,
-  "hit_count": 62,
-  "query_count": 100,
-  "prediction_ids_sha256": "54e637421ff470a27899b3376ba7cdc6112246f5c447afe715fafc8328150b29",
   "corpus_sha256": "97fe08496783f71dc21b060d15245c279e4076cbbf9078886f7fafc2d402d4dc",
   "vectors_sha256": "54c2f4a5a83e43d8ab5569f195c7e478a0807c9018e0749a9f62158656c8cd46",
   "queries_sha256": "8dbc99e62fdb268d2b09d9ecdb6e2ad7d2dd12ca8055f32190a901abd6dd6cb8",
