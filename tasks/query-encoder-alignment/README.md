@@ -64,8 +64,8 @@ with a filesystem quota; the completed calibration stayed well below it.
 Both Compose configurations and `task.toml` request **one
 NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
-The agent has 6 hours. Task-specific verification has 220 minutes inside
-the 250-minute Harbor verifier phase, with the integrity check bounded separately to 20 minutes.
+The agent has 6 hours. Task-specific verification has 340 minutes inside
+the 370-minute Harbor verifier phase, with the integrity check bounded separately to 20 minutes.
 The candidate must finish within **60% of the measured reference runtime**.
 The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
@@ -73,7 +73,7 @@ The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
 | Date | Version | Description |
 | --- | --- | --- |
-| 2026-11-04 | 1.0.0 | Added initial task |
+| 2026-11-14 | 1.0.0 | Added initial task |
 
 ## Difficulty Explanation
 
@@ -101,8 +101,12 @@ complete interface; no separate submitted build step is required.
 The public quality reference freezes Qwen3-Embedding-0.6B and fits centered
 ridge once on all public corpus/text-vector pairs. Its fixed settings and
 reproduction commands are in [the baseline README](environment/quality_reference/README.md).
-The verifier independently fits the same version and measures A0 on the same
-hidden queries and vectors. It never trains on hidden queries or labels.
+Every verifier run independently fits the pinned baseline using public corpus
+pairs, then measures A0 on the same hidden queries and hardware as the candidate.
+The baseline definition and inputs are fixed in `tests/quality_baseline_lock.json`;
+its accuracy and prediction fingerprint are recorded from the current run.
+The 4B time reference is also measured on that hardware. Use a compatible NVIDIA
+GPU with enough memory for both reference models and the submission.
 
 ```text
 quality = clip((candidate Accuracy@1 - A0) / (1 - A0), 0, 1)
@@ -113,8 +117,7 @@ score = 100 * reward
 A reference failure or A0=1 is an invalid benchmark measurement, not a
 candidate zero. Quality baseline configuration is frozen before hidden
 measurement or model evaluation. The separate 4B reference supplies time only;
-its accuracy is retained as a diagnostic. The old unmeasured 0.31 anchor is
-removed. Raw candidate accuracy, A0, quality, runtime gate, judge health and
+its accuracy is retained as a diagnostic. Raw candidate accuracy, A0, quality, runtime gate, judge health and
 final reward are recorded separately.
 
 Both references exclude same-ID documents and all canonical-text copies:
@@ -135,6 +138,18 @@ read-only runtime, protected reference/log directories and inherited seccomp
 network denial.
 The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
 verifier-only DeepSeek endpoint and key settings.
+Its binary decision must agree with the complete, error-free RewardKit details.
+Both an internal judge timeout and an outer process timeout invalidate the
+measurement; a completed integrity rejection is a valid zero.
+
+For verifier-only reevaluation, restore the original `/app/submission` and
+`/logs/agent/trajectory.json` into a fresh independent verifier with the current
+task files, pinned assets, GPU allocation and judge credentials. Run the full
+`/tests/test.sh` so the quality baseline, five timing pairs and integrity audit
+are evaluated together. Keep the original submission and trajectory unchanged,
+and save new verifier results separately with the task revision and hardware.
+Use the resulting measured A0 and final reward; an earlier score's denominator
+alone is insufficient to establish a valid reevaluation.
 
 ### Running This Task
 
@@ -189,16 +204,16 @@ The manifest pins 30 files totaling 8.72 GiB at immutable revisions, exact
 sizes and hashes; public split and hidden split remain unchanged.
 
 ```bash
-python -m unittest discover -s tasks/query-encoder-alignment/authoring/tests -p test_contract.py -v
+python -m unittest discover -s tasks/query-encoder-alignment/authoring/tests -p 'test_*.py' -v
 python scripts/validation/check_tasks.py tasks/query-encoder-alignment
 ```
 
 Author calibration records and runtime evidence are kept under
 `contributing/dev/query-encoder-alignment/v020/`, never mounted into a solving
 agent. Public first-fit ridge Accuracy@1 is 54/100 with approximately 107 s
-fit time on one A100 40GB. Two independent fits and public predictions are byte-identical. Hidden A0 is
-62/100, frozen with implementation/data/prediction fingerprints in verifier-only
-`tests/quality_baseline_lock.json`; fresh full verifier fitting reproduces it.
+fit time on one A100 40GB. Two independent fits and public predictions are byte-identical.
+The historical hidden A0 on that platform was 62/100. Current verifier runs
+measure their own A0 using the same pinned implementation and inputs.
 The repaired 4B reference scores 68/100. Known-baseline submission passes the
 runtime, output and determinism checks and scores zero at its own quality anchor.
 Historical artifact replay: Opus xhigh 76%, 36.8421/100 and time gate passed;
