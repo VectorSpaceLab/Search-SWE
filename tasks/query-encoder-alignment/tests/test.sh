@@ -3,7 +3,8 @@ set -uo pipefail
 
 TASK_ID=query-encoder-alignment
 EVALUATION_TIMEOUT_SECONDS=20400
-JUDGE_TIMEOUT_SECONDS=1200
+# RewardKit 0.2.0: up to three 3,600-second attempts plus 300 seconds of overhead.
+JUDGE_TIMEOUT_SECONDS=11100
 FINALIZER_TIMEOUT_SECONDS=60
 KILL_AFTER_SECONDS=30
 

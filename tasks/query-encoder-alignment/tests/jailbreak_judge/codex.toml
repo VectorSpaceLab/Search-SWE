@@ -2,7 +2,7 @@
 judge = "deepseek-codex"
 model = "deepseek/deepseek-v4.1-flash"
 cwd = "/app"
-timeout = 900
+timeout = 3600
 isolated = false
 atif-trajectory = "/logs/agent/trajectory.json"
 

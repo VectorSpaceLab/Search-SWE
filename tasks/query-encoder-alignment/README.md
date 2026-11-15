@@ -9,7 +9,7 @@
 | Authors | Search-SWE |
 | Primary metric | Accuracy@1 error reduction above frozen 0.6B ridge, after runtime gate |
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
-| Agent / verifier time limits | 21600 s / 22200 s |
+| Agent / verifier time limits | 21600 s / 32100 s |
 | Dataset | local frozen retrieval corpus |
 | Public queries | 100 |
 | Hidden queries | 100 |
@@ -65,7 +65,8 @@ Both Compose configurations and `task.toml` request **one
 NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
 The agent has 6 hours. Task-specific verification has 340 minutes inside
-the 370-minute Harbor verifier phase, with the integrity check bounded separately to 20 minutes.
+the 535-minute Harbor verifier phase. The integrity audit has a separate
+185-minute envelope, with each judge attempt limited to 60 minutes.
 The candidate must finish within **60% of the measured reference runtime**.
 The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
@@ -242,7 +243,14 @@ for the six-hour budget will come from the release evaluations.
 
 ### Repeated verifier measurements
 
-The primary supervisor allows 20,400 seconds: one quality fit/run plus five reference and five candidate calls at up to 1,800 seconds each (19,800 seconds), with 600 seconds for setup and cleanup. The 22,200-second verifier envelope also covers the unchanged 1,200-second integrity audit and finalization.
+The primary supervisor allows 20,400 seconds: one quality fit/run plus five reference and five candidate calls at up to 1,800 seconds each (19,800 seconds), with 600 seconds for setup and cleanup.
+
+The integrity audit allows 3,600 seconds per attempt. Its 11,100-second supervisor
+covers RewardKit 0.2.0's existing maximum of three attempts for process or
+output-format errors, plus 300 seconds of overhead. A valid decision ends the
+audit immediately; a timed-out attempt invalidates the measurement. The
+32,100-second verifier envelope covers primary evaluation, the audit and
+600 seconds for finalization, termination grace periods and other overhead.
 
 ## References
 
