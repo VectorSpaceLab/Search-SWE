@@ -48,6 +48,7 @@ def parser():
     commands = root.add_subparsers(dest="command")
     descriptions = {
         "run": "Select tasks, check resources, restore assets and run evaluations.",
+        "regrade": "Run the current verifier against the recorded outputs of one local Harbor trial.",
         "configure": "Save model settings, API keys and default concurrency to .env. Select optional tasks to configure their services and check submission-key restrictions.",
         "list": "List available tasks and their resource requirements.",
         "doctor": "Check the local Docker host and evaluation prerequisites.",
@@ -80,6 +81,14 @@ def parser():
             command.add_argument("--env-file", type=Path, help="Environment file; defaults to the checkout .env")
         if name == "update":
             command.add_argument("--check", action="store_true", help="Fetch and report available updates without changing checkout files")
+        if name == "regrade":
+            command.add_argument("trial", type=Path, help="Original Harbor trial directory containing result.json, agent/ and artifacts/")
+            command.add_argument("--env-file", type=Path, help="Verifier and task environment; defaults to the checkout .env")
+            command.add_argument("--output", type=Path, help="Fresh result directory; defaults to jobs/regrades/<unique-run>/")
+            command.add_argument("--cpu-set", help="Verifier CPU pool, e.g. 0-31")
+            command.add_argument("--gpu-device", help="Verifier GPU index or full UUID; defaults to an idle GPU")
+            command.add_argument("--offline", action="store_true", help="Restore task assets from cache only; verifier APIs may still need network")
+            command.add_argument("--dry-run", action="store_true", help="Check the trial's recorded inputs and preview without writing, downloading or starting Docker")
         if name not in ("run", "configure"):
             continue
         command.set_defaults(cpu_set=None, gpu_devices=None, memory_gb=None, output=None, edit_credentials=False)
@@ -326,6 +335,9 @@ def main(argv=None):
             result = runner.doctor(root, env={**DEFAULTS, **read_env(path), **os.environ})
             print(json.dumps(result, indent=2) if args.json else "\n".join(f"{key}: {value}" for key, value in result.items()))
             return 0
+        if args.command == "regrade":
+            from .regrade import run
+            return run(args, root)
         return configure_run(args, root)
     except KeyboardInterrupt:
         print("Cancelled; inspect the batch summary if execution had started.", file=sys.stderr)

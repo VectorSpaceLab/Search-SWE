@@ -127,6 +127,64 @@ def host_is_allowed(host, allowed_hosts):
     )
 
 
+def verifier_settings(task_config, env):
+    """Return the variables and Harbor bindings for this task's verifier."""
+    verifier_env = task_config.get("verifier", {}).get("env", {})
+    mode, allowed_hosts = effective_network_policy(task_config, "verifier")
+    binds = {}
+    required = set()
+    endpoints = []
+    if "OPENAI_API_KEY" in verifier_env:
+        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
+            source = f"VERIFIER_{name}"
+            required.add(source)
+            binds[name] = f"${{{source}}}"
+        endpoints.append("VERIFIER_OPENAI_BASE_URL")
+    for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
+        required.update(re.findall(r"\$\{([A-Z][A-Z0-9_]*)(?::[-?][^}]*)?\}", verifier_env.get(name, "")))
+    if "${ANSWER_JUDGE_BASE_URL" in verifier_env.get("ANSWER_JUDGE_BASE_URL", ""):
+        endpoints.append("ANSWER_JUDGE_BASE_URL")
+    for variable in endpoints:
+        if not env.get(variable):
+            continue
+        host = endpoint_hostname(env[variable], variable)
+        if mode == "no-network":
+            raise ValueError(f"{variable} cannot be used with verifier network_mode=no-network")
+        if mode == "allowlist" and not host_is_allowed(host, allowed_hosts):
+            raise ValueError(f"{variable} host {host!r} is not permitted by the task's [verifier].allowed_hosts")
+    return required, binds
+
+
+def network_settings(task, env, agent_hosts, egress_path, dns_servers, egress_image):
+    """Select trusted Compose egress and service proxy bindings."""
+    from scripts.egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+
+    if egress_path is not None:
+        if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
+            raise ValueError("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
+        egress = load_config(egress_path)
+    else:
+        egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
+    restricted = validate_task_networks(task, agent_hosts, egress.settings.get("upstream_host"),
+                                        allow_public=egress.settings.get("transport") == "direct")
+    kwargs = None
+    if egress_path is not None:
+        kwargs = {"egress_config": str(egress.path)}
+    elif restricted:
+        kwargs = {"egress_image": egress.image}
+        if dns_servers:
+            kwargs["egress_dns"] = ",".join(dns_servers)
+    proxy_bindings = {}
+    if env.get("CONTAINER_PROXY"):
+        if restricted:
+            raise ValueError("CONTAINER_PROXY is incompatible with this task's Harbor network "
+                             "allowlists because a general proxy can bypass destination filtering")
+        env.setdefault("CONTAINER_NO_PROXY", "127.0.0.1,localhost")
+        proxy_bindings = {name: "${CONTAINER_PROXY}" for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY")}
+        proxy_bindings.update({name: "${CONTAINER_NO_PROXY}" for name in ("no_proxy", "NO_PROXY")})
+    return egress, kwargs, proxy_bindings
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
@@ -264,7 +322,6 @@ def main():
             validate_gpu_device(args.gpu_device)
         except ValueError as error:
             parser.error(str(error))
-    verifier_env = task_config.get("verifier", {}).get("env", {})
     output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
@@ -378,9 +435,6 @@ def main():
             command.extend(["--ak", "model_config=" + json.dumps(model_config)])
 
     agent_network_mode, _ = effective_network_policy(task_config, "agent")
-    verifier_network_mode, verifier_allowed_hosts = effective_network_policy(
-        task_config, "verifier"
-    )
     agent_requires_host = any(step.get("agent", {}).get("network_mode", agent_network_mode) != "public"
                               for step in task_config.get("steps") or [{}])
     agent_hosts = native["hosts"] if native else [agent_host] if agent_host else []
@@ -393,86 +447,30 @@ def main():
         for host in agent_hosts:
             command.extend(["--allow-agent-host", host])
 
-    if "OPENAI_API_KEY" in verifier_env:
-        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
-            source = f"VERIFIER_{name}"
-            required.append(source)
-            command.extend(["--verifier-env", f"{name}=${{{source}}}"])
-
-    # Task-specific judge settings are resolved by task.toml from Harbor's
-    # environment; require only the groups used by the selected task.
-    for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
-        required.extend(re.findall(r"\$\{([A-Z][A-Z0-9_]*)(?::[-?][^}]*)?\}", verifier_env.get(name, "")))
-    task_setup = task_config.get("metadata", {}).get("configuration", {})
-    required.extend(name for name, options in task_setup.items() if options.get("required"))
-
-    endpoint_variables = []
-    if "OPENAI_API_KEY" in verifier_env:
-        endpoint_variables.append("VERIFIER_OPENAI_BASE_URL")
-    if "${ANSWER_JUDGE_BASE_URL" in verifier_env.get("ANSWER_JUDGE_BASE_URL", ""):
-        endpoint_variables.append("ANSWER_JUDGE_BASE_URL")
-    for variable in endpoint_variables:
-        if not env.get(variable):
-            continue
-        try:
-            host = endpoint_hostname(env[variable], variable)
-        except ValueError as error:
-            parser.error(str(error))
-        if verifier_network_mode == "no-network":
-            parser.error(f"{variable} cannot be used with verifier network_mode=no-network")
-        if verifier_network_mode == "allowlist" and not host_is_allowed(
-            host, verifier_allowed_hosts
-        ):
-            parser.error(
-                f"{variable} host {host!r} is not permitted by the task's "
-                "[verifier].allowed_hosts"
-            )
-
-    from scripts.egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
-    egress_image = args.egress_image or env.get("EGRESS_IMAGE")
     try:
-        if egress_path is not None:
-            if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
-                parser.error("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
-            egress = load_config(egress_path)
-        else:
-            egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
-        restricted = validate_task_networks(task, agent_hosts, egress.settings.get("upstream_host"),
-                                            allow_public=egress.settings.get("transport") == "direct")
+        required_verifier, verifier_bindings = verifier_settings(task_config, env)
+        egress, gateway_kwargs, proxy_bindings = network_settings(
+            task, env, agent_hosts, egress_path, dns_servers, args.egress_image or env.get("EGRESS_IMAGE")
+        )
     except (OSError, ValueError) as error:
         parser.error(str(error))
-    use_gateway = restricted or egress_path is not None
+    required.extend(required_verifier)
+    task_setup = task_config.get("metadata", {}).get("configuration", {})
+    required.extend(name for name, options in task_setup.items() if options.get("required"))
+    for name, value in {**verifier_bindings, **proxy_bindings}.items():
+        command.extend(["--verifier-env", f"{name}={value}"])
+    for name, value in proxy_bindings.items():
+        command.extend(["--ae", f"{name}={value}"])
 
-    if env.get("CONTAINER_PROXY"):
-        if restricted:
-            parser.error(
-                "CONTAINER_PROXY is incompatible with this task's Harbor network "
-                "allowlists because a general proxy can bypass destination filtering"
-            )
-        env.setdefault("CONTAINER_NO_PROXY", "127.0.0.1,localhost")
-        for flag in ("--ae", "--verifier-env"):
-            for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
-                command.extend([flag, f"{name}=${{CONTAINER_PROXY}}"])
-            for name in ("no_proxy", "NO_PROXY"):
-                command.extend([flag, f"{name}=${{CONTAINER_NO_PROXY}}"])
-
-    if use_gateway:
-        command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:PhaseScopedDocker"
-        if egress_path is not None:
-            command.extend(["--environment-kwarg", f"egress_config={egress.path}"])
-        else:
-            command.extend(["--environment-kwarg", f"egress_image={egress.image}"])
-            if dns_servers:
-                command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
-
+    use_gateway = gateway_kwargs is not None
+    if use_gateway or args.cpu_set is not None or args.gpu_device is not None:
+        adapter = "PhaseScopedDocker" if use_gateway else "GpuDocker"
+        command[command.index("--env") + 1] = f"scripts.evaluation.harbor_environments:{adapter}"
+    for name, value in (gateway_kwargs or {}).items():
+        command.extend(["--environment-kwarg", f"{name}={value}"])
     if args.cpu_set is not None:
-        if not use_gateway:
-            command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:GpuDocker"
         command.extend(["--environment-kwarg", f"cpu_set={args.cpu_set}"])
-
     if args.gpu_device is not None:
-        if not use_gateway:
-            command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:GpuDocker"
         command.extend(["--environment-kwarg", f"gpu_device={args.gpu_device}"])
 
     # This launcher uses explicit API keys, without consulting a host auth.json.
