@@ -26,16 +26,16 @@ class CgroupResourcesTests(unittest.TestCase):
             (self.path / name).write_text(value + "\n")
 
     def resolve(self, membership, mountinfo, *names):
-        original = cg._read
+        original = cg._read_proc
 
         def read(path):
             if path == Path("/proc/self/cgroup"):
-                return membership
+                return os.fsencode(membership)
             if path == Path("/proc/self/mountinfo"):
-                return mountinfo
+                return os.fsencode(mountinfo)
             return original(path)
 
-        with patch.object(cg, "_read", side_effect=read) as reads:
+        with patch.object(cg, "_read_proc", side_effect=read) as reads:
             result = [cg.controller(name) for name in names]
             self.assertIs(cg.controller(names[0]), result[0])
             self.assertEqual(reads.call_count, 2 * len(names))
@@ -60,6 +60,14 @@ class CgroupResourcesTests(unittest.TestCase):
         mounts = "22 1 0:17 /docker/other /sys/fs/cgroup/memory ro - cgroup cgroup rw,memory"
         with self.assertRaisesRegex(cg.CgroupError, "No cgroup v1 mount covers memory"):
             self.resolve("5:memory:/docker/isolated", mounts, "memory")
+
+    def test_mount_and_membership_preserve_filesystem_bytes_and_mount_escapes(self):
+        parent = os.fsdecode(b"/slice-\xff") + "-中文"
+        target = os.fsdecode(b"/mount-\xfe") + r"\040中文\134cgroup"
+        mounts = (f"10 1 0:2 /普通挂载 /inputs ro - tmpfs tmpfs ro\n"
+                  f"17 1 0:12 {parent} {target} ro - cgroup2 cgroup ro")
+        memory, = self.resolve(f"0::{parent}/任务", mounts, "memory")
+        self.assertEqual(os.fsencode(memory.path), b"/mount-\xfe " + "中文\\cgroup/任务".encode())
 
     def test_v2_budget_current_peak_and_oom_are_separate(self):
         self.put(**{"cpu.max": "1600000 100000", "memory.max": str(16 << 30),

@@ -23,6 +23,14 @@ def _read(path):
         raise CgroupError(f"Cannot read cgroup evidence at {path}: {error}") from error
 
 
+def _read_proc(path):
+    # Proc path fields contain filesystem bytes, including non-UTF-8 names.
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        raise CgroupError(f"Cannot read cgroup evidence at {path}: {error}") from error
+
+
 def _integer(value, path, minimum=0):
     try:
         result = int(value)
@@ -34,7 +42,8 @@ def _integer(value, path, minimum=0):
 
 
 def _mount_path(value):
-    return Path(re.sub(r"\\([0-7]{3})", lambda m: chr(int(m[1], 8)), value))
+    unescaped = re.sub(rb"\\([0-3][0-7]{2})", lambda m: bytes([int(m[1], 8)]), value)
+    return Path(os.fsdecode(unescaped))
 
 
 @cache
@@ -45,29 +54,30 @@ def controller(name):
 
 def resolve_controller(name, membership_file):
     """Resolve a process's membership against mounts visible to the reader."""
+    key_name = name.encode("ascii")
     memberships = {}
-    for line in _read(membership_file).splitlines():
-        fields = line.split(":", 2)
+    for line in _read_proc(membership_file).rstrip(b"\n").split(b"\n"):
+        fields = line.split(b":", 2)
         if len(fields) != 3:
             raise CgroupError(f"Invalid cgroup membership: {line!r}")
         _, controllers, location = fields
-        for key in controllers.split(","):
-            memberships[key] = Path(location)
+        for key in controllers.split(b","):
+            memberships[key] = Path(os.fsdecode(location))
     # A hybrid host can mount v2 alongside active v1 controllers.
-    version = 1 if name in memberships else 2
-    member = memberships.get(name if version == 1 else "")
+    version = 1 if key_name in memberships else 2
+    member = memberships.get(key_name if version == 1 else b"")
     if member is None or not member.is_absolute() or ".." in member.parts:
         raise CgroupError(f"No visible cgroup membership for the {name} controller")
     candidates = []
-    for line in _read(Path("/proc/self/mountinfo")).splitlines():
-        before, _, after = line.partition(" - ")
-        mount, filesystem = before.split(), after.split()
+    for line in _read_proc(Path("/proc/self/mountinfo")).split(b"\n"):
+        before, _, after = line.partition(b" - ")
+        mount, filesystem = before.split(b" "), after.split(b" ")
         if len(mount) < 6 or len(filesystem) < 3:
             continue
         if version == 1:
-            if filesystem[0] != "cgroup" or name not in filesystem[2].split(","):
+            if filesystem[0] != b"cgroup" or key_name not in filesystem[2].split(b","):
                 continue
-        elif filesystem[0] != "cgroup2":
+        elif filesystem[0] != b"cgroup2":
             continue
         root, target = map(_mount_path, mount[3:5])
         if root.is_absolute() and ".." not in root.parts and member.is_relative_to(root):

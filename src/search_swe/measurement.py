@@ -42,12 +42,36 @@ def _legacy_multilingual_submission_zero(verifier, status, reward):
     }
 
 
+def _legacy_primary_timeout(verifier, task):
+    if task not in {"instruction-following-embedding", "protein-text-bidirectional-retrieval"}:
+        return False
+    try:
+        status = (verifier / "status.txt").read_text().strip()
+    except (OSError, ValueError):
+        return False
+    # These supervisors also record exits caused by a rejected submission.
+    return status in {"primary evaluator failed with status 124", "primary evaluator failed with status 137"}
+
+
+def _reported_failure(details):
+    if details.get("infrastructure_error") is True:
+        return "judge_infrastructure" if details.get("audit_valid") is False else "verifier_measurement"
+    if details.get("semantic_judge_succeeded") is False:
+        return "answer_judging"
+    if any(details.get(key) is False for key in ("judge_output_valid", "judge_details_valid",
+                                                  "trajectory_present")):
+        return "judge_infrastructure"
+    return None
+
+
 def verifier_measurement(verifier, task_name, reward):
     """Return (valid, failure kind). None means the verifier gave no health signal."""
     valid = cgroup_measurement_valid(verifier / "cgroup-status.json")
     if valid is False:
         return False, "cgroup_environment"
     task = task_name.rsplit("/", 1)[-1]
+    if _legacy_primary_timeout(verifier, task):
+        return False, "verifier_timeout"
     evaluation = _report(verifier / f"{task}-eval/evaluation.json")
     errors = evaluation.get("judge_error_count")
     if evaluation.get("valid") is False and type(errors) is int and errors > 0:
@@ -69,13 +93,16 @@ def verifier_measurement(verifier, task_name, reward):
             exit_status = guard.get("exit_status")
             return False, "verifier_timeout" if exit_status in ("124", "137", 124, 137) else "verifier_failure"
         if filename in ("judge-status.json", "audit-status.json"):
-            if data.get("infrastructure_error") is True or data.get("healthy") is False:
+            if data.get("healthy") is False:
                 return False, "verifier_measurement" if data.get("audit_valid") is True else "judge_infrastructure"
             if data.get("healthy") is True:
                 valid = True
         for details in (data, data.get("final_gate")):
             if not isinstance(details, dict):
                 continue
+            failure = _reported_failure(details)
+            if failure:
+                return False, failure
             flag = details.get("measurement_valid")
             if flag is False:
                 if not (task == "multilingual-vector-postprocessing" and filename == "judge-status.json"

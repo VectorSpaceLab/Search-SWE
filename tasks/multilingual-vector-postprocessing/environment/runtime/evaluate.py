@@ -12,7 +12,7 @@ import numpy as np
 from threadpoolctl import threadpool_limits
 from failures import ContractViolation, LEGACY_COLLECTION_REJECTIONS, SubmissionViolation
 from metrics import aggregate, normalize, quality
-from process import TransformError, TransformProcess
+from process import TransformError, TransformProcess, WorkerExited
 from storage import StorageBudget
 
 
@@ -167,14 +167,14 @@ def evaluate_once(submission, corpus, query_root, development, output, *, sandbo
         try:
             transformed = worker.transform(vectors, languages, prepare_deadline)
             return normalize(transformed) if normalized else transformed
-        except (ValueError, TimeoutError) as error:
+        except (ValueError, TimeoutError, WorkerExited, BrokenPipeError) as error:
             raise SubmissionViolation(f"Document preparation failed: {error}") from error
 
     try:
         try:
             worker = TransformProcess(submission, temporary.name, output / "worker.stderr.log",
                                       prepare_deadline, sandbox=sandbox, require_gpu=require_gpu)
-        except (TransformError, TimeoutError) as error:
+        except TransformError as error:
             raise SubmissionViolation(f"Document preparation failed: {error}") from error
         for dataset in ("belebele", "xquad"):
             metadata, raw = inputs(Path(corpus) / dataset, "documents")

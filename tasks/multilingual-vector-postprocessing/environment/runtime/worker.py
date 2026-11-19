@@ -48,6 +48,8 @@ def main():
         isolate(work)
     else:
         os.chdir(work)
+    # Acknowledge trusted startup before importing or running submitted code.
+    print('{"loading":true}', flush=True)
     # Do not import submitted Python or deserialize its weights before isolation.
     sys.path.insert(0, str(submission))
     spec = importlib.util.spec_from_file_location("submission_transform", submission / "transform.py")

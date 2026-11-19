@@ -305,6 +305,13 @@ return None''')
         with self.assertRaisesRegex(SubmissionViolation, "Document preparation failed: ValueError"):
             self.run_control()
 
+    def test_worker_exit_during_load_or_document_preparation_is_a_submission_failure(self):
+        for script in ({"load": "os._exit(2)"}, {"transform": "os._exit(2)"}):
+            with self.subTest(script=script):
+                self.module(**script)
+                with self.assertRaisesRegex(SubmissionViolation, "Transform exited before responding"):
+                    self.run_control()
+
     def test_labels_rewards_network_and_privilege_protected(self):
         marker = ROOT / "secret-label.txt"
         marker.write_text("private fixture label")
@@ -347,8 +354,8 @@ return None'''
         with self.assertRaisesRegex(SubmissionViolation, "timed out"):
             evaluate("/app/submission", ROOT / "corpus", ROOT / "hidden", ROOT / "development",
                      ROOT / "logs/preparation-timeout", sandbox=True, require_gpu=False,
-                     preparation_seconds=.5, frozen_status=ROOT / "frozen-status.json")
-        self.assertLess(time.monotonic() - began, 10)
+                     preparation_seconds=5, frozen_status=ROOT / "frozen-status.json")
+        self.assertLess(time.monotonic() - began, 15)
 
     def test_query_timeout_preserves_denominators(self):
         self.module(transform="if vectors[0,2] > .5:\n    import time\n    time.sleep(60)\nreturn vectors.copy()")

@@ -19,6 +19,10 @@ class TransformError(ValueError):
     pass
 
 
+class WorkerExited(RuntimeError):
+    """The worker closed its response pipe before completing a request."""
+
+
 class TransformProcess:
     def __init__(self, submission, work, log, deadline, sandbox=False, require_gpu=True):
         self.sandbox = sandbox
@@ -53,11 +57,16 @@ class TransformProcess:
         self.drainer = threading.Thread(target=drain, daemon=True)
         self.drainer.start()
         try:
-            response = self.read(deadline)
+            if self.read(deadline) != {"loading": True}:
+                raise RuntimeError("Transform failed to complete trusted startup")
+            try:
+                response = self.read(deadline)
+            except (WorkerExited, TimeoutError, ValueError) as error:
+                raise TransformError(str(error)) from error
             if "error" in response:
                 raise TransformError(str(response["error"]))
             if response != {"ready": True}:
-                raise ValueError("Transform did not become ready")
+                raise TransformError("Transform did not become ready")
         except BaseException:
             self.close()
             raise
@@ -69,7 +78,7 @@ class TransformProcess:
                 raise TimeoutError("Transform response timed out")
             chunk = os.read(self.process.stdout.fileno(), 65536)
             if not chunk:
-                raise RuntimeError("Transform exited before responding")
+                raise WorkerExited("Transform exited before responding")
             self.buffer += chunk
             if len(self.buffer) > MAX_FRAME:
                 raise ValueError("Transform response exceeded the frame limit")

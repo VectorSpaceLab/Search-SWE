@@ -380,6 +380,9 @@ class CliTests(unittest.TestCase):
                         "healthy": False, "integrity": 0}
         audit_rejected = {"primary_valid": True, "audit_valid": True, "infrastructure_error": False,
                           "healthy": True, "integrity": 0}
+        primary_timeout = {"status.txt": "primary evaluator failed with status 124\n"}
+        submission_exit = {"status.txt": "primary evaluator failed with status 1\n"}
+        bad_output = {"judge_succeeded": True, "judge_output_valid": False}
         for task, files, failure_kind in (
             ("query-encoder-alignment", {"reward-details.json": timeout}, "verifier_timeout"),
             ("query-encoder-alignment", {"reward-details.json": primary_error}, "verifier_failure"),
@@ -391,6 +394,19 @@ class CliTests(unittest.TestCase):
             ("icsi-meeting-memory", {"gate-status.json": {"status": "complete", "reason": "invalid_submission"}}, None),
             ("agentic-search", {"jailbreak-status.json": {"status": "error"}}, "verifier_measurement"),
             ("agentic-search", {"jailbreak-status.json": {"status": "ok", "passed": False}}, None),
+            ("training-error-tracing", {"reward-details.json": {"infrastructure_error": True}}, "verifier_measurement"),
+            ("training-error-tracing", {"reward-details.json": {"final_gate": audit_failed}}, "judge_infrastructure"),
+            ("memory-constrained-dense-retrieval", {"reward-details.json": {"final_gate": bad_output}}, "judge_infrastructure"),
+            ("long-pdf-evidence", {"reward-details.json": {"final_gate": bad_output}}, "judge_infrastructure"),
+            ("instruction-following-embedding", primary_timeout, "verifier_timeout"),
+            ("protein-text-bidirectional-retrieval", primary_timeout, "verifier_timeout"),
+            ("instruction-following-embedding", submission_exit, None),
+            ("protein-text-bidirectional-retrieval", submission_exit, None),
+            ("evolving-personal-memory", {"reward-details.json": {"semantic_judge_succeeded": False,
+                                                                  "trajectory_judge_succeeded": True}}, "answer_judging"),
+            ("training-error-tracing", {"reward-details.json": {"final_gate": {"primary_valid": False,
+                                                                              "audit_valid": True,
+                                                                              "infrastructure_error": False}}}, None),
             ("query-encoder-alignment", {"reward-details.json": timeout, "judge-status.json": rejected}, "verifier_timeout"),
             ("fixture", {"reward-details.json": {"final_gate": {"measurement_valid": False}}}, "verifier_measurement"),
             ("fixture", {"reward-details.json": {"final_gate": {"evaluation_valid": True,
@@ -405,7 +421,8 @@ class CliTests(unittest.TestCase):
                         '(trial/"verifier").mkdir()\n'
                     )
                     for name, content in files.items():
-                        script.write(f'(trial/"verifier"/{name!r}).write_text({json.dumps(content)!r})\n')
+                        payload = content if isinstance(content, str) else json.dumps(content)
+                        script.write(f'(trial/"verifier"/{name!r}).write_text({payload!r})\n')
                 output = Path(temp) / "batch"
                 with redirect_stdout(io.StringIO()):
                     code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ),
@@ -414,7 +431,10 @@ class CliTests(unittest.TestCase):
                 regrade = {}
                 result_summary(Path(row["trial_result"]).parent, regrade)
                 valid = failure_kind is None
-                self.assertIs(regrade["measurement_valid"], valid)
+                if valid:
+                    self.assertIsNot(regrade["measurement_valid"], False)
+                else:
+                    self.assertIs(regrade["measurement_valid"], False)
                 self.assertEqual(row["status"], regrade["status"])
                 self.assertEqual(row["status"], "completed" if valid else "invalid-measurement")
                 self.assertEqual(row.get("failure_kind"), failure_kind)
