@@ -20,6 +20,7 @@ from search_swe import __version__
 from search_swe.cli import main, parser, configure_run
 from search_swe.configuration import Setting, read_env, save_env, check_config_destination, saved_setting, resolve_setting
 from search_swe.repository import discover, find_repo
+from search_swe.regrade import result_summary
 from search_swe.resources import Pool
 from search_swe.runner import doctor, run_batch, trial_outcome
 
@@ -369,6 +370,62 @@ class CliTests(unittest.TestCase):
         self.assertEqual(trial_outcome(self.root, 0)["status"], "invalid-measurement")
         path.unlink()
         self.assertEqual(trial_outcome(self.root, 0)["status"], "invalid-measurement")
+
+    def test_batch_and_regrade_agree_on_verifier_diagnostics(self):
+        timeout = {"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "124"}}
+        rejected = {"healthy": True, "accepted": False, "measurement_valid": True}
+        failed = {"healthy": False, "accepted": False, "measurement_valid": False}
+        for task, files, valid in (
+            ("query-encoder-alignment", {"reward-details.json": timeout}, False),
+            ("join-aware-table-retrieval", {"judge-status.json": failed}, False),
+            ("join-aware-table-retrieval", {"judge-status.json": rejected}, True),
+            ("query-encoder-alignment", {"reward-details.json": timeout, "judge-status.json": rejected}, False),
+            ("fixture", {"reward-details.json": {"final_gate": {"measurement_valid": False}}}, False),
+            ("fixture", {"reward-details.json": {"final_gate": {"evaluation_valid": True,
+                                                               "judge_succeeded": False}}}, False),
+        ):
+            with self.subTest(task=task, files=files), tempfile.TemporaryDirectory() as temp:
+                self.fake_launcher()
+                with (self.root / "scripts/evaluation/run_task.py").open("a") as script:
+                    script.write(
+                        f'result["task_name"]="search-swe/{task}"\n'
+                        '(trial/"result.json").write_text(json.dumps(result))\n'
+                        '(trial/"verifier").mkdir()\n'
+                    )
+                    for name, content in files.items():
+                        script.write(f'(trial/"verifier"/{name!r}).write_text({json.dumps(content)!r})\n')
+                output = Path(temp) / "batch"
+                with redirect_stdout(io.StringIO()):
+                    code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ),
+                                     Pool({0, 1}, 8192, []), 1, output)
+                row = json.loads((output / "run.json").read_text())["tasks"][self.tasks[0].name]
+                regrade = {}
+                result_summary(Path(row["trial_result"]).parent, regrade)
+                self.assertIs(regrade["measurement_valid"], valid)
+                self.assertEqual(row["status"], regrade["status"])
+                self.assertEqual(row["status"], "completed" if valid else "invalid-measurement")
+                self.assertEqual(code, 0 if valid else 1)
+
+    def test_multilingual_collector_rejection_requires_a_healthy_audit_and_a_submission_error(self):
+        trial = self.root / "job/trial"
+        verifier = trial / "verifier"
+        verifier.mkdir(parents=True)
+        result = self.harbor_result()
+        result["task_name"] = "search-swe/multilingual-vector-postprocessing"
+        (trial / "result.json").write_text(json.dumps(result))
+        prefix = ("ContractViolation: Invalid frozen submission: Collected artifact restoration failed: "
+                  "Invalid frozen submission: ")
+        for reason, healthy, valid in (("Missing transform.py", True, True), ("Missing transform.py", False, False),
+                                       ("Cannot inspect submission open files or mappings", True, False)):
+            with self.subTest(reason=reason, healthy=healthy):
+                (verifier / "report.json").write_text(json.dumps({"valid": False, "reward": 0, "failure": prefix + reason}))
+                (verifier / "judge-status.json").write_text(json.dumps({
+                    "measurement_valid": False, "healthy": healthy, "primary_exit_status": "1",
+                    "exit_status": "0" if healthy else "78"}))
+                regrade = {}
+                result_summary(trial, regrade)
+                self.assertIs(regrade["measurement_valid"], valid)
+                self.assertEqual(trial_outcome(self.root, 0)["status"], regrade["status"])
 
     def test_cancellation_releases_allocations_and_records_not_started_tasks(self):
         self.fake_launcher(cancel=True)

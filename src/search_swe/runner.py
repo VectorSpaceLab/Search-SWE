@@ -15,6 +15,7 @@ import time
 import uuid
 
 from . import __version__
+from .measurement import cgroup_measurement_valid, verifier_measurement
 from .resources import gpu_inventory
 
 
@@ -130,30 +131,6 @@ def wait_cancelled(processes):
             process.wait()
 
 
-def cgroup_measurement_valid(path):
-    """Return None for no diagnostic and False for invalid or unreadable evidence."""
-    try:
-        status = json.loads(path.read_text())
-    except FileNotFoundError:
-        return None
-    except (OSError, ValueError):
-        return False
-    return isinstance(status, dict) and status.get("measurement_valid") is True
-
-
-def answer_judging_failed(verifier, task_name):
-    name = task_name.rsplit("/", 1)[-1]
-    evaluation = verifier / f"{name}-eval/evaluation.json"
-    try:
-        report = json.loads(evaluation.read_text())
-    except (OSError, ValueError):
-        return False
-    if not isinstance(report, dict):
-        return False
-    errors = report.get("judge_error_count")
-    return report.get("valid") is False and type(errors) is int and errors > 0
-
-
 def trial_outcome(output, returncode):
     from harbor.models.trial.result import TrialResult
 
@@ -196,8 +173,9 @@ def trial_outcome(output, returncode):
     if not (rewards and "reward" in rewards and 0 <= rewards["reward"] <= 1 and
             all(isinstance(value, int) or math.isfinite(value) for value in rewards.values())):
         return {**failure, "failure_kind": "invalid_reward"}
-    if answer_judging_failed(path.parent / "verifier", trial.task_name):
-        return {**failure, "status": "invalid-measurement", "failure_kind": "answer_judging"}
+    valid, failure_kind = verifier_measurement(path.parent / "verifier", trial.task_name, rewards["reward"])
+    if valid is False:
+        return {**failure, "status": "invalid-measurement", "failure_kind": failure_kind}
     return {"status": "completed", "trial_result": str(path)}
 
 
