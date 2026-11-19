@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shlex
 import sys
+from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
@@ -84,11 +85,36 @@ class NativeLifecycle(ManagedHarness):
             return await super().run(*args, **kwargs)
 
 
+class AntigravityOpenRouter:
+    """Run Harbor's agy commands against the per-process Gemini bridge."""
+
+    def _find_api_key(self):
+        # Enable Harbor's headless Gemini configuration. The bridge generates
+        # the actual loopback key and hands it to the agy child process.
+        return "search-swe-loopback"
+
+    async def run(self, instruction, environment, context):
+        if not self._get_env("AGENT_OPENROUTER_API_KEY"):
+            raise ValueError("Antigravity OpenRouter requires AGENT_OPENROUTER_API_KEY")
+        self._bridge_path = f"/tmp/search-swe-agy-{uuid4().hex}.py"
+        await environment.upload_file(Path(__file__).with_name("agy_openrouter.py"), self._bridge_path)
+        return await super().run(instruction, environment, context)
+
+    async def exec_as_agent(self, environment, command, env=None, **kwargs):
+        if (env or {}).get("GEMINI_API_KEY") == "search-swe-loopback":
+            if not command.startswith("$HOME/.local/bin/agy "):
+                raise RuntimeError("Harbor's Antigravity command format changed")
+            env = {**env, "AGENT_OPENROUTER_API_KEY": self._get_env("AGENT_OPENROUTER_API_KEY")}
+            command = (f"/opt/conda/bin/python -I {shlex.quote(self._bridge_path)} "
+                       f"{shlex.quote(self.model_name)} " + command)
+        return await super().exec_as_agent(environment, command, env=env, **kwargs)
+
+
 class NativeAgent:
     """Factory returning the actual Harbor agent with its native capabilities."""
 
     def __new__(cls, *args, search_swe_native_name, search_swe_setup_hosts=(),
-                search_swe_files=(), **kwargs):
+                search_swe_files=(), search_swe_openrouter=False, **kwargs):
         from search_swe.harbor_native import agent_class, registry
         from search_swe import harnesses
         selected_version = harnesses.resolve_version(search_swe_native_name, kwargs.get("version"))
@@ -100,7 +126,12 @@ class NativeAgent:
             from harbor.agents.installed.acp_registry import registry_spec_from_agent_name
             kwargs.setdefault("registry_spec", registry_spec_from_agent_name(search_swe_native_name))
         converter = {"pi": PiTrajectory, "antigravity-cli": AntigravityTrajectory}.get(search_swe_native_name)
-        bases = (FinalizeBoundedLogs, NativeLifecycle, *((converter,) if converter else ()), base)
+        mixins = (converter,) if converter else ()
+        if search_swe_openrouter:
+            if search_swe_native_name != "antigravity-cli":
+                raise ValueError("The Gemini bridge is only available for Antigravity CLI")
+            mixins += (AntigravityOpenRouter,)
+        bases = (FinalizeBoundedLogs, NativeLifecycle, *mixins, base)
         adapted = type("SearchSwe" + base.__name__, bases, {"__module__": base.__module__})
         with agent_environment(kwargs.get("extra_env") or {}):
             instance = adapted(*args, **kwargs)

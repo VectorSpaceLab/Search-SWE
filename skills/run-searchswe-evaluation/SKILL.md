@@ -1,9 +1,9 @@
 ---
 name: run-searchswe-evaluation
-description: Configure, launch, monitor and summarize evaluations of existing Search-SWE tasks using the search-swe CLI. Use when the user specifies models, harnesses, providers, tasks or resource settings for benchmark runs, including preparation-only requests.
+description: Configure, run and monitor Search-SWE evaluations or regrade a recorded trial using the search-swe CLI. Use for benchmark runs, their model and harness settings, resource allocation, and preparation-only requests.
 license: Apache-2.0
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Run Search-SWE evaluations
@@ -54,6 +54,12 @@ to a compatible release series; resolve local changes or history with the user.
 Read `docs/evaluation/cli.md` in the selected checkout for its supported flags. Read
 `docs/evaluation/runtime.md` only for provider, network or bounded-storage setup details.
 These paths are relative to the benchmark checkout, not this installed skill.
+
+For a verifier-only replay, use `search-swe regrade ORIGINAL_TRIAL --dry-run`
+to check the recorded inputs, then run `search-swe regrade ORIGINAL_TRIAL`
+with the verifier's service configuration. Report the new trial and its
+`regrade.json`, including measurement validity when available. See the
+regrade section of `docs/evaluation/cli.md`.
 
 ## Resolve the requested experiment
 
@@ -201,12 +207,12 @@ search-swe run agentic-search agentic-search-vectorless \
   --reasoning-effort max --concurrency 2 --dry-run
 ```
 
-For Antigravity CLI through the Gemini API, using a key with access to the
-requested model:
+For Antigravity CLI through OpenRouter, use CLI 0.3.1+ and
+`AGENT_OPENROUTER_API_KEY`:
 
 ```bash
 search-swe run agentic-search \
-  --agent antigravity-cli --provider native --model gemini/gemini-4-argon \
+  --agent antigravity-cli --provider openrouter --model google/gemini-4-argon \
   --reasoning-effort high --dry-run
 ```
 

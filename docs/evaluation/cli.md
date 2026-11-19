@@ -59,6 +59,36 @@ New tasks are discovered from the checkout and normally need no CLI upgrade.
 The target checkout must match the installed CLI's release series. `update`
 updates repository files; package upgrades remain separate Python installations.
 
+## Regrade a recorded trial
+
+Pass the directory of one completed local Harbor trial. The CLI discovers the
+task from the recorded result and uses the verifier in the selected checkout.
+
+```bash
+search-swe regrade /path/to/original-trial --dry-run
+search-swe regrade /path/to/original-trial
+```
+
+Keep the original `config.json`, `result.json`, `agent/`, and
+`artifacts/manifest.json` with its recorded artifact files. The preview checks
+that the current verifier's declared inputs are present, including the ATIF
+trajectory for tasks that require it. Regrade rejects
+`large-scale-formula-retrieval` during preflight because its verifier needs
+private agent-phase memory evidence outside the recorded trial.
+
+Run with the task's verifier credentials and network settings in `.env`
+or `--env-file`. The verifier uses the task's usual asset preparation and
+CPU/GPU requirements. Use `--offline` for cached assets, `--cpu-set` for a
+CPU pool, or `--gpu-device` for a specific GPU.
+
+The CLI starts only the verifier and preserves the original trial. The new
+trial and its `regrade.json` summary are written under `jobs/regrades/` or a
+fresh `--output` directory. The summary records both trial IDs, the verifier
+checkout revision, and rewards. Measurement validity is recorded when the
+verifier reports it explicitly. A failed verifier phase or a primary evaluation
+invalidated by answer-judge errors causes a nonzero exit status. Review the new
+verifier logs before using the result, including when the reward is zero.
+
 ## Interactive setup
 
 `search-swe` or `search-swe run` opens the wizard:
@@ -78,9 +108,9 @@ keys to configure; `run` selects the tasks to evaluate. Use each command's
 `--help` for its flags.
 
 The default is **Codex + OpenRouter + `openai/gpt-6-luna`, `max` reasoning**.
-Codex, Claude Code and Pi provide integrated OpenRouter routes. All registered
-Harbor agents are available through `--provider native`; use `search-swe agents`
-to discover them. See the
+Codex, Claude Code, Pi and Antigravity CLI provide integrated OpenRouter routes.
+Use `search-swe agents` to discover Harbor agents available through
+`--provider native`. See the
 [agent/provider matrix](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md)
 for direct routes, model scope and [harness versions/cache](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md#harness-versions-and-installation). `search-swe pi-models` lists Pi providers;
 add `--provider NAME` for exact model IDs.
@@ -90,8 +120,8 @@ add `--provider NAME` for exact model IDs.
 Search by name or model ID, highlight with ↓/↑ and select with Enter. An empty
 field keeps the displayed model; full IDs can also be entered manually.
 Suggestions use text, tool and API metadata: Responses for Codex, Messages for
-Claude Code, and Chat Completions for Pi. Model selection makes no inference
-request; actual compatibility depends on the model/provider.
+Claude Code, and Chat Completions for Pi and Antigravity CLI. Model selection
+makes no inference requests. Runtime compatibility depends on the model and provider.
 
 The public catalog is cached for 24 hours at
 `$XDG_CACHE_HOME/search-swe/openrouter-models.json` (default

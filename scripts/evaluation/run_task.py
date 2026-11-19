@@ -20,6 +20,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "src"))
 from search_swe import harbor_native, harnesses, pi_models
+from search_swe.configuration import AGY_OPENROUTER_EFFORTS
 from scripts.evaluation.docker_dns import parse_servers
 from scripts.task_paths import select_task, task_key
 from scripts.assets.download_assets import destination_path, read_manifest, relative_path
@@ -126,6 +127,64 @@ def host_is_allowed(host, allowed_hosts):
     )
 
 
+def verifier_settings(task_config, env):
+    """Return the variables and Harbor bindings for this task's verifier."""
+    verifier_env = task_config.get("verifier", {}).get("env", {})
+    mode, allowed_hosts = effective_network_policy(task_config, "verifier")
+    binds = {}
+    required = set()
+    endpoints = []
+    if "OPENAI_API_KEY" in verifier_env:
+        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
+            source = f"VERIFIER_{name}"
+            required.add(source)
+            binds[name] = f"${{{source}}}"
+        endpoints.append("VERIFIER_OPENAI_BASE_URL")
+    for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
+        required.update(re.findall(r"\$\{([A-Z][A-Z0-9_]*)(?::[-?][^}]*)?\}", verifier_env.get(name, "")))
+    if "${ANSWER_JUDGE_BASE_URL" in verifier_env.get("ANSWER_JUDGE_BASE_URL", ""):
+        endpoints.append("ANSWER_JUDGE_BASE_URL")
+    for variable in endpoints:
+        if not env.get(variable):
+            continue
+        host = endpoint_hostname(env[variable], variable)
+        if mode == "no-network":
+            raise ValueError(f"{variable} cannot be used with verifier network_mode=no-network")
+        if mode == "allowlist" and not host_is_allowed(host, allowed_hosts):
+            raise ValueError(f"{variable} host {host!r} is not permitted by the task's [verifier].allowed_hosts")
+    return required, binds
+
+
+def network_settings(task, env, agent_hosts, egress_path, dns_servers, egress_image):
+    """Select trusted Compose egress and service proxy bindings."""
+    from scripts.egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
+
+    if egress_path is not None:
+        if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
+            raise ValueError("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
+        egress = load_config(egress_path)
+    else:
+        egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
+    restricted = validate_task_networks(task, agent_hosts, egress.settings.get("upstream_host"),
+                                        allow_public=egress.settings.get("transport") == "direct")
+    kwargs = None
+    if egress_path is not None:
+        kwargs = {"egress_config": str(egress.path)}
+    elif restricted:
+        kwargs = {"egress_image": egress.image}
+        if dns_servers:
+            kwargs["egress_dns"] = ",".join(dns_servers)
+    proxy_bindings = {}
+    if env.get("CONTAINER_PROXY"):
+        if restricted:
+            raise ValueError("CONTAINER_PROXY is incompatible with this task's Harbor network "
+                             "allowlists because a general proxy can bypass destination filtering")
+        env.setdefault("CONTAINER_NO_PROXY", "127.0.0.1,localhost")
+        proxy_bindings = {name: "${CONTAINER_PROXY}" for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY")}
+        proxy_bindings.update({name: "${CONTAINER_NO_PROXY}" for name in ("no_proxy", "NO_PROXY")})
+    return egress, kwargs, proxy_bindings
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
@@ -145,7 +204,7 @@ def main():
     env_options.add_argument("--no-env-file", action="store_true", help="Use only process environment configuration")
     parser.add_argument(
         "--reasoning-effort",
-        help="Override AGENT_REASONING_EFFORT for Codex or Claude Code",
+        help="Override the selected harness's reasoning effort",
     )
     parser.add_argument("--codex-config", type=Path, help="Optional native Codex TOML configuration")
     parser.add_argument("--thinking", choices=("default", *PI_THINKING_LEVELS), help="Pi thinking level; default omits the override")
@@ -160,10 +219,11 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     parser.add_argument("--check", action="store_true", help="Validate model, credentials and configuration without restoring assets or launching")
     args = parser.parse_args()
-    if args.agent not in AGENT_IMPORTS:
-        args.native = True
     if args.native and args.openrouter:
         parser.error("Use --native with Harbor's own model/provider configuration, or --openrouter with the integrated route")
+    agy_openrouter = args.agent == "antigravity-cli" and args.openrouter
+    if args.agent not in AGENT_IMPORTS and not agy_openrouter:
+        args.native = True
     if args.agent_config and not args.native:
         parser.error("--agent-config requires --native")
     if args.native and any(value is not None for value in (args.thinking, args.pi_model_config, args.codex_config)):
@@ -202,12 +262,14 @@ def main():
     if not model and not args.native:
         parser.error("Set --model or AGENT_MODEL")
     if args.openrouter:
-        if args.agent not in OPENROUTER_AGENT_IMPORTS:
+        if args.agent not in OPENROUTER_AGENT_IMPORTS and not agy_openrouter:
             parser.error("Unsupported OpenRouter harness")
         if not OPENROUTER_MODEL.fullmatch(model):
             parser.error("OpenRouter requires a complete provider/model slug in --model or AGENT_MODEL")
         if args.agent == "codex" and args.codex_config is not None:
             parser.error("--openrouter uses its own Codex config; omit --codex-config")
+        if agy_openrouter and args.codex_config is not None:
+            parser.error("--codex-config is only valid with --agent codex")
     if args.native:
         pass
     elif args.agent == "pi":
@@ -241,7 +303,7 @@ def main():
         parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
     try:
-        harbor_native.check_trajectory_support(args.agent, args.native, task_config)
+        harbor_native.check_trajectory_support(args.agent, args.native or agy_openrouter, task_config)
         storage = StoragePlan.discover(task, task_config)
     except ValueError as error:
         parser.error(str(error))
@@ -260,12 +322,11 @@ def main():
             validate_gpu_device(args.gpu_device)
         except ValueError as error:
             parser.error(str(error))
-    verifier_env = task_config.get("verifier", {}).get("env", {})
     output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
         "--agent",
-        args.agent if args.native else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
+        args.agent if args.native or agy_openrouter else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
         "--force-build", "--yes", "-o", str(output),
         "--agent-setup-timeout-multiplier", "3",
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
@@ -280,7 +341,18 @@ def main():
     required = []
     agent_host = None
     native = None
-    if args.native:
+    if agy_openrouter:
+        effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT") or "default"
+        if effort not in AGY_OPENROUTER_EFFORTS:
+            parser.error("Antigravity CLI with OpenRouter accepts reasoning effort: default, low, high")
+        native = {
+            "env": {"AGENT_OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"},
+            "kwargs": {"version": agent_version, "reasoning_effort": None if effort == "default" else effort,
+                       "search_swe_openrouter": True},
+            "hosts": [OPENROUTER_HOST], "setup_hosts": harbor_native.SETUP_HOSTS, "files": {},
+        }
+        required.append("AGENT_OPENROUTER_API_KEY")
+    elif args.native:
         try:
             native = harbor_native.plan(args.agent, model, env, args.agent_config)
             if agent_version:
@@ -363,9 +435,6 @@ def main():
             command.extend(["--ak", "model_config=" + json.dumps(model_config)])
 
     agent_network_mode, _ = effective_network_policy(task_config, "agent")
-    verifier_network_mode, verifier_allowed_hosts = effective_network_policy(
-        task_config, "verifier"
-    )
     agent_requires_host = any(step.get("agent", {}).get("network_mode", agent_network_mode) != "public"
                               for step in task_config.get("steps") or [{}])
     agent_hosts = native["hosts"] if native else [agent_host] if agent_host else []
@@ -378,86 +447,30 @@ def main():
         for host in agent_hosts:
             command.extend(["--allow-agent-host", host])
 
-    if "OPENAI_API_KEY" in verifier_env:
-        for name in ("OPENAI_BASE_URL", "OPENAI_API_KEY"):
-            source = f"VERIFIER_{name}"
-            required.append(source)
-            command.extend(["--verifier-env", f"{name}=${{{source}}}"])
-
-    # Task-specific judge settings are resolved by task.toml from Harbor's
-    # environment; require only the groups used by the selected task.
-    for name in ("ANSWER_JUDGE_MODEL_NAME", "ANSWER_JUDGE_BASE_URL", "ANSWER_JUDGE_API_KEY"):
-        required.extend(re.findall(r"\$\{([A-Z][A-Z0-9_]*)(?::[-?][^}]*)?\}", verifier_env.get(name, "")))
-    task_setup = task_config.get("metadata", {}).get("configuration", {})
-    required.extend(name for name, options in task_setup.items() if options.get("required"))
-
-    endpoint_variables = []
-    if "OPENAI_API_KEY" in verifier_env:
-        endpoint_variables.append("VERIFIER_OPENAI_BASE_URL")
-    if "${ANSWER_JUDGE_BASE_URL" in verifier_env.get("ANSWER_JUDGE_BASE_URL", ""):
-        endpoint_variables.append("ANSWER_JUDGE_BASE_URL")
-    for variable in endpoint_variables:
-        if not env.get(variable):
-            continue
-        try:
-            host = endpoint_hostname(env[variable], variable)
-        except ValueError as error:
-            parser.error(str(error))
-        if verifier_network_mode == "no-network":
-            parser.error(f"{variable} cannot be used with verifier network_mode=no-network")
-        if verifier_network_mode == "allowlist" and not host_is_allowed(
-            host, verifier_allowed_hosts
-        ):
-            parser.error(
-                f"{variable} host {host!r} is not permitted by the task's "
-                "[verifier].allowed_hosts"
-            )
-
-    from scripts.egress.config import DEFAULT_IMAGE, direct_config, load_config, validate_task_networks
-    egress_image = args.egress_image or env.get("EGRESS_IMAGE")
     try:
-        if egress_path is not None:
-            if dns_servers or env.get("CONTAINER_PROXY") or egress_image:
-                parser.error("EGRESS_CONFIG cannot be combined with CONTAINER_DNS/--container-dns, CONTAINER_PROXY, or EGRESS_IMAGE/--egress-image; clear them explicitly")
-            egress = load_config(egress_path)
-        else:
-            egress = direct_config(egress_image or DEFAULT_IMAGE, dns_servers)
-        restricted = validate_task_networks(task, agent_hosts, egress.settings.get("upstream_host"),
-                                            allow_public=egress.settings.get("transport") == "direct")
+        required_verifier, verifier_bindings = verifier_settings(task_config, env)
+        egress, gateway_kwargs, proxy_bindings = network_settings(
+            task, env, agent_hosts, egress_path, dns_servers, args.egress_image or env.get("EGRESS_IMAGE")
+        )
     except (OSError, ValueError) as error:
         parser.error(str(error))
-    use_gateway = restricted or egress_path is not None
+    required.extend(required_verifier)
+    task_setup = task_config.get("metadata", {}).get("configuration", {})
+    required.extend(name for name, options in task_setup.items() if options.get("required"))
+    for name, value in {**verifier_bindings, **proxy_bindings}.items():
+        command.extend(["--verifier-env", f"{name}={value}"])
+    for name, value in proxy_bindings.items():
+        command.extend(["--ae", f"{name}={value}"])
 
-    if env.get("CONTAINER_PROXY"):
-        if restricted:
-            parser.error(
-                "CONTAINER_PROXY is incompatible with this task's Harbor network "
-                "allowlists because a general proxy can bypass destination filtering"
-            )
-        env.setdefault("CONTAINER_NO_PROXY", "127.0.0.1,localhost")
-        for flag in ("--ae", "--verifier-env"):
-            for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
-                command.extend([flag, f"{name}=${{CONTAINER_PROXY}}"])
-            for name in ("no_proxy", "NO_PROXY"):
-                command.extend([flag, f"{name}=${{CONTAINER_NO_PROXY}}"])
-
-    if use_gateway:
-        command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:PhaseScopedDocker"
-        if egress_path is not None:
-            command.extend(["--environment-kwarg", f"egress_config={egress.path}"])
-        else:
-            command.extend(["--environment-kwarg", f"egress_image={egress.image}"])
-            if dns_servers:
-                command.extend(["--environment-kwarg", "egress_dns=" + ",".join(dns_servers)])
-
+    use_gateway = gateway_kwargs is not None
+    if use_gateway or args.cpu_set is not None or args.gpu_device is not None:
+        adapter = "PhaseScopedDocker" if use_gateway else "GpuDocker"
+        command[command.index("--env") + 1] = f"scripts.evaluation.harbor_environments:{adapter}"
+    for name, value in (gateway_kwargs or {}).items():
+        command.extend(["--environment-kwarg", f"{name}={value}"])
     if args.cpu_set is not None:
-        if not use_gateway:
-            command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:GpuDocker"
         command.extend(["--environment-kwarg", f"cpu_set={args.cpu_set}"])
-
     if args.gpu_device is not None:
-        if not use_gateway:
-            command[command.index("--env") + 1] = "scripts.evaluation.harbor_environments:GpuDocker"
         command.extend(["--environment-kwarg", f"gpu_device={args.gpu_device}"])
 
     # This launcher uses explicit API keys, without consulting a host auth.json.
@@ -488,7 +501,8 @@ def main():
             print("Trusted gateway DNS servers: " + ", ".join(dns_servers))
         print("Environment values are passed to Harbor separately from the command:")
         if native:
-            print(f"Native agent config: {args.agent_config or 'defaults'}; agent env: {', '.join(sorted(native['env'])) or 'none'}")
+            route = "Antigravity OpenRouter bridge" if agy_openrouter else f"Native agent config: {args.agent_config or 'defaults'}"
+            print(f"{route}; agent env: {', '.join(sorted(native['env'])) or 'none'}")
             print("Native parameters and authentication-file bindings are passed in a private generated job configuration.")
         print(shlex.join(command))
         return 0

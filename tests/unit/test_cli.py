@@ -51,6 +51,15 @@ class CliTests(unittest.TestCase):
         (self.root / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.1"\n')
         check_compatibility(self.root)
 
+    def test_agy_openrouter_requires_a_checkout_with_the_bridge(self):
+        (self.root / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.0"\n')
+        with patch("search_swe.runner.asset_plan", side_effect=AssertionError("assets prepared")), \
+                redirect_stderr(io.StringIO()) as error:
+            self.assertEqual(main(["run", "first-search", "--repo", str(self.root), "--agent", "antigravity-cli",
+                                   "--provider", "openrouter", "--model", "google/gemini-4-argon", "--yes"]), 1)
+        self.assertIn("Antigravity CLI with OpenRouter requires an updated checkout", error.getvalue())
+        self.assertFalse((self.root / ".env").exists())
+
     def test_new_pi_model_is_checked_before_credentials_and_backend_preflight(self):
         with patch("search_swe.model_catalog.load_models", return_value=({}, "unavailable")) as catalog, \
                 patch("search_swe.cli.runner.preflight", side_effect=AssertionError("late check")), \

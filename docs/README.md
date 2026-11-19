@@ -9,7 +9,7 @@ task with the CLI or your coding agent.
 | Guide | Use it to |
 | --- | --- |
 | [Quick start](evaluation/quickstart.md) | Install, choose CLI or agent operation, and inspect your first results |
-| [CLI reference](evaluation/cli.md) | Configure settings, select tasks, and schedule sequential or parallel batches |
+| [CLI reference](evaluation/cli.md) | Configure settings, run batches, and regrade recorded trials |
 | [Supported agents and providers](evaluation/agents.md) | Choose harnesses, versions and provider routes; configure API keys or Claude Code/Codex subscriptions |
 | [Submission model access](evaluation/submission-models.md) | Apply the required OpenRouter model allowlists to submission API keys |
 | [Data and models](evaluation/assets.md) | Plan disk space, download, verify, and restore fixed inputs |

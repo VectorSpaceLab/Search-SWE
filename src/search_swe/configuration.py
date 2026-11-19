@@ -15,12 +15,21 @@ DEFAULTS = {"AGENT_MODEL": "openai/gpt-6-luna", "SEARCH_SWE_AGENT": "codex",
             "SEARCH_SWE_PROVIDER": "openrouter", "AGENT_REASONING_EFFORT": "max",
             "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1"}
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
+AGY_OPENROUTER_EFFORTS = ("default", "low", "high")
+
+
+def effort_levels(agent, provider):
+    if (agent, provider) == ("antigravity-cli", "openrouter"):
+        return list(AGY_OPENROUTER_EFFORTS)
+    return ["default", "off", "minimal", *EFFORTS] if agent == "pi" else ["default", *EFFORTS]
 
 
 def default_model(agent, provider):
     if provider == "native":
         return ""
     if provider == "openrouter":
+        if agent == "antigravity-cli":
+            return "google/gemini-4-argon"
         return "anthropic/claude-opus-5.5" if agent == "claude-code" else DEFAULTS["AGENT_MODEL"]
     if agent == "pi":
         return "deepseek/deepseek-flash"
@@ -173,7 +182,7 @@ class Setting:
             raise ValueError("--agent-config is used with --provider native")
         if self.agent == "pi" and self.provider != "native":
             pi_models.selection(pi_models.native_model(self.model, self.provider))
-        levels = ["default", "off", "minimal", *EFFORTS] if self.agent == "pi" else ["default", *EFFORTS]
+        levels = effort_levels(self.agent, self.provider)
         if self.effort and self.effort not in levels:
             raise ValueError("Unsupported reasoning/thinking level: " + self.effort)
         if self.provider != "native":

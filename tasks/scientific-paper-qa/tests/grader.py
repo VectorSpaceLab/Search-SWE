@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import fcntl
+import hashlib
+import http.client
 import json
 import os
 import re
 import time
-import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -25,6 +27,7 @@ PREDICTIONS_PATH = RESULTS_DIR / "results.jsonl"
 REPORT_PATH = RESULTS_DIR / "evaluation.json"
 EXECUTION_ERROR = os.environ.get("SEARCH_SWE_EXECUTION_ERROR", "")
 MAX_ANSWER_CHARS = 20_000
+ANSWER_JUDGE_PROTOCOL = "answer-judge-v2"
 
 SYSTEM_PROMPT = """
 You are a strict answer-equivalence evaluator. Determine only whether the
@@ -243,23 +246,21 @@ def call_judge(
         },
         ensure_ascii=False,
     )
-    body = json.dumps(
-        {
-            "model": config.model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_payload},
-            ],
-            "temperature": 0,
-            "max_tokens": 512,
-        }
-    ).encode("utf-8")
+    body = {
+        "model": config.model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_payload},
+        ],
+        "temperature": 0,
+        "max_tokens": 512,
+    }
 
     last_error: Exception | None = None
     for attempt in range(retries):
         request = urllib.request.Request(
             endpoint,
-            data=body,
+            data=json.dumps(body).encode("utf-8"),
             headers={
                 "Authorization": f"Bearer {config.api_key}",
                 "Content-Type": "application/json",
@@ -269,21 +270,22 @@ def call_judge(
         try:
             with urllib.request.urlopen(request, timeout=120) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-            choices = payload.get("choices")
-            if not isinstance(choices, list) or not choices:
+            choices = payload.get("choices") if isinstance(payload, dict) else None
+            if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
                 raise ValueError("judge response contains no choices")
-            message = choices[0].get("message")
+            choice = choices[0]
+            message = choice.get("message")
             content = message.get("content") if isinstance(message, dict) else None
+            if isinstance(content, str) and content.strip() and not parse_judgement(content)[1]:
+                return content
+            if choice.get("finish_reason") == "length":
+                previous_limit = body["max_tokens"]
+                body["max_tokens"] = min(8192, previous_limit * 4)
+                raise ValueError(f"judge decision truncated at {previous_limit} tokens")
             if not isinstance(content, str) or not content.strip():
                 raise ValueError("judge response contains no text")
-            return content
-        except (
-            OSError,
-            ValueError,
-            json.JSONDecodeError,
-            urllib.error.HTTPError,
-            urllib.error.URLError,
-        ) as error:
+            raise ValueError("answer judge returned a malformed decision")
+        except (OSError, ValueError, http.client.HTTPException) as error:
             last_error = error
             if attempt + 1 < retries:
                 time.sleep(2**attempt)
@@ -350,19 +352,37 @@ def main() -> int:
         calls = 0
         try:
             assert config is not None
-            for _ in range(3):
-                calls += 1
-                response = call_judge(
-                    config,
-                    question=row["question"],
-                    candidate_answer=predictions[query_id]["answer"],
-                    reference_answer=references[query_id]["answer"],
-                )
-                correct, parse_error, reason = parse_judgement(response)
-                samples.append({"correct": correct, "parse_error": parse_error, "reason": reason,
-                                "judge_response": response[:5000]})
-                if parse_error:
-                    raise ValueError("answer judge returned a malformed decision")
+            # This directory belongs to the verifier and to this trial. Bind each
+            # checkpoint to the exact judgment, including the submission and policy.
+            context = [ANSWER_JUDGE_PROTOCOL, config.api_base, config.model, SYSTEM_PROMPT,
+                       row, references[query_id], predictions[query_id]]
+            digest = hashlib.sha256(json.dumps(context, sort_keys=True).encode()).hexdigest()
+            directory = RESULTS_DIR / ANSWER_JUDGE_PROTOCOL / digest
+            directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+            with (directory / ".lock").open("a") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                for vote in range(1, 4):
+                    checkpoint = directory / f"{vote}.txt"
+                    cached = checkpoint.exists()
+                    if cached:
+                        response = checkpoint.read_text(encoding="utf-8")
+                    else:
+                        calls += 1
+                        response = call_judge(
+                            config,
+                            question=row["question"],
+                            candidate_answer=predictions[query_id]["answer"],
+                            reference_answer=references[query_id]["answer"],
+                        )
+                    correct, parse_error, reason = parse_judgement(response)
+                    if parse_error:
+                        raise ValueError("answer judge returned a malformed decision")
+                    if not cached:
+                        temporary = checkpoint.with_suffix(".tmp")
+                        temporary.write_text(response, encoding="utf-8")
+                        temporary.replace(checkpoint)
+                    samples.append({"correct": correct, "parse_error": False, "reason": reason,
+                                    "judge_response": response[:5000], "from_checkpoint": cached})
             return query_id, {
                 "answer_correct": sum(sample["correct"] for sample in samples) / len(samples),
                 "parse_error": False,
@@ -436,6 +456,7 @@ def main() -> int:
         "evidence_match_count": evidence_count,
         "answer_judge_call_count": sum(item["judge_call_count"] for item in per_query),
         "answer_judge_repetitions": 3,
+        "answer_judge_protocol": ANSWER_JUDGE_PROTOCOL,
         "judge_error_count": judge_error_count,
         "judge_model": config.model if config else None,
         "per_query_metrics": per_query,

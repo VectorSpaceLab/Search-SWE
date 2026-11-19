@@ -84,8 +84,11 @@ class NativeAgents(unittest.TestCase):
         self.assertIn("--native", setting.flags())
         self.assertNotIn("--reasoning-effort", setting.flags())
         self.assertEqual(Setting("nop", "native", "", "default").validate().required({}), set())
-        with self.assertRaisesRegex(ValueError, "Unsupported"):
-            Setting("antigravity-cli", "openrouter", "google/model", "default").validate()
+        routed = Setting("antigravity-cli", "openrouter", "google/gemini-4-argon", "high").validate()
+        self.assertEqual(routed.required({}), {"AGENT_OPENROUTER_API_KEY"})
+        self.assertIn("--openrouter", routed.flags())
+        with self.assertRaisesRegex(ValueError, "Unsupported reasoning"):
+            Setting("antigravity-cli", "openrouter", "google/gemini-4-argon", "max").validate()
         plan = harbor_native.plan("aider", "openrouter/vendor/model", {"OPENROUTER_API_KEY": "submission-only"})
         self.assertEqual(plan["env"], {"OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"})
         self.assertEqual(plan["required"], {"AGENT_OPENROUTER_API_KEY"})
@@ -394,6 +397,46 @@ class NativeAgents(unittest.TestCase):
                     else:
                         self.assertEqual(job.agents[0].kwargs["search_swe_native_name"], name)
                 self.assertFalse(path.exists())
+
+    def test_agy_openrouter_launch_keeps_credentials_and_provider_scoped(self):
+        launch_env = {
+            "AGENT_OPENROUTER_API_KEY": "coding-fixture",
+            "OPENROUTER_API_KEY": "submission-fixture",
+            "VERIFIER_OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
+            "VERIFIER_OPENAI_API_KEY": "judge-fixture",
+            "ANSWER_JUDGE_BASE_URL": "https://openrouter.ai/api/v1",
+            "ANSWER_JUDGE_API_KEY": "answer-fixture",
+            "ANSWER_JUDGE_MODEL_NAME": "fixture/model",
+        }
+
+        def inspect_job(argv, env, _repo):
+            path = Path(argv[argv.index("--config") + 1])
+            self.assertNotIn("coding-fixture", path.read_text())
+            self.assertNotIn("coding-fixture", argv)
+            job = JobConfig.model_validate_json(path.read_text())
+            agent_config = job.agents[0]
+            self.assertEqual(agent_config.model_name, "google/gemini-4-argon")
+            self.assertEqual(agent_config.env, {"AGENT_OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"})
+            self.assertEqual(agent_config.extra_allowed_hosts, ["openrouter.ai"])
+            self.assertEqual(agent_config.kwargs["reasoning_effort"], "high")
+            with patch.dict(os.environ, env, clear=True):
+                agent = AgentFactory.create_agent_from_config(agent_config, logs_dir=self.root)
+                self.assertEqual(agent.extra_env, {"AGENT_OPENROUTER_API_KEY": "coding-fixture"})
+            self.assertIsInstance(agent, AntigravityCli)
+            self.assertEqual(env["OPENROUTER_API_KEY"], "submission-fixture")
+            self.assertEqual(env["VERIFIER_OPENAI_API_KEY"], "judge-fixture")
+            return 0
+
+        argv = ["run_task.py", "--task", "scientific-paper-qa", "--agent", "antigravity-cli",
+                "--openrouter", "--model", "google/gemini-4-argon", "--reasoning-effort", "high", "--no-env-file"]
+        with patch.object(sys, "argv", argv), patch.dict(os.environ, launch_env, clear=True), \
+                patch.object(run_task, "read_manifest", return_value={"files": []}), \
+                patch.object(run_task.shutil, "which", return_value="/fixture/harbor"), \
+                patch.object(run_task, "prepare_task"), \
+                patch.object(run_task, "run_command", side_effect=inspect_job) as launched, \
+                redirect_stdout(io.StringIO()):
+            self.assertEqual(run_task.main(), 0)
+        launched.assert_called_once()
 
     def test_each_registered_agent_reaches_native_launcher_preview(self):
         task = self.root / "tasks/example-search"
