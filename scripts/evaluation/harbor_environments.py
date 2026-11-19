@@ -19,7 +19,9 @@ from harbor.models.task.config import NetworkMode, TaskOS
 from scripts.egress.compose import SERVICE, declared_services, is_separate_verifier_context, validate_final
 from scripts.egress.config import DEFAULT_IMAGE, direct_config, exact_hosts, load_config, require_supported_harbor
 from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
+from environments.cgroups.cgroup_resources import controller
 from environments.egress.gateway import LEASE_SECONDS
+from scripts.evaluation.v1_oom import V1OomObserver
 from scripts.evaluation.gpu_device import GPU_UUID, select_compose_gpu
 from scripts.evaluation.cpu_affinity import normalize_compose_cpu_quota, parse_cpu_set, select_compose_cpus
 from scripts.evaluation.bounded_logs import BoundedLogs
@@ -70,6 +72,33 @@ class GpuDocker(BoundedLogs, DockerEnvironment):
             parse_cpu_set(cpu_set)
         self.cpu_set = cpu_set
         super().__init__(*args, **kwargs)
+
+    async def start(self, force_build):
+        self._oom_observer = None
+        source = self._environment_docker_compose_path
+        if source.is_file():
+            extension = (yaml.safe_load(source.read_text()) or {}).get("x-search-swe", {})
+            if extension.get("v1_oom_notifications") is True and controller("memory").version == 1:
+                self._oom_observer = V1OomObserver()
+        try:
+            if self._oom_observer:
+                self._mounts.append(await self._oom_observer.start())
+            await super().start(force_build)
+        except BaseException:
+            self._close_oom_observer()
+            raise
+
+    def _close_oom_observer(self):
+        if getattr(self, "_oom_observer", None) is not None:
+            self._mounts = [mount for mount in self._mounts if mount.get("source") != self._oom_observer.directory.name]
+            self._oom_observer.close()
+            self._oom_observer = None
+
+    async def stop(self, delete):
+        try:
+            await super().stop(delete)
+        finally:
+            self._close_oom_observer()
 
     @property
     def _docker_compose_paths(self):
@@ -520,6 +549,7 @@ print(json.dumps({'gateway':hashlib.sha256(Path('/opt/searchswe/gateway.py').rea
             if cancelled:
                 raise asyncio.CancelledError
         finally:
+            self._close_oom_observer()
             self._release_owner()
 
     async def _stop_owned(self, delete):

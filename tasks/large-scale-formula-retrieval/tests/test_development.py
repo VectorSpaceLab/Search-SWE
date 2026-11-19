@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from cgroup_resources import CgroupError
 from development import check_development
 
 
@@ -38,6 +39,24 @@ class DevelopmentTests(unittest.TestCase):
             with self.subTest(oom=oom, oom_kill=oom_kill):
                 self.memory(oom, oom_kill)
                 self.assertEqual(check_development(self.evidence)[1], 'development memory limit')
+
+    def test_v1_frozen_evidence(self):
+        path = self.evidence / 'agent.json'
+        watch = {'id': 'test', 'initial_hits': [0, 0], 'events': 0, 'parent_events': 0}
+        sample = {'limit_hits': [1, 7], 'oom_kill': 0, 'observer': watch}
+        record = {'cgroup_v1_memory': sample}
+        path.write_text(json.dumps(record))
+        self.assertIsNone(check_development(self.evidence)[1])
+        watch['events'] = 1
+        path.write_text(json.dumps(record))
+        self.assertEqual(check_development(self.evidence)[1], 'development memory limit')
+        sample['observer'] = None
+        path.write_text(json.dumps(record))
+        with self.assertRaises(CgroupError):
+            check_development(self.evidence)
+        path.write_text(json.dumps({**record, 'memory_events': 'oom 0\noom_kill 0\n'}))
+        with self.assertRaisesRegex(CgroupError, 'Conflicting'):
+            check_development(self.evidence)
 
     def test_missing_memory_evidence_is_an_error(self):
         (self.evidence / 'agent.json').unlink()

@@ -4,7 +4,7 @@ mkdir -p /logs/verifier
 chmod 700 /logs/verifier
 printf '0\n' > /logs/verifier/reward.txt
 printf '{"reward":0}\n' > /logs/verifier/reward.json
-rm -f /logs/verifier/reward-details.json /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/evaluation.json
+rm -f /logs/verifier/cgroup-status.json /logs/verifier/reward-details.json /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/evaluation.json
 /opt/conda/bin/python /tests/integrity_gate.py prepare
 # Deny every general-purpose writable path; indexes/caches live on the quota volume.
 chmod 755 /tmp /var/tmp /dev/shm /run/lock

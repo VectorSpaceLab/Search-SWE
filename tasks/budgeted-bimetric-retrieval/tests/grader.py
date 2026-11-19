@@ -11,6 +11,8 @@ import signal
 import time
 import traceback
 import numpy as np
+from cgroup_resources import CgroupError, controller, write_resource_error
+import v1_oom
 from metrics import ndcg10, reward, valid_ranking
 from oracle import Oracle, QueryFailure
 from runtime import Worker, Violation, signal_members, writable_size, asset_size
@@ -63,6 +65,17 @@ def verify_storage(fixed):
     return runtime
 
 
+def monitor_memory(memory):
+    if memory.memory_limit() != 32 << 30:
+        raise CgroupError('Verifier requires a 32 GiB aggregate memory cgroup')
+    if memory.version == 1:
+        memory.swap_limit()
+        initial = v1_oom.snapshot(memory)
+        return lambda: v1_oom.violation(v1_oom.snapshot(memory), initial, include_kills=False)
+    initial = memory.memory_events('oom')[1]['oom']
+    return lambda: memory.memory_events('oom')[1]['oom'] != initial
+
+
 def main():
     verification_started = time.monotonic()
     LOGS.mkdir(parents=True, exist_ok=True)
@@ -100,13 +113,9 @@ def main():
         query_vectors = np.memmap(PRIVATE/'queries.f32', dtype='<f4', mode='r', shape=(3452,4096))
         oracle = Oracle(expensive, budget=config['score_budget'])
         cpus = sorted(os.sched_getaffinity(0))
-        if len(cpus) != 16: raise RuntimeError('Verifier must be pinned to exactly 16 CPUs')
-        cg = Path('/sys/fs/cgroup')
-        if (cg/'memory.max').read_text().strip() != str(32 << 30):
-            raise RuntimeError('Verifier requires a 32 GiB aggregate memory cgroup')
-        def oom_count():
-            return int(dict(line.split() for line in (cg/'memory.events').read_text().splitlines())['oom'])
-        initial_oom = oom_count()
+        if len(cpus) != 16: raise CgroupError('Verifier must be pinned to exactly 16 CPUs')
+        memory = controller('memory')
+        memory_exceeded = monitor_memory(memory)
         signal_members(signal.SIGKILL)
         startup_total = 0
         peak_rss = peak_storage = 0
@@ -126,14 +135,14 @@ def main():
                 return w
             except BaseException as exc:
                 w.close()
-                if oom_count() != initial_oom:
+                if memory_exceeded():
                     raise Violation('aggregate memory exceeded during build/load') from exc
                 raise
             finally:
                 startup_total += time.monotonic()-t0
 
         worker = start('build', 0)
-        if oom_count() != initial_oom: raise Violation('aggregate memory exceeded during build')
+        if memory_exceeded(): raise Violation('aggregate memory exceeded during build')
         peak_rss, peak_storage = worker.peak_rss, worker.peak_storage
         worker.close()
         worker = None
@@ -145,7 +154,7 @@ def main():
                 item = {'query_id': query['query_id'], 'ndcg10': 0.0, 'calls': 0, 'valid': False}
                 if worker is None:
                     worker = start('load', f'{repeat+1}-{i+1}')
-                    if oom_count() != initial_oom: raise Violation('aggregate memory exceeded during reload')
+                    if memory_exceeded(): raise Violation('aggregate memory exceeded during reload')
                 token = secrets.token_hex(16)
                 t0 = time.monotonic()
                 deadline = t0+3.0
@@ -180,7 +189,7 @@ def main():
                 finally:
                     item['calls'] = oracle.used
                     oracle.close()
-                if oom_count() != initial_oom: raise Violation('aggregate memory exceeded (cgroup OOM)')
+                if memory_exceeded(): raise Violation('aggregate memory exceeded (cgroup OOM)')
                 samples[i].append(item)
                 if worker:
                     peak_rss = max(peak_rss, worker.peak_rss)
@@ -199,23 +208,24 @@ def main():
             })
         report.update(timing_repeats=TIMING_REPEATS, timing_aggregation='median')
         quality = sum(q['ndcg10'] for q in report['queries'])/3452
-        if oom_count() != initial_oom: raise Violation('aggregate memory exceeded')
+        if memory_exceeded(): raise Violation('aggregate memory exceeded')
         result = reward(quality, refs['B'], refs['U'])
         report.update(status='complete', Q=quality, B=refs['B'], U=refs['U'], raw_reward=result, score=100*result,
                       build_load_seconds=startup_total, peak_aggregate_rss_bytes=peak_rss,
                       peak_total_storage_bytes=peak_storage, index_bytes=writable_size(work/'index'))
-        report['peak_cgroup_memory_bytes'] = int((cg/'memory.peak').read_text())
     except Violation as exc:
         report.update(status='submission_failure', error=str(exc))
     except Exception as exc:
+        if isinstance(exc, CgroupError):
+            write_resource_error(LOGS, exc)
         report.update(status='infrastructure_failure', error=str(exc), traceback=traceback.format_exc())
     finally:
         if worker: worker.close()
         signal_members(signal.SIGKILL)
         report['verification_seconds'] = time.monotonic()-verification_started
         if 'startup_total' in locals(): report.setdefault('build_load_seconds', startup_total)
-        peak_file = Path('/sys/fs/cgroup/memory.peak')
-        if peak_file.exists(): report['peak_cgroup_memory_bytes'] = int(peak_file.read_text())
+        if 'memory' in locals():
+            report['peak_cgroup_memory_bytes'] = memory.memory_peak()
         write(LOGS/'evaluation.json',report)
     return 1 if report['status']=='infrastructure_failure' else 0
 

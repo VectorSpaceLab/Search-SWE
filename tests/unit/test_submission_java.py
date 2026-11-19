@@ -9,6 +9,8 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
+from environments.cgroups.cgroup_resources import CgroupError
+
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA_HOME = "/opt/java/openjdk"
@@ -88,7 +90,7 @@ class SubmissionJavaTests(unittest.TestCase):
                             if isinstance(node, ast.FunctionDef) and node.name == "run_query")
             namespace = {"Path": Mock(), "shutil": Mock(), "isolation": Mock(UID=10001),
                          "os": Mock(sched_getaffinity=Mock(return_value={0, 1})),
-                         "time": time, "subprocess": Mock(PIPE=-1)}
+                         "time": time, "subprocess": Mock(PIPE=-1), "CgroupError": CgroupError}
             spawn = namespace["subprocess"].Popen
             spawn.side_effect = RuntimeError("fixture stopped before launch")
             # Exercise the actual query launcher without /work mutations, UID
@@ -108,6 +110,9 @@ class SubmissionJavaTests(unittest.TestCase):
                 self.assertEqual(environment["HOME"], "/work")
                 self.assertNotIn("OPENAI_API_KEY", environment)
                 self.assertNotIn("VERIFIER_OPENAI_API_KEY", environment)
+                spawn.side_effect = CgroupError("Missing aggregate memory evidence")
+                with self.assertRaises(CgroupError):
+                    namespace["run_query"]({"query_id": "fixture"}, output, None, output, Mock())
 
 
 if __name__ == "__main__":

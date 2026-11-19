@@ -19,6 +19,7 @@ import threading
 import time
 from pathlib import Path
 
+from cgroup_resources import CgroupError, controller, write_resource_error
 from metrics import macro_precision, normalized_score, query_precision
 from storage_accounting import inventory, total_bytes, require_inspection_capabilities
 
@@ -29,14 +30,14 @@ MAX_LOG_BYTES = 262144
 
 def verify_runtime_limits():
     """Reject an incorrectly provisioned verifier instead of scoring its solver."""
-    cgroup = Path("/sys/fs/cgroup")
-    quota, period = (cgroup / "cpu.max").read_text().split()
-    if quota == "max" or int(quota)/int(period) != 16:
-        raise ValueError("Verifier must enforce exactly 16 CPU cores of quota")
-    memory = (cgroup / "memory.max").read_text().strip()
-    swap = (cgroup / "memory.swap.max").read_text().strip()
-    if memory == "max" or int(memory) != 16*1024**3 or swap != "0":
-        raise ValueError("Verifier must enforce 16 GiB RAM and no swap")
+    quota, period = controller("cpu").cpu_quota()
+    if quota != 16 * period:
+        raise CgroupError("Verifier must enforce exactly 16 CPU cores of quota")
+    cgroup = controller("memory")
+    memory = cgroup.memory_limit()
+    if memory != 16 << 30 or cgroup.swap_limit() != 0:
+        raise CgroupError("Verifier must enforce 16 GiB RAM and no swap")
+    cgroup.memory_events("oom_kill")
     raw = subprocess.check_output(["nvidia-smi", "--query-gpu=uuid,name,memory.total",
                                    "--format=csv,noheader,nounits"], text=True, timeout=10)
     rows = list(csv.reader(raw.splitlines()))
@@ -231,10 +232,7 @@ def bounded_log(pipe, path):
 
 
 def memory_oom_count():
-    path = Path("/sys/fs/cgroup/memory.events")
-    if not path.exists():
-        return 0
-    return int(dict(line.split() for line in path.read_text().splitlines()).get("oom_kill", 0))
+    return controller("memory").memory_events("oom_kill")[1]["oom_kill"]
 
 
 def run_command(command, *, cwd, index, timeout, log, storage_roots, fixed_files, budget):
@@ -488,6 +486,8 @@ def main(phase_args=None, phase_config=None):
     except InvalidSubmission as error:
         report["submission_error"] = str(error)
     except Exception as error:
+        if isinstance(error, CgroupError):
+            write_resource_error(args.logs, error)
         report.update(infrastructure_error=True, infrastructure_exception=type(error).__name__,
                       infrastructure_message=str(error))
     finally:
@@ -498,10 +498,19 @@ def main(phase_args=None, phase_config=None):
             except Exception as error:
                 report.update(infrastructure_error=True, reward=0.0,
                               infrastructure_exception=type(error).__name__, infrastructure_message=str(error))
-        for name in ("memory.peak", "cpu.stat", "memory.events"):
-            path = Path("/sys/fs/cgroup") / name
-            if path.is_file():
-                report.setdefault("container_cgroup", {})[name] = path.read_text().strip()
+        try:
+            memory = controller("memory")
+            peak = memory.memory_peak()
+            report["container_cgroup"] = {
+                "memory.peak": None if peak is None else str(peak),
+                "memory.events" if memory.version == 2 else "memory.oom_control":
+                    memory.memory_events("oom_kill")[0].strip(),
+            }
+            report["container_cgroup"]["cpu.stat"] = controller("cpu").cpu_stat().strip()
+        except CgroupError:
+            # The required resources were checked before execution and after
+            # each workload. A missing diagnostic must not mask that outcome.
+            pass
         write_json(args.logs / "evaluation.json", report)
     # An independent integrity judge must accept the trajectory before a
     # production finalizer can turn this intermediate result into a reward.

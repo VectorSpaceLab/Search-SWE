@@ -8,6 +8,7 @@ import sys
 import traceback
 
 sys.path.insert(0, '/tests/runtime')
+from cgroup_resources import CgroupError, write_resource_error
 from evaluate import evaluate, dump
 from isolation import cleanup
 from submission_transfer import ARCHIVE, restore
@@ -53,6 +54,8 @@ def main():
                       status='complete', failed_queries=sum(r['status'] != 'ok' for r in result['queries']))
         status = 0
     except Exception as error:
+        if isinstance(error, CgroupError):
+            write_resource_error(OUTPUT, error)
         report['error'] = str(error)
         (OUTPUT/'exception.txt').write_text(traceback.format_exc())
     finally:

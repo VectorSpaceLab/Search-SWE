@@ -14,14 +14,13 @@ class GpuResourceTests(unittest.TestCase):
             nvmlDeviceGetName=Mock(side_effect=AssertionError('model queried')),
             nvmlDeviceGetMemoryInfo=Mock(side_effect=AssertionError('capacity queried')))
 
-    def files(self, cores=16, memory=32):
-        def read(path, *args, **kwargs):
-            return f'{cores * 100000} 100000' if path.name == 'cpu.max' else str(memory << 30)
-        return read
+    def controls(self, cores=16, memory=32):
+        return SimpleNamespace(cpu_quota=lambda: (cores * 100000, 100000),
+                               memory_limit=lambda: memory << 30)
 
     def test_resource_setup_accepts_the_mapped_device(self):
         nvml = self.nvml()
-        with patch.object(evaluate, 'pynvml', nvml), patch.object(Path, 'read_text', self.files()):
+        with patch.object(evaluate, 'pynvml', nvml), patch.object(evaluate, 'controller', return_value=self.controls()):
             resources = evaluate.Resources(0)
         nvml.nvmlDeviceGetName.assert_not_called()
         nvml.nvmlDeviceGetMemoryInfo.assert_not_called()
@@ -30,8 +29,9 @@ class GpuResourceTests(unittest.TestCase):
     def test_single_device_and_host_limits_are_retained(self):
         for count, cores, memory in [(0, 16, 32), (2, 16, 32), (1, 17, 32), (1, 16, 33)]:
             with self.subTest(count=count, cores=cores, memory=memory):
-                with patch.object(evaluate, 'pynvml', self.nvml(count)), patch.object(Path, 'read_text', self.files(cores, memory)):
-                    with self.assertRaises(evaluate.ResourceViolation):
+                with patch.object(evaluate, 'pynvml', self.nvml(count)), patch.object(evaluate, 'controller', return_value=self.controls(cores, memory)):
+                    expected = evaluate.ResourceViolation if count != 1 else evaluate.CgroupError
+                    with self.assertRaises(expected):
                         evaluate.Resources(0)
 
 if __name__ == '__main__':

@@ -12,4 +12,4 @@ Read-only inputs are under `/task/data`, `/task/models/Qwen3-1.7B`, `/task/runti
 
 The container permits 256 tasks, including the trusted runtime and strategy descendants. OpenMP, OpenBLAS, MKL and NumExpr default to 16 threads per pool; the model thread count follows `deployment.json`.
 
-Linux Landlock ABI 3 or newer, libseccomp and cgroup v2 are required. Use `/opt/conda/bin/python /task/runtime/evaluate.py --submission /app/submission --output /app/dev-report` for the public self-check. The instruction defines the interface, query budgets and permitted deployment settings.
+Linux Landlock ABI 3 or newer, libseccomp and a cgroup that exposes aggregate memory and OOM kills are required. Use `/opt/conda/bin/python /task/runtime/evaluate.py --submission /app/submission --output /app/dev-report` for the public self-check. The instruction defines the interface, query budgets and permitted deployment settings.

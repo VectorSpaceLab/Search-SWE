@@ -15,6 +15,7 @@ import time
 import numpy as np
 import pynvml
 
+from cgroup_resources import CgroupError, controller, write_resource_error
 from isolation import UID, cleanup
 from metrics import JS, PROPERTIES, recalls, reward, summarize, validate_ids
 from metrics import TARGETS
@@ -153,12 +154,13 @@ class Resources:
         if pynvml.nvmlDeviceGetCount() != 1:
             raise ResourceViolation("Exactly one mapped GPU is required")
         self.gpu = pynvml.nvmlDeviceGetHandleByIndex(0)
-        quota, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()
-        maximum = Path("/sys/fs/cgroup/memory.max").read_text().strip()
-        if quota == "max" or int(quota) / int(period) > 16:
-            raise ResourceViolation("CPU cgroup limit must be at most 16 cores")
-        if maximum == "max" or int(maximum) > 32 << 30:
-            raise ResourceViolation("Memory cgroup limit must be at most 32 GiB")
+        quota, period = controller("cpu").cpu_quota()
+        self.memory = controller("memory")
+        maximum = self.memory.memory_limit()
+        if quota is None or quota > 16 * period:
+            raise CgroupError("CPU cgroup limit must be at most 16 cores")
+        if maximum is None or maximum > 32 << 30:
+            raise CgroupError("Memory cgroup limit must be at most 32 GiB")
 
     def check(self, force=False):
         self.peak_gpu = max(self.peak_gpu, pynvml.nvmlDeviceGetMemoryInfo(self.gpu).used)
@@ -170,11 +172,10 @@ class Resources:
                 raise ResourceViolation("64 GiB total task storage exceeded")
 
     def report(self):
-        path = Path("/sys/fs/cgroup/memory.peak")
         return {"gpu": pynvml.nvmlDeviceGetName(self.gpu),
                 "gpu_uuid": pynvml.nvmlDeviceGetUUID(self.gpu),
                 "peak_gpu_bytes": self.peak_gpu, "peak_task_storage_bytes": self.peak_storage,
-                "container_memory_peak_bytes": int(path.read_text()) if path.exists() else None}
+                "container_memory_peak_bytes": self.memory.memory_peak()}
 
 
 class Worker:
@@ -387,6 +388,8 @@ def main():
         report = evaluate(args.private_dir, output, args.library_dir,
                           args.reference_dir)
     except Exception as error:
+        if isinstance(error, CgroupError):
+            write_resource_error(output, error)
         report["failure"] = type(error).__name__ + ": " + str(error)
     (output / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     return 0 if report["valid"] else 1

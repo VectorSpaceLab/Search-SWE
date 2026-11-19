@@ -1,3 +1,6 @@
+x-search-swe:
+  v1_oom_notifications: true
+
 services:
   main:
     cpuset: ${BIMETRIC_CPUSET:-0-15}

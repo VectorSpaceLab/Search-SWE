@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 
+from cgroup_resources import CgroupError, controller, write_resource_error
 import isolation
 from metrics import ndcg, validate_result
 from model import BUDGET, MODEL, deployment_config, verify_model
@@ -132,15 +133,14 @@ class Resources:
                         seen.add(identity)
                         self.fixed_bytes += s.st_size
         self.last_disk = 0
-        cgroup = Path('/sys/fs/cgroup')
-        maximum = cgroup.joinpath('memory.max').read_text().strip()
-        if maximum == 'max' or int(maximum) > 32 << 30:
-            raise RuntimeError('A <=32 GiB aggregate container memory cgroup is required')
+        self.memory = controller('memory')
+        maximum = self.memory.memory_limit()
+        if maximum is None or maximum > 32 << 30:
+            raise CgroupError('A <=32 GiB aggregate container memory cgroup is required')
         self.initial_oom = self.oom_count()
 
     def oom_count(self):
-        events = dict(line.split() for line in Path('/sys/fs/cgroup/memory.events').read_text().splitlines())
-        return int(events.get('oom_kill', 0))
+        return self.memory.memory_events('oom_kill')[1]['oom_kill']
 
     def check(self, disk=False):
         used = self.nvml.nvmlDeviceGetMemoryInfo(self.gpu).used
@@ -159,7 +159,7 @@ class Resources:
 
     def report(self):
         return {'peak_gpu_bytes': self.peak_gpu, 'peak_task_storage_bytes': self.peak_disk,
-                'peak_cgroup_memory_bytes': int(Path('/sys/fs/cgroup/memory.peak').read_text()),
+                'peak_cgroup_memory_bytes': self.memory.memory_peak(),
                 'gpu_name': self.nvml.nvmlDeviceGetName(self.gpu),
                 'gpu_uuid': self.nvml.nvmlDeviceGetUUID(self.gpu)}
 
@@ -291,7 +291,7 @@ def run_query(query, submission, backend, output, resources):
     except Exception as error:
         report.update(status='failed', ids=[], error=str(error))
         report['local_seconds'] = time.monotonic()-started-excluded
-        if str(error).startswith('Global resource violation:'):
+        if isinstance(error, CgroupError) or str(error).startswith('Global resource violation:'):
             raise
     finally:
         isolation.cleanup()
@@ -400,7 +400,11 @@ def main():
     parser.add_argument('--qrels', default='/task/data/public-qrels.json')
     parser.add_argument('--output', required=True)
     args = parser.parse_args()
-    report = evaluate(args.submission, args.queries, args.qrels, args.output)
+    try:
+        report = evaluate(args.submission, args.queries, args.qrels, args.output)
+    except CgroupError as error:
+        write_resource_error(args.output, error)
+        raise
     dump(Path(args.output)/'report.json', report)
 
 

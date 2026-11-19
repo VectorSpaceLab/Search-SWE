@@ -19,6 +19,7 @@ import numpy as np
 from rdkit import Chem, RDLogger
 from rdkit.Chem import Descriptors, Crippen, Lipinski, rdMolDescriptors
 
+from cgroup_resources import controller
 from library import Library
 
 LIBRARY = None
@@ -86,9 +87,12 @@ def main():
               "seconds": time.monotonic() - started, "invalid_structures": invalid,
               "cpu_affinity": sorted(os.sched_getaffinity(0)), "workers": 16,
               "properties": ["mol_wt", "logp", "n_hbd", "n_hba", "n_rotatable_bonds", "tpsa"]}
-    report["container_memory_peak_bytes"] = int(Path("/sys/fs/cgroup/memory.peak").read_text())
-    report["memory_max"] = Path("/sys/fs/cgroup/memory.max").read_text().strip()
-    report["cpu_max"] = Path("/sys/fs/cgroup/cpu.max").read_text().strip()
+    cpu, period = controller("cpu").cpu_quota()
+    memory = controller("memory")
+    report["container_memory_peak_bytes"] = memory.memory_peak()
+    maximum = memory.memory_limit()
+    report["memory_max"] = "max" if maximum is None else str(maximum)
+    report["cpu_max"] = f"{cpu if cpu is not None else 'max'} {period}"
     (out / "measurement.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report), flush=True)
 

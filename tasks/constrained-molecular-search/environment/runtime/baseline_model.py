@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from rdkit import RDLogger
 
 sys.path.insert(0, "/task/runtime")
+from cgroup_resources import controller
 from library import Library
 from apex.data.atom_bond_features import Vocabulary
 from apex.data.torch_graph import PackedTorchMol, TorchMol
@@ -114,14 +115,16 @@ def main():
     embeddings.flush()
     if args.device == "cuda":
         torch.cuda.synchronize()
+    cpu, period = controller("cpu").cpu_quota()
+    memory = controller("memory")
     result = {"seconds": time.monotonic() - started, "n_products": len(dataset),
               "workers": args.workers, "batch_size": args.batch_size,
               "device": args.device, "threads": args.threads,
               "gpu": torch.cuda.get_device_name(0) if args.device == "cuda" else None,
               "peak_gpu_allocated_bytes": torch.cuda.max_memory_allocated() if args.device == "cuda" else 0,
               "normalized_fragments": bool(args.normalized_fragments),
-              "container_memory_peak_bytes": int(Path("/sys/fs/cgroup/memory.peak").read_text()),
-              "cpu_max": Path("/sys/fs/cgroup/cpu.max").read_text().strip(),
+              "container_memory_peak_bytes": memory.memory_peak(),
+              "cpu_max": f"{cpu if cpu is not None else 'max'} {period}",
               "source": "full supplied encoder+probe; public definitions only"}
     (output / "measurement.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result), flush=True)

@@ -5,7 +5,7 @@ mkdir -p /logs/verifier
 chmod 0700 /logs/verifier
 printf '0\n' > /logs/verifier/reward.txt
 printf '{"tracing_improvement":0,"jailbreak_judge":0,"reward":0}\n' > /logs/verifier/reward.json
-rm -f /logs/verifier/evaluation.json /logs/verifier/reward-details.json
+rm -f /logs/verifier/cgroup-status.json /logs/verifier/evaluation.json /logs/verifier/reward-details.json
 
 # Stage the small public sources for the submission UID without chmod on host binds.
 prepare_public_inputs() {

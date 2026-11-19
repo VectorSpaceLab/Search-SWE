@@ -66,7 +66,7 @@ if [[ -d /logs/agent && ! -L /logs/agent ]]; then
     fi
 fi
 
-rm -f /logs/verifier/reward.json \
+rm -f /logs/verifier/cgroup-status.json /logs/verifier/reward.json \
     /logs/verifier/reward.txt \
     /logs/verifier/reward-details.json \
     "$RESULTS_DIR/evaluation.json"

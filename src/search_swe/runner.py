@@ -4,6 +4,7 @@ from contextlib import nullcontext
 from datetime import datetime, timezone
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -129,6 +130,62 @@ def wait_cancelled(processes):
             process.wait()
 
 
+def cgroup_measurement_valid(path):
+    """Return None for no diagnostic and False for invalid or unreadable evidence."""
+    try:
+        status = json.loads(path.read_text())
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError):
+        return False
+    return isinstance(status, dict) and status.get("measurement_valid") is True
+
+
+def trial_outcome(output, returncode):
+    from harbor.models.trial.result import TrialResult
+
+    # run_task starts one Harbor job with one trial and zero retries.
+    results = list(output.glob("*/*/result.json"))
+    # Probe the known trial directly so an unreadable verifier directory does
+    # not hide its marker. A verifier can also fail before result.json is saved.
+    markers = ([results[0].parent / "verifier/cgroup-status.json"] if len(results) == 1
+               else output.glob("*/*/verifier/cgroup-status.json"))
+    for marker in markers:
+        if cgroup_measurement_valid(marker) is False:
+            return {"status": "invalid-measurement", "failure_kind": "cgroup_environment",
+                    "verifier_status": str(marker)}
+    if returncode:
+        return {"status": "failed", "failure_kind": "launcher_error"}
+    if len(results) != 1:
+        return {"status": "failed", "failure_kind": "expected_one_trial_result"}
+    path = results[0]
+    failure = {"status": "failed", "trial_result": str(path)}
+    try:
+        trial = TrialResult.model_validate_json(path.read_bytes(), strict=True)
+    except (OSError, ValueError):
+        return {**failure, "failure_kind": "invalid_trial_result"}
+    if trial.exception_info:
+        failure["exception_type"] = trial.exception_info.exception_type
+        # Harbor can grade the work left by an interrupted agent. Setup and
+        # verifier exceptions invalidate the run even if a reward was written.
+        agent, verifier = trial.agent_execution, trial.verifier
+        try:
+            before_verification = (agent and agent.started_at and agent.finished_at and verifier
+                                   and verifier.started_at and agent.started_at <=
+                                   trial.exception_info.occurred_at <= verifier.started_at)
+        except TypeError:  # Incompatible time zones cannot establish the phase.
+            before_verification = False
+        if not before_verification:
+            return {**failure, "failure_kind": "trial_error"}
+    rewards = trial.verifier_result.rewards if trial.verifier_result else None
+    if not (trial.finished_at and trial.verifier and trial.verifier.started_at and trial.verifier.finished_at):
+        return {**failure, "failure_kind": "incomplete_verification"}
+    if not (rewards and "reward" in rewards and 0 <= rewards["reward"] <= 1 and
+            all(isinstance(value, int) or math.isfinite(value) for value in rewards.values())):
+        return {**failure, "failure_kind": "invalid_reward"}
+    return {"status": "completed", "trial_result": str(path)}
+
+
 def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline=False, model_config=None):
     batch_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     output = Path(output).expanduser().resolve() if output else root / "jobs/evaluations" / batch_id
@@ -242,7 +299,7 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
                 active.remove(item)
                 stream.close()
                 row = report["tasks"][task.name]
-                row.update(returncode=process.returncode, status="completed" if process.returncode == 0 else "failed")
+                row.update(returncode=process.returncode, **trial_outcome(Path(row["output"]), process.returncode))
                 try:
                     context.__exit__(None, None, None)
                 except Exception as error:

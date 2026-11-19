@@ -93,8 +93,11 @@ def recorded_inputs(source, task):
 
 
 def measurement_valid(verifier, task_name):
+    cgroup_valid = runner.cgroup_measurement_valid(verifier / "cgroup-status.json")
+    if cgroup_valid is False:
+        return False
     evaluation = f"{task_name.rsplit('/', 1)[-1]}-eval/evaluation.json"
-    health = []
+    health = [] if cgroup_valid is None else [cgroup_valid]
     for name in ("reward-details.json", "judge-status.json", evaluation):
         try:
             data = json.loads((verifier / name).read_text())
