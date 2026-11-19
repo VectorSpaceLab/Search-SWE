@@ -156,7 +156,9 @@ assets, credentials, or hardware.
 
 ### Repeated verifier measurements
 
-After evidence matching, the fixed submitted answer is judged independently three times and the binary decisions are averaged arithmetically. Query values are then averaged equally. Retrieval, answer generation and evidence comparison run once. Each decision retains its own response/reason; transport or malformed-decision failures invalidate the measurement and leave zero reward, rather than averaging fewer decisions. Three valid decisions are distinct from the existing bounded transport retries. The answer-grader supervisor is 2,700 seconds: up to 30 judgments in five workers, each with three 120-second attempts and retry backoff, plus overhead. The overall 14,400-second verifier budget and single trajectory audit remain unchanged.
+After evidence matching, the fixed submitted answer is judged independently three times. The score is the mean of the three binary decisions, averaged equally across queries. Retrieval, answer generation and evidence comparison run once.
+
+The `answer-judge-v2` protocol starts each vote at 512 output tokens. It accepts the first parseable decision, including a negative vote. Empty or malformed replies and transport errors retry within the same three 120-second attempts. If the provider reports a length limit and the decision is incomplete, the next attempt gets four times the output budget, up to 8,192 tokens. Each completed vote is saved in the verifier's private results directory. Restarting the grader there with the same inputs, judge and protocol reuses those votes. A missing required vote invalidates the measurement and leaves zero reward. The answer-grader supervisor allows 2,700 seconds for up to 30 judgments with five workers. The overall verifier budget is 14,400 seconds and includes one trajectory audit.
 
 ## References
 
