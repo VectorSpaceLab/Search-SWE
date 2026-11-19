@@ -74,11 +74,12 @@ def violation(sample, baseline=None, *, include_kills):
     watch = sample["observer"]
     if watch and (baseline is None or (old_watch and old_watch["id"] == watch["id"])):
         start = old_watch["events"] if old_watch else 0
-        if watch["events"] < start or (old_watch and watch["parent_events"] < old_watch["parent_events"]):
+        parent_start = old_watch["parent_events"] if old_watch else 0
+        if watch["events"] < start or watch["parent_events"] < parent_start:
             raise CgroupError("Reset v1 OOM notifications")
         # Ancestor OOMs notify descendants too. A plain eventfd cannot
         # attribute a notification if an ancestor was also under pressure.
-        if watch["parent_events"] == 0:
+        if watch["parent_events"] == parent_start:
             if watch["events"] > start:
                 return True
             if old_watch is not None or not any(watch["initial_hits"]):

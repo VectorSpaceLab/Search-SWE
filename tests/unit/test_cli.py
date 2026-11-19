@@ -315,6 +315,29 @@ class CliTests(unittest.TestCase):
         self.assertEqual(row["exception_type"], "HealthcheckError")
         self.assertNotIn("private diagnostics", summary)
 
+    def test_batch_distinguishes_exhausted_answer_judging_from_a_graded_zero(self):
+        for details, expected in (({"valid": False, "judge_error_count": 1}, "invalid-measurement"),
+                                  ({"valid": False, "judge_error_count": 0}, "completed"),
+                                  ({"valid": True, "judge_error_count": 0}, "completed")):
+            with self.subTest(details=details), tempfile.TemporaryDirectory() as temp:
+                self.fake_launcher()
+                launcher = self.root / "scripts/evaluation/run_task.py"
+                with launcher.open("a") as script:
+                    script.write(
+                        'result["task_name"]="search-swe/scientific-paper-qa"\n'
+                        '(trial/"result.json").write_text(json.dumps(result))\n'
+                        'evaluation=trial/"verifier/scientific-paper-qa-eval"\n'
+                        'evaluation.mkdir(parents=True)\n'
+                        f'(evaluation/"evaluation.json").write_text(json.dumps({details!r}))\n'
+                    )
+                output = Path(temp) / "batch"
+                with redirect_stdout(io.StringIO()):
+                    code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ),
+                                     Pool({0, 1}, 8192, []), 1, output)
+                row = json.loads((output / "run.json").read_text())["tasks"][self.tasks[0].name]
+                self.assertEqual(row["status"], expected)
+                self.assertEqual(code, 0 if expected == "completed" else 1)
+
     def test_harbor_trial_requires_finished_verification_and_preserves_graded_agent_timeouts(self):
         trial = self.root / "job/trial"
         trial.mkdir(parents=True)

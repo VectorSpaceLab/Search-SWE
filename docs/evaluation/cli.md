@@ -237,8 +237,9 @@ Each batch creates `jobs/evaluations/<unique-run>/` or a new `--output` director
 `completed` requires a successful launch, a finished Harbor trial and verifier,
 and a primary `reward` between 0 and 1 inclusive. A graded zero counts as completed, including when the
 agent timed out and the verifier scored its work. A setup failure or missing
-trial result marks the task `failed`. Invalid cgroup evidence marks it
-`invalid-measurement`. Both statuses give the batch a nonzero exit code.
+trial result marks the task `failed`. Invalid resource evidence or exhausted
+answer-judge retries mark it `invalid-measurement`. Both statuses give the
+batch a nonzero exit code.
 
 Ctrl-C/SIGTERM cancels active runs and lets storage
 teardown finish. Cleanup failure stops the batch, cancels other active runs,

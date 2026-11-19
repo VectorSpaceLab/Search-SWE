@@ -164,6 +164,13 @@ class CgroupResourcesTests(unittest.TestCase):
         start = sample(1, events=1, initial=1)
         # An earlier local OOM is outside Bimetric's interval but counts for Formula.
         self.assertFalse(v1_oom.violation(sample(5, events=1, initial=1), start, include_kills=False))
+        before = sample(0, events=1, parent=1)
+        self.assertFalse(v1_oom.violation(sample(3, events=1, parent=1), before, include_kills=False))
+        self.assertTrue(v1_oom.violation(sample(3, events=2, parent=1), before, include_kills=False))
+        with self.assertRaises(cg.CgroupError):
+            v1_oom.violation(sample(3, events=2, parent=2), before, include_kills=False)
+        with self.assertRaises(cg.CgroupError):
+            v1_oom.violation(sample(3, events=1, parent=1), include_kills=True)
         self.assertTrue(v1_oom.violation(start, include_kills=True))
         self.assertTrue(v1_oom.violation(sample(5, events=2), start, include_kills=False))
         global_kill = sample(0, kills=1)

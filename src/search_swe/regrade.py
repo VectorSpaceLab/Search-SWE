@@ -94,23 +94,15 @@ def recorded_inputs(source, task):
 
 def measurement_valid(verifier, task_name):
     cgroup_valid = runner.cgroup_measurement_valid(verifier / "cgroup-status.json")
-    if cgroup_valid is False:
+    if cgroup_valid is False or runner.answer_judging_failed(verifier, task_name):
         return False
-    evaluation = f"{task_name.rsplit('/', 1)[-1]}-eval/evaluation.json"
     health = [] if cgroup_valid is None else [cgroup_valid]
-    for name in ("reward-details.json", "judge-status.json", evaluation):
+    for name in ("reward-details.json", "judge-status.json"):
         try:
             data = json.loads((verifier / name).read_text())
         except (OSError, ValueError):
             continue
         if not isinstance(data, dict):
-            continue
-        if name == evaluation:
-            # The primary grader records failed answer judgments separately
-            # from the final gate's trajectory judge status.
-            errors = data.get("judge_error_count")
-            if data.get("valid") is False and type(errors) is int and errors > 0:
-                return False
             continue
         guard = data.get("timeout_guard")
         phase = guard.get("failed_phase") if isinstance(guard, dict) else None

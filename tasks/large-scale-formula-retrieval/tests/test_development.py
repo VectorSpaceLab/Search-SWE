@@ -60,7 +60,7 @@ class DevelopmentTests(unittest.TestCase):
 
     def test_missing_memory_evidence_is_an_error(self):
         (self.evidence / 'agent.json').unlink()
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(CgroupError):
             check_development(self.evidence)
 
     def test_malformed_memory_evidence_is_an_error(self):
@@ -68,10 +68,11 @@ class DevelopmentTests(unittest.TestCase):
                         '{"memory_events": ""}', '{"memory_events": "oom 0"}',
                         '{"memory_events": "oom_kill 0"}',
                         '{"memory_events": "oom unknown\\noom_kill 0"}',
-                        '{"memory_events": "oom -1\\noom_kill 0"}']:
+                        '{"memory_events": "oom -1\\noom_kill 0"}',
+                        '{"memory_events": "oom 0\\noom 1\\noom_kill 0"}',
+                        '[]', 'null']:
             (self.evidence / 'agent.json').write_text(content)
-            with self.subTest(content=content), self.assertRaises(
-                    (ValueError, KeyError, AttributeError)):
+            with self.subTest(content=content), self.assertRaises(CgroupError):
                 check_development(self.evidence)
 
     def test_evidence_privacy(self):
