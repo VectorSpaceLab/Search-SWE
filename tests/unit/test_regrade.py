@@ -95,6 +95,44 @@ class RegradeTests(unittest.TestCase):
         self.assertEqual(code, 1, output)
         self.assertIn("Only regular files and directories", output)
 
+    def test_formula_requires_original_private_memory_evidence(self):
+        name = "large-scale-formula-retrieval"
+        formula = self.task.with_name(name)
+        self.task.rename(formula)
+        (formula / "task.toml").write_bytes((ROOT / "tasks" / name / "task.toml").read_bytes())
+        (self.source / "result.json").write_text(json.dumps({
+            **self.original, "task_name": f"search-swe/{name}",
+        }))
+        with patch("search_swe.runner.doctor", side_effect=AssertionError("started preflight")):
+            for flags in (("--dry-run",), ()):
+                with self.subTest(flags=flags):
+                    code, output = self.invoke(*flags)
+                    self.assertEqual(code, 1, output)
+                    self.assertIn("/task-evidence/agent.json", output)
+                    self.assertFalse(self.output.exists())
+
+    def test_timeout_guard_invalidates_a_numeric_reward(self):
+        new_trial = self.output / "trial"
+        (new_trial / "verifier").mkdir(parents=True)
+        (new_trial / "result.json").write_text(json.dumps({
+            **self.original, "verifier_result": {"rewards": {"reward": 0}},
+        }))
+        details = new_trial / "verifier/reward-details.json"
+        # Query Encoder includes an exit code. Older supervisors omit it.
+        for status in ({"exit_status": "124"}, {}):
+            with self.subTest(status=status):
+                details.write_text(json.dumps({"timeout_guard": {
+                    "failed_phase": "primary_evaluation",
+                    "failure_reason": "task-specific evaluation timed out",
+                    "reward": 0.0,
+                    **status,
+                }}))
+                report = {}
+                result_summary(new_trial, report)
+                self.assertEqual(report["rewards"], {"reward": 0.0})
+                self.assertEqual(report["status"], "invalid-measurement")
+                self.assertIs(report["measurement_valid"], False)
+
     def test_only_verifier_is_configured_and_zero_reward_is_preserved(self):
         from search_swe import runner
         launcher = runner.backend(self.checkout, "evaluation/run_task")
@@ -106,6 +144,7 @@ class RegradeTests(unittest.TestCase):
         task.write_text("services: {}\n")
         new_id = str(uuid4())
         original_source = (self.source / "result.json").read_bytes()
+        timed_out = self.output.with_name("timed-out")
 
         def execute(command, env, cwd):
             if command[0] == sys.executable:
@@ -126,6 +165,10 @@ class RegradeTests(unittest.TestCase):
             trial = config.trials_dir / config.trial_name
             (trial / "verifier").mkdir(parents=True)
             (trial / "verifier/judge-status.json").write_text('{"measurement_valid": true}')
+            if config.trials_dir == timed_out:
+                (trial / "verifier/reward-details.json").write_text(
+                    '{"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "124"}}'
+                )
             (trial / "result.json").write_text(json.dumps({
                 **self.original, "id": new_id, "trial_name": config.trial_name, "task_checksum": "current-hash",
                 "verifier_result": {"rewards": {"reward": 0}},
@@ -134,11 +177,16 @@ class RegradeTests(unittest.TestCase):
 
         with patch.dict(os.environ, {"VERIFIER_OPENAI_API_KEY": "verifier-token"}), \
                 patch.object(launcher, "run_command", side_effect=execute), \
-                patch.object(runner, "backend", side_effect=[launcher, space]), \
+                patch.object(runner, "backend", side_effect=[launcher, space, launcher, space]), \
                 patch.object(runner, "doctor"), patch.object(runner, "asset_plan", return_value={}), \
                 patch.object(space, "describe"), patch.object(space, "validate"):
             code, output = self.invoke("--offline")
+            timeout_code, timeout_output = self.invoke("--offline", "--output", str(timed_out))
         self.assertEqual(code, 0, output)
+        self.assertEqual(timeout_code, 1, timeout_output)
+        timeout_report = json.loads((timed_out / "regrade.json").read_text())
+        self.assertEqual(timeout_report["status"], "invalid-measurement")
+        self.assertIs(timeout_report["measurement_valid"], False)
         report = json.loads((self.output / "regrade.json").read_text())
         self.assertEqual(report["source_trial_id"], self.original["id"])
         self.assertEqual(report["trial_id"], new_id)
@@ -150,6 +198,7 @@ class RegradeTests(unittest.TestCase):
         trial = Path(report["trial"])
         (trial / "verifier/judge-status.json").unlink()
         result_summary(trial, report)
+        self.assertEqual(report["status"], "completed")
         self.assertIsNone(report["measurement_valid"])
         for health in ({"measurement_valid": False},
                        {"final_gate": {"evaluation_valid": True, "judge_succeeded": False}}):

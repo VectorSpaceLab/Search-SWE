@@ -72,17 +72,22 @@ search-swe regrade /path/to/original-trial
 Keep the original `config.json`, `result.json`, `agent/`, and
 `artifacts/manifest.json` with its recorded artifact files. The preview checks
 that the current verifier's declared inputs are present, including the ATIF
-trajectory for tasks that require it. Run with the task's verifier credentials
-and network settings in `.env` or `--env-file`. The verifier uses the task's
-usual asset preparation and CPU/GPU requirements. Use `--offline` for cached
-assets, `--cpu-set` for a CPU pool, or `--gpu-device` for a specific GPU.
+trajectory for tasks that require it. Regrade rejects
+`large-scale-formula-retrieval` during preflight because its verifier needs
+private agent-phase memory evidence outside the recorded trial.
+
+Run with the task's verifier credentials and network settings in `.env`
+or `--env-file`. The verifier uses the task's usual asset preparation and
+CPU/GPU requirements. Use `--offline` for cached assets, `--cpu-set` for a
+CPU pool, or `--gpu-device` for a specific GPU.
 
 The CLI starts only the verifier and preserves the original trial. The new
 trial and its `regrade.json` summary are written under `jobs/regrades/` or a
 fresh `--output` directory. The summary records both trial IDs, the verifier
 checkout revision, and rewards. Measurement validity is recorded when the
-verifier reports it explicitly. Review the new verifier logs before using
-the result, including when the reward is zero.
+verifier reports it explicitly. Verifier diagnostics that identify a failed
+phase mark the measurement invalid and cause a nonzero exit status. Review the
+new verifier logs before using the result, including when the reward is zero.
 
 ## Interactive setup
 

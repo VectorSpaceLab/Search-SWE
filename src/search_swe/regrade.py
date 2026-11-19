@@ -43,6 +43,11 @@ def recorded_inputs(source, task):
 
     if problem := check_task_regradable(task):
         raise ValueError(problem)
+    if task.name == "large-scale-formula-retrieval":
+        raise ValueError(
+            f"Regrade is unavailable for {task.name}: its verifier requires the original "
+            "agent's private memory evidence at /task-evidence/agent.json, outside the recorded trial."
+        )
     config = TaskConfig.model_validate_toml((task / "task.toml").read_text())
     convention = convention_source_for_os(config.environment.os)
 
@@ -96,6 +101,10 @@ def measurement_valid(verifier):
             continue
         if not isinstance(data, dict):
             continue
+        guard = data.get("timeout_guard")
+        phase = guard.get("failed_phase") if isinstance(guard, dict) else None
+        if isinstance(phase, str) and phase.strip():
+            return False
         for details in (data, data.get("final_gate")):
             if not isinstance(details, dict):
                 continue
