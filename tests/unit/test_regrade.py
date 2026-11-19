@@ -133,6 +133,31 @@ class RegradeTests(unittest.TestCase):
                 self.assertEqual(report["status"], "invalid-measurement")
                 self.assertIs(report["measurement_valid"], False)
 
+    def test_answer_judge_failure_is_distinct_from_a_completed_zero(self):
+        trial = self.output / "trial"
+        verifier = trial / "verifier"
+        for name in ("scientific-paper-qa", "long-pdf-evidence", "long-pdf-evidence-vectorless"):
+            evaluation = verifier / f"{name}-eval/evaluation.json"
+            evaluation.parent.mkdir(parents=True)
+            (trial / "result.json").write_text(json.dumps({
+                **self.original, "task_name": f"search-swe/{name}",
+                "verifier_result": {"rewards": {"reward": 0}},
+            }))
+            for judge_errors in (1, 0, None):
+                with self.subTest(name=name, judge_errors=judge_errors):
+                    metrics = {"valid": judge_errors == 0}
+                    if judge_errors is not None:
+                        metrics["judge_error_count"] = judge_errors
+                    evaluation.write_text(json.dumps(metrics))
+                    (verifier / "reward-details.json").write_text(json.dumps({
+                        "final_gate": {"evaluation_valid": metrics["valid"], "judge_succeeded": True},
+                    }))
+                    report = {}
+                    result_summary(trial, report)
+                    self.assertEqual(report["rewards"], {"reward": 0.0})
+                    self.assertIs(report["measurement_valid"], False if judge_errors == 1 else None)
+                    self.assertEqual(report["status"], "invalid-measurement" if judge_errors == 1 else "completed")
+
     def test_only_verifier_is_configured_and_zero_reward_is_preserved(self):
         from search_swe import runner
         launcher = runner.backend(self.checkout, "evaluation/run_task")
@@ -145,6 +170,7 @@ class RegradeTests(unittest.TestCase):
         new_id = str(uuid4())
         original_source = (self.source / "result.json").read_bytes()
         timed_out = self.output.with_name("timed-out")
+        judge_failed = self.output.with_name("judge-failed")
 
         def execute(command, env, cwd):
             if command[0] == sys.executable:
@@ -169,6 +195,10 @@ class RegradeTests(unittest.TestCase):
                 (trial / "verifier/reward-details.json").write_text(
                     '{"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "124"}}'
                 )
+            if config.trials_dir == judge_failed:
+                evaluation = trial / "verifier/fixture-regrade-eval/evaluation.json"
+                evaluation.parent.mkdir()
+                evaluation.write_text('{"valid": false, "judge_error_count": 1}')
             (trial / "result.json").write_text(json.dumps({
                 **self.original, "id": new_id, "trial_name": config.trial_name, "task_checksum": "current-hash",
                 "verifier_result": {"rewards": {"reward": 0}},
@@ -177,16 +207,17 @@ class RegradeTests(unittest.TestCase):
 
         with patch.dict(os.environ, {"VERIFIER_OPENAI_API_KEY": "verifier-token"}), \
                 patch.object(launcher, "run_command", side_effect=execute), \
-                patch.object(runner, "backend", side_effect=[launcher, space, launcher, space]), \
+                patch.object(runner, "backend", side_effect=[launcher, space] * 3), \
                 patch.object(runner, "doctor"), patch.object(runner, "asset_plan", return_value={}), \
                 patch.object(space, "describe"), patch.object(space, "validate"):
             code, output = self.invoke("--offline")
-            timeout_code, timeout_output = self.invoke("--offline", "--output", str(timed_out))
+            for invalid in (timed_out, judge_failed):
+                status, message = self.invoke("--offline", "--output", str(invalid))
+                self.assertEqual(status, 1, message)
+                invalid_report = json.loads((invalid / "regrade.json").read_text())
+                self.assertEqual(invalid_report["status"], "invalid-measurement")
+                self.assertIs(invalid_report["measurement_valid"], False)
         self.assertEqual(code, 0, output)
-        self.assertEqual(timeout_code, 1, timeout_output)
-        timeout_report = json.loads((timed_out / "regrade.json").read_text())
-        self.assertEqual(timeout_report["status"], "invalid-measurement")
-        self.assertIs(timeout_report["measurement_valid"], False)
         report = json.loads((self.output / "regrade.json").read_text())
         self.assertEqual(report["source_trial_id"], self.original["id"])
         self.assertEqual(report["trial_id"], new_id)

@@ -85,9 +85,9 @@ The CLI starts only the verifier and preserves the original trial. The new
 trial and its `regrade.json` summary are written under `jobs/regrades/` or a
 fresh `--output` directory. The summary records both trial IDs, the verifier
 checkout revision, and rewards. Measurement validity is recorded when the
-verifier reports it explicitly. Verifier diagnostics that identify a failed
-phase mark the measurement invalid and cause a nonzero exit status. Review the
-new verifier logs before using the result, including when the reward is zero.
+verifier reports it explicitly. A failed verifier phase or a primary evaluation
+invalidated by answer-judge errors causes a nonzero exit status. Review the new
+verifier logs before using the result, including when the reward is zero.
 
 ## Interactive setup
 

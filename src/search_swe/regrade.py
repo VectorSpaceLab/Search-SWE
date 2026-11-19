@@ -92,14 +92,22 @@ def recorded_inputs(source, task):
                          + ", ".join(missing))
 
 
-def measurement_valid(verifier):
+def measurement_valid(verifier, task_name):
+    evaluation = f"{task_name.rsplit('/', 1)[-1]}-eval/evaluation.json"
     health = []
-    for name in ("reward-details.json", "judge-status.json"):
+    for name in ("reward-details.json", "judge-status.json", evaluation):
         try:
             data = json.loads((verifier / name).read_text())
         except (OSError, ValueError):
             continue
         if not isinstance(data, dict):
+            continue
+        if name == evaluation:
+            # The primary grader records failed answer judgments separately
+            # from the final gate's trajectory judge status.
+            errors = data.get("judge_error_count")
+            if data.get("valid") is False and type(errors) is int and errors > 0:
+                return False
             continue
         guard = data.get("timeout_guard")
         phase = guard.get("failed_phase") if isinstance(guard, dict) else None
@@ -129,7 +137,7 @@ def result_summary(trial, report):
         report.update(measurement_valid=False, status="verifier-error",
                       exception_type=result.exception_info.exception_type)
     elif rewards:
-        valid = measurement_valid(trial / "verifier")
+        valid = measurement_valid(trial / "verifier", result.task_name)
         report.update(measurement_valid=valid, status="invalid-measurement" if valid is False else "completed")
 
 
