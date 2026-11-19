@@ -105,7 +105,7 @@ URL for a branch or tag. Match the skill to your CLI and checkout.
 ### Update the skill
 
 The skill records its matching CLI release in `SKILL.md` as `metadata.version`
-(currently `0.3.0`), with compatible CLI/checkout series `0.3.x`.
+(currently `0.3.1`), with compatible CLI/checkout series `0.3.x`.
 For a project installation, run these commands in your coordinating agent's
 workspace:
 

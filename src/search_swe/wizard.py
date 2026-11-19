@@ -3,7 +3,7 @@
 from pathlib import Path
 import questionary
 
-from .configuration import EFFORTS, Setting, default_model
+from .configuration import Setting, default_model, effort_levels
 from . import harbor_native, harnesses, pi_models
 from .model_catalog import MODEL_ID, ModelCompleter, eligible, load_models
 from .repository import clone_repo, is_repo, preference_path, remember_repo
@@ -96,7 +96,7 @@ def select_setting(current, args, *, root=None):
         _, model_id, info = pi_models.selection(model)
         if not info["models"].get(model_id, {}).get("reasoning", True):
             metadata = {"supported_parameters": []}
-    levels = ["default", "off", "minimal", *EFFORTS] if agent == "pi" else ["default", *EFFORTS]
+    levels = effort_levels(agent, provider)
     effort = args.reasoning_effort
     if effort is None:
         parameters = metadata.get("supported_parameters") if metadata else None

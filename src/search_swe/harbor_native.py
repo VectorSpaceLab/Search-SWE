@@ -78,6 +78,8 @@ def agent_class(name):
 
 
 def routes(name):
+    if name == "antigravity-cli":
+        return ("native", "openrouter")
     return ("openrouter", "direct", "native") if name in ENHANCED else ("native",)
 
 

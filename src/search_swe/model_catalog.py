@@ -110,7 +110,7 @@ def eligible(model, agent):
         return False
     if "supported_parameters" in model and "tools" not in model["supported_parameters"]:
         return False
-    endpoint = {"claude-code": "/api/v1/messages", "pi": "/api/v1/chat/completions", "codex": "/api/v1/responses"}[agent]
+    endpoint = {"claude-code": "/api/v1/messages", "codex": "/api/v1/responses"}.get(agent, "/api/v1/chat/completions")
     return "endpoints" not in model or endpoint in model["endpoints"]
 
 

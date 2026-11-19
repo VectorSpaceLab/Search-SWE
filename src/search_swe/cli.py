@@ -145,6 +145,9 @@ def configure_run(args, root):
         setting = resolve_setting(current, args)
     if setting.provider == "native" and not (root / "scripts/evaluation/native_agents.py").is_file():
         raise ValueError("This checkout needs the Harbor native agent backend; update it with search-swe update before using --provider native")
+    if ((setting.agent, setting.provider) == ("antigravity-cli", "openrouter")
+            and not (root / "scripts/evaluation/agy_openrouter.py").is_file()):
+        raise ValueError("Antigravity CLI with OpenRouter requires an updated checkout. Run search-swe update or select a checkout containing this integration with --repo")
     if setting.agent_config:
         config_path = Path(setting.agent_config).expanduser()
         setting = replace(setting, agent_config=str((root / config_path).resolve()))

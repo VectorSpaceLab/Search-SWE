@@ -14,6 +14,7 @@ The default is Codex + OpenRouter + `openai/gpt-6-luna` (`max` reasoning).
 | Claude Code | `direct` | Claude model at the official Anthropic API | `AGENT_ANTHROPIC_API_KEY` |
 | Pi | `openrouter` | OpenRouter text/tool models; full OpenRouter ID | `AGENT_OPENROUTER_API_KEY` |
 | Pi | `direct` | `provider/model` from Pi's bundled API-key catalog | Selected provider's key and endpoint settings |
+| Antigravity CLI | `openrouter` | OpenRouter text/tool models using Chat Completions | `AGENT_OPENROUTER_API_KEY` |
 | Any registered Harbor agent | `native` | Native model ID, or the agent's default | Selected agent's `AGENT_*` variables and optional native configuration |
 
 ## Harness versions and installation
@@ -141,6 +142,22 @@ audits still require their declared input. Pi direct, OpenRouter and native
 routes share the Search-SWE event-stream-to-ATIF converter.
 Inspect the chosen agent's official
 setup when it needs project files, a subscription or cloud credentials.
+
+## Antigravity CLI through OpenRouter
+
+Use CLI 0.3.1 or later in the 0.3.x series with a checkout containing this
+integration. Set `AGENT_OPENROUTER_API_KEY` in the checkout's private `.env`.
+
+```bash
+search-swe run TASK --agent antigravity-cli --provider openrouter \
+  --model google/gemini-4-argon --reasoning-effort high
+```
+
+The route uses a loopback bridge in the agent container to translate agy's
+Gemini requests to OpenRouter Chat Completions. Use the full OpenRouter model
+ID. Effort accepts `default` (agy's model default), `low`, or `high`.
+The bridge transfers tool calls, results, and reasoning details across turns.
+OpenRouter is the coding-model endpoint for this route.
 
 ## Claude Code and Codex subscriptions
 

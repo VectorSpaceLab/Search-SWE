@@ -78,9 +78,9 @@ keys to configure; `run` selects the tasks to evaluate. Use each command's
 `--help` for its flags.
 
 The default is **Codex + OpenRouter + `openai/gpt-6-luna`, `max` reasoning**.
-Codex, Claude Code and Pi provide integrated OpenRouter routes. All registered
-Harbor agents are available through `--provider native`; use `search-swe agents`
-to discover them. See the
+Codex, Claude Code, Pi and Antigravity CLI provide integrated OpenRouter routes.
+Use `search-swe agents` to discover Harbor agents available through
+`--provider native`. See the
 [agent/provider matrix](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md)
 for direct routes, model scope and [harness versions/cache](https://github.com/VectorSpaceLab/Search-SWE/blob/main/docs/evaluation/agents.md#harness-versions-and-installation). `search-swe pi-models` lists Pi providers;
 add `--provider NAME` for exact model IDs.
@@ -90,8 +90,8 @@ add `--provider NAME` for exact model IDs.
 Search by name or model ID, highlight with ↓/↑ and select with Enter. An empty
 field keeps the displayed model; full IDs can also be entered manually.
 Suggestions use text, tool and API metadata: Responses for Codex, Messages for
-Claude Code, and Chat Completions for Pi. Model selection makes no inference
-request; actual compatibility depends on the model/provider.
+Claude Code, and Chat Completions for Pi and Antigravity CLI. Model selection
+makes no inference requests. Runtime compatibility depends on the model and provider.
 
 The public catalog is cached for 24 hours at
 `$XDG_CACHE_HOME/search-swe/openrouter-models.json` (default

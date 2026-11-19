@@ -58,13 +58,14 @@ The single-task backend uses `--openrouter` for OpenRouter; the CLI uses
 | `--agent codex --openrouter` | Full OpenRouter ID | `AGENT_OPENROUTER_API_KEY` |
 | `--agent claude-code --openrouter` | Full OpenRouter ID with Messages/tool support | `AGENT_OPENROUTER_API_KEY` |
 | `--agent pi --openrouter` | Full OpenRouter ID with Chat Completions/tool support | `AGENT_OPENROUTER_API_KEY` |
+| `--agent antigravity-cli --openrouter` | Full OpenRouter ID with Chat Completions/tool support | `AGENT_OPENROUTER_API_KEY` |
 | `--agent codex` | Direct endpoint's model ID | `AGENT_OPENAI_BASE_URL`, `AGENT_OPENAI_API_KEY` |
 | `--agent claude-code` | Official Anthropic model ID | `AGENT_ANTHROPIC_API_KEY` |
 | `--agent pi` | Pi `provider/model` ID | Selected provider's key and endpoint settings |
 | `--agent NAME --native` | Native Harbor model ID or agent default | Agent-only `AGENT_*` variables and optional `--agent-config PATH` |
 
-Use `search-swe agents` to discover Harbor's registered agents. Agents beyond the
-three integrated routes select native mode automatically in this backend.
+Use `search-swe agents` to discover Harbor's registered agents. Antigravity CLI
+selects its native route unless `--openrouter` is passed.
 `--agent-version VERSION` or `SEARCH_SWE_AGENT_VERSION` overrides the central
 [harness default](agents.md#harness-versions-and-installation); `default` resets it.
 The five centrally managed CLIs are installed and version-verified during setup,

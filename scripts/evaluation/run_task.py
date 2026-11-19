@@ -20,6 +20,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "src"))
 from search_swe import harbor_native, harnesses, pi_models
+from search_swe.configuration import AGY_OPENROUTER_EFFORTS
 from scripts.evaluation.docker_dns import parse_servers
 from scripts.task_paths import select_task, task_key
 from scripts.assets.download_assets import destination_path, read_manifest, relative_path
@@ -145,7 +146,7 @@ def main():
     env_options.add_argument("--no-env-file", action="store_true", help="Use only process environment configuration")
     parser.add_argument(
         "--reasoning-effort",
-        help="Override AGENT_REASONING_EFFORT for Codex or Claude Code",
+        help="Override the selected harness's reasoning effort",
     )
     parser.add_argument("--codex-config", type=Path, help="Optional native Codex TOML configuration")
     parser.add_argument("--thinking", choices=("default", *PI_THINKING_LEVELS), help="Pi thinking level; default omits the override")
@@ -160,10 +161,11 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print the command with variable references; do not launch")
     parser.add_argument("--check", action="store_true", help="Validate model, credentials and configuration without restoring assets or launching")
     args = parser.parse_args()
-    if args.agent not in AGENT_IMPORTS:
-        args.native = True
     if args.native and args.openrouter:
         parser.error("Use --native with Harbor's own model/provider configuration, or --openrouter with the integrated route")
+    agy_openrouter = args.agent == "antigravity-cli" and args.openrouter
+    if args.agent not in AGENT_IMPORTS and not agy_openrouter:
+        args.native = True
     if args.agent_config and not args.native:
         parser.error("--agent-config requires --native")
     if args.native and any(value is not None for value in (args.thinking, args.pi_model_config, args.codex_config)):
@@ -202,12 +204,14 @@ def main():
     if not model and not args.native:
         parser.error("Set --model or AGENT_MODEL")
     if args.openrouter:
-        if args.agent not in OPENROUTER_AGENT_IMPORTS:
+        if args.agent not in OPENROUTER_AGENT_IMPORTS and not agy_openrouter:
             parser.error("Unsupported OpenRouter harness")
         if not OPENROUTER_MODEL.fullmatch(model):
             parser.error("OpenRouter requires a complete provider/model slug in --model or AGENT_MODEL")
         if args.agent == "codex" and args.codex_config is not None:
             parser.error("--openrouter uses its own Codex config; omit --codex-config")
+        if agy_openrouter and args.codex_config is not None:
+            parser.error("--codex-config is only valid with --agent codex")
     if args.native:
         pass
     elif args.agent == "pi":
@@ -241,7 +245,7 @@ def main():
         parser.error(str(error))
     task_config = tomllib.loads((task / "task.toml").read_text())
     try:
-        harbor_native.check_trajectory_support(args.agent, args.native, task_config)
+        harbor_native.check_trajectory_support(args.agent, args.native or agy_openrouter, task_config)
         storage = StoragePlan.discover(task, task_config)
     except ValueError as error:
         parser.error(str(error))
@@ -265,7 +269,7 @@ def main():
     command = [
         "harbor", "run", "--path", str(task), "--env", "docker",
         "--agent",
-        args.agent if args.native else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
+        args.agent if args.native or agy_openrouter else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
         "--force-build", "--yes", "-o", str(output),
         "--agent-setup-timeout-multiplier", "3",
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
@@ -280,7 +284,18 @@ def main():
     required = []
     agent_host = None
     native = None
-    if args.native:
+    if agy_openrouter:
+        effort = args.reasoning_effort or env.get("AGENT_REASONING_EFFORT") or "default"
+        if effort not in AGY_OPENROUTER_EFFORTS:
+            parser.error("Antigravity CLI with OpenRouter accepts reasoning effort: default, low, high")
+        native = {
+            "env": {"AGENT_OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"},
+            "kwargs": {"version": agent_version, "reasoning_effort": None if effort == "default" else effort,
+                       "search_swe_openrouter": True},
+            "hosts": [OPENROUTER_HOST], "setup_hosts": harbor_native.SETUP_HOSTS, "files": {},
+        }
+        required.append("AGENT_OPENROUTER_API_KEY")
+    elif args.native:
         try:
             native = harbor_native.plan(args.agent, model, env, args.agent_config)
             if agent_version:
@@ -488,7 +503,8 @@ def main():
             print("Trusted gateway DNS servers: " + ", ".join(dns_servers))
         print("Environment values are passed to Harbor separately from the command:")
         if native:
-            print(f"Native agent config: {args.agent_config or 'defaults'}; agent env: {', '.join(sorted(native['env'])) or 'none'}")
+            route = "Antigravity OpenRouter bridge" if agy_openrouter else f"Native agent config: {args.agent_config or 'defaults'}"
+            print(f"{route}; agent env: {', '.join(sorted(native['env'])) or 'none'}")
             print("Native parameters and authentication-file bindings are passed in a private generated job configuration.")
         print(shlex.join(command))
         return 0

@@ -3,7 +3,7 @@ name: run-searchswe-evaluation
 description: Configure, launch, monitor and summarize evaluations of existing Search-SWE tasks using the search-swe CLI. Use when the user specifies models, harnesses, providers, tasks or resource settings for benchmark runs, including preparation-only requests.
 license: Apache-2.0
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Run Search-SWE evaluations
@@ -201,12 +201,12 @@ search-swe run agentic-search agentic-search-vectorless \
   --reasoning-effort max --concurrency 2 --dry-run
 ```
 
-For Antigravity CLI through the Gemini API, using a key with access to the
-requested model:
+For Antigravity CLI through OpenRouter, use CLI 0.3.1+ and
+`AGENT_OPENROUTER_API_KEY`:
 
 ```bash
 search-swe run agentic-search \
-  --agent antigravity-cli --provider native --model gemini/gemini-4-argon \
+  --agent antigravity-cli --provider openrouter --model google/gemini-4-argon \
   --reasoning-effort high --dry-run
 ```
 
