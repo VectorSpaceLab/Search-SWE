@@ -234,8 +234,16 @@ Each batch creates `jobs/evaluations/<unique-run>/` or a new `--output` director
 | `logs/` | Asset preparation and evaluation logs |
 | Harbor result paths recorded in `run.json` | Scores, verifier health, trajectories and artifacts |
 
-`completed` means the launcher exited successfully; check Harbor reports for
-scores and verifier health. Ctrl-C/SIGTERM cancels active runs and lets storage
+`completed` requires a successful launch, a finished Harbor trial and verifier,
+and a primary `reward` between 0 and 1 inclusive. A graded zero counts as completed, including when the
+agent timed out and the verifier scored its work. A setup failure or missing
+trial result marks the task `failed`. Batch runs and regrades use the same verifier
+diagnostics. A verifier timeout, failed answer or trajectory judging, or invalid
+resource evidence marks the task `invalid-measurement`. A completed audit may
+reject the submission and award a valid zero. Failed and invalid measurements
+give the batch a nonzero exit code.
+
+Ctrl-C/SIGTERM cancels active runs and lets storage
 teardown finish. Cleanup failure stops the batch, cancels other active runs,
 records `cleanup-error` and leaves queued tasks `not-started`; follow the recovery
 instructions before another batch. Tasks with

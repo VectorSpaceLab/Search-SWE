@@ -149,7 +149,7 @@ class RuntimeTests(unittest.TestCase):
     def test_actual_memory_excess(self):
         previous = runtime.MEMORY
         try:
-            runtime.MEMORY = int(Path('/sys/fs/cgroup/memory.current').read_text()) + (64 << 20)
+            runtime.MEMORY = self.worker.memory.memory_charge() + (64 << 20)
             self.worker.begin(5)
             with self.assertRaisesRegex(Violation, 'memory limit'):
                 self.worker.request({'op': 'memory'})
@@ -160,7 +160,7 @@ class RuntimeTests(unittest.TestCase):
     def test_shared_pages_are_not_charged_per_process(self):
         previous = runtime.MEMORY
         try:
-            runtime.MEMORY = int(Path('/sys/fs/cgroup/memory.current').read_text()) + (192 << 20)
+            runtime.MEMORY = self.worker.memory.memory_charge() + (192 << 20)
             self.worker.begin(5)
             self.assertEqual(self.worker.request({'op': 'shared_memory'}), {'ok': True})
             result = self.worker.finish()

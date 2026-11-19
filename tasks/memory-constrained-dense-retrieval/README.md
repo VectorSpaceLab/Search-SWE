@@ -169,7 +169,7 @@ assets, credentials, or hardware.
 
 ### Local regression checks
 
-Run `python -m unittest discover -s tasks/memory-constrained-dense-retrieval/tests -p "test_*.py"`. Runtime grading requires Linux blocking process waits and a cgroup-v2 container with memory.max=536870912 and memory.swap.max=0. The grader records final-verifier container memory peak/events; any OOM kill in that container fails the evaluation. The two Compose overlays set identical 16-CPU, 512-MiB/no-swap container limits. The native query launcher enforces one logical CPU for all online submission processes.
+Run `python -m unittest discover -s tasks/memory-constrained-dense-retrieval/tests -p "test_*.py"`. Runtime grading requires Linux blocking process waits and a container with a verified 512 MiB cgroup memory limit and no swap. The grader records final-verifier container memory peak/events; any OOM kill in that container fails the evaluation. The two Compose overlays set identical 16-CPU, 512-MiB/no-swap container limits. The native query launcher enforces one logical CPU for all online submission processes.
 
 The verifier snapshots each output immediately after observing client exit, in a root-only directory. Query timing ends after capture completes, so every scored byte was received within the measured interval. Validation uses only that protected snapshot; writes through retained descriptors after capture cannot change it. The same capture-inclusive duration controls the 0.5-second deadline and P95.
 

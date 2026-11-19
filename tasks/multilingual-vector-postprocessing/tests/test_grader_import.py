@@ -18,6 +18,9 @@ for name, attribute in [('evaluate', 'evaluate'), ('metrics', 'reward'), ('isola
     module = types.ModuleType(name)
     setattr(module, attribute, forbidden)
     sys.modules[name] = module
+failures = types.ModuleType('failures')
+failures.SubmissionViolation = type('SubmissionViolation', (RuntimeError,), {})
+sys.modules['failures'] = failures
 runpy.run_path(sys.argv[1], run_name='grade_import_probe')
 assert pathlib.Path(sys.modules['scoring_parameters'].__file__).resolve() == pathlib.Path(sys.argv[1]).with_name('scoring_parameters.py')
 """

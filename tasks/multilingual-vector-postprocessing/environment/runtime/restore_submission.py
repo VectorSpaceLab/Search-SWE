@@ -7,6 +7,7 @@ import sys
 
 sys.path.insert(0, "/task/runtime")
 from evaluate import verify_snapshot
+from failures import SubmissionViolation
 
 
 def main():
@@ -29,7 +30,8 @@ def main():
             shutil.rmtree(destination)
         shutil.copytree(source, destination)
     except Exception as error:
-        status = dict(valid=False, files=[], reason="Collected artifact restoration failed: " + str(error))
+        status = dict(valid=False, files=[], reason="Collected artifact restoration failed: " + str(error),
+                      failure_kind="submission" if isinstance(error, SubmissionViolation) else "infrastructure")
         if destination.is_symlink():
             destination.unlink()
         elif destination.exists():

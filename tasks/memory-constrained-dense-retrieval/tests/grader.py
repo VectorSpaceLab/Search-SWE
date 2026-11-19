@@ -16,6 +16,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from cgroup_resources import CgroupError, controller, write_resource_error
+
 
 TASK_DATA = Path("/task/data")
 PRIVATE_DATA = Path("/tests/data")
@@ -458,11 +460,20 @@ def run_timed(
 
 
 def resource_snapshot() -> dict[str, Any]:
-    """Container-wide cgroup v2 accounting includes service and descendants."""
-    root = Path("/sys/fs/cgroup")
-    snapshot = {}
-    for name in ("memory.max", "memory.swap.max", "memory.peak", "memory.events", "cpu.max"):
-        snapshot[name] = (root / name).read_text().strip()
+    """Container-wide accounting includes the service and its descendants."""
+    memory = controller("memory")
+    quota, period = controller("cpu").cpu_quota()
+    maximum, swap, peak = memory.memory_limit(), memory.swap_limit(), memory.memory_peak()
+    events, _ = memory.memory_events("oom_kill")
+    snapshot = {
+        "memory.max": "max" if maximum is None else str(maximum),
+        "memory.swap.max": "max" if swap is None else str(swap),
+        "memory.peak": None if peak is None else str(peak),
+        "memory.events": events.strip(),
+        "cpu.max": f"{quota if quota is not None else 'max'} {period}",
+    }
+    if memory.version == 1:
+        snapshot.update(cgroup_version=1, memory_events_source="memory.oom_control")
     return snapshot
 
 
@@ -872,7 +883,7 @@ def main() -> int:
         resources_before = resource_snapshot()
         report["resources_before"] = resources_before
         if resources_before["memory.max"] != str(MEMORY_LIMIT_BYTES) or resources_before["memory.swap.max"] != "0":
-            raise VerificationError("verifier requires a 512 MiB cgroup memory limit and no swap")
+            raise CgroupError("verifier requires a 512 MiB cgroup memory limit and no swap")
         prepare_workdirs()
         check_submission_boundary()
         report['query_cpu_boundary'] = validate_query_cpu_boundary()
@@ -989,6 +1000,9 @@ def main() -> int:
             "queries": results,
         })
     except Exception as error:
+        if isinstance(error, CgroupError):
+            write_resource_error(RESULTS_DIR.parent, error)
+            report.update(measurement_valid=False, failure_kind="cgroup_environment")
         report["errors"].append(str(error))
     finally:
         try:
@@ -998,7 +1012,9 @@ def main() -> int:
             report["errors"].append(f"cannot confirm submission cleanup: {error}")
         try:
             report["resources_final"] = resource_snapshot()
-        except OSError as error:
+        except CgroupError as error:
+            write_resource_error(RESULTS_DIR.parent, error)
+            report.update(valid=False, score=0.0, reward=0.0, measurement_valid=False, failure_kind="cgroup_environment")
             report["errors"].append(f"cannot record final cgroup resources: {error}")
 
     write_json(REPORT_PATH, report)

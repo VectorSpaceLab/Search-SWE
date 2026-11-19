@@ -12,14 +12,16 @@ import unittest
 from unittest.mock import patch
 
 import grade
+from cgroup_resources import Controller
 
 
 class RuntimeLimits(unittest.TestCase):
     def profile(self, gpu="GPU-assigned, NVIDIA A100-SXM4-40GB, 40960\n", **overrides):
         limits = {"cpu.max": "1600000 100000", "memory.max": str(16 * 1024**3),
-                  "memory.swap.max": "0"}
+                  "memory.swap.max": "0", "memory.events": "oom_kill 0"}
         limits.update(overrides)
-        with patch.object(Path, "read_text", lambda path: limits[path.name]), \
+        with patch.object(grade, "controller", return_value=Controller(2, Path("/sys/fs/cgroup"))), \
+                patch.object(Path, "read_text", lambda path, **_: limits[path.name]), \
                 patch.object(grade.subprocess, "check_output", return_value=gpu):
             return grade.verify_runtime_limits()
 
@@ -55,13 +57,14 @@ class RuntimeLimits(unittest.TestCase):
         for limits in ({"cpu.max": "max 100000"}, {"cpu.max": "800000 100000"},
                        {"memory.max": "max"}, {"memory.max": str(32 * 1024**3)},
                        {"memory.swap.max": "1"}):
-            with self.subTest(limits=limits), self.assertRaises(ValueError):
+            with self.subTest(limits=limits), self.assertRaises(grade.CgroupError):
                 self.profile(**limits)
 
     def test_gpu_probe_failure_is_an_infrastructure_error(self):
         limits = {"cpu.max": "1600000 100000", "memory.max": str(16 * 1024**3),
-                  "memory.swap.max": "0"}
-        with patch.object(Path, "read_text", lambda path: limits[path.name]), \
+                  "memory.swap.max": "0", "memory.events": "oom_kill 0"}
+        with patch.object(grade, "controller", return_value=Controller(2, Path("/sys/fs/cgroup"))), \
+                patch.object(Path, "read_text", lambda path, **_: limits[path.name]), \
                 patch.object(grade.subprocess, "check_output", side_effect=FileNotFoundError), \
                 self.assertRaises(FileNotFoundError):
             grade.verify_runtime_limits()

@@ -8,6 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import grade
+from cgroup_resources import CgroupError, write_resource_error
 from efficiency_metrics import efficiency_score, latency_metric, quality_gate
 
 
@@ -26,6 +27,8 @@ def run_phase(args, config, name, submission, *, control=False):
         phase.update(prepare_timeout_sec=300, query_timeout_sec=5)
     status = grade.main(SimpleNamespace(**options), phase)
     report = json.loads((options["logs"] / "evaluation.json").read_text())
+    if report.get("infrastructure_exception") == CgroupError.__name__:
+        raise CgroupError(f"{name}: {report['infrastructure_message']}")
     if status or report["infrastructure_error"]:
         raise RuntimeError(f"{name} infrastructure failure: {report.get('infrastructure_message')}")
     return report
@@ -86,6 +89,8 @@ def main():
                                          control_time, control_memory, reference)
                 result.update(**score, normalized_score_defined=True, reward=score["score"]/100)
     except Exception as error:
+        if isinstance(error, CgroupError):
+            write_resource_error(args.logs, error)
         result.update(infrastructure_error=True, reward=0., infrastructure_exception=type(error).__name__,
                       infrastructure_message=str(error))
     finally:

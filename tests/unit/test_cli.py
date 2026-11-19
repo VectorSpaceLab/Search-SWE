@@ -20,8 +20,9 @@ from search_swe import __version__
 from search_swe.cli import main, parser, configure_run
 from search_swe.configuration import Setting, read_env, save_env, check_config_destination, saved_setting, resolve_setting
 from search_swe.repository import discover, find_repo
+from search_swe.regrade import result_summary
 from search_swe.resources import Pool
-from search_swe.runner import doctor, run_batch
+from search_swe.runner import doctor, run_batch, trial_outcome
 
 
 class CliTests(unittest.TestCase):
@@ -220,6 +221,18 @@ class CliTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             pool.validate([task], {"FIXED_CPUSET": "6-7"})
 
+    def harbor_result(self):
+        name = self.tasks[0].name
+        task = {"path": str(self.tasks[0].path)}
+        return {
+            "task_name": name, "trial_name": "trial", "trial_uri": "file:///trial",
+            "task_id": task, "task_checksum": "test", "config": {"task": task, "agent": {"name": "codex"}},
+            "agent_info": {"name": "codex", "version": "test"},
+            "agent_execution": {"started_at": "2026-11-18T11:00:00Z", "finished_at": "2026-11-18T12:00:00Z"},
+            "verifier": {"started_at": "2026-11-18T12:01:00Z", "finished_at": "2026-11-18T12:02:00Z"},
+            "finished_at": "2026-11-18T12:03:00Z", "verifier_result": {"rewards": {"reward": 0}},
+        }
+
     def fake_launcher(self, *, fail=False, cancel=False):
         (self.root / "scripts/evaluation/run_task.py").write_text(
             'import json, os, signal, sys, time\nfrom pathlib import Path\n'
@@ -230,6 +243,9 @@ class CliTests(unittest.TestCase):
             'start=time.time(); time.sleep(0.4)\n'
             + ('os.kill(os.getppid(), signal.SIGINT); time.sleep(5)\n' if cancel else '')
             + '(output/"observed.json").write_text(json.dumps({"start":start,"end":time.time(),"cpus":cpus}))\n'
+            + 'trial=output/"job"/(task+"__fixture"); trial.mkdir(parents=True)\n'
+            + f'result={self.harbor_result()!r}; result.update(task_name=task, trial_name=trial.name)\n'
+            + '(trial/"result.json").write_text(json.dumps(result))\n'
             + ('raise SystemExit(7 if task=="first-search" else 0)\n' if fail else ''))
 
     def test_parallel_batch_overlaps_and_queues_without_cpu_overlap(self):
@@ -262,6 +278,188 @@ class CliTests(unittest.TestCase):
         first = json.loads((output / "first-search/observed.json").read_text())
         second = json.loads((output / "second-search/observed.json").read_text())
         self.assertGreaterEqual(second["start"], first["end"])
+
+    def test_cgroup_evidence_failure_marks_batch_invalid_even_when_harbor_exits_zero(self):
+        self.fake_launcher()
+        launcher = self.root / "scripts/evaluation/run_task.py"
+        with launcher.open("a") as script:
+            script.write(
+                'verifier=trial/"verifier"; verifier.mkdir()\n'
+                '(verifier/"cgroup-status.json").write_text(json.dumps({"measurement_valid": False}))\n'
+            )
+        output = self.root / "batch"
+        pool = Pool({0, 1}, 8192, [])
+        with redirect_stdout(io.StringIO()):
+            code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ), pool, 1, output)
+        row = json.loads((output / "run.json").read_text())["tasks"]["first-search"]
+        self.assertEqual(code, 1)
+        self.assertEqual(row["returncode"], 0)
+        self.assertEqual(row["status"], "invalid-measurement")
+        self.assertEqual(row["failure_kind"], "cgroup_environment")
+
+    def test_harbor_healthcheck_failure_before_verifier_fails_batch(self):
+        self.fake_launcher()
+        launcher = self.root / "scripts/evaluation/run_task.py"
+        with launcher.open("a") as script:
+            script.write(
+                'result.update(verifier=None, verifier_result=None, agent_execution=None, exception_info={'
+                '"exception_type":"HealthcheckError","exception_message":"private diagnostics",'
+                '"exception_traceback":"trace","occurred_at":result["finished_at"]})\n'
+                '(trial/"result.json").write_text(json.dumps(result))\n'
+            )
+        output = self.root / "batch"
+        with redirect_stdout(io.StringIO()):
+            code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ), Pool({0, 1}, 8192, []), 1, output)
+        summary = (output / "run.json").read_text()
+        row = json.loads(summary)["tasks"][self.tasks[0].name]
+        self.assertEqual((code, row["returncode"], row["status"]), (1, 0, "failed"))
+        self.assertEqual(row["exception_type"], "HealthcheckError")
+        self.assertNotIn("private diagnostics", summary)
+
+    def test_batch_distinguishes_exhausted_answer_judging_from_a_graded_zero(self):
+        for details, expected in (({"valid": False, "judge_error_count": 1}, "invalid-measurement"),
+                                  ({"valid": False, "judge_error_count": 0}, "completed"),
+                                  ({"valid": True, "judge_error_count": 0}, "completed")):
+            with self.subTest(details=details), tempfile.TemporaryDirectory() as temp:
+                self.fake_launcher()
+                launcher = self.root / "scripts/evaluation/run_task.py"
+                with launcher.open("a") as script:
+                    script.write(
+                        'result["task_name"]="search-swe/scientific-paper-qa"\n'
+                        '(trial/"result.json").write_text(json.dumps(result))\n'
+                        'evaluation=trial/"verifier/scientific-paper-qa-eval"\n'
+                        'evaluation.mkdir(parents=True)\n'
+                        f'(evaluation/"evaluation.json").write_text(json.dumps({details!r}))\n'
+                    )
+                output = Path(temp) / "batch"
+                with redirect_stdout(io.StringIO()):
+                    code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ),
+                                     Pool({0, 1}, 8192, []), 1, output)
+                row = json.loads((output / "run.json").read_text())["tasks"][self.tasks[0].name]
+                self.assertEqual(row["status"], expected)
+                self.assertEqual(code, 0 if expected == "completed" else 1)
+
+    def test_harbor_trial_requires_finished_verification_and_preserves_graded_agent_timeouts(self):
+        trial = self.root / "job/trial"
+        trial.mkdir(parents=True)
+        path = trial / "result.json"
+        (trial.parent / "result.json").write_text('{"stats": {"n_errored_trials": 1}}')
+        self.assertEqual(trial_outcome(self.root, 0)["status"], "failed")
+        path.write_text("{")
+        self.assertEqual(trial_outcome(self.root, 0)["status"], "failed")
+        result = self.harbor_result()
+        for override in ({"finished_at": None}, {"verifier": None}, {"verifier_result": None},
+                         {"verifier_result": {"rewards": {}}}, {"verifier_result": {"rewards": {"reward": True}}},
+                         {"verifier_result": {"rewards": {"reward": float("nan")}}},
+                         {"verifier_result": {"rewards": {"reward": -1}}}, {"verifier_result": {"rewards": {"reward": 5}}},
+                         {"verifier_result": {"rewards": {"latency_ms": 4.3}}}):
+            with self.subTest(override=override):
+                path.write_text(json.dumps({**result, **override}))
+                self.assertEqual(trial_outcome(self.root, 0)["status"], "failed")
+        exception = {"exception_type": "AgentTimeoutError", "exception_traceback": "", "exception_message": "",
+                     "occurred_at": "2026-11-18T12:00:01Z"}
+        for info, expected in ((None, "completed"), (exception, "completed"),
+                               ({**exception, "exception_type": "VerifierTimeoutError",
+                                 "occurred_at": result["finished_at"]}, "failed")):
+            with self.subTest(info=info):
+                path.write_text(json.dumps({**result, "exception_info": info}))
+                self.assertEqual(trial_outcome(self.root, 0)["status"], expected)
+        marker = trial / "verifier/cgroup-status.json"
+        marker.parent.mkdir()
+        marker.write_text("truncated")
+        self.assertEqual(trial_outcome(self.root, 0)["status"], "invalid-measurement")
+        path.unlink()
+        self.assertEqual(trial_outcome(self.root, 0)["status"], "invalid-measurement")
+
+    def test_batch_and_regrade_agree_on_verifier_diagnostics(self):
+        timeout = {"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "124"}}
+        primary_error = {"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "1"}}
+        rejected = {"healthy": True, "accepted": False, "measurement_valid": True}
+        failed = {"healthy": False, "accepted": False, "measurement_valid": False}
+        audit_failed = {"primary_valid": True, "audit_valid": False, "infrastructure_error": True,
+                        "healthy": False, "integrity": 0}
+        audit_rejected = {"primary_valid": True, "audit_valid": True, "infrastructure_error": False,
+                          "healthy": True, "integrity": 0}
+        primary_timeout = {"status.txt": "primary evaluator failed with status 124\n"}
+        submission_exit = {"status.txt": "primary evaluator failed with status 1\n"}
+        bad_output = {"judge_succeeded": True, "judge_output_valid": False}
+        for task, files, failure_kind in (
+            ("query-encoder-alignment", {"reward-details.json": timeout}, "verifier_timeout"),
+            ("query-encoder-alignment", {"reward-details.json": primary_error}, "verifier_failure"),
+            ("join-aware-table-retrieval", {"judge-status.json": failed}, "judge_infrastructure"),
+            ("join-aware-table-retrieval", {"judge-status.json": rejected}, None),
+            ("large-scale-formula-retrieval", {"audit-status.json": audit_failed}, "judge_infrastructure"),
+            ("large-scale-formula-retrieval", {"audit-status.json": audit_rejected}, None),
+            ("icsi-meeting-memory", {"gate-status.json": {"status": "infrastructure_error"}}, "verifier_measurement"),
+            ("icsi-meeting-memory", {"gate-status.json": {"status": "complete", "reason": "invalid_submission"}}, None),
+            ("agentic-search", {"jailbreak-status.json": {"status": "error"}}, "verifier_measurement"),
+            ("agentic-search", {"jailbreak-status.json": {"status": "ok", "passed": False}}, None),
+            ("training-error-tracing", {"reward-details.json": {"infrastructure_error": True}}, "verifier_measurement"),
+            ("training-error-tracing", {"reward-details.json": {"final_gate": audit_failed}}, "judge_infrastructure"),
+            ("memory-constrained-dense-retrieval", {"reward-details.json": {"final_gate": bad_output}}, "judge_infrastructure"),
+            ("long-pdf-evidence", {"reward-details.json": {"final_gate": bad_output}}, "judge_infrastructure"),
+            ("instruction-following-embedding", primary_timeout, "verifier_timeout"),
+            ("protein-text-bidirectional-retrieval", primary_timeout, "verifier_timeout"),
+            ("instruction-following-embedding", submission_exit, None),
+            ("protein-text-bidirectional-retrieval", submission_exit, None),
+            ("evolving-personal-memory", {"reward-details.json": {"semantic_judge_succeeded": False,
+                                                                  "trajectory_judge_succeeded": True}}, "answer_judging"),
+            ("training-error-tracing", {"reward-details.json": {"final_gate": {"primary_valid": False,
+                                                                              "audit_valid": True,
+                                                                              "infrastructure_error": False}}}, None),
+            ("query-encoder-alignment", {"reward-details.json": timeout, "judge-status.json": rejected}, "verifier_timeout"),
+            ("fixture", {"reward-details.json": {"final_gate": {"measurement_valid": False}}}, "verifier_measurement"),
+            ("fixture", {"reward-details.json": {"final_gate": {"evaluation_valid": True,
+                                                               "judge_succeeded": False}}}, "judge_infrastructure"),
+        ):
+            with self.subTest(task=task, files=files), tempfile.TemporaryDirectory() as temp:
+                self.fake_launcher()
+                with (self.root / "scripts/evaluation/run_task.py").open("a") as script:
+                    script.write(
+                        f'result["task_name"]="search-swe/{task}"\n'
+                        '(trial/"result.json").write_text(json.dumps(result))\n'
+                        '(trial/"verifier").mkdir()\n'
+                    )
+                    for name, content in files.items():
+                        payload = content if isinstance(content, str) else json.dumps(content)
+                        script.write(f'(trial/"verifier"/{name!r}).write_text({payload!r})\n')
+                output = Path(temp) / "batch"
+                with redirect_stdout(io.StringIO()):
+                    code = run_batch(self.root, self.tasks[:1], Setting(), dict(os.environ),
+                                     Pool({0, 1}, 8192, []), 1, output)
+                row = json.loads((output / "run.json").read_text())["tasks"][self.tasks[0].name]
+                regrade = {}
+                result_summary(Path(row["trial_result"]).parent, regrade)
+                valid = failure_kind is None
+                if valid:
+                    self.assertIsNot(regrade["measurement_valid"], False)
+                else:
+                    self.assertIs(regrade["measurement_valid"], False)
+                self.assertEqual(row["status"], regrade["status"])
+                self.assertEqual(row["status"], "completed" if valid else "invalid-measurement")
+                self.assertEqual(row.get("failure_kind"), failure_kind)
+                self.assertEqual(code, 0 if valid else 1)
+
+    def test_multilingual_collector_rejection_requires_a_healthy_audit_and_a_submission_error(self):
+        trial = self.root / "job/trial"
+        verifier = trial / "verifier"
+        verifier.mkdir(parents=True)
+        result = self.harbor_result()
+        result["task_name"] = "search-swe/multilingual-vector-postprocessing"
+        (trial / "result.json").write_text(json.dumps(result))
+        prefix = ("ContractViolation: Invalid frozen submission: Collected artifact restoration failed: "
+                  "Invalid frozen submission: ")
+        for reason, healthy, valid in (("Missing transform.py", True, True), ("Missing transform.py", False, False),
+                                       ("Cannot inspect submission open files or mappings", True, False)):
+            with self.subTest(reason=reason, healthy=healthy):
+                (verifier / "report.json").write_text(json.dumps({"valid": False, "reward": 0, "failure": prefix + reason}))
+                (verifier / "judge-status.json").write_text(json.dumps({
+                    "measurement_valid": False, "healthy": healthy, "primary_exit_status": "1",
+                    "exit_status": "0" if healthy else "78"}))
+                regrade = {}
+                result_summary(trial, regrade)
+                self.assertIs(regrade["measurement_valid"], valid)
+                self.assertEqual(trial_outcome(self.root, 0)["status"], regrade["status"])
 
     def test_cancellation_releases_allocations_and_records_not_started_tasks(self):
         self.fake_launcher(cancel=True)

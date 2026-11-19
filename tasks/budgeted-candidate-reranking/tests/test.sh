@@ -3,7 +3,7 @@ set -eu
 install -d -o root -g root -m 0700 /logs/verifier
 printf '0\n' > /logs/verifier/reward.txt
 printf '{"reward":0}\n' > /logs/verifier/reward.json
-rm -f /logs/verifier/reward-details.json /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/report.json
+rm -f /logs/verifier/cgroup-status.json /logs/verifier/reward-details.json /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/report.json
 chmod 0700 /tests
 /opt/conda/bin/python /tests/integrity_gate.py prepare
 chmod 0700 /logs/agent

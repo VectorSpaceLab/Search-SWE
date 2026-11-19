@@ -6,7 +6,7 @@ The task Python interpreter and its installed packages are available at `/opt/co
 
 The image also includes the CUDA 13.0 toolkit and runtime, Java 21 runtime, Node.js with npm, Node.js 24.16.0 with npm 11.13.0, FFmpeg, Poppler utilities, Cairo, Git, curl, `jq`, `build-essential`, `ca-certificates`, `libffi`, `libgomp`, `netbase`, `netcat`, `procps`, `tzdata`, `unzip`, and the related system runtime libraries.
 
-The task additionally installs RDKit 2024.3.5, DuckDB 1.3.2, TensorBoard 2.20.0, LightGBM 4.6.0 and nvidia-ml-py 12.560.30. APEX and its GPU top-k extension are installed from bundled sources. One GPU is provided. Linux Landlock ABI 3 or newer, seccomp, cgroup v2 and a compatible NVIDIA runtime are required.
+The task additionally installs RDKit 2024.3.5, DuckDB 1.3.2, TensorBoard 2.20.0, LightGBM 4.6.0 and nvidia-ml-py 12.560.30. APEX and its GPU top-k extension are installed from bundled sources. One GPU is provided. Linux Landlock ABI 3 or newer, seccomp, Linux cgroups and a compatible NVIDIA runtime are required.
 
 Read-only inputs are under `/task/library`, `/task/models`, `/task/train` and `/task/dev`. Public helpers are under `/task/runtime`. The `Library` helper in `library.py` provides `id_to_name`, `name_to_id`, `id_to_smiles`, `id_to_key` and `iter_smiles` for the supplied library. Property units are Da for `mol_wt`, RDKit Crippen logP for `logp`, counts for hydrogen-bond and rotatable-bond fields, and square angstroms for `tpsa`; rotatable bonds use RDKit's default strict definition.
 

@@ -48,14 +48,20 @@ def main():
         isolate(work)
     else:
         os.chdir(work)
+    # Acknowledge trusted startup before importing or running submitted code.
+    print('{"loading":true}', flush=True)
     # Do not import submitted Python or deserialize its weights before isolation.
     sys.path.insert(0, str(submission))
     spec = importlib.util.spec_from_file_location("submission_transform", submission / "transform.py")
     module = importlib.util.module_from_spec(spec)
-    with contextlib.redirect_stdout(sys.stderr), torch.inference_mode():
-        spec.loader.exec_module(module)
-        state = module.load(str(submission))
-        synchronize()
+    try:
+        with contextlib.redirect_stdout(sys.stderr), torch.inference_mode():
+            spec.loader.exec_module(module)
+            state = module.load(str(submission))
+    except Exception as error:
+        print(json.dumps({"error": type(error).__name__}), flush=True)
+        raise
+    synchronize()
     print('{"ready":true}', flush=True)
     for line in sys.stdin:
         try:

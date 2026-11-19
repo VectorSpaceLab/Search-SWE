@@ -22,6 +22,45 @@ checks. Task libraries run in the published CPU/GPU
 [base images](../../docker/README.md); ordinary runs pull these images.
 See [data and models](assets.md) to plan space for task copies, cache and outputs.
 
+## Linux cgroups
+
+The resource checks use the current container's CPU and memory controllers.
+This lets the same task budgets apply across different CPU and GPU models.
+
+| Task | cgroup v1 requirements |
+| --- | --- |
+| `constrained-molecular-search` | CPU CFS quota and a finite aggregate RAM limit |
+| `budgeted-candidate-reranking` | A finite RAM limit and the kernel's `oom_kill` counter for the container's memory cgroup |
+| `memory-constrained-dense-retrieval`, `training-error-tracing` | A finite RAM limit, a container-scoped `oom_kill` counter and no active host swap |
+| `budgeted-bimetric-retrieval`, `large-scale-formula-retrieval` | A finite RAM limit and no active host swap. The launcher subscribes to the kernel’s OOM notifications for the task and its parent. |
+
+On v1, the effective RAM cap includes ancestor memory and combined RAM+swap
+limits reported by the kernel, even when the container has a private cgroup
+namespace. The v1 OOM-kill checks use a leaf memory cgroup, the normal layout for a
+single Docker task container. The CPU affinity requirements and GPU
+requirements still apply. A missing diagnostic memory peak is recorded as
+`null`. Missing required evidence produces a verifier
+`cgroup-status.json` with `measurement_valid: false` and the failing check.
+For Formula, the agent environment also checks for the required evidence
+before starting the coding agent. If that health check fails, the batch records
+a failed trial with the Harbor exception type.
+
+For Bimetric and Formula, the launcher registers v1 notifications on the host
+and exposes a read-only bind mount with a private socket to the trusted task
+process. This distinguishes successful page-cache reclaim from an OOM, including
+an OOM without a kill. Bimetric checks the interval after verifier startup.
+Formula also checks the full development container lifetime. If notifications
+are unavailable, untouched RAM and combined RAM+swap limits can still establish
+a clean run. Formula also recognizes a kernel-recorded OOM kill. Unattributable
+pressure produces an invalid measurement.
+
+The probes were verified on Linux 6.8 in a Docker v2 container and an OCI
+container on a v1 guest, including successful reclaim and a kernel OOM kill.
+
+See the [Linux cgroup v1 memory controller](https://docs.kernel.org/admin-guide/cgroup-v1/memory.html),
+[cgroup v2 interface](https://docs.kernel.org/admin-guide/cgroup-v2.html)
+and [CPU bandwidth control](https://docs.kernel.org/scheduler/sched-bwc.html).
+
 ## Select a task
 
 Use `search-swe list` to discover `tasks/*/task.toml`. Read the chosen package:

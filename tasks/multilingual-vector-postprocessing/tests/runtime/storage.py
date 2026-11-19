@@ -5,6 +5,7 @@ from pathlib import Path
 import stat
 import time
 
+from failures import SubmissionViolation
 from isolation import UID
 
 
@@ -156,5 +157,5 @@ class StorageBudget:
             used = self.fixed_bytes + logical_bytes(self.work_roots, include_retained=True)
             self.peak_bytes = max(self.peak_bytes, used)
         if self.peak_bytes > self.limit:
-            raise RuntimeError("100 GiB total task storage exceeded")
+            raise SubmissionViolation("100 GiB total task storage exceeded")
         return self.peak_bytes

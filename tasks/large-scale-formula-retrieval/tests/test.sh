@@ -6,7 +6,7 @@ cd /tests
 install -d -m 0700 /logs /logs/verifier
 printf '0\n' > /logs/verifier/reward.txt
 printf '{"reward":0}\n' > /logs/verifier/reward.json
-rm -f /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/reward-details.json /logs/verifier/evaluation.json
+rm -f /logs/verifier/cgroup-status.json /logs/verifier/audit.json /logs/verifier/audit-status.json /logs/verifier/reward-details.json /logs/verifier/evaluation.json
 rm -f /audit/output/audit.json /audit/output/reward-details.json
 /opt/conda/bin/python /tests/integrity_gate.py prepare
 cleanup() {

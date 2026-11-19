@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from . import runner, updates
 from .configuration import DEFAULTS, read_env
+from .measurement import verifier_measurement
 from .repository import VARIABLE, check_compatibility, discover
 from .resources import Pool, cpu_ids
 from .submission_checks import verify_submission_keys
@@ -92,38 +93,6 @@ def recorded_inputs(source, task):
                          + ", ".join(missing))
 
 
-def measurement_valid(verifier, task_name):
-    evaluation = f"{task_name.rsplit('/', 1)[-1]}-eval/evaluation.json"
-    health = []
-    for name in ("reward-details.json", "judge-status.json", evaluation):
-        try:
-            data = json.loads((verifier / name).read_text())
-        except (OSError, ValueError):
-            continue
-        if not isinstance(data, dict):
-            continue
-        if name == evaluation:
-            # The primary grader records failed answer judgments separately
-            # from the final gate's trajectory judge status.
-            errors = data.get("judge_error_count")
-            if data.get("valid") is False and type(errors) is int and errors > 0:
-                return False
-            continue
-        guard = data.get("timeout_guard")
-        phase = guard.get("failed_phase") if isinstance(guard, dict) else None
-        if isinstance(phase, str) and phase.strip():
-            return False
-        for details in (data, data.get("final_gate")):
-            if not isinstance(details, dict):
-                continue
-            if type(details.get("measurement_valid")) is bool:
-                health.append(details["measurement_valid"])
-            elif details.get("evaluation_valid") is True and details.get("judge_succeeded") is False:
-                # Some finalizers write zero when the audit could not complete.
-                health.append(False)
-    return all(health) if health else None
-
-
 def result_summary(trial, report):
     from harbor.models.trial.result import TrialResult
 
@@ -137,7 +106,7 @@ def result_summary(trial, report):
         report.update(measurement_valid=False, status="verifier-error",
                       exception_type=result.exception_info.exception_type)
     elif rewards:
-        valid = measurement_valid(trial / "verifier", result.task_name)
+        valid, _ = verifier_measurement(trial / "verifier", result.task_name, rewards.get("reward"))
         report.update(measurement_valid=valid, status="invalid-measurement" if valid is False else "completed")
 
 

@@ -11,6 +11,7 @@ import subprocess
 import time
 
 import psutil
+from cgroup_resources import controller
 
 UID = 10001
 MEMORY = 4 << 30
@@ -149,6 +150,7 @@ class Worker:
         os.set_blocking(self.process.stderr.fileno(), False)
         os.set_blocking(self.process.stdin.fileno(), False)
         self.buffer = bytearray()
+        self.memory = controller('memory')
         self.last_sample = self.last_disk = 0
         self.peak = self.disk_peak = self.lifetime_peak = 0
         self.phase_start = time.monotonic()
@@ -172,7 +174,7 @@ class Worker:
             # Aggregate RSS double-counts shared pages in multiprocess indexes.
             # Keep it as a diagnostic, but enforce the container's actual charge,
             # including page cache and descendants, consistent with Docker.
-            if int(Path('/sys/fs/cgroup/memory.current').read_text()) > MEMORY:
+            if self.memory.memory_charge() > MEMORY:
                 raise Violation('memory limit')
         if force or now - self.last_disk >= .5:
             size = self.fixed_bytes + os.fstat(self.stderr.fileno()).st_size

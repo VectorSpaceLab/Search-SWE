@@ -9,6 +9,7 @@ from scoring_parameters import SCORING
 
 sys.path.insert(0, "/task/runtime")
 from evaluate import evaluate
+from failures import SubmissionViolation
 from metrics import reward
 from isolation import cleanup
 
@@ -17,7 +18,6 @@ OUT = Path("/logs/verifier")
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    report = {"valid": False, "reward": 0.}
     try:
         anchors = SCORING
         reward(0., anchors["baseline"], anchors["reference"])
@@ -26,16 +26,18 @@ def main():
                           frozen_status="/var/tmp/submission-freeze-status.json")
         if report["total_queries"] != 13002:
             raise RuntimeError("Fixed hidden query population is incomplete")
-        report.update(valid=True, baseline=anchors["baseline"], reference=anchors["reference"],
+        report.update(status="ok", valid=True, baseline=anchors["baseline"], reference=anchors["reference"],
                       reward=reward(report["Q"], anchors["baseline"], anchors["reference"]))
         report["score_100"] = report["reward"] * 100
     except Exception as error:
-        report = {"valid": False, "reward": 0., "failure": type(error).__name__ + ": " + str(error)}
+        status = "submission_failed" if isinstance(error, SubmissionViolation) else "infrastructure_error"
+        report = {"status": status, "valid": False, "reward": 0.,
+                  "failure": type(error).__name__ + ": " + str(error)}
         print(report["failure"], file=sys.stderr)
     finally:
         cleanup()
     (OUT / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
-    return 0 if report["valid"] else 1
+    return int(report["status"] == "infrastructure_error")
 
 
 if __name__ == "__main__":

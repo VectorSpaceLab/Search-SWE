@@ -6,6 +6,8 @@ import secrets
 import time
 
 import numpy as np
+from cgroup_resources import CgroupError, controller, write_resource_error
+import v1_oom
 from development import check_development
 from runtime import Worker, Violation
 from scoring import read_qrels, evaluate
@@ -24,10 +26,17 @@ def write(name, obj):
 
 
 def finish_report(report):
-    events = Path('/sys/fs/cgroup/memory.events').read_text()
-    report['cgroup_memory_events'] = events
-    report['cgroup_memory_peak_bytes'] = int(Path('/sys/fs/cgroup/memory.peak').read_text())
-    if any(int(r.split()[1]) for r in events.splitlines() if r.split()[0] in ['oom', 'oom_kill']):
+    memory = controller('memory')
+    report['cgroup_memory_peak_bytes'] = memory.memory_peak()
+    if memory.version == 1:
+        sample = v1_oom.snapshot(memory)
+        report['cgroup_v1_memory'] = sample
+        exceeded = v1_oom.violation(sample, include_kills=True)
+    else:
+        events, counters = memory.memory_events('oom', 'oom_kill')
+        report['cgroup_memory_events'] = events
+        exceeded = counters['oom'] or counters['oom_kill']
+    if exceeded:
         report['failure'] = 'memory limit'
     if report.get('failure'):
         report['raw_reward'] = 0.0
@@ -37,6 +46,15 @@ def finish_report(report):
 
 def main():
     started = time.monotonic()
+    memory = controller('memory')
+    if memory.memory_limit() != 4 << 30:
+        raise CgroupError('Formula requires a 4 GiB aggregate memory cgroup')
+    if memory.version == 1:
+        memory.swap_limit()
+        v1_oom.snapshot(memory)
+    else:
+        memory.memory_events('oom', 'oom_kill')
+    memory.memory_charge()
     queries = [json.loads(s) for s in Path('/tests/data/queries.jsonl').read_text().splitlines()]
     labels = read_qrels(Path('/tests/data/qrels.tsv'))
     if len(queries) != 76 or set(labels) != {q['query_id'] for q in queries}:
@@ -179,5 +197,7 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as exc:
+        if isinstance(exc, CgroupError):
+            write_resource_error(LOG, exc)
         write('infrastructure-error.json', {'error': f'{type(exc).__name__}: {exc}'})
         raise

@@ -64,7 +64,10 @@ def main():
                           TRAJECTORY.is_file() and TRAJECTORY.stat().st_size > 0,
                           read_json(OUT/'reward-details.json'))
     primary_status = os.environ.get('PRIMARY_STATUS')
-    measurement_valid = primary_status == '0' and report.get('valid') is True and health['healthy']
+    submission_failed = (report.get('status') == 'submission_failed' and report.get('valid') is False
+                         and type(report.get('reward')) in (int, float) and report['reward'] == 0)
+    primary_valid = report.get('valid') is True or submission_failed
+    measurement_valid = primary_status == '0' and primary_valid and health['healthy']
     if not measurement_valid:
         result['reward'] = 0.
     health.update(primary_exit_status=primary_status, measurement_valid=measurement_valid)

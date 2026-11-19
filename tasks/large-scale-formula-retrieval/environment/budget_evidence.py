@@ -39,7 +39,30 @@ def check_log_budget(source):
     return total
 
 
+def verify_memory():
+    from cgroup_resources import CgroupError, controller
+
+    memory = controller('memory')
+    if memory.memory_limit() != 4 << 30:
+        raise CgroupError('Formula requires a 4 GiB aggregate memory cgroup')
+    if memory.version == 1:
+        memory.swap_limit()
+    return memory
+
+
+def memory_record(memory):
+    import v1_oom
+
+    record = {'cgroup_memory_peak_bytes': memory.memory_peak()}
+    if memory.version == 1:
+        record['cgroup_v1_memory'] = v1_oom.snapshot(memory)
+    else:
+        record['memory_events'] = memory.memory_events('oom', 'oom_kill')[0]
+    return record
+
+
 def setup():
+    memory_record(verify_memory())
     bounded = Path(os.environ['FORMULA_DIAGNOSTICS'])
     assert bounded.is_dir() and os.stat(bounded).st_dev == os.stat('/app').st_dev
     # Sticky ownership protects root-published framework artifacts while each
@@ -112,8 +135,8 @@ def freeze():
     assert logs.is_symlink() and logs.readlink() == bounded
     # Stop all solver/background processes before snapshotting their logs.
     stop_solver()
-    record = {'memory_events': Path('/sys/fs/cgroup/memory.events').read_text(),
-              'cgroup_memory_peak_bytes': int(Path('/sys/fs/cgroup/memory.peak').read_text())}
+    memory = verify_memory()
+    record = memory_record(memory)
     os.chown(bounded, 0, 0)
     bounded.chmod(0o500)
     snapshot = Path(tempfile.mkdtemp(prefix='.agent-logs-', dir='/logs'))

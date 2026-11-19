@@ -13,6 +13,7 @@ import numpy as np
 import psutil
 sys.path.insert(0, "/task/runtime")
 from evaluate import evaluate, verify_snapshot
+from failures import SubmissionViolation
 
 ROOT = Path("/app/control-private")
 
@@ -291,13 +292,25 @@ return None''')
     def test_nan_and_zero_document_outputs_rejected(self):
         for expression in ("return np.full_like(vectors, np.nan)", "return np.zeros_like(vectors)"):
             self.module(transform=expression)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SubmissionViolation):
                 self.run_control()
 
     def test_batch_dependent_function_rejected(self):
         self.module(transform="return np.roll(vectors, 1, axis=1) if len(vectors) == 1 else vectors.copy()")
-        with self.assertRaisesRegex(RuntimeError, "frozen function changed"):
+        with self.assertRaisesRegex(SubmissionViolation, "frozen function changed"):
             self.run_control()
+
+    def test_worker_load_exception_is_a_submission_failure(self):
+        self.module(load="raise ValueError('invalid submission weights')")
+        with self.assertRaisesRegex(SubmissionViolation, "Document preparation failed: ValueError"):
+            self.run_control()
+
+    def test_worker_exit_during_load_or_document_preparation_is_a_submission_failure(self):
+        for script in ({"load": "os._exit(2)"}, {"transform": "os._exit(2)"}):
+            with self.subTest(script=script):
+                self.module(**script)
+                with self.assertRaisesRegex(SubmissionViolation, "Transform exited before responding"):
+                    self.run_control()
 
     def test_labels_rewards_network_and_privilege_protected(self):
         marker = ROOT / "secret-label.txt"
@@ -338,11 +351,11 @@ return None'''
     def test_preparation_timeout_stops_worker(self):
         self.module(load="import time\ntime.sleep(60)\nreturn None")
         began = time.monotonic()
-        with self.assertRaises(TimeoutError):
+        with self.assertRaisesRegex(SubmissionViolation, "timed out"):
             evaluate("/app/submission", ROOT / "corpus", ROOT / "hidden", ROOT / "development",
                      ROOT / "logs/preparation-timeout", sandbox=True, require_gpu=False,
-                     preparation_seconds=.5, frozen_status=ROOT / "frozen-status.json")
-        self.assertLess(time.monotonic() - began, 10)
+                     preparation_seconds=5, frozen_status=ROOT / "frozen-status.json")
+        self.assertLess(time.monotonic() - began, 15)
 
     def test_query_timeout_preserves_denominators(self):
         self.module(transform="if vectors[0,2] > .5:\n    import time\n    time.sleep(60)\nreturn vectors.copy()")
@@ -406,7 +419,11 @@ return None'''
         self.assertTrue(restore()["valid"])
         self.assertEqual(self.run_control()["Q"], 1)
         (collected / "transform.py").write_text("tampered")
-        self.assertFalse(restore()["valid"])
+        self.assertEqual(restore()["failure_kind"], "infrastructure")
+        self.assertFalse(any(Path("/app/submission").iterdir()))
+        (parent / "submission-freeze-status.json").write_text(json.dumps(
+            {"valid": False, "files": [], "reason": "Missing transform.py", "failure_kind": "submission"}))
+        self.assertEqual(restore()["failure_kind"], "submission")
         self.assertFalse(any(Path("/app/submission").iterdir()))
 
 

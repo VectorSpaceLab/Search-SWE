@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+from cgroup_resources import CgroupError
 from development import check_development
 
 
@@ -39,9 +40,27 @@ class DevelopmentTests(unittest.TestCase):
                 self.memory(oom, oom_kill)
                 self.assertEqual(check_development(self.evidence)[1], 'development memory limit')
 
+    def test_v1_frozen_evidence(self):
+        path = self.evidence / 'agent.json'
+        watch = {'id': 'test', 'initial_hits': [0, 0], 'events': 0, 'parent_events': 0}
+        sample = {'limit_hits': [1, 7], 'oom_kill': 0, 'observer': watch}
+        record = {'cgroup_v1_memory': sample}
+        path.write_text(json.dumps(record))
+        self.assertIsNone(check_development(self.evidence)[1])
+        watch['events'] = 1
+        path.write_text(json.dumps(record))
+        self.assertEqual(check_development(self.evidence)[1], 'development memory limit')
+        sample['observer'] = None
+        path.write_text(json.dumps(record))
+        with self.assertRaises(CgroupError):
+            check_development(self.evidence)
+        path.write_text(json.dumps({**record, 'memory_events': 'oom 0\noom_kill 0\n'}))
+        with self.assertRaisesRegex(CgroupError, 'Conflicting'):
+            check_development(self.evidence)
+
     def test_missing_memory_evidence_is_an_error(self):
         (self.evidence / 'agent.json').unlink()
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(CgroupError):
             check_development(self.evidence)
 
     def test_malformed_memory_evidence_is_an_error(self):
@@ -49,10 +68,11 @@ class DevelopmentTests(unittest.TestCase):
                         '{"memory_events": ""}', '{"memory_events": "oom 0"}',
                         '{"memory_events": "oom_kill 0"}',
                         '{"memory_events": "oom unknown\\noom_kill 0"}',
-                        '{"memory_events": "oom -1\\noom_kill 0"}']:
+                        '{"memory_events": "oom -1\\noom_kill 0"}',
+                        '{"memory_events": "oom 0\\noom 1\\noom_kill 0"}',
+                        '[]', 'null']:
             (self.evidence / 'agent.json').write_text(content)
-            with self.subTest(content=content), self.assertRaises(
-                    (ValueError, KeyError, AttributeError)):
+            with self.subTest(content=content), self.assertRaises(CgroupError):
                 check_development(self.evidence)
 
     def test_evidence_privacy(self):

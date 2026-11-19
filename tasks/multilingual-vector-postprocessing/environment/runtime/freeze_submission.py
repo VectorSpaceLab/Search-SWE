@@ -12,6 +12,7 @@ import time
 
 import psutil
 sys.path.insert(0, "/task/runtime")
+from failures import SubmissionViolation
 from storage import StorageBudget
 
 
@@ -71,24 +72,24 @@ def main():
         storage = StorageBudget()
         status["task_storage_bytes"] = storage.check(force=True)
         if root.is_symlink() or not root.is_dir():
-            raise ValueError("Submission root must be a real directory")
+            raise SubmissionViolation("Submission root must be a real directory")
         paths = []
         for parent, directories, files in os.walk(root, followlinks=False):
             for name in directories:
                 path = Path(parent) / name
                 if not stat.S_ISDIR(path.lstat().st_mode):
-                    raise ValueError("Linked or non-directory submission entry")
+                    raise SubmissionViolation("Linked or non-directory submission entry")
             for name in files:
                 path = Path(parent) / name
                 mode = path.lstat().st_mode
                 if not stat.S_ISREG(mode):
-                    raise ValueError("Linked or non-regular submission entry")
+                    raise SubmissionViolation("Linked or non-regular submission entry")
                 paths.append((path, mode))
         if not (root / "transform.py").is_file():
-            raise ValueError("Missing transform.py")
+            raise SubmissionViolation("Missing transform.py")
         total = sum(path.stat().st_size for path, mode in paths)
         if total > 100 * 1024**3:
-            raise ValueError("Submission exceeds the total storage limit")
+            raise SubmissionViolation("Submission exceeds the total storage limit")
         for path, mode in sorted(paths):
             with path.open("rb") as handle:
                 digest = hashlib.file_digest(handle, "sha256").hexdigest()
@@ -100,7 +101,8 @@ def main():
             Path(parent).chmod(0o555)
         status.update(valid=True, reason=None, submitted_bytes=total)
     except Exception as error:
-        status.update(valid=False, reason=str(error), files=[])
+        status.update(valid=False, reason=str(error), files=[],
+                      failure_kind="submission" if isinstance(error, SubmissionViolation) else "infrastructure")
         # Still supply a real, harmless artifact to the framework, so a bad
         # submission is a measured zero rather than a collection-path error.
         if root.exists() or root.is_symlink():
