@@ -373,16 +373,28 @@ class CliTests(unittest.TestCase):
 
     def test_batch_and_regrade_agree_on_verifier_diagnostics(self):
         timeout = {"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "124"}}
+        primary_error = {"timeout_guard": {"failed_phase": "primary_evaluation", "exit_status": "1"}}
         rejected = {"healthy": True, "accepted": False, "measurement_valid": True}
         failed = {"healthy": False, "accepted": False, "measurement_valid": False}
-        for task, files, valid in (
-            ("query-encoder-alignment", {"reward-details.json": timeout}, False),
-            ("join-aware-table-retrieval", {"judge-status.json": failed}, False),
-            ("join-aware-table-retrieval", {"judge-status.json": rejected}, True),
-            ("query-encoder-alignment", {"reward-details.json": timeout, "judge-status.json": rejected}, False),
-            ("fixture", {"reward-details.json": {"final_gate": {"measurement_valid": False}}}, False),
+        audit_failed = {"primary_valid": True, "audit_valid": False, "infrastructure_error": True,
+                        "healthy": False, "integrity": 0}
+        audit_rejected = {"primary_valid": True, "audit_valid": True, "infrastructure_error": False,
+                          "healthy": True, "integrity": 0}
+        for task, files, failure_kind in (
+            ("query-encoder-alignment", {"reward-details.json": timeout}, "verifier_timeout"),
+            ("query-encoder-alignment", {"reward-details.json": primary_error}, "verifier_failure"),
+            ("join-aware-table-retrieval", {"judge-status.json": failed}, "judge_infrastructure"),
+            ("join-aware-table-retrieval", {"judge-status.json": rejected}, None),
+            ("large-scale-formula-retrieval", {"audit-status.json": audit_failed}, "judge_infrastructure"),
+            ("large-scale-formula-retrieval", {"audit-status.json": audit_rejected}, None),
+            ("icsi-meeting-memory", {"gate-status.json": {"status": "infrastructure_error"}}, "verifier_measurement"),
+            ("icsi-meeting-memory", {"gate-status.json": {"status": "complete", "reason": "invalid_submission"}}, None),
+            ("agentic-search", {"jailbreak-status.json": {"status": "error"}}, "verifier_measurement"),
+            ("agentic-search", {"jailbreak-status.json": {"status": "ok", "passed": False}}, None),
+            ("query-encoder-alignment", {"reward-details.json": timeout, "judge-status.json": rejected}, "verifier_timeout"),
+            ("fixture", {"reward-details.json": {"final_gate": {"measurement_valid": False}}}, "verifier_measurement"),
             ("fixture", {"reward-details.json": {"final_gate": {"evaluation_valid": True,
-                                                               "judge_succeeded": False}}}, False),
+                                                               "judge_succeeded": False}}}, "judge_infrastructure"),
         ):
             with self.subTest(task=task, files=files), tempfile.TemporaryDirectory() as temp:
                 self.fake_launcher()
@@ -401,9 +413,11 @@ class CliTests(unittest.TestCase):
                 row = json.loads((output / "run.json").read_text())["tasks"][self.tasks[0].name]
                 regrade = {}
                 result_summary(Path(row["trial_result"]).parent, regrade)
+                valid = failure_kind is None
                 self.assertIs(regrade["measurement_valid"], valid)
                 self.assertEqual(row["status"], regrade["status"])
                 self.assertEqual(row["status"], "completed" if valid else "invalid-measurement")
+                self.assertEqual(row.get("failure_kind"), failure_kind)
                 self.assertEqual(code, 0 if valid else 1)
 
     def test_multilingual_collector_rejection_requires_a_healthy_audit_and_a_submission_error(self):

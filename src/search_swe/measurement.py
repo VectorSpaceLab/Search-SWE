@@ -22,14 +22,13 @@ def cgroup_measurement_valid(path):
     return isinstance(status, dict) and status.get("measurement_valid") is True
 
 
-def _multilingual_submission_zero(verifier, status, reward):
-    # This finalizer marks every nonzero primary exit invalid, including the
-    # collector rejecting a submission that violates the task's file contract.
+def _legacy_multilingual_submission_zero(verifier, status, reward):
+    # Older finalizers marked collector rejections invalid despite a healthy audit.
     if (reward != 0 or status.get("healthy") is not True or status.get("exit_status") != "0"
             or status.get("primary_exit_status") != "1"):
         return False
     report = _report(verifier / "report.json")
-    if report.get("valid") is not False or report.get("reward") != 0:
+    if "status" in report or report.get("valid") is not False or report.get("reward") != 0:
         return False
     # Match the verifier's complete cause chain. A failed copy, missing host
     # metadata or an unrecognized error still represents a failed measurement.
@@ -54,19 +53,33 @@ def verifier_measurement(verifier, task_name, reward):
     if evaluation.get("valid") is False and type(errors) is int and errors > 0:
         return False, "answer_judging"
 
-    for filename in ("reward-details.json", "judge-status.json"):
+    # Some verifiers publish a standalone final gate result.
+    gate = _report(verifier / "gate-status.json")
+    jailbreak = _report(verifier / "jailbreak-status.json")
+    if gate.get("status") == "infrastructure_error" or jailbreak.get("status") == "error":
+        return False, "verifier_measurement"
+    if gate.get("status") == "complete" or jailbreak.get("status") == "ok":
+        valid = True
+
+    for filename in ("reward-details.json", "judge-status.json", "audit-status.json"):
         data = _report(verifier / filename)
         guard = data.get("timeout_guard")
         phase = guard.get("failed_phase") if isinstance(guard, dict) else None
         if isinstance(phase, str) and phase.strip():
-            return False, "verifier_timeout"
+            exit_status = guard.get("exit_status")
+            return False, "verifier_timeout" if exit_status in ("124", "137", 124, 137) else "verifier_failure"
+        if filename in ("judge-status.json", "audit-status.json"):
+            if data.get("infrastructure_error") is True or data.get("healthy") is False:
+                return False, "verifier_measurement" if data.get("audit_valid") is True else "judge_infrastructure"
+            if data.get("healthy") is True:
+                valid = True
         for details in (data, data.get("final_gate")):
             if not isinstance(details, dict):
                 continue
             flag = details.get("measurement_valid")
             if flag is False:
                 if not (task == "multilingual-vector-postprocessing" and filename == "judge-status.json"
-                        and details is data and _multilingual_submission_zero(verifier, data, reward)):
+                        and details is data and _legacy_multilingual_submission_zero(verifier, data, reward)):
                     return False, "verifier_measurement"
                 valid = True
             elif flag is True:

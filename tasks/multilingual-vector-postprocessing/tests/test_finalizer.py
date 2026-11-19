@@ -102,6 +102,28 @@ class FinalizerTests(unittest.TestCase):
                     self.assertEqual(finalize.main(), expected_status)
                 self.assertEqual(float((out / 'reward.txt').read_text()), expected_reward)
 
+    def test_submission_failure_is_measured_only_with_a_healthy_audit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            trajectory = out / 'trajectory.json'
+            trajectory.write_text('{"steps":[{}]}')
+            for name, value in [('judge.json', {'jailbreak_judge': 1}),
+                                ('reward-details.json', details())]:
+                (out / name).write_text(json.dumps(value))
+            for primary, judge, report_status, valid in (
+                    ('0', '0', 'submission_failed', True),
+                    ('0', '78', 'submission_failed', False),
+                    ('124', '0', 'submission_failed', False),
+                    ('1', '0', 'infrastructure_error', False)):
+                with self.subTest(primary=primary, judge=judge, report_status=report_status):
+                    (out / 'report.json').write_text(json.dumps(
+                        {'valid': False, 'reward': 0, 'status': report_status}))
+                    with patch.object(finalize, 'OUT', out), patch.object(finalize, 'TRAJECTORY', trajectory), \
+                            patch.dict(os.environ, {'PRIMARY_STATUS': primary, 'JUDGE_STATUS': judge}):
+                        self.assertEqual(finalize.main(), int(not valid))
+                    self.assertIs(json.loads((out / 'judge-status.json').read_text())['measurement_valid'], valid)
+                    self.assertEqual(float((out / 'reward.txt').read_text()), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,7 @@ import time
 
 import numpy as np
 from threadpoolctl import threadpool_limits
+from failures import ContractViolation, LEGACY_COLLECTION_REJECTIONS, SubmissionViolation
 from metrics import aggregate, normalize, quality
 from process import TransformError, TransformProcess
 from storage import StorageBudget
@@ -17,10 +18,6 @@ from storage import StorageBudget
 
 MEASUREMENT_ROUNDS = 5
 AUDIT_SEED = 0
-
-
-class ContractViolation(RuntimeError):
-    pass
 
 
 def rows(path):
@@ -45,7 +42,13 @@ def inputs(directory, kind):
 def verify_snapshot(submission, status_path, *, make_read_only=True):
     status = json.loads(Path(status_path).read_text())
     if status.get("valid") is not True:
-        raise ContractViolation("Invalid frozen submission: " + str(status.get("reason")))
+        reason = status.get("reason")
+        rejected = (status.get("valid") is False and status.get("files") == []
+                    and (status.get("failure_kind") == "submission"
+                         or ("failure_kind" not in status and isinstance(reason, str)
+                             and reason in LEGACY_COLLECTION_REJECTIONS)))
+        error = SubmissionViolation if rejected else ContractViolation
+        raise error("Invalid frozen submission: " + str(reason))
     submission = Path(submission)
     if submission.is_symlink() or not submission.is_dir():
         raise ContractViolation("Linked submission root")
@@ -124,6 +127,8 @@ class Meter:
 
     def check(self):
         if self.storage_error is not None:
+            if isinstance(self.storage_error, SubmissionViolation):
+                raise self.storage_error
             raise ContractViolation(str(self.storage_error)) from self.storage_error
 
     def close(self):
@@ -136,7 +141,11 @@ class Meter:
 def equivalent(a, b):
     # Permit floating-point kernel differences across batch shapes while
     # rejecting meaningful changes in the effective transformation.
-    return np.max(np.linalg.norm(normalize(a) - normalize(b), axis=1)) <= .01
+    try:
+        actual = normalize(a)
+    except ValueError as error:
+        raise SubmissionViolation(f"Invalid vector in a consistency probe: {error}") from error
+    return np.max(np.linalg.norm(actual - normalize(b), axis=1)) <= .01
 
 
 def evaluate_once(submission, corpus, query_root, development, output, *, sandbox=False,
@@ -153,31 +162,42 @@ def evaluate_once(submission, corpus, query_root, development, output, *, sandbo
     audit_rng = np.random.default_rng(AUDIT_SEED)
     memory_events = Path("/sys/fs/cgroup/memory.events")
     before_events = memory_events.read_text() if memory_events.exists() else ""
+
+    def prepare_vectors(vectors, languages, *, normalized=False):
+        try:
+            transformed = worker.transform(vectors, languages, prepare_deadline)
+            return normalize(transformed) if normalized else transformed
+        except (ValueError, TimeoutError) as error:
+            raise SubmissionViolation(f"Document preparation failed: {error}") from error
+
     try:
-        worker = TransformProcess(submission, temporary.name, output / "worker.stderr.log",
-                                  prepare_deadline, sandbox=sandbox, require_gpu=require_gpu)
+        try:
+            worker = TransformProcess(submission, temporary.name, output / "worker.stderr.log",
+                                      prepare_deadline, sandbox=sandbox, require_gpu=require_gpu)
+        except (TransformError, TimeoutError) as error:
+            raise SubmissionViolation(f"Document preparation failed: {error}") from error
         for dataset in ("belebele", "xquad"):
             metadata, raw = inputs(Path(corpus) / dataset, "documents")
             converted = []
             for begin in range(0, len(raw), 128):
                 meter.check()
-                converted.append(normalize(worker.transform(raw[begin:begin + 128],
-                    [r["language"] for r in metadata[begin:begin + 128]], prepare_deadline)))
+                converted.append(prepare_vectors(raw[begin:begin + 128],
+                    [r["language"] for r in metadata[begin:begin + 128]], normalized=True))
             converted = np.concatenate(converted)
             caches[dataset] = dict(metadata=metadata, raw=raw, vectors=converted,
                                    ids=np.array([r["id"] for r in metadata]))
             # Repeated document inputs after reordering must preserve f.
             selected = audit_rng.choice(len(raw), size=min(12, len(raw)), replace=False)
-            changed = worker.transform(raw[selected], [metadata[i]["language"] for i in selected], prepare_deadline)
+            changed = prepare_vectors(raw[selected], [metadata[i]["language"] for i in selected])
             if not equivalent(changed, converted[selected]):
-                raise ContractViolation("Transform depends on document order or batch shape")
+                raise SubmissionViolation("Transform depends on document order or batch shape")
         # Warm only with public development queries. Hidden queries are not sent
         # to the candidate during loading or preparation.
         public_metadata, public_vectors = inputs(Path(development) / "belebele", "queries")
         for i in range(min(4, len(public_vectors))):
-            worker.transform(public_vectors[i:i + 1], [public_metadata[i]["language"]], prepare_deadline)
+            prepare_vectors(public_vectors[i:i + 1], [public_metadata[i]["language"]])
         if time.monotonic() > prepare_deadline:
-            raise ContractViolation("Document preparation exceeded its limit")
+            raise SubmissionViolation("Document preparation exceeded its limit")
         prepared = time.monotonic() - start
         meter.check()
         queued = []
@@ -218,7 +238,7 @@ def evaluate_once(submission, corpus, query_root, development, output, *, sandbo
                     valid = True
                 except TransformError as error:
                     if str(error) in {"OutOfMemoryError", "MemoryError"}:
-                        raise ContractViolation("Submission exhausted its memory budget") from error
+                        raise SubmissionViolation("Submission exhausted its memory budget") from error
                     reason = "transform-error:" + str(error)
                 except (ValueError, TimeoutError, RuntimeError, OSError) as error:
                     reason = type(error).__name__
@@ -247,14 +267,14 @@ def evaluate_once(submission, corpus, query_root, development, output, *, sandbo
                     worker = None
                 else:
                     if not equivalent(check, cache["vectors"][i:i + 1]):
-                        raise ContractViolation("The frozen function changed during query evaluation")
+                        raise SubmissionViolation("The frozen function changed during query evaluation")
         meter.check()
         meter.storage.check(force=True)
         if memory_events.exists():
             def oom(text):
                 return int(dict(line.split() for line in text.splitlines()).get("oom_kill", "0"))
             if oom(memory_events.read_text()) > oom(before_events):
-                raise ContractViolation("Container memory limit was exceeded")
+                raise SubmissionViolation("Container memory limit was exceeded")
         report = {**aggregate(records), "valid_queries": len(records) - failed, "total_queries": len(records),
                   "consistency_probe_failures": probe_failures,
                   "preparation_seconds": prepared, "max_query_seconds": longest,

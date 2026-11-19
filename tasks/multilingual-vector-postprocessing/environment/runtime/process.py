@@ -53,7 +53,10 @@ class TransformProcess:
         self.drainer = threading.Thread(target=drain, daemon=True)
         self.drainer.start()
         try:
-            if self.read(deadline) != {"ready": True}:
+            response = self.read(deadline)
+            if "error" in response:
+                raise TransformError(str(response["error"]))
+            if response != {"ready": True}:
                 raise ValueError("Transform did not become ready")
         except BaseException:
             self.close()
