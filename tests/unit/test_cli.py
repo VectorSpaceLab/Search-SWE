@@ -47,6 +47,13 @@ class CliTests(unittest.TestCase):
             self.assertIn("needs a 0.3.x checkout", error.getvalue())
             self.assertFalse((self.root / ".env").exists())
 
+    def test_incompatible_checkout_harbor_requirement_reports_update(self):
+        from search_swe.repository import check_compatibility
+        (self.root / "pyproject.toml").write_text(
+            '[project]\nname="search-swe"\nversion="0.3.1"\ndependencies=["harbor<0.22"]\n')
+        with self.assertRaisesRegex(ValueError, "search-swe update"):
+            check_compatibility(self.root)
+
     def test_compatible_patch_checkout_is_accepted(self):
         from search_swe.repository import check_compatibility
         (self.root / "pyproject.toml").write_text('[project]\nname="search-swe"\nversion="0.3.1"\n')

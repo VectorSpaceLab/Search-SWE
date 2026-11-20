@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import AsyncMock, patch
 from types import SimpleNamespace
@@ -206,6 +208,40 @@ class PiTrajectoryTests(unittest.TestCase):
 
 
 class AdapterTests(unittest.IsolatedAsyncioTestCase):
+    @unittest.skipUnless(hasattr(Pi, "_load_trajectory"), "Harbor has no native Pi session converter")
+    async def test_partial_native_session_preserves_stream_atif_and_usage(self):
+        from harbor.models.agent.context import AgentContext
+
+        with tempfile.TemporaryDirectory() as directory:
+            logs = Path(directory)
+            agent = PreinstalledPi(logs_dir=logs, model_name="openai/gpt-4o")
+            session = logs / "pi/sessions/session.jsonl"
+            session.parent.mkdir(parents=True)
+            user = {"role": "user", "content": [{"type": "text", "text": "task"}]}
+            assistant = {"role": "assistant", "stopReason": "stop", "content": [{"type": "text", "text": "done"}],
+                         "usage": {"input": 7, "output": 3, "cacheRead": 2}}
+            header = {"type": "session", "id": "pi-test-session", "version": 3}
+            session.write_text(json.dumps(header) + "\n" + json.dumps({"type": "message", "id": "u1",
+                               "message": user}) + '\n{"type":"message","message":')
+            environment = AsyncMock()
+            environment.exec.return_value = SimpleNamespace(return_code=0, stdout="", stderr="")
+
+            async def download(remote, local):
+                local.write_text(with_session(stream(user, assistant)))
+
+            async def upload(environment, *, content, **kwargs):
+                (logs / "trajectory.json").write_text(content)
+
+            environment.download_file.side_effect = download
+            agent._upload_config_text = upload
+            with patch.object(Pi, "run", new_callable=AsyncMock):
+                await agent.run("task", environment, AgentContext())
+            context = AgentContext()
+            agent.populate_context_post_run(context)
+            exported = json.loads((logs / "trajectory.json").read_text())
+            self.assertEqual([s["message"] for s in exported["steps"]], ["task", "done"])
+            self.assertEqual((context.n_input_tokens, context.n_output_tokens, context.n_cache_tokens), (9, 3, 2))
+
     async def test_native_pi_uses_the_same_converter_and_preserves_native_auth(self):
         from pathlib import Path
         from scripts.evaluation.native_agents import NativeAgent

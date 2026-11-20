@@ -67,7 +67,7 @@ layer; runtime proxy settings apply to task traffic.
 
 ## Supported runtime
 
-- Native Linux amd64, IPv4, Harbor 0.22.0 and local rootful Docker through a
+- Native Linux amd64, IPv4, Harbor 0.22.0 or later and local rootful Docker through a
   Unix socket, without user namespace remapping. Docker Desktop and remote or
   rootless Docker are unsupported.
 - Direct mode supports public and restricted phases. **Proxy mode supports

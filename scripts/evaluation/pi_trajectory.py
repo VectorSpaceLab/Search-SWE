@@ -3,6 +3,8 @@
 from datetime import datetime, timezone
 import hashlib
 import json
+from pathlib import Path
+import tempfile
 
 
 def _content(content):
@@ -157,13 +159,23 @@ class PiTrajectory:
     """Export Pi's actual event stream for both integrated and native routes."""
     SUPPORTS_ATIF = True
 
+    def populate_context_post_run(self, context):
+        metrics = getattr(self, "_search_swe_stream_metrics", None)
+        if metrics is None or not hasattr(self, "_load_trajectory"):
+            return super().populate_context_post_run(context)
+        # The verifier receives the ATIF generated from this run's event stream.
+        # Harbor's session parser can accept a prefix of a truncated session.
+        context.n_input_tokens = metrics.get("total_prompt_tokens")
+        context.n_output_tokens = metrics.get("total_completion_tokens")
+        context.n_cache_tokens = metrics.get("total_cached_tokens")
+        context.cost_usd = metrics.get("total_cost_usd")
+
     async def run(self, instruction, environment, context):
-        from pathlib import Path
-        import tempfile
         import uuid
         from harbor.models.trajectories.trajectory import Trajectory
         from scripts.evaluation.harness_install import execute
 
+        self._search_swe_stream_metrics = None
         try:
             await super().run(instruction, environment, context)
         finally:
@@ -180,5 +192,6 @@ class PiTrajectory:
                 # Replace any solver-created file with a fresh, root-owned
                 # artifact; a pre-existing open file descriptor stays detached.
                 await execute(environment, f"chown 0:0 {staged} && chmod 600 {staged} && mv -f {staged} /logs/agent/trajectory.json", user="root")
+                self._search_swe_stream_metrics = trajectory["final_metrics"]
         if error:
             raise RuntimeError(f"Pi execution failed: {error}")

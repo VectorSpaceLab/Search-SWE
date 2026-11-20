@@ -103,46 +103,26 @@ Host tests alone do not establish network enforcement.
 
 ## Direct Harbor runs
 
-The repository launcher derives and supplies the coding-model host. When
-invoking Harbor directly on a non-public task, add the matching hostname:
+Preview the Harbor command for the task, using the Search-SWE Python environment
+from the checkout root. For example:
 
 ```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
-  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
-  --agent scripts.evaluation.harbor_agents:PreinstalledCodex --model MODEL_ID \
-  --ak version=0.164.0 \
-  --allow-agent-host MODEL_API_HOST
+python scripts/evaluation/run_task.py --task agentic-search --agent codex \
+  --openrouter --model openai/gpt-6-luna --dry-run
 ```
 
-For the supported official-Anthropic Claude Code mode, use the pinned wrapper,
-an environment reference rather than a literal secret, and the fixed host:
+The preview shows the managed Codex agent, phase-scoped Docker adapter, credential
+references and coding-model host. To run this example directly, prepare the task
+assets, export the referenced variables and use the displayed command from the
+checkout root. Use the launcher for native agents and Antigravity through
+OpenRouter so it creates their private job configuration at startup. It also
+handles task-specific preparation and GPU flags for the installed Harbor version.
+An explicit device passed directly to the adapter must be a full GPU UUID.
 
-```bash
-PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}" harbor run --path tasks/TASK_NAME \
-  --env scripts.evaluation.harbor_environments:PhaseScopedDocker \
-  --agent scripts.evaluation.harbor_agents:PreinstalledClaudeCode \
-  --model ANTHROPIC_MODEL_ID \
-  --ak version=2.1.309 \
-  --ae 'ANTHROPIC_API_KEY=${AGENT_ANTHROPIC_API_KEY}' \
-  --allow-agent-host api.anthropic.com
-```
-
-The repository launcher additionally removes inherited gateway, OAuth, and
-Bedrock selectors. Reproduce that sanitization when bypassing it; custom
-Anthropic endpoints and alternate Claude authentication modes are not part of
-the supported configuration.
-
-These commands use the default direct gateway image and pull it if missing locally.
-To select another matching image, add `--environment-kwarg egress_image=YOUR_IMAGE`. Manually using
-`--env docker` selects installed Harbor and does not receive this checkout's
-capability restrictions or connection revocation when policies change.
-
-Do not use `--allow-environment-host` for a coding-model endpoint: that changes
-the environment baseline rather than only the agent phase. Do not add package
-registries, source-code hosts, wildcard domains, or a general HTTP proxy to a
-task allowlist. A general proxy reduces destination filtering to the proxy
-itself, so `scripts/evaluation/run_task.py` rejects `CONTAINER_PROXY` for the current
-restricted task policies.
+Keep the coding endpoint in `--allow-agent-host` so access is scoped to the
+agent phase. Use the [gateway configuration](../../docs/evaluation/network.md)
+for an upstream proxy or a locally built image. Keep the task's declared
+verifier policy and service credentials with the verifier.
 
 Image pulls and Docker build downloads happen before untrusted task execution
 and are configured at the Docker daemon/build layer; they are not task runtime

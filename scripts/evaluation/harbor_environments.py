@@ -16,6 +16,7 @@ from harbor.environments.capabilities import EnvironmentCapabilities
 from harbor.environments.docker.docker import DockerEnvironment, _sanitize_docker_compose_project_name
 from harbor.models.task.config import NetworkMode, TaskOS
 
+from src.search_swe.harbor_compat import legacy_gpu_override
 from scripts.egress.compose import SERVICE, declared_services, is_separate_verifier_context, validate_final
 from scripts.egress.config import DEFAULT_IMAGE, direct_config, exact_hosts, load_config, require_supported_harbor
 from scripts.egress.ownership import ProjectLock, PrivateDirectory, owner_root
@@ -61,6 +62,13 @@ def gateway_image_info(reference):
 class GpuDocker(BoundedLogs, DockerEnvironment):
     """Select task CPU/GPU devices in independent per-phase Compose copies."""
 
+    @classmethod
+    def parse_options(cls, kwargs=None):
+        options = dict(kwargs or {})
+        for name in ("cpu_set", "gpu_device"):
+            options.pop(name, None)
+        return super().parse_options(options)
+
     def __init__(self, *args, gpu_device=None, cpu_set=None, **kwargs):
         if gpu_device is not None and not GPU_UUID.fullmatch(gpu_device):
             raise ValueError("gpu_device must be a resolved UUID; use scripts/evaluation/run_task.sh --gpu-device")
@@ -82,7 +90,10 @@ class GpuDocker(BoundedLogs, DockerEnvironment):
                 self._oom_observer = V1OomObserver()
         try:
             if self._oom_observer:
-                self._mounts.append(await self._oom_observer.start())
+                mount = await self._oom_observer.start()
+                self._mounts.append(mount)
+                if getattr(self, "_host_mounts", self._mounts) is not self._mounts:
+                    self._host_mounts.append(mount)
             await super().start(force_build)
         except BaseException:
             self._close_oom_observer()
@@ -90,7 +101,8 @@ class GpuDocker(BoundedLogs, DockerEnvironment):
 
     def _close_oom_observer(self):
         if getattr(self, "_oom_observer", None) is not None:
-            self._mounts = [mount for mount in self._mounts if mount.get("source") != self._oom_observer.directory.name]
+            for mounts in (self._mounts, getattr(self, "_host_mounts", [])):
+                mounts[:] = [mount for mount in mounts if mount.get("source") != self._oom_observer.directory.name]
             self._oom_observer.close()
             self._oom_observer = None
 
@@ -129,6 +141,13 @@ class GpuDocker(BoundedLogs, DockerEnvironment):
 
 class PhaseScopedDocker(GpuDocker):
     """Linux/rootful/local, exact-host, phase-scoped direct or proxy egress."""
+
+    @classmethod
+    def parse_options(cls, kwargs=None):
+        options = dict(kwargs or {})
+        for name in ("egress_config", "egress_dns", "egress_image"):
+            options.pop(name, None)
+        return super().parse_options(options)
 
     def __init__(self, *args, egress_config: str | None = None, egress_image: str = DEFAULT_IMAGE,
                  egress_dns: str | None = None, **kwargs):
@@ -173,7 +192,8 @@ class PhaseScopedDocker(GpuDocker):
     def capabilities(self):
         return EnvironmentCapabilities(disable_internet=True, network_allowlist=True,
                                        network_allowlist_hostnames=True, dynamic_network_policy=True,
-                                       mounted=not bool(getattr(self, "_bounded_agent_logs", None)), docker_compose=True)
+                                       mounted=not bool(getattr(self, "_bounded_agent_logs", None)), docker_compose=True,
+                                       gpus=not legacy_gpu_override())
 
     def _check_policy(self, policy):
         if (policy.network_mode == NetworkMode.PUBLIC

@@ -108,7 +108,8 @@ class GpuSelection(unittest.TestCase):
             self.assertEqual(selected.returncode, 0, selected.stderr)
             self.assertIn("gpu_device=2", selected.stdout)
             self.assertIn("PhaseScopedDocker", selected.stdout)
-            self.assertIn("--override-gpus 0", selected.stdout)
+            from search_swe.harbor_compat import legacy_gpu_override
+            self.assertEqual("--override-gpus 0" in selected.stdout, legacy_gpu_override())
             default = launch("code-embedding-finetuning")
             self.assertEqual(default.returncode, 0, default.stderr)
             self.assertNotIn("gpu_device=", default.stdout)

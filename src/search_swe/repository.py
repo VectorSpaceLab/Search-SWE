@@ -1,6 +1,7 @@
 """Discover a checkout and read task metadata without executing task code."""
 
 from dataclasses import dataclass
+from importlib.metadata import version as installed_version
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,8 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+
+from packaging.requirements import Requirement
 
 from . import __version__
 
@@ -44,6 +47,17 @@ def compatible_version(version):
     return isinstance(version, str) and re.fullmatch(re.escape(series) + r"\.\d+", version) is not None
 
 
+def harbor_requirement_error(project):
+    for dependency in project.get("dependencies", []):
+        requirement = Requirement(dependency)
+        if requirement.name.lower() != "harbor" or (requirement.marker and not requirement.marker.evaluate()):
+            continue
+        installed = installed_version("harbor")
+        if installed not in requirement.specifier:
+            return f"Checkout requires {requirement}, but Harbor {installed} is installed."
+    return None
+
+
 def check_compatibility(root):
     """Patch releases share a CLI/checkout contract within their release series."""
     version = checkout_version(root)
@@ -56,6 +70,10 @@ def check_compatibility(root):
     if not (root / "scripts/evaluation/run_task.py").is_file():
         raise ValueError(f"Search-SWE checkout at {root} is missing its evaluation launcher. "
                          "Restore or update the checkout, or select a complete checkout with --repo.")
+
+    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    if problem := harbor_requirement_error(project):
+        raise ValueError(f"{problem} Run search-swe update or select a compatible checkout with --repo.")
 
 
 def preference_path():

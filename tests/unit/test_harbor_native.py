@@ -69,6 +69,7 @@ class NativeAgents(unittest.TestCase):
             self.assertEqual(main(["agents", "--json"]), 0)
         rows = json.loads(output.getvalue())
         self.assertEqual({item["name"] for item in rows}, expected)
+        self.assertEqual(next(item for item in rows if item["name"] == "pi")["atif_source"], "search-swe")
         self.assertFalse(next(item for item in rows if item["name"] == "aider")["native_atif"])
         for name in expected:
             with self.subTest(agent=name):
@@ -121,7 +122,13 @@ class NativeAgents(unittest.TestCase):
     def test_grok_byok_matches_the_actual_native_provider_contract(self):
         import tomllib
         from harbor.agents.installed.grok_build import GrokBuild
-        for provider, native in GrokBuild._PROVIDERS.items():
+        from search_swe.harbor_compat import HARBOR_VERSION
+        providers = getattr(GrokBuild, "_PROVIDERS", {
+            "openrouter": {"base_url": "https://openrouter.ai/api/v1", "env_key": "OPENROUTER_API_KEY"},
+            "openai": {"base_url": "https://api.openai.com/v1", "env_key": "OPENAI_API_KEY"},
+            "anthropic": {"base_url": "https://api.anthropic.com/v1", "env_key": "ANTHROPIC_API_KEY"},
+        })
+        for provider, native in providers.items():
             with self.subTest(provider=provider):
                 model = provider + "/vendor/model"
                 key = native['env_key']
@@ -131,7 +138,10 @@ class NativeAgents(unittest.TestCase):
                 agent = NativeAgent(search_swe_native_name='grok-build', logs_dir=self.root,
                                     model_name=model, extra_env={key: 'fixture-byok'})
                 configured = tomllib.loads(agent._build_config_toml())['model']['vendor/model']
-                self.assertEqual(configured['env_key'], key)
+                self.assertEqual(configured['env_key'], agent.model_connection.api_key_destination_name
+                                 if HARBOR_VERSION.release[:2] >= (0, 25) else key)
+                if HARBOR_VERSION.release[:2] >= (0, 25):
+                    self.assertEqual(agent.model_connection.env[configured['env_key']], 'fixture-byok')
                 self.assertEqual(configured['base_url'], native['base_url'])
                 self.assertIn(native['base_url'].split('/')[2], plan['hosts'])
                 self.assertNotIn('api.x.ai', plan['hosts'])
@@ -189,6 +199,7 @@ class NativeAgents(unittest.TestCase):
 
     def test_service_default_auth_and_explicit_native_overrides_are_preserved(self):
         for name, model, key in (('grok-build', 'grok-code-fast-1', 'XAI_API_KEY'),
+                                 ('kimi-code', 'kimi-k3', 'KIMI_MODEL_API_KEY'),
                                  ('junie', 'sonnet', 'JUNIE_API_KEY'),
                                  ('vibe', 'devstral-small-latest', 'MISTRAL_API_KEY')):
             with self.subTest(agent=name):
@@ -202,6 +213,74 @@ class NativeAgents(unittest.TestCase):
         self.assertEqual(plan['env'], {'JUNIE_ANTHROPIC_API_KEY': '${AGENT_PRIVATE_KEY}'})
         self.assertEqual(plan['required'], {'AGENT_PRIVATE_KEY'})
         self.assertIn('custom.example', plan['hosts'])
+
+    def test_model_routed_native_agents_use_the_selected_providers_credentials(self):
+        import tomllib
+        if not hasattr(harbor_native.agent_class("kimi-code"), "resolve_model_connection_for_execution"):
+            self.skipTest("Provider inference for these native agents starts in Harbor 0.25")
+        native_env = {"AGENT_KIMI_MODEL_API_KEY": "moonshot-only", "AGENT_XAI_API_KEY": "xai-only",
+                      "AGENT_COPILOT_GITHUB_TOKEN": "github-only", "AGENT_MISTRAL_API_KEY": "mistral-only",
+                      "AGENT_JUNIE_API_KEY": "jetbrains-only", "AGENT_KIMI_MODEL_BASE_URL": "https://kimi.example"}
+        cases = (("kimi-code", "openrouter/openai/gpt-4o", "OPENROUTER_API_KEY", "openrouter.ai"),
+                 ("grok-build", "gpt-4o", "OPENAI_API_KEY", "api.openai.com"),
+                 ("junie", "gpt-4o", "OPENAI_API_KEY", "api.openai.com"),
+                 ("copilot-cli", "openrouter/openai/gpt-4o", "OPENROUTER_API_KEY", "openrouter.ai"),
+                 ("vibe", "openrouter/openai/gpt-4o", "OPENROUTER_API_KEY", "openrouter.ai"))
+        for name, model, key, host in cases:
+            with self.subTest(agent=name):
+                source = "AGENT_" + key
+                env = {**native_env, source: "provider-only"}
+                missing = harbor_native.plan(name, model, native_env)
+                self.assertEqual(missing["required"], {"AGENT_JUNIE_OPENAI_API_KEY" if name == "junie" else source})
+                plan = harbor_native.plan(name, model, env)
+                self.assertEqual(plan["required"], {source})
+                self.assertEqual(plan["hosts"], [host])
+                bindings = {dest: env[match[1]] if (match := harbor_native.REFERENCE.fullmatch(value)) else value
+                            for dest, value in plan["env"].items()}
+                agent = NativeAgent(search_swe_native_name=name, model_name=model, logs_dir=self.root,
+                                    extra_env=bindings)
+                self.assertEqual(agent.model_connection.api_key, "provider-only")
+                if name == "kimi-code":
+                    runtime = agent._runtime_env()
+                    self.assertEqual(runtime["KIMI_MODEL_API_KEY"], "provider-only")
+                    self.assertEqual(runtime["KIMI_MODEL_BASE_URL"], "https://openrouter.ai/api/v1")
+                elif name == "grok-build":
+                    config = tomllib.loads(agent._build_config_toml())["model"][model]
+                    self.assertEqual(config["base_url"], "https://api.openai.com/v1")
+                    self.assertEqual(agent.model_connection.env[config["env_key"]], "provider-only")
+                elif name == "junie":
+                    with agent_environment(bindings):
+                        auth = agent._build_auth_env(agent._resolve_provider())
+                        self.assertEqual(auth["JUNIE_OPENAI_API_KEY"], "provider-only")
+                        self.assertNotIn("JUNIE_API_KEY", auth)
+                elif name == "copilot-cli":
+                    self.assertTrue(agent._uses_custom_provider(agent.model_connection))
+                    self.assertEqual(agent.model_connection.execution_base_url, "https://openrouter.ai/api/v1")
+                else:
+                    with agent_environment(bindings):
+                        self.assertEqual(agent._get_backend_and_key_env()[0], "generic")
+                        self.assertIn("https://openrouter.ai/api/v1", agent._build_config_toml())
+
+    def test_native_egress_uses_the_execution_adapters_endpoint(self):
+        if not hasattr(harbor_native.agent_class("codex"), "resolve_model_connection_for_execution"):
+            self.skipTest("Harbor execution endpoint resolution starts in 0.25")
+        from urllib.parse import urlsplit
+        model = "moonshot/kimi-k2"
+        plan = harbor_native.plan("terminus-2", model, {"AGENT_MOONSHOT_API_KEY": "fixture"})
+        agent = NativeAgent(search_swe_native_name="terminus-2", model_name=model, logs_dir=self.root,
+                            extra_env={"MOONSHOT_API_KEY": "fixture"})
+        self.assertEqual(plan["hosts"], [urlsplit(agent.model_connection.inference_base_url).hostname])
+
+        model = "openai/gpt-4o"
+        endpoint = "https://models.example/v1"
+        config = {"model_provider": "private", "model_providers": {
+            "private": {"name": "private", "base_url": endpoint, "wire_api": "responses"}}}
+        plan = harbor_native.plan("codex", model, {}, self.config({"kwargs": {"config": config}}))
+        agent = NativeAgent(search_swe_native_name="codex", model_name=model, logs_dir=self.root,
+                            config=config, extra_env={"OPENAI_API_KEY": "fixture"})
+        effective = agent._build_effective_config(agent._resolved_base_url())
+        self.assertEqual(effective["model_providers"][effective["model_provider"]]["base_url"], endpoint)
+        self.assertEqual(plan["hosts"], ["models.example"])
 
     def test_native_model_can_be_cleared_in_scripted_settings(self):
         current = Setting("antigravity-cli", "native", "gemini/gemini-2.5-flash", "default")
@@ -250,7 +329,7 @@ class NativeAgents(unittest.TestCase):
                     patch.object(sys, "argv", [*common, "--agent", "nop", "--model", "", "--dry-run"]), \
                     redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(run_task.main(), 0)
-                self.assertNotIn("-m", shlex.split(output.getvalue().splitlines()[-1]))
+                self.assertNotIn("--model", shlex.split(output.getvalue().splitlines()[-1]))
 
     def test_native_auth_files_are_owned_by_the_agent_and_failures_are_checked(self):
         async def exercise(fail):
@@ -275,6 +354,69 @@ class NativeAgents(unittest.TestCase):
         for fail in (False, True):
             asyncio.run(exercise(fail))
 
+    def test_native_factory_constructs_agents_without_a_default_version(self):
+        for name in ("terminus-2", "dspy-rlm", "computer-1"):
+            if name not in harbor_native.names():
+                continue
+            with self.subTest(name=name):
+                config = AgentConfig(import_path="scripts.evaluation.native_agents:Harness_" + name.replace("-", "_"),
+                                     model_name="openai/gpt-4o", env={"OPENAI_API_KEY": "fixture"},
+                                     kwargs={"search_swe_native_name": name})
+                agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+                self.assertEqual(agent.HARNESS_NAME, name)
+
+    def test_preflight_auth_resolves_only_selected_agent_environment(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 25):
+            self.skipTest("Harbor credential preflight starts in 0.25")
+        cases = [
+            ("native_agents:Harness_claude_code", "anthropic/claude-sonnet-4-6", {"ANTHROPIC_API_KEY": "fixture"}),
+            ("harbor_agents:ManagedClaudeCode", "anthropic/claude-sonnet-4-6", {"ANTHROPIC_API_KEY": "fixture"}),
+            ("harbor_agents:ManagedPi", "google/gemini-2.5-flash", {"GEMINI_API_KEY": "fixture"}),
+        ]
+        with patch.dict(os.environ, {"CLAUDE_FORCE_OAUTH": "1", "OPENAI_BASE_URL": "https://unrelated.example",
+                                     "ANTHROPIC_API_BASE": "https://unrelated.example"}):
+            for route, model, env in cases:
+                with self.subTest(route=route):
+                    kwargs = {"search_swe_native_name": "claude-code"} if "Harness_" in route else {}
+                    config = AgentConfig(import_path="scripts.evaluation." + route, model_name=model, env=env, kwargs=kwargs)
+                    AgentFactory.run_preflight(config)
+                    agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+                    self.assertNotIn("unrelated.example", str(agent.model_connection.env))
+
+    def test_native_openrouter_selects_its_own_key_and_endpoint(self):
+        env = {"AGENT_OPENAI_API_KEY": "other-secret", "AGENT_OPENAI_BASE_URL": "https://other.example",
+               "AGENT_OPENROUTER_API_KEY": "router-secret", "AGENT_OPENROUTER_BASE_URL": "https://router.example/v1"}
+        for name in ("pi", "opencode"):
+            with self.subTest(name=name):
+                plan = harbor_native.plan(name, "openrouter/openai/gpt-4o", env)
+                self.assertEqual(plan["required"], {"AGENT_OPENROUTER_BASE_URL", "AGENT_OPENROUTER_API_KEY"})
+                self.assertEqual(plan["hosts"], ["router.example"])
+                bindings = {key: env[value[2:-1]] for key, value in plan["env"].items()}
+                config = AgentConfig(import_path="scripts.evaluation.native_agents:Harness_" + name,
+                                     model_name="openrouter/openai/gpt-4o", env=bindings,
+                                     kwargs={"search_swe_native_name": name})
+                connection = AgentFactory.create_agent_from_config(config, logs_dir=self.root).model_connection
+                self.assertIn("router-secret", connection.env.values())
+                self.assertNotIn("other-secret", connection.env.values())
+                incomplete = harbor_native.plan(name, "openrouter/openai/gpt-4o", {"AGENT_OPENAI_API_KEY": "other-secret"})
+                self.assertIn("AGENT_OPENROUTER_API_KEY", incomplete["required"])
+
+    def test_native_custom_endpoint_matches_runtime_on_modern_harbor(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 25):
+            self.skipTest("Harbor common connection options start in 0.25")
+        url = "https://router.example/v1"
+        for agent, model in (("codex", "openai/gpt-4o"), ("grok-build", "google/gemini-2.5-pro"),
+                             ("grok-build", "openrouter/openai/gpt-4o")):
+            with self.subTest(agent=agent, model=model):
+                config = self.config({"kwargs": {"base_url": url}})
+                plan = harbor_native.plan(agent, model, {}, config)
+                self.assertEqual(plan["hosts"], ["router.example"])
+                instance = NativeAgent(search_swe_native_name=agent, logs_dir=self.root,
+                                       model_name=model, base_url=url)
+                self.assertEqual(instance.model_connection.inference_base_url, url)
+
     def test_host_auth_selectors_cannot_override_the_selected_native_route(self):
         inherited = {"CLAUDE_CODE_USE_BEDROCK": "1", "CLAUDE_CODE_USE_VERTEX": "1",
                      "AWS_PROFILE": "unrelated-host-profile", "AWS_CONFIG_FILE": "/host/aws-config",
@@ -295,6 +437,178 @@ class NativeAgents(unittest.TestCase):
                 self.assertEqual(os.environ["CLAUDE_CODE_USE_BEDROCK"], "1")
             for name, value in inherited.items():
                 self.assertEqual(os.environ[name], value)
+
+    def test_native_antigravity_gateway_and_adc_use_the_execution_hosts(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 25):
+            self.skipTest("Harbor's execution endpoint resolver starts in 0.25")
+        model = "gemini/gemini-3-flash"
+        cases = [({"env": {"AGY_ADC_AUTH": "true", "AGY_LLM_GATEWAY_API_KEY": "${AGENT_INACTIVE}"},
+                   "extra_allowed_hosts": ["oauth2.googleapis.com"]},
+                  ["oauth2.googleapis.com"], None),
+                 ({"env": {"AGY_ADC_AUTH": "false", "GOOGLE_GEMINI_BASE_URL": "",
+                           "GOOGLE_API_KEY": "",
+                           "GEMINI_API_KEY": "${AGENT_GATEWAY_KEY}"}, "extra_allowed_hosts": ["oauth2.googleapis.com"]},
+                  ["generativelanguage.googleapis.com", "oauth2.googleapis.com"],
+                  "https://generativelanguage.googleapis.com")]
+        if HARBOR_VERSION.release[:2] >= (0, 26):
+            cases.append(({"env": {"AGY_LLM_GATEWAY_URL": "${AGENT_GATEWAY_URL}",
+                                   "GOOGLE_API_KEY": "", "GEMINI_API_KEY": "${AGENT_INACTIVE}",
+                                   "AGY_LLM_GATEWAY_API_KEY": "${AGENT_GATEWAY_KEY}"}},
+                          ["gateway.example"], "https://gateway.example/v1"))
+        env = {"AGENT_GATEWAY_URL": "https://gateway.example/v1", "AGENT_GATEWAY_KEY": "fixture"}
+        for options, hosts, endpoint in cases:
+            with self.subTest(hosts=hosts), patch.dict(os.environ, env, clear=True):
+                plan = harbor_native.plan("antigravity-cli", model, env, self.config(options))
+                with run_task.native_job(["harbor", "run", "--agent", "antigravity-cli"], "antigravity-cli",
+                                         model, plan, env) as command:
+                    config = JobConfig.model_validate_json(Path(command[-1]).read_text()).agents[0]
+                self.assertEqual(config.extra_allowed_hosts, hosts)
+                self.assertNotIn("AGENT_INACTIVE", plan["required"])
+                AgentFactory.run_preflight(config)
+                agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+                self.assertEqual(agent.model_connection.inference_base_url, endpoint)
+                if endpoint:
+                    self.assertEqual(agent._resolve_api_key(), env["AGENT_GATEWAY_KEY"])
+                else:
+                    self.assertNotIn("AGY_LLM_GATEWAY_API_KEY", agent.extra_env)
+
+    def test_native_antigravity_auth_checks_match_the_selected_mode(self):
+        env = {"AGENT_GEMINI_API_KEY": "unrelated", "AGENT_GATEWAY_URL": "https://gateway.example/v1"}
+        for bindings in ({"AGY_ADC_AUTH": "false"}, {"AGY_LLM_GATEWAY_URL": ""},
+                         {"AGY_LLM_GATEWAY_URL": "${AGENT_GATEWAY_URL}"}):
+            with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "Bind .*API_KEY|requires Harbor 0.26"):
+                harbor_native.plan("antigravity-cli", "gemini/gemini-3-flash", env, self.config({"env": bindings}))
+        with self.assertRaisesRegex(ValueError, "explicit model ID"):
+            harbor_native.plan("antigravity-cli", "", env)
+        with self.assertRaisesRegex(ValueError, "Gemini 3 Flash"):
+            harbor_native.plan("antigravity-cli", "gemini/gemini-2.5-pro", env, self.config({"env": {"AGY_ADC_AUTH": "true"}}))
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] >= (0, 26):
+            for url in ("http://gateway.example", "https://gateway.example:bad"):
+                with self.subTest(url=url), self.assertRaises(ValueError):
+                    path = self.config({"env": {"AGY_LLM_GATEWAY_URL": url,
+                                                "AGY_LLM_GATEWAY_API_KEY": "${AGENT_GATEWAY_KEY}"}})
+                    harbor_native.plan("antigravity-cli", "gemini/gemini-3-flash", env, path)
+
+    def test_gateway_rejects_redirected_credentials_before_launch(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 26):
+            self.skipTest("Native Antigravity LLM gateway support starts in 0.26")
+        gateway = "https://gateway.example/v1"
+        for model, protocol, alias in (("gemini/gemini-3-flash", "gemini", "GOOGLE_BASE_URL"),
+                                       ("openai/gpt-4o", "openai", "OPENAI_BASE_URL")):
+            with self.subTest(model=model):
+                bindings = {"AGY_LLM_GATEWAY_URL": gateway, "AGY_LLM_GATEWAY_API_KEY": "${AGENT_KEY}",
+                            "AGY_LLM_GATEWAY_WIRE_PROTOCOL": protocol, alias: "${AGENT_PROVIDER_URL}"}
+                env = {"AGENT_KEY": "fixture", "AGENT_PROVIDER_URL": "https://provider.example/v1"}
+                for conflicting in ("${AGENT_PROVIDER_URL}", ""):
+                    with self.subTest(conflicting=conflicting), self.assertRaisesRegex(ValueError, "gateway conflicts"):
+                        path = self.config({"env": {**bindings, alias: conflicting}})
+                        harbor_native.plan("antigravity-cli", model, env, path)
+                env["AGENT_PROVIDER_URL"] = gateway
+                with patch.dict(os.environ, env, clear=True):
+                    plan = harbor_native.plan("antigravity-cli", model, env, self.config({"env": bindings}))
+                    with run_task.native_job(["harbor", "run", "--agent", "antigravity-cli"], "antigravity-cli",
+                                             model, plan, env) as command:
+                        config = JobConfig.model_validate_json(Path(command[-1]).read_text()).agents[0]
+                    AgentFactory.run_preflight(config)
+                    agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+                    self.assertEqual(config.extra_allowed_hosts, ["gateway.example"])
+                    self.assertEqual(agent.extra_env["AGY_LLM_GATEWAY_URL"], gateway)
+                    self.assertEqual(agent._resolve_api_key(), env["AGENT_KEY"])
+
+    def test_antigravity_invalid_auth_flags_keep_referenced_values_private(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        secret = "private-fixture-value"
+        flags = {"AGY_ADC_AUTH": {"GEMINI_API_KEY": "${AGENT_SHARED}"}}
+        if HARBOR_VERSION.release[:2] >= (0, 26):
+            flags["HARBOR_ALLOW_INSECURE_MODEL_BASE_URL"] = {
+                "AGY_LLM_GATEWAY_URL": "http://gateway.example", "AGY_LLM_GATEWAY_API_KEY": "${AGENT_SHARED}"}
+        for flag, bindings in flags.items():
+            with self.subTest(flag=flag), self.assertRaisesRegex(ValueError, flag) as raised:
+                path = self.config({"env": {**bindings, flag: "${AGENT_SHARED}"}})
+                harbor_native.plan("antigravity-cli", "gemini/gemini-3-flash", {"AGENT_SHARED": secret}, path)
+            self.assertNotIn(secret, str(raised.exception))
+
+    def test_discovered_junie_kwargs_match_native_user_options(self):
+        cls = harbor_native.agent_class("junie")
+        if not getattr(cls, "options_model", None):
+            self.skipTest("This Harbor version discovers native options from constructors")
+        options = harbor_native.describe("junie")["kwargs"]
+        self.assertIn("brave", options)
+        self.assertNotIn("skip_model_parsing", options)
+        path = self.config({"kwargs": {"skip_model_parsing": True}})
+        with self.assertRaisesRegex(ValueError, "Unsupported junie kwargs: skip_model_parsing"):
+            harbor_native.plan("junie", "openai/gpt-4o", {}, path)
+
+    def test_fixed_service_agents_ignore_other_providers_base_urls(self):
+        shared = {"AGENT_ANTHROPIC_BASE_URL": "https://unrelated.example"}
+        for name, key, endpoint in (("devin", "DEVIN_API_KEY", "api.devin.ai"),
+                                    ("cursor-cli", "CURSOR_API_KEY", "api2.cursor.sh")):
+            with self.subTest(name=name):
+                plan = harbor_native.plan(name, "anthropic/claude-opus-4.7", shared)
+                self.assertEqual(plan["required"], {"AGENT_" + key})
+                self.assertIn(endpoint, plan["hosts"])
+                self.assertNotIn("unrelated.example", plan["hosts"])
+        plan = harbor_native.plan("devin", "model", {**shared, "AGENT_DEVIN_API_SERVER_URL": "https://devin.example"})
+        self.assertEqual(plan["hosts"], ["devin.example"])
+
+    def test_antigravity_openai_wire_gateway_accepts_harbors_provider_key(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 26):
+            self.skipTest("Native Antigravity LLM gateway support starts in 0.26")
+        model = "openai/gpt-4o"
+        endpoint = "https://gateway.example/v1"
+        path = self.config({"env": {"AGY_LLM_GATEWAY_URL": endpoint, "AGY_LLM_GATEWAY_WIRE_PROTOCOL": "openai",
+                                    "OPENAI_API_KEY": "${AGENT_CUSTOM}"}})
+        plan = harbor_native.plan("antigravity-cli", model, {}, path)
+        self.assertEqual(plan["required"], {"AGENT_CUSTOM"})
+        self.assertEqual(plan["secret_variables"], {"AGENT_CUSTOM"})
+        env = {"AGENT_CUSTOM": "fixture"}
+        with patch.dict(os.environ, env, clear=True), run_task.native_job(
+                ["harbor", "run", "--agent", "antigravity-cli"], "antigravity-cli", model, plan, env) as cmd:
+            config = JobConfig.model_validate_json(Path(cmd[-1]).read_text()).agents[0]
+            self.assertEqual(config.extra_allowed_hosts, ["gateway.example"])
+            AgentFactory.run_preflight(config)
+            agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+            self.assertEqual(agent.model_connection.execution_base_url, endpoint)
+            self.assertEqual(agent._resolve_api_key(), "fixture")
+
+    def test_native_key_selector_matches_harbor_preflight_and_execution(self):
+        model = "openai/gpt-4o"
+        selector = "TEAM_CREDENTIAL"
+        options = {"kwargs": {"model_api_key_name": selector}}
+        if "model_api_key_name" not in AgentConfig.model_fields:
+            self.assertNotIn("model_api_key_name", harbor_native.describe("codex")["kwargs"])
+            with self.assertRaisesRegex(ValueError, "Harbor 0.25"):
+                harbor_native.plan("codex", model, {}, self.config(options))
+            return
+        self.assertIn("model_api_key_name", harbor_native.describe("codex")["kwargs"])
+        for bindings, source in [({}, "AGENT_TEAM_CREDENTIAL"), ({selector: "${AGENT_CUSTOM}"}, "AGENT_CUSTOM")]:
+            with self.subTest(source=source):
+                path = self.config({**options, "env": bindings})
+                plan = harbor_native.plan("codex", model, {}, path)
+                self.assertEqual(plan["required"], {source})
+                env = {source: "selected-fixture", "OPENAI_API_KEY": "unrelated-fixture"}
+                with patch.dict(os.environ, env, clear=True), run_task.native_job(
+                        ["harbor", "run", "--agent", "codex"], "codex", model, plan, env) as command:
+                    job = Path(command[-1]).read_text()
+                    self.assertNotIn("selected-fixture", job)
+                    config = JobConfig.model_validate_json(job).agents[0]
+                    self.assertEqual(config.model_api_key_name, selector)
+                    self.assertNotIn("model_api_key_name", config.kwargs)
+                    AgentFactory.run_preflight(config)
+                    agent = AgentFactory.create_agent_from_config(config, logs_dir=self.root)
+                    self.assertEqual(agent.model_connection.api_key, "selected-fixture")
+        with self.assertRaisesRegex(ValueError, "must reference"):
+            harbor_native.plan("codex", model, {}, self.config({**options, "env": {selector: "literal"}}))
+        empty = self.config({**options, "env": {selector: ""}})
+        with self.assertRaisesRegex(ValueError, "no nonempty model API key"):
+            harbor_native.plan("grok-build", model, {}, empty)
+        local = self.config({"kwargs": {"model_api_key_name": selector, "base_url": "https://local.example/v1"},
+                             "env": {selector: ""}})
+        self.assertEqual(harbor_native.plan("aider", model, {}, local)["required"], set())
 
     def test_configuration_references_files_and_endpoint_overrides(self):
         path = self.config({"env": {"AGY_ADC_AUTH": "true", "GOOGLE_APPLICATION_CREDENTIALS": "/root/adc.json"},
@@ -384,7 +698,7 @@ class NativeAgents(unittest.TestCase):
             with self.subTest(agent=name):
                 plan = harbor_native.plan(name, "openai/model", {})
                 plan["kwargs"]["config"] = {"opaque": "fixture-private-configuration"}
-                command = ["harbor", "run", "--agent", name, "-m", "openai/model", "--n-attempts", "1"]
+                command = ["harbor", "run", "--agent", name, "--model", "openai/model", "--n-attempts", "1"]
                 with run_task.native_job(command, name, "openai/model", plan, {}) as argv:
                     path = Path(argv[argv.index("--config") + 1])
                     self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
@@ -416,12 +730,21 @@ class NativeAgents(unittest.TestCase):
             job = JobConfig.model_validate_json(path.read_text())
             agent_config = job.agents[0]
             self.assertEqual(agent_config.model_name, "google/gemini-4-argon")
-            self.assertEqual(agent_config.env, {"AGENT_OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"})
+            from search_swe.harbor_compat import HARBOR_VERSION
+            expected = {"AGENT_OPENROUTER_API_KEY": "${AGENT_OPENROUTER_API_KEY}"}
+            if HARBOR_VERSION.release[:2] >= (0, 25):
+                expected["GEMINI_API_KEY"] = "search-swe-loopback"
+            self.assertEqual(agent_config.env, expected)
             self.assertEqual(agent_config.extra_allowed_hosts, ["openrouter.ai"])
             self.assertEqual(agent_config.kwargs["reasoning_effort"], "high")
             with patch.dict(os.environ, env, clear=True):
                 agent = AgentFactory.create_agent_from_config(agent_config, logs_dir=self.root)
-                self.assertEqual(agent.extra_env, {"AGENT_OPENROUTER_API_KEY": "coding-fixture"})
+                runtime_env = dict(agent.extra_env)
+                if HARBOR_VERSION.release[:2] >= (0, 26):
+                    self.assertEqual(runtime_env.pop("AGY_CLI_DISABLE_AUTO_UPDATE"), "true")
+                self.assertEqual(runtime_env, {**expected, "AGENT_OPENROUTER_API_KEY": "coding-fixture"})
+                if hasattr(AgentFactory, "run_preflight"):
+                    AgentFactory.run_preflight(agent_config)
             self.assertIsInstance(agent, AntigravityCli)
             self.assertEqual(env["OPENROUTER_API_KEY"], "submission-fixture")
             self.assertEqual(env["VERIFIER_OPENAI_API_KEY"], "judge-fixture")
@@ -431,7 +754,6 @@ class NativeAgents(unittest.TestCase):
                 "--openrouter", "--model", "google/gemini-4-argon", "--reasoning-effort", "high", "--no-env-file"]
         with patch.object(sys, "argv", argv), patch.dict(os.environ, launch_env, clear=True), \
                 patch.object(run_task, "read_manifest", return_value={"files": []}), \
-                patch.object(run_task.shutil, "which", return_value="/fixture/harbor"), \
                 patch.object(run_task, "prepare_task"), \
                 patch.object(run_task, "run_command", side_effect=inspect_job) as launched, \
                 redirect_stdout(io.StringIO()):
@@ -449,6 +771,8 @@ class NativeAgents(unittest.TestCase):
             with self.subTest(agent=name), patch.object(run_task, "REPO", self.root), \
                     patch.dict(os.environ, {}, clear=True), redirect_stdout(io.StringIO()) as output, redirect_stderr(io.StringIO()):
                 argv = ["run_task.py", "--task-path", "tasks/example-search", "--agent", name, "--native", "--no-env-file", "--dry-run"]
+                if name == "antigravity-cli":
+                    argv.extend(["--model", "gemini/gemini-3-flash"])
                 with patch.object(sys, "argv", argv):
                     self.assertEqual(run_task.main(), 0)
                 self.assertIn("Native agent config:", output.getvalue())

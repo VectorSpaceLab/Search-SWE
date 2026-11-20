@@ -22,7 +22,7 @@ from harbor.models.task.config import EnvironmentConfig as TaskEnvironment, Netw
 from harbor.models.task.verifier_mode import resolve_effective_verifier_env_config, resolve_task_verifier_mode
 from harbor.models.trial.config import AgentConfig, EnvironmentConfig
 from harbor.models.trial.paths import TrialPaths
-from harbor.trial.network_policy import resolve_trial_network_plan
+from search_swe.harbor_compat import HARBOR_VERSION, resolve_trial_network_plan
 from harbor.trial.trial import Trial
 from tests.integration.egress_credentials import CredentialProbe
 
@@ -192,8 +192,12 @@ else:
         trial._validate_dynamic_phase_switch = MethodType(Trial._validate_dynamic_phase_switch, trial)
         trial._validate_separate_verifier_env_policies = MethodType(Trial._validate_separate_verifier_env_policies, trial)
         private_paths = {private}
+        definition = TaskEnvironment(docker_image=args.python_image)
+        if HARBOR_VERSION.release[:2] >= (0, 24):
+            from harbor.models.task.verifier_mode import VerifierEnvironmentDefinition
+            definition = VerifierEnvironmentDefinition(config=definition, directory=environment_dir, bundled_tests=True)
         for key in ("first", "second"):
-            async with Trial._separate_verifier_env(trial, TaskEnvironment(docker_image=args.python_image),
+            async with Trial._separate_verifier_env(trial, definition,
                                                      key=key, plan=plan) as verifier:
                 if type(verifier) is not type(environment) or verifier.extra_docker_compose_paths:
                     raise AssertionError("independent verifier adapter/config was not preserved")

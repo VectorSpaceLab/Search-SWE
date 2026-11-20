@@ -173,11 +173,11 @@ class RegradeTests(unittest.TestCase):
         judge_failed = self.output.with_name("judge-failed")
 
         def execute(command, env, cwd):
-            if command[0] == sys.executable:
+            if command[1] != "-m":
                 self.assertIn("--local-files-only", command)
                 return 0
-            self.assertEqual(command[:4], ["harbor", "trial", "start", "--config"])
-            config_path = Path(command[4])
+            self.assertEqual(command[:6], [sys.executable, "-m", "harbor.cli.main", "trial", "start", "--config"])
+            config_path = Path(command[6])
             raw_config = config_path.read_text()
             self.assertNotIn("verifier-token", raw_config)
             self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)

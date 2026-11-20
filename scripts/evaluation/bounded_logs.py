@@ -86,7 +86,8 @@ class BoundedLogs:
         if self._bounded_agent_logs:
             # The task links /logs/agent into its quota-backed filesystem.
             # Host logs are populated through Harbor's non-mounted lifecycle.
-            self._mounts = [mount for mount in self._mounts if mount.get("target") not in LOG_MOUNTS]
+            for mounts in (self._mounts, getattr(self, "_host_mounts", [])):
+                mounts[:] = [mount for mount in mounts if mount.get("target") not in LOG_MOUNTS]
 
     @property
     def capabilities(self):

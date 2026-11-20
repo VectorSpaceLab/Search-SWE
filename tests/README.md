@@ -10,9 +10,11 @@ python -m unittest discover -s tests/unit -p 'test_*.py'
 ```
 
 [`unit/`](unit/) covers the CLI, credentials, assets, task validation, launcher,
-Harbor adapters and network policy using local fixtures and mocks. These tests
-run in CI and include Pi trajectory conversion. They do not launch a benchmark
-or call live model APIs.
+Harbor adapters and network policy using the installed Harbor package and local
+fixtures. CI runs the suite with Harbor 0.22.0, each 0.23–0.26 release line and
+the latest version resolved by pip. Coverage includes agent credential selection,
+GPU routing, trajectory handling and verifier-only replay. The tests run without
+live model APIs.
 
 The portable authoring and maintainer skills also test their own workflows:
 

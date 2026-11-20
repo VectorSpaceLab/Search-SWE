@@ -10,6 +10,8 @@ import sys
 import tempfile
 import unittest
 
+from tests.unit.harbor_fixture import cli_module
+
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS.parent))
@@ -156,7 +158,7 @@ class ReleasePackage(unittest.TestCase):
         )
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         fake_harbor.write_text(
             f"#!{sys.executable}\nimport json, os, sys\n"
             "assert os.environ['AGENT_OPENAI_API_KEY'] == 'fixture-agent-secret'\n"
@@ -165,7 +167,6 @@ class ReleasePackage(unittest.TestCase):
             "assert 'CODEX_FORCE_AUTH_JSON' not in os.environ\n"
             "print(json.dumps(sys.argv[1:]))\n"
         )
-        fake_harbor.chmod(0o755)
         env = {key: value for key, value in os.environ.items()
                if not key.startswith(("AGENT_", "VERIFIER_", "CONTAINER_"))}
         env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
@@ -185,7 +186,7 @@ class ReleasePackage(unittest.TestCase):
     def test_openrouter_launch_requires_its_own_key_and_keeps_it_out_of_argv(self):
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         fake_harbor.write_text(
             f"#!{sys.executable}\nimport json, os, sys\n"
             "assert os.environ['AGENT_OPENROUTER_API_KEY'] == 'fixture-agent-openrouter-key'\n"
@@ -194,7 +195,6 @@ class ReleasePackage(unittest.TestCase):
             "assert 'OPENAI_BASE_URL' not in os.environ\n"
             "print(json.dumps(sys.argv[1:]))\n"
         )
-        fake_harbor.chmod(0o755)
         env = self.launcher_env()
         env.update({
             "PATH": str(bin_dir) + os.pathsep + env.get("PATH", ""),
@@ -245,7 +245,7 @@ class ReleasePackage(unittest.TestCase):
         # Import the real adapter in a new interpreter, not just inspect argv.
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         fake_harbor.write_text(
             f"#!{sys.executable}\n"
             "import importlib, json, os, sys\n"
@@ -259,7 +259,6 @@ class ReleasePackage(unittest.TestCase):
             "assert 'CODEX_FORCE_AUTH_JSON' not in os.environ\n"
             "print(json.dumps(sys.argv[1:]))\n"
         )
-        fake_harbor.chmod(0o755)
         old_paths = os.pathsep.join((str(self.root / "existing-a"), str(self.root / "existing-b")))
         for agent, model in (("pi", "deepseek/deepseek-flash"),
                              ("codex", "example-model"),
@@ -294,7 +293,7 @@ class ReleasePackage(unittest.TestCase):
                                    "fixture-provider-secret", "fixture-judge-secret"):
                         self.assertNotIn(secret, result.stdout + result.stderr)
                     argv = json.loads(result.stdout.splitlines()[-1])
-                    self.assertEqual(argv[argv.index("-m") + 1], model)
+                    self.assertEqual(argv[argv.index("--model") + 1], model)
                     self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}", argv)
 
     def test_codex_options_remain_supported(self):
@@ -316,7 +315,8 @@ class ReleasePackage(unittest.TestCase):
                       self.flag_values(argv, "--ae"))
 
     def test_launcher_bypasses_harbor_022_gpu_preflight_for_docker(self):
-        for gpus, expected in ((0, []), (1, ["0"])):
+        from search_swe.harbor_compat import legacy_gpu_override
+        for gpus, expected in ((0, []), (1, ["0"] if legacy_gpu_override() else [])):
             with self.subTest(gpus=gpus):
                 (self.task / "task.toml").write_text(
                     '[task]\nname = "search-swe/example-search"\nversion = "0.1"\n'
@@ -354,7 +354,7 @@ class ReleasePackage(unittest.TestCase):
                     argv[argv.index("--agent") + 1],
                     "scripts.evaluation.harbor_agents:ManagedPi",
                 )
-                self.assertEqual(argv[argv.index("-m") + 1], model)
+                self.assertEqual(argv[argv.index("--model") + 1], model)
                 self.assertIn("version=1.4.0", self.flag_values(argv, "--ak"))
                 self.assertIn("thinking=xhigh", self.flag_values(argv, "--ak"))
                 self.assertFalse(any(value.startswith(("reasoning_effort=", "config="))
@@ -393,7 +393,7 @@ class ReleasePackage(unittest.TestCase):
             argv[argv.index("--agent") + 1],
             "scripts.evaluation.harbor_agents:ManagedClaudeCode",
         )
-        self.assertEqual(argv[argv.index("-m") + 1], "claude-sonnet-4-6")
+        self.assertEqual(argv[argv.index("--model") + 1], "claude-sonnet-4-6")
         self.assertIn("version=2.1.309", self.flag_values(argv, "--ak"))
         self.assertIn("reasoning_effort=max", self.flag_values(argv, "--ak"))
         self.assertEqual(
@@ -474,14 +474,13 @@ class ReleasePackage(unittest.TestCase):
         )
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         fake_harbor.write_text(
             f"#!{sys.executable}\nimport json, os, sys\n"
             f"assert os.environ['DEEPSEEK_API_KEY'] == {provider_secret!r}\n"
             "assert os.environ['CONTAINER_PROXY'] == 'http://shell-proxy-secret@example:7887'\n"
             "print(json.dumps(sys.argv[1:]))\n"
         )
-        fake_harbor.chmod(0o755)
         env = self.launcher_env()
         env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
         env["DEEPSEEK_API_KEY"] = provider_secret
@@ -538,7 +537,7 @@ class ReleasePackage(unittest.TestCase):
         )
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         scrubbed = (
             "ANTHROPIC_API_KEY",
             "ANTHROPIC_AUTH_TOKEN",
@@ -555,7 +554,6 @@ class ReleasePackage(unittest.TestCase):
             f"assert not ({set(scrubbed)!r} & os.environ.keys())\n"
             "print(json.dumps(sys.argv[1:]))\n"
         )
-        fake_harbor.chmod(0o755)
         env = self.launcher_env()
         env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
         for name in scrubbed:
@@ -613,9 +611,8 @@ class ReleasePackage(unittest.TestCase):
     def test_launcher_requires_only_the_selected_tasks_judge_groups(self):
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
-        fake_harbor = bin_dir / "harbor"
+        fake_harbor = cli_module(self.repo)
         fake_harbor.write_text(f"#!{sys.executable}\nimport json, sys\nprint(json.dumps(sys.argv[1:]))\n")
-        fake_harbor.chmod(0o755)
         env = {key: value for key, value in os.environ.items()
                if not key.startswith(("AGENT_", "VERIFIER_", "CONTAINER_", "TRAJECTORY_JUDGE_", "ANSWER_JUDGE_"))}
         env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")

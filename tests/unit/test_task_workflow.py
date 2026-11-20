@@ -10,6 +10,8 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+
+from tests.unit.harbor_fixture import cli_module
 from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
@@ -229,9 +231,8 @@ class TaskWorkflow(unittest.TestCase):
     def test_task_launch_reaches_mock_harbor(self):
         binary = self.root / "bin"
         binary.mkdir()
-        harbor = binary / "harbor"
+        harbor = cli_module(self.repo)
         harbor.write_text(f"#!{sys.executable}\nimport json, sys\nprint(json.dumps(sys.argv[1:]))\n")
-        harbor.chmod(0o755)
         with patch.dict(os.environ, {"PATH": str(binary) + os.pathsep + os.environ.get("PATH", ""),
                                      "DEEPSEEK_API_KEY": "fixture-only"}):
             missing = self.cli("evaluation/run_task.py", "--task-path", self.source, "--agent", "pi",
@@ -276,10 +277,9 @@ a.result_json.write_text(json.dumps({'environment': {'FIXTURE_PREPARED': 'ready'
 ''')
         binary = self.root / "bin"
         binary.mkdir()
-        harbor = binary / "harbor"
+        harbor = cli_module(self.repo)
         started = self.root / "harbor-started"
         harbor.write_text(f"#!{sys.executable}\nimport os\nfrom pathlib import Path\nassert os.environ['FIXTURE_PREPARED']=='ready'\nPath({str(started)!r}).touch()\n")
-        harbor.chmod(0o755)
         (self.repo / ".env").write_text("VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1\nVERIFIER_OPENAI_API_KEY=fixture-only\n")
         arguments = ("evaluation/run_task.py", "--task-path", self.source, "--agent", "pi", "--model", "deepseek/deepseek-flash")
         with patch.dict(os.environ, {"PATH": str(binary) + os.pathsep + os.environ.get("PATH", ""),

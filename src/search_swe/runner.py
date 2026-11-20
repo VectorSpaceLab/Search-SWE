@@ -66,9 +66,8 @@ def doctor(root, tasks=(), env=None):
     env = dict(os.environ) if env is None else env
     if platform.system() != "Linux" or platform.machine() not in ("x86_64", "amd64"):
         raise ValueError("Evaluation requires a native Linux x86_64 Docker host")
-    missing = [name for name in ("docker", "harbor") if shutil.which(name, path=env.get("PATH")) is None]
-    if missing:
-        raise ValueError("Missing executables: " + ", ".join(missing) + "; install the package and Docker Engine")
+    if shutil.which("docker", path=env.get("PATH")) is None:
+        raise ValueError("Docker executable is missing; install Docker Engine")
     def docker_check(arguments, remedy):
         try:
             return subprocess.run(["docker", *arguments], env=env, check=True,
@@ -190,7 +189,8 @@ def run_batch(root, tasks, setting, env, pool, concurrency, output=None, offline
         dirty = bool(subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True))
     except (OSError, subprocess.SubprocessError):
         revision, dirty = None, None
-    report = {"cli_version": __version__, "setting": setting.public(), "pi_model_config": model_config,
+    from .harbor_compat import HARBOR_VERSION
+    report = {"harbor_version": str(HARBOR_VERSION), "cli_version": __version__, "setting": setting.public(), "pi_model_config": model_config,
               "git_revision": revision, "working_tree_dirty": dirty,
               "concurrency": concurrency, "tasks": {}, "status": "preparing"}
     for task in tasks:

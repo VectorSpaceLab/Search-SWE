@@ -58,7 +58,7 @@ datasets, labels, and answer mappings are not permitted; see the
 The runtime uses Python 3.12 with CUDA-enabled PyTorch. It is configured for
 8 CPUs, 32 GiB memory, and 100 GiB storage. The environment and verifier
 Compose files and `task.toml` explicitly request **one GPU**.
-For local Docker, the shared launcher works around Harbor 0.22.0's GPU
+For local Docker, the shared launcher handles Harbor 0.22 and 0.23 GPU
 capability preflight with `--override-gpus 0`; the Compose reservations still
 provide the GPU to both containers.
 
@@ -124,7 +124,7 @@ verifier-only DeepSeek endpoint and key settings.
 ### Running This Task
 
 From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install the pinned Harbor dependencies and prepare Docker. Use the
+to install Search-SWE and prepare Docker. Use the
 [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
 [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.

@@ -106,7 +106,7 @@ class PiProviderTests(unittest.TestCase):
             with patch.dict(os.environ, {"OPENAI_BASE_URL": "https://wrong.example", "ANTHROPIC_OAUTH_TOKEN": "fixture-oauth"}):
                 agent = PreinstalledPi(logs_dir=Path("/tmp"), model_name=model, extra_env=environment)
                 connection = agent.model_connection
-                self.assertEqual(connection.configured_base_url, None)
+                self.assertIsNone(getattr(connection, "user_supplied_base_url", None) or getattr(connection, "configured_base_url", None))
                 self.assertIsNone(agent._get_env("ANTHROPIC_OAUTH_TOKEN"))
                 for key, value in environment.items():
                     self.assertEqual(connection.env[key], value)

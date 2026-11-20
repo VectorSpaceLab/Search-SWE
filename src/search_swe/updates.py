@@ -9,7 +9,7 @@ import tomllib
 import uuid
 
 from . import __version__
-from .repository import check_compatibility, checkout_version, compatible_version
+from .repository import check_compatibility, checkout_version, compatible_version, harbor_requirement_error
 
 
 def git(root, *arguments, required=True):
@@ -106,7 +106,8 @@ def update(root, *, check=False):
             version = project.get("version") if project.get("name") == "search-swe" else None
         except (ValueError, KeyError, TypeError, AttributeError):
             version = None
-        compatible = (compatible_version(version) and
+        harbor_error = harbor_requirement_error(project) if compatible_version(version) else None
+        compatible = (compatible_version(version) and not harbor_error and
                       git(root, "cat-file", "-e", f"{target}:scripts/evaluation/run_task.py", required=False) is not None)
         before, after = task_names(root, state["revision"]), task_names(root, target)
         status = "diverged" if ahead and behind else "available" if behind else "ahead" if ahead else "up-to-date"
@@ -115,7 +116,8 @@ def update(root, *, check=False):
         report = {"checkout": str(root), "branch": branch, "upstream": state["upstream"],
                   "cli_version": __version__, "checkout_version": checkout_version(root),
                   "target_version": version if isinstance(version, str) else "unknown",
-                  "compatible": compatible, "before": state["revision"], "target": target,
+                  "compatible": compatible, "compatibility_error": harbor_error,
+                  "before": state["revision"], "target": target,
                   "ahead": ahead, "behind": behind, "dirty": state["dirty"],
                   "git_operation_in_progress": in_progress, "status": status, "updated": False,
                   "tasks_added": sorted(after - before), "tasks_removed": sorted(before - after),
@@ -123,6 +125,8 @@ def update(root, *, check=False):
         if check:
             return report
         if behind and not compatible:
+            if harbor_error:
+                raise ValueError(f"{harbor_error} Select a compatible checkout or install the required Harbor version.")
             raise ValueError(f"Upstream checkout {report['target_version']} is incompatible with CLI {__version__}; install a matching CLI before updating. Checkout files were preserved.")
         if ahead and behind:
             raise ValueError("Local and upstream histories have diverged; reconcile them with Git before updating.")
@@ -151,6 +155,8 @@ def display(result, *, checking=False):
     print(f"Branch: {result['branch']}; upstream: {result['upstream']}")
     print(f"Status: {result['status']}; {result['behind']} upstream commits, {result['ahead']} local commits")
     print(f"Target checkout: {result['target_version']}; compatible: {result['compatible']}")
+    if result.get("compatibility_error"):
+        print(result["compatibility_error"])
     for label, key in (("Added tasks", "tasks_added"), ("Removed tasks", "tasks_removed")):
         if result[key]:
             print(f"{label}: {', '.join(result[key])}")

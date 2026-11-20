@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import re
 import shlex
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -19,6 +18,8 @@ REPO = Path(__file__).resolve().parents[2]
 # Direct script execution and Harbor subprocesses use this checkout's modules.
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "src"))
+# Regrade can load this checkout inside an already-imported older CLI package.
+from src.search_swe.harbor_compat import HARBOR_VERSION, legacy_gpu_override
 from search_swe import harbor_native, harnesses, pi_models
 from search_swe.configuration import AGY_OPENROUTER_EFFORTS
 from scripts.evaluation.docker_dns import parse_servers
@@ -68,10 +69,16 @@ def native_job(command, name, model, plan, env):
              for source, target in plan["files"].items()]
     agent = {"model_name": model or None, "env": plan["env"],
              "extra_allowed_hosts": plan["hosts"], "kwargs": dict(plan["kwargs"])}
+    if (selector := agent["kwargs"].pop("model_api_key_name", None)) is not None:
+        agent["model_api_key_name"] = selector
     if name in ("oracle", "nop"):
         agent["name"] = name
     else:
-        agent["import_path"] = "scripts.evaluation.native_agents:NativeAgent"
+        kind = name if name in harbor_native.registry() else "acp"
+        wrapper = ("OpenRouterAntigravity" if agent["kwargs"].pop("search_swe_openrouter", False)
+                   else "Harness_" + kind.replace("-", "_"))
+        agent["import_path"] = "scripts.evaluation.native_agents:" + wrapper
+        agent["model_name"] = harbor_native.native_model(name, model)
         agent["kwargs"].update(search_swe_native_name=name, search_swe_setup_hosts=plan["setup_hosts"],
                                search_swe_files=files)
     with tempfile.TemporaryDirectory(prefix="search-swe-agent-") as directory:
@@ -81,8 +88,8 @@ def native_job(command, name, model, plan, env):
         argv = list(command)
         index = argv.index("--agent")
         del argv[index:index + 2]
-        if "-m" in argv:
-            index = argv.index("-m")
+        if "--model" in argv:
+            index = argv.index("--model")
             del argv[index:index + 2]
         argv.extend(["--config", str(path)])
         yield argv
@@ -324,7 +331,7 @@ def main():
             parser.error(str(error))
     output = args.output.resolve() if args.output else REPO / "jobs" / task_key(REPO, task)
     command = [
-        "harbor", "run", "--path", str(task), "--env", "docker",
+        sys.executable, "-m", "harbor.cli.main", "run", "--path", str(task), "--env", "docker",
         "--agent",
         args.agent if args.native or agy_openrouter else (OPENROUTER_AGENT_IMPORTS if args.openrouter else AGENT_IMPORTS)[args.agent],
         "--force-build", "--yes", "-o", str(output),
@@ -332,11 +339,11 @@ def main():
         "--n-concurrent", "1", "--n-attempts", "1", "--max-retries", "0",
     ]
     if model:
-        command.extend(["-m", model])
-    # Harbor 0.22.0 rejects Docker tasks with gpus > 0 before Compose starts
+        command.extend(["--model", model])
+    # Harbor before 0.24 rejects Docker tasks with gpus > 0 before Compose starts
     # and does not translate that field into a Docker GPU request. Preserve the
     # truthful task metadata while the task's Compose overlays allocate the GPU.
-    if task_config.get("environment", {}).get("gpus", 0) > 0:
+    if legacy_gpu_override() and task_config.get("environment", {}).get("gpus", 0) > 0:
         command.extend(["--override-gpus", "0"])
     required = []
     agent_host = None
@@ -351,6 +358,8 @@ def main():
                        "search_swe_openrouter": True},
             "hosts": [OPENROUTER_HOST], "setup_hosts": harbor_native.SETUP_HOSTS, "files": {},
         }
+        if HARBOR_VERSION.release[:2] >= (0, 25):
+            native["env"]["GEMINI_API_KEY"] = "search-swe-loopback"
         required.append("AGENT_OPENROUTER_API_KEY")
     elif args.native:
         try:
@@ -527,8 +536,6 @@ def main():
     if unavailable:
         selection_flag = f"--task-path {args.task_path}" if args.task_path else f"--task {args.task}"
         parser.error(f"Run python scripts/assets/download_assets.py {selection_flag} to restore the missing or incomplete assets: " + ", ".join(unavailable))
-    if shutil.which("harbor", path=env.get("PATH")) is None:
-        parser.error("harbor was not found; activate the supported Harbor environment")
     if dns_servers and not use_gateway:
         parser.error("CONTAINER_DNS requires a restricted task or an explicit direct EGRESS_CONFIG")
 

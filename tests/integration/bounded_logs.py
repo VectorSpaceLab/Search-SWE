@@ -37,7 +37,7 @@ def prepare_task(work):
     (task / 'data').mkdir()
     tests = task / 'tests'; tests.mkdir()
     shutil.copyfile(SOURCE / 'tests/docker-compose.yaml', tests / 'docker-compose.yaml')
-    for helper in ('integrity_gate.py', 'development.py'):
+    for helper in ('integrity_gate.py', 'development.py', 'cgroup_resources.py', 'v1_oom.py'):
         shutil.copyfile(SOURCE / 'tests' / helper, tests / helper)
     (tests / 'Dockerfile').write_text('FROM hanhainebula/search-swe-base:cpu-py3.12-1.0.0\nCOPY . /tests/\nRUN chmod -R a+rX /tests && chmod 755 /tests/test.sh\n')
     (tests / 'test.sh').write_text('''#!/bin/bash
@@ -54,11 +54,9 @@ assert any(s.get('tool_calls') and s.get('observation') for s in trace['steps'])
 assert Path('/app/submission/ready.txt').is_file()
 evidence=Path('/task-evidence')
 assert evidence.stat().st_mode & 0o077 == 0
-record=json.loads((evidence/'agent.json').read_text())
 from development import check_development
-assert check_development()[1] is None
-counts=dict(line.split() for line in record['memory_events'].splitlines())
-assert int(counts['oom']) == int(counts['oom_kill']) == 0
+record, violation=check_development(evidence)
+assert violation is None and ('cgroup_v1_memory' in record or 'memory_events' in record)
 Path('/logs/verifier/reward.txt').write_text('1.0')
 Path('/logs/verifier/fixture.json').write_text(json.dumps({'synthetic_fixture':True,'model_requests':0,'private_memory_evidence':True,'atif_received':True}))
 CHECK

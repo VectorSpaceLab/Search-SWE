@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+from tests.unit.harbor_fixture import cli_module
 from unittest.mock import patch
 
 from scripts.evaluation.task_storage import StoragePlan, prepared_storage, require_unused, run_command
@@ -82,7 +84,7 @@ class StorageTests(unittest.TestCase):
             'if "context" in sys.argv: print(json.dumps([{"Endpoints":{"docker":{"Host":"unix:///fixture"}}}]))\n'
             'elif "info" in sys.argv: print(json.dumps({"OSType":"linux","KernelVersion":platform.release()}))\n')
         observed = self.root / "harbor-observed.json"
-        harbor = self.bin / "harbor"
+        harbor = cli_module(self.root)
         harbor.write_text(
             f'#!{sys.executable}\nimport json, os, sys\nfrom pathlib import Path\n'
             'assert "fixture-agent-secret" not in " ".join(sys.argv)\n'
@@ -91,7 +93,6 @@ class StorageTests(unittest.TestCase):
             'assert (root/"prepared").exists()\n'
             f'Path({str(observed)!r}).write_text(json.dumps({{"root":str(root),"cpus":os.environ["EXAMPLE_CPUSET"]}}))\n'
             'raise SystemExit(7)\n')
-        harbor.chmod(0o755)
         env = {"PATH": str(self.bin) + os.pathsep + os.environ["PATH"],
                "HOME": str(self.root), "AGENT_OPENAI_BASE_URL": "https://agent.example/v1",
                "AGENT_OPENAI_API_KEY": "fixture-agent-secret"}

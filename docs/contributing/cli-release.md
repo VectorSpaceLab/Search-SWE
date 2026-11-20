@@ -12,8 +12,9 @@ release. Task versions are managed independently. The PyPI
 project description comes from `docs/evaluation/cli.md`, as configured by the `readme` field
 in `pyproject.toml`; review that user-facing guide before building.
 
-CLI 0.3.x requires a 0.3.x checkout. Publish compatible checkout changes alongside
-the package; a patch release must preserve that series' CLI/backend contract.
+CLI 0.3.x requires a 0.3.x checkout and a Harbor version accepted by that checkout.
+When changing the Harbor requirement, verify checkout updates and replay an older
+trial using the new release. See the [compatibility tests](../../tests/README.md#unit-and-regression-tests).
 
 From the repository root, build into a fresh directory and validate the artifacts:
 

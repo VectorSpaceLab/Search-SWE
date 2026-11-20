@@ -45,7 +45,7 @@ An earlier author-only local A100 run substituted local BGE embeddings for the A
 
 From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. The input sources, immutable revisions, filenames, sizes and hashes are listed in `assets.json`.
 
-Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which preserves real Compose GPU reservations with the documented Harbor override.
+Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which uses the task's GPU reservations for both the agent and verifier.
 
 #### Historical 6-hour coding-model evaluation (v0.3.1)
 

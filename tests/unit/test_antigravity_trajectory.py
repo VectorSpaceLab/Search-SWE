@@ -1,4 +1,5 @@
 """Current-run Antigravity collection under coarse filesystem timestamps."""
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -23,6 +24,20 @@ class AntigravityCollection(unittest.TestCase):
         path.write_text(content)
         os.utime(path, ns=(self.timestamp, self.timestamp))
         return path
+
+    def test_usage_from_a_newer_harbor_stream(self):
+        from harbor.models.agent.context import AgentContext
+        from scripts.evaluation.native_agents import NativeAgent
+        from search_swe.harbor_compat import HARBOR_VERSION
+
+        agent = NativeAgent(search_swe_native_name="antigravity-cli", search_swe_openrouter=True,
+                            model_name="google/gemini-4-argon", logs_dir=self.logs)
+        usage = {"input_tokens": 10, "cache_read_tokens": 7, "output_tokens": 3}
+        (self.logs / "antigravity-stream.jsonl").write_text(json.dumps({"event": "result", "result": {"usage": usage}}))
+        context = AgentContext()
+        agent.populate_context_post_run(context)
+        totals = (context.n_input_tokens, context.n_cache_tokens, context.n_output_tokens)
+        self.assertEqual(totals, (17, 7, 3) if HARBOR_VERSION.release[:2] >= (0, 23) else (None, None, None))
 
     def test_new_session_is_collected_at_same_timestamp_as_existing_session(self):
         old = self.transcript("old", "old session")

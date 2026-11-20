@@ -184,6 +184,19 @@ class UpdateTests(unittest.TestCase):
             updates.update(self.checkout)
         self.assertEqual(self.git(self.checkout, "rev-parse", "HEAD"), head)
 
+    def test_remote_harbor_requirement_is_checked_before_updating(self):
+        project = self.source / "pyproject.toml"
+        project.write_text(project.read_text() + 'dependencies=["harbor<0.22"]\n')
+        self.commit(self.source)
+        original = self.git(self.checkout, "rev-parse", "HEAD")
+        preview = updates.update(self.checkout, check=True)
+        self.assertEqual(preview["status"], "incompatible")
+        self.assertFalse(preview["compatible"])
+        self.assertIn("harbor<0.22", preview["compatibility_error"])
+        with self.assertRaisesRegex(ValueError, "harbor<0.22"):
+            updates.update(self.checkout)
+        self.assertEqual(self.git(self.checkout, "rev-parse", "HEAD"), original)
+
     def test_update_can_repair_an_older_checkout_series(self):
         project = self.source / "pyproject.toml"
         project.write_text('[project]\nname="search-swe"\nversion="0.1.0"\n')

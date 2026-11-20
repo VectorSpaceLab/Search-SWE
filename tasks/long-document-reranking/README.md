@@ -41,7 +41,7 @@ Finding more evidence must remain practical within the runtime budget.
 
 Downloaded data and models are mounted read-only under `/task/data` and
 `/task/models`. The hidden evaluation contains 100 disjoint queries.
-[Starter notes](environment/starter/README.md) describe the initial implementation.
+The [starter implementation](environment/starter/) includes the build and query entry points.
 
 #### Fixed Components and Allowed Changes
 
@@ -118,7 +118,7 @@ The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter t
 ### Running This Task
 
 From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install the pinned Harbor dependencies and prepare Docker. Use the
+to install Search-SWE and prepare Docker. Use the
 [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
 [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
@@ -150,7 +150,7 @@ assets, credentials, or hardware.
 | [Environment guide](environment/docs/environment.md) | Installed runtime and task environment |
 | [Environment configuration](environment/docker-compose.yaml) | Read-only mounts and hardware requests |
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
-| [Starter notes](environment/starter/README.md) | Initial pipeline and local validation guidance |
+| [Starter implementation](environment/starter/) | Build and query scripts for the initial pipeline |
 | [Verifier notes](tests/README.md) | Additional verification details |
 
 ### Instruction source

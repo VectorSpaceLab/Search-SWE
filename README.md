@@ -44,8 +44,6 @@ CPU/RAM and optional GPU resources required by your chosen tasks.
 
 ### Run with the CLI
 
-Use CLI **0.3.x** with a checkout from the same release series.
-
 ```bash
 pip install search-swe
 search-swe run
@@ -58,8 +56,8 @@ assets as needed and saves logs and results under `jobs/evaluations/` in the che
 Before downloading, it shows the task/cache locations and required disk space;
 see the [asset guide](docs/evaluation/assets.md) to choose a cache on another disk.
 
+Use `search-swe info` to check checkout compatibility and see the available task count.
 Use `search-swe update` between batches to get newly contributed tasks.
-`search-swe info` shows the selected checkout, versions and task count.
 
 Submission API keys require fixed [OpenRouter model allowlists](docs/evaluation/submission-models.md):
 **47 models** for the shared key and **17** for `reasoning-query-rewriting`.

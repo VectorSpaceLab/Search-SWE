@@ -244,11 +244,12 @@ distinct devices and output directories for concurrent backend runs.
 
 ### Harbor integration
 
-The launcher handles Harbor 0.22.0's GPU preflight using `--override-gpus 0`
-while keeping Compose GPU reservations. Direct Harbor calls need that override
-and can pass `--environment-kwarg gpu_device=GPU-<full-UUID>` to
-`scripts.evaluation.harbor_environments:PhaseScopedDocker` for selection across
-both phases. Recheck this integration when changing Harbor versions.
+With a 0.3.2 CLI and checkout, runs and regrades use Harbor 0.22.0 or later from
+the CLI's Python environment. The single-task launcher uses
+`--override-gpus 0` on Harbor 0.22 and 0.23 so each task's Compose reservations
+allocate its GPU. Harbor 0.24 and later support those reservations natively.
+The selected UUID applies to both the agent and verifier. For the version
+used in a particular run, read `harbor_version` in `run.json` or `regrade.json`.
 
 ## Bounded task storage
 

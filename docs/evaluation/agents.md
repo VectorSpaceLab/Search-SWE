@@ -3,7 +3,7 @@
 [Documentation index](../README.md)
 
 A setting selects one **harness + provider route + model** for the whole batch.
-Use CLI 0.3.x with a checkout from the same release series.
+Use `search-swe info` to check whether the installed CLI and Harbor are compatible with your checkout.
 The default is Codex + OpenRouter + `openai/gpt-6-luna` (`max` reasoning).
 
 | Harness | CLI provider | Model selection | Coding-agent credential |
@@ -32,7 +32,7 @@ The CLI uses the selected checkout's registry for the whole batch:
 
 Override a version with `--agent-version 0.164.0`, or save
 `SEARCH_SWE_AGENT_VERSION` in `.env`. Use `--agent-version default` to return to
-the checkout default. Exact versions are required. An explicit flag/saved version
+the checkout default. Use an exact version for an override. An explicit flag/saved version
 takes precedence over native JSON `kwargs.version`, followed by the registry.
 
 The shared installer prepares these five CLIs before the coding phase, verifies
@@ -40,7 +40,7 @@ the executable's actual `--version`, and records it in the agent log's
 `harness.json`. Task Dockerfiles supply task dependencies. The verifier's judge
 Codex pin is managed independently; changing the coding harness version preserves it.
 Antigravity versions require a registered immutable archive URL and SHA-512 in
-the central file. Other Harbor agents use their native installers and defaults;
+the central file. Other Harbor agents use their native setup and defaults;
 explicit version requests must pass actual CLI verification. Agents without a
 CLI version command are controlled by Harbor's own version.
 
@@ -58,7 +58,7 @@ installation and model API calls may still need network.
 
 CLI 0.3.0+ discovers agents from the installed Harbor registry, including
 Antigravity CLI/SDK, Gemini CLI, Cursor, Copilot, OpenCode, OpenHands, Aider,
-Terminus 2 and ACP. Inspect the current list and native constructor parameters:
+Terminus 2 and ACP. Inspect the current list and the native options for an agent:
 
 ```bash
 search-swe agents
@@ -75,19 +75,21 @@ search-swe run TASK --agent antigravity-cli --provider native \
 ```
 
 The wizard requests `AGENT_GEMINI_API_KEY` for this setting. Native routes use
-Harbor's own provider/model and authentication conventions. Common provider
-credentials are mapped from agent-only variables such as `AGENT_OPENAI_API_KEY`
-and `AGENT_OPENROUTER_API_KEY`; task submission and judge keys retain their roles.
+Harbor's own provider/model and authentication conventions. When a shared `.env`
+contains keys for several providers, the CLI selects the coding key and endpoint
+for the model's provider. For example, native Pi with `openrouter/openai/gpt-4o`
+uses `AGENT_OPENROUTER_API_KEY`.
 Leave the native model field empty when the selected agent supplies a default. Harbor's registered
 `oracle` and `nop` helpers are also available for task development.
 In scripts, `--model ''` selects that native default and clears a saved model.
 
-Grok Build and Junie select their native BYOK credentials from the `provider/model`
-prefix; bare model names use their service authentication. Vibe defaults to
-Mistral; choose `"kwargs": {"backend": "generic"}` in native configuration for
-an OpenAI-compatible provider. The CLI maps that provider's key and endpoint to
-Vibe's generic backend. Custom authentication and endpoints use the explicit
-native configuration below.
+For native agents with BYOK, use a `provider/model` ID to select provider credentials. On Harbor
+0.25 and later, Kimi Code, Grok Build and Junie can also infer the provider from
+recognized model names such as `gpt-4o`. Copilot keeps GitHub authentication
+for bare catalog names and accepts an explicit provider such as
+`openrouter/openai/gpt-4o`. Vibe selects its generic backend for non-Mistral
+providers. On Harbor 0.22–0.24, set `"kwargs": {"backend": "generic"}`
+explicitly for Vibe and use provider prefixes for Grok Build and Junie.
 
 ### Native configuration
 
@@ -112,6 +114,10 @@ section references them with `${AGENT_VARIABLE_NAME}`. An explicit `env` block
 selects its own authentication strategy, including native OAuth or cloud auth.
 Configure authentication selectors and cloud profiles in that block; native runs
 isolate host credentials and provider selectors before applying the selected env.
+On Harbor 0.25 and later, `kwargs.model_api_key_name` selects the variable that
+holds the model credential inside the agent. For example, selecting `TEAM_KEY`
+prompts for `AGENT_TEAM_KEY`. To use an existing key, map `TEAM_KEY` to its
+`${AGENT_VARIABLE_NAME}` reference in `env`.
 `files` maps `${AGENT_AUTH_FILE}` to an absolute container file path for an agent
 that needs an uploaded credential file; the variable contains its local path.
 The agent-specific env/config must point at that container path. Harbor adapters
@@ -126,12 +132,22 @@ for other agents, then restores the task's network
 policy before running the agent, including when setup fails. Task files and
 verifier network permissions retain their declared settings.
 
+With Harbor 0.26 or later, native Antigravity CLI uses the host in
+`env.AGY_LLM_GATEWAY_URL`. Bind `AGY_LLM_GATEWAY_API_KEY` to the gateway
+credential in the same `env` block. Use this single endpoint for gateway
+mode. The CLI reports a configuration error if a provider setting redirects
+the connection to a different address. For Google Application Default Credentials
+(`AGY_ADC_AUTH=true`), choose Gemini 3 Flash or newer and list your project's
+authentication and model hosts in `extra_allowed_hosts`.
+
 Default control-plane hosts follow the published [Cursor network guide](https://cursor.com/docs/enterprise/network-configuration)
 and [GitHub Copilot allowlist](https://docs.github.com/en/copilot/reference/copilot-allowlist-reference).
 Add account-specific, regional or additional distribution hosts in the native JSON as needed.
 
 Availability in `agents` describes Harbor's integrations. Actual use also depends
 on the native agent's model, credentials, installer and task requirements.
+Check the agent's setup instructions when it needs project files, a subscription
+or cloud credentials.
 The `atif` field reports trajectory support in Search-SWE; `atif_source` identifies
 Harbor or the Search-SWE converter. `native_atif` reports upstream Harbor support. Tasks with trajectory
 audits require a real `/logs/agent/trajectory.json`; their original checks apply
@@ -139,9 +155,14 @@ to every agent. The CLI checks the task's declared trajectory artifact before
 preparing assets and requires an ATIF-capable route for those evaluations.
 The `oracle`/`nop` development helpers can exercise primary grading; trajectory
 audits still require their declared input. Pi direct, OpenRouter and native
-routes share the Search-SWE event-stream-to-ATIF converter.
-Inspect the chosen agent's official
-setup when it needs project files, a subscription or cloud credentials.
+routes export ATIF from Pi's event stream. Use ATIF `prompt_tokens` to compare
+Pi runs across Harbor versions. It includes uncached input, cache reads and
+cache writes. Harbor 0.22 and 0.23 omit cache writes from the trial summary's
+`n_input_tokens`.
+
+On Harbor 0.23 and later, Antigravity usage in `agent/antigravity-stream.jsonl`
+can supply trial token totals even when individual ATIF steps omit usage.
+Reported cost is an estimate when model pricing is available.
 
 ## Antigravity CLI through OpenRouter
 

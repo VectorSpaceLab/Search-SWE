@@ -1,7 +1,6 @@
 """Strict public configuration; credentials are loaded only by the host adapter."""
 
 from dataclasses import dataclass, field
-from importlib.metadata import version
 import ipaddress
 import json
 import os
@@ -10,14 +9,16 @@ import re
 import stat
 from urllib.parse import urlsplit
 
+from src.search_swe.harbor_compat import HARBOR_VERSION
+
 
 HOST = re.compile(r"(?=.{1,253}\Z)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?\Z")
 DEFAULT_IMAGE = "hanhainebula/search-swe-egress:1.0.0"
 
 
 def require_supported_harbor():
-    if version("harbor") != "0.22.0":
-        raise ValueError("Restricted egress is currently validated only against Harbor 0.22.0")
+    if HARBOR_VERSION.release[:2] < (0, 22):
+        raise ValueError("Restricted egress requires Harbor >=0.22.0")
 
 
 def exact_hosts(hosts):
@@ -175,7 +176,7 @@ def validate_task_networks(task_path, model_host, proxy_host=None, *, allow_publ
         resolve_effective_verifier_env_config, resolve_step_verifier_mode, resolve_task_verifier_mode,
     )
     from harbor.models.trial.config import AgentConfig, EnvironmentConfig
-    from harbor.trial.network_policy import resolve_trial_network_plan
+    from src.search_swe.harbor_compat import resolve_trial_network_plan
 
     model_hosts = list(model_host) if isinstance(model_host, (list, tuple)) else [model_host] if model_host else []
     task = TaskConfig.model_validate_toml((Path(task_path) / "task.toml").read_text())

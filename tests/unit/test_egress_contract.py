@@ -7,12 +7,17 @@ not enforcement correctness.
 """
 
 import asyncio
+import inspect
 import logging
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+import tomllib
+
+from packaging.requirements import Requirement
+from packaging.version import Version
 
 from harbor.environments.docker.docker import DockerEnvironment
 from harbor.environments.factory import EnvironmentFactory
@@ -20,7 +25,7 @@ from harbor.models.task.config import EnvironmentConfig as TaskEnvironment, Netw
 from harbor.models.task.verifier_mode import resolve_effective_verifier_env_config, resolve_task_verifier_mode, resolve_step_verifier_mode
 from harbor.models.trial.config import AgentConfig, EnvironmentConfig
 from harbor.models.trial.paths import TrialPaths
-from harbor.trial.network_policy import resolve_trial_network_plan
+from search_swe.harbor_compat import resolve_trial_network_plan
 from harbor.trial.trial import Trial
 
 from tests.integration.egress_s0.fixture import dns_packet, questions
@@ -29,6 +34,22 @@ from tests.integration.egress_full_trial import task_config
 
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+class HarborDependency(unittest.TestCase):
+    def test_checkout_and_egress_share_an_open_ended_minimum(self):
+        from scripts.egress.config import require_supported_harbor
+
+        dependencies = tomllib.loads((REPO / "pyproject.toml").read_text())["project"]["dependencies"]
+        harbor = next(req for dep in dependencies if (req := Requirement(dep)).name == "harbor")
+        for version, allowed in (("0.21.0", False), ("0.22.0", True), ("0.27.0", True), ("1.0.0", True)):
+            with self.subTest(version=version), patch("scripts.egress.config.HARBOR_VERSION", Version(version)):
+                self.assertEqual(version in harbor.specifier, allowed)
+                if allowed:
+                    require_supported_harbor()
+                else:
+                    with self.assertRaises(ValueError):
+                        require_supported_harbor()
 
 
 class ContractDocker(DockerEnvironment):
@@ -107,9 +128,14 @@ class EgressHarborContractTests(unittest.TestCase):
             _verifier_env_mounts=lambda config: [],
             _validate_separate_verifier_env_policies=lambda env, plan: None)
 
+        definition = TaskEnvironment()
+        if "definition" in inspect.signature(Trial._separate_verifier_env).parameters:
+            from harbor.models.task.verifier_mode import VerifierEnvironmentDefinition
+            definition = VerifierEnvironmentDefinition(config=definition, directory=self.root, bundled_tests=True)
+
         async def exercise():
             async with Trial._separate_verifier_env(
-                fake_trial, TaskEnvironment(), key="first", plan=plan) as verifier:
+                fake_trial, definition, key="first", plan=plan) as verifier:
                 self.assertIsInstance(verifier, ContractDocker)
                 self.assertIsNot(verifier, agent)
                 self.assertEqual(verifier.s0_binding, "host-config-path-only")
@@ -118,7 +144,7 @@ class EgressHarborContractTests(unittest.TestCase):
                 self.assertEqual(verifier.events[0][0], "start")
             self.assertEqual(verifier.events[-1], ("stop", True))
             async with Trial._separate_verifier_env(
-                fake_trial, TaskEnvironment(), key="second", plan=plan) as second:
+                fake_trial, definition, key="second", plan=plan) as second:
                 self.assertIsNot(second, verifier)
 
         asyncio.run(exercise())

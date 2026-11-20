@@ -23,6 +23,38 @@ from search_swe.submission_models import EXCLUDED_MODEL, PROFILES
 
 
 class CredentialSetupTests(unittest.TestCase):
+    def test_native_selected_credential_with_custom_name_uses_hidden_input(self):
+        from harbor.models.trial.config import AgentConfig
+        if "model_api_key_name" not in AgentConfig.model_fields:
+            self.skipTest("Harbor key selectors start in 0.25")
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "agent.json"
+            config.write_text(json.dumps({"kwargs": {"model_api_key_name": "TEAM_CREDENTIAL"},
+                                          "env": {"TEAM_CREDENTIAL": "${AGENT_CUSTOM}"}}))
+            setting = Setting("codex", "native", "openai/gpt-4o", "default", str(config))
+            updates = {}
+            with patch.object(wizard.questionary, "password") as password, \
+                    patch.object(wizard.questionary, "text", side_effect=AssertionError("plaintext prompt")), \
+                    patch.object(wizard, "ask", return_value="fixture"), redirect_stdout(io.StringIO()):
+                wizard.configure_agent(setting, {}, updates)
+            password.assert_called_once()
+            self.assertEqual(updates, {"AGENT_CUSTOM": "fixture"})
+
+    def test_gateway_credential_uses_hidden_input_for_a_neutral_source_name(self):
+        from search_swe.harbor_compat import HARBOR_VERSION
+        if HARBOR_VERSION.release[:2] < (0, 26):
+            self.skipTest("Native Antigravity LLM gateway support starts in Harbor 0.26")
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "agent.json"
+            config.write_text(json.dumps({"env": {"AGY_LLM_GATEWAY_URL": "https://gateway.example/v1",
+                                                   "AGY_LLM_GATEWAY_API_KEY": "${AGENT_ORG}"}}))
+            setting = Setting("antigravity-cli", "native", "gemini/gemini-3-flash", "default", str(config))
+            with patch.object(wizard.questionary, "password") as password, \
+                    patch.object(wizard.questionary, "text", side_effect=AssertionError("plaintext prompt")), \
+                    patch.object(wizard, "ask", return_value="fixture"), redirect_stdout(io.StringIO()):
+                wizard.configure_agent(setting, {}, {})
+            password.assert_called_once()
+
     def test_optional_key_can_be_disabled_saved_and_skipped_by_probes(self):
         from search_swe.submission_checks import verify_submission_keys
         env = {"OPENROUTER_API_KEY": "fixture-old-key"}

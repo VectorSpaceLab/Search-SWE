@@ -3,13 +3,13 @@
 from harbor.agents.installed.codex import Codex
 from harbor.agents.installed.claude_code import ClaudeCode
 from harbor.agents.installed.pi import Pi
-from harbor.agents.model_connection import ResolvedModelConnection
 from dataclasses import replace
 import json
 import re
 import shlex
 from pathlib import Path
 
+from scripts.evaluation.harbor_auth import ScopedHarborAuth
 from scripts.evaluation.pi_trajectory import PiTrajectory
 from scripts.evaluation.harness_versions import PI_THINKING_LEVELS
 from scripts.evaluation.harness_install import ManagedHarness
@@ -18,9 +18,10 @@ from scripts.evaluation.bounded_logs import FinalizeBoundedLogs
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from search_swe import pi_models
+from search_swe.harbor_compat import HARBOR_VERSION, ResolvedModelConnection
 
 
-class ManagedCodex(FinalizeBoundedLogs, ManagedHarness, Codex):
+class ManagedCodex(FinalizeBoundedLogs, ScopedHarborAuth, ManagedHarness, Codex):
     HARNESS_NAME = "codex"
 
     def parse_version(self, stdout: str) -> str:
@@ -38,25 +39,31 @@ class ManagedOpenRouterCodex(ManagedCodex):
         # only its model flag; fail if a future Harbor release changes it.
         if "codex exec " in command:
             flags, separator, instruction = command.partition("-- ")
-            bare_model = self.model_name.split("/")[-1]
-            old = f"--model {bare_model} --json "
-            if not separator or flags.count(old) != 1:
+            # Older adapters strip all provider components. Newer adapters
+            # preserve unknown prefixes and nested model IDs.
+            variants = {self.model_name, self.model_name.partition("/")[2], self.model_name.rsplit("/", 1)[-1]}
+            matches = [f"--model {shlex.quote(model)} --json " for model in variants
+                       if model and f"--model {shlex.quote(model)} --json " in flags]
+            if not separator or len(matches) != 1 or flags.count(matches[0]) != 1:
                 raise RuntimeError(
                     "Harbor's Codex command format changed; OpenRouter model may be truncated"
                 )
             command = (
-                flags.replace(old, f"--model {shlex.quote(self.model_name)} --json ", 1)
+                flags.replace(matches[0], f"--model {shlex.quote(self.model_name)} --json ", 1)
                 + separator + instruction
             )
         return await super().exec_as_agent(environment, command, **kwargs)
 
 
-class ManagedClaudeCode(FinalizeBoundedLogs, ManagedHarness, ClaudeCode):
+class ManagedClaudeCode(FinalizeBoundedLogs, ScopedHarborAuth, ManagedHarness, ClaudeCode):
     HARNESS_NAME = "claude-code"
 
 
 class ManagedOpenRouterClaudeCode(ManagedClaudeCode):
     """Use OpenRouter's bearer token with Claude Code's Anthropic endpoint."""
+
+    def _resolved_model_name(self):
+        return self.model_name
 
     def _resolve_auth_env(self):
         env = super()._resolve_auth_env()
@@ -70,24 +77,50 @@ class ManagedOpenRouterClaudeCode(ManagedClaudeCode):
         return env
 
 
-class ManagedPi(FinalizeBoundedLogs, PiTrajectory, ManagedHarness, Pi):
+if HARBOR_VERSION.release[:2] == (0, 23):
+    from harbor.agents.installed.pi import PiOptions
+    from harbor.agents.options import Cli
+    from typing import Annotated, Literal
+
+    class ExtendedPiOptions(PiOptions):
+        thinking: Annotated[Literal["off", "minimal", "low", "medium", "high", "xhigh", "max"] | None,
+                            Cli("--thinking")] = None
+
+
+class ManagedPi(FinalizeBoundedLogs, PiTrajectory, ScopedHarborAuth, ManagedHarness, Pi):
     HARNESS_NAME = "pi"
 
     CLI_FLAGS = [replace(flag, choices=list(PI_THINKING_LEVELS))
                  if flag.kwarg == "thinking" else flag for flag in Pi.CLI_FLAGS]
+
+    if HARBOR_VERSION.release[:2] == (0, 23):
+        options_model = ExtendedPiOptions
+
+    @classmethod
+    def parse_options(cls, kwargs=None, env=None):
+        options = dict(kwargs or {})
+        options.pop("model_config", None)
+        return super().parse_options(options, env)
 
     def __init__(self, *args, model_config=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._model_config = (pi_models.validate_model_config(self.model_name, model_config)
                               if model_config is not None else None)
 
+    def _parse_model_name(self, model_name):
+        provider, model_id, _ = pi_models.selection(model_name)
+        return provider, model_id
+
     @property
     def model_connection(self):
-        provider, _, _ = pi_models.selection(self.model_name)
+        return self.resolve_model_connection_for_execution(self.model_name, None, explicit_env=self._extra_env)
+
+    @classmethod
+    def resolve_model_connection_for_execution(cls, model_name, resolve_env, *, explicit_env=None, **options):
+        provider, _, _ = pi_models.selection(model_name)
         # Pi owns provider/key resolution. Harbor's generic provider aliases and
         # custom endpoint inference differ from Pi (notably Azure and Copilot).
-        return ResolvedModelConnection(provider=provider, api_key=None, base_url=None,
-                                       configured_base_url=None, env={**self.extra_env,
+        return ResolvedModelConnection(provider=provider, env={**(explicit_env or {}),
                                        "PI_CODING_AGENT_DIR": "/tmp/search-swe-pi", "PI_OFFLINE": "1"})
 
     def _get_env(self, key, *alternatives):
@@ -99,9 +132,11 @@ class ManagedPi(FinalizeBoundedLogs, PiTrajectory, ManagedHarness, Pi):
         if "pi --print --mode json " in command:
             provider, model_id, _ = pi_models.selection(self.model_name)
             old = f"--provider {provider} --model {model_id} "
-            if command.count(old) != 1:
-                raise RuntimeError("Harbor's Pi command format changed; cannot preserve the selected model")
-            command = command.replace(old, f"--provider {shlex.quote(provider)} --model {shlex.quote(model_id)} ", 1)
+            quoted = f"--provider {shlex.quote(provider)} --model {shlex.quote(model_id)} "
+            if command.count(quoted) != 1:
+                if command.count(old) != 1:
+                    raise RuntimeError("Harbor's Pi command format changed; cannot preserve the selected model")
+                command = command.replace(old, quoted, 1)
         return await super().exec_as_agent(environment, command, **kwargs)
 
     async def _prepare_model(self, environment):

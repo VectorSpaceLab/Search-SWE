@@ -3,7 +3,7 @@ name: run-searchswe-evaluation
 description: Configure, run and monitor Search-SWE evaluations or regrade a recorded trial using the search-swe CLI. Use for benchmark runs, their model and harness settings, resource allocation, and preparation-only requests.
 license: Apache-2.0
 metadata:
-  version: "0.3.1"
+  version: "0.3.2"
 ---
 
 # Run Search-SWE evaluations
@@ -45,11 +45,12 @@ command. Reload skills or start a new agent session afterward. Keep the Python
 package upgrade and checkout update as separate operations within the user's
 scope, then recheck release-series compatibility.
 
-Use `search-swe info --json` to inspect the selected checkout
-and task count offline. To obtain new tasks, use `search-swe update --check
+Use `search-swe info --json` to inspect the selected checkout, task count and
+compatibility offline. If `compatible` is false, read `compatibility_error`
+for the CLI or Harbor requirement. To obtain new tasks, use `search-swe update --check
 --json`, then `search-swe update` between batches within the requested scope.
 Updates follow the current branch's upstream and require a clean fast-forward
-to a compatible release series; resolve local changes or history with the user.
+to a checkout compatible with the installed CLI and Harbor.
 
 Read `docs/evaluation/cli.md` in the selected checkout for its supported flags. Read
 `docs/evaluation/runtime.md` only for provider, network or bounded-storage setup details.
@@ -57,8 +58,8 @@ These paths are relative to the benchmark checkout, not this installed skill.
 
 For a verifier-only replay, use `search-swe regrade ORIGINAL_TRIAL --dry-run`
 to check the recorded inputs, then run `search-swe regrade ORIGINAL_TRIAL`
-with the verifier's service configuration. Report the new trial and its
-`regrade.json`, including measurement validity when available. See the
+with the verifier's service configuration. Report the new trial, the replay's
+`harbor_version` from `regrade.json` and measurement validity when available. See the
 regrade section of `docs/evaluation/cli.md`.
 
 ## Resolve the requested experiment
@@ -78,8 +79,8 @@ regrade section of `docs/evaluation/cli.md`.
   shared installer verifies actual versions and records `harness.json` with the agent logs. Reuse its
   private, image-specific cache (`SEARCH_SWE_HARNESS_CACHE`); allow disk/network
   for a first install. Preserve the independent verifier judge pins. Other native
-  agents use Harbor installers and report limitations when version verification
-  is unavailable.
+  agents use Harbor's native setup and defaults. Report which version the run
+  could verify.
 - Use one model setting per batch and one attempt per selected task by default.
   For a requested model matrix, create separate batches and coordinate resources
   across them. The CLI coordinates allocations within one invocation.
@@ -99,7 +100,8 @@ the command preview without launching an evaluation.
 | Harness | Available routes |
 | --- | --- |
 | Codex, Claude Code, Pi | `direct`, `openrouter`, `native` |
-| Other registered Harbor agents, including Antigravity and Gemini CLI | `native` |
+| Antigravity CLI | `openrouter`, `native` |
+| Other registered Harbor agents, including Gemini CLI | `native` |
 
 `direct` and `openrouter` use Search-SWE's integrated adapters. Codex direct uses
 `AGENT_OPENAI_API_KEY` and `AGENT_OPENAI_BASE_URL`; Claude Code direct uses
@@ -130,8 +132,7 @@ and model; other thinking controls use their native JSON kwargs.
 
 Preserve each task's trajectory requirements. Tasks declaring
 `/logs/agent/trajectory.json` need `atif=true`; the CLI checks this before asset
-preparation. Pi routes share the Search-SWE ATIF converter. Capture the effective
-route, CLI version and model in the run evidence.
+preparation. Pi routes share the Search-SWE ATIF converter.
 
 ## Prepare configuration and resources
 
@@ -242,11 +243,10 @@ runtime and the user's preference. Check the recorded task output directories fo
 Harbor results, rewards, verifier errors and judge health. Asset restoration may
 take time before any task enters its agent phase.
 
-`completed` in `run.json` means the launcher exited successfully; it is not a
-passing score. Distinguish an observed task score from setup/authentication,
-infrastructure or verifier failures. A running process or command preview is not
-a completed evaluation. Report task, model/harness/provider/effort, status, score
-when available, judge/verifier health and paths to evidence.
+A task marked `completed` in `run.json` has a finished verifier and a valid
+reward, which can be zero. Treat `invalid-measurement` and `failed` as separate
+outcomes. Report the task, model, harness, provider, effort, CLI and Harbor
+versions, status, score when available, judge health and evidence paths.
 
 On interruption, signal the recorded CLI process with SIGINT or SIGTERM and allow
 its teardown to finish. If storage remains attached, follow that run's printed

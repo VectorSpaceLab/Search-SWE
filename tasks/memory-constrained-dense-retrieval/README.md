@@ -134,7 +134,7 @@ DeepSeek endpoint and key only in the verifier.
 ### Running This Task
 
 From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install the pinned Harbor dependencies and prepare Docker. Use the
+to install Search-SWE and prepare Docker. Use the
 [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
 task credential profile. The
 [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.

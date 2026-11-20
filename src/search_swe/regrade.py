@@ -9,6 +9,7 @@ import sys
 import tempfile
 from uuid import uuid4
 
+from .harbor_compat import HARBOR_VERSION, legacy_gpu_override
 from . import runner, updates
 from .configuration import DEFAULTS, read_env
 from .measurement import verifier_measurement
@@ -191,7 +192,7 @@ def run(args, root):
         agent=AgentConfig(name="nop"),
         environment=EnvironmentConfig(
             import_path=f"scripts.evaluation.harbor_environments:{adapter}",
-            override_gpus=0 if task.gpus else None, kwargs=environment_kwargs,
+            override_gpus=0 if task.gpus and legacy_gpu_override() else None, kwargs=environment_kwargs,
         ),
         verifier=VerifierConfig(env={**verifier_env, **proxy_env}),
     )
@@ -203,7 +204,7 @@ def run(args, root):
     trial = output / trial_name
     report = {
         "task": name, "source_trial": str(source), "source_trial_id": str(original.id),
-        "source_task_checksum": original.task_checksum, "trial": str(trial),
+        "harbor_version": str(HARBOR_VERSION), "source_task_checksum": original.task_checksum, "trial": str(trial),
         "verifier_checkout": str(root), "verifier_revision": git.get("revision"),
         "verifier_checkout_dirty": git.get("dirty"),
         "measurement_valid": None, "status": "preparing",
@@ -221,7 +222,7 @@ def run(args, root):
             runner.private_json(path, config.model_dump(mode="json"))
             report.update(status="verifier-error", measurement_valid=False)
             with launcher.prepared_storage(storage, env) if storage else nullcontext():
-                code = launcher.run_command(["harbor", "trial", "start", "--config", str(path)], env, root)
+                code = launcher.run_command([sys.executable, "-m", "harbor.cli.main", "trial", "start", "--config", str(path)], env, root)
             result_summary(trial, report)
             if code:
                 report.update(status="verifier-error", measurement_valid=False, exit_code=code)

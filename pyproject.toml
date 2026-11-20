@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "search-swe"
-version = "0.3.1"
+version = "0.3.2"
 description = "Configure and run Search-SWE coding-agent evaluations"
 readme = "docs/evaluation/cli.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 dependencies = [
-  "harbor==0.22.0",
+  "packaging>=24",
+  "harbor>=0.22.0",
   "huggingface_hub>=1.0,<2.0",
   "questionary>=2.1,<3",
   "prompt_toolkit>=3.0.48,<4",

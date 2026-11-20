@@ -14,14 +14,16 @@ In your Python environment:
 pip install search-swe
 ```
 
+Pip installs Harbor alongside the CLI. Search-SWE 0.3.2 requires Harbor 0.22.0 or later.
 The CLI uses a separate Search-SWE checkout for tasks, data and results. On first
 interactive use, choose an existing checkout or clone to `~/Search-SWE` or a
 custom path. The CLI remembers it. CLI and checkout must use the same release
 series, currently 0.3.x.
 
-Use `search-swe info` to inspect that checkout. Between evaluation batches,
-`search-swe update --check` previews new tasks and `search-swe update` applies
-compatible upstream updates. Ordinary task additions need no CLI release.
+Use `search-swe info` to check whether the installed CLI and Harbor match the checkout.
+Between batches, `search-swe update --check` previews upstream changes and
+`search-swe update` applies a compatible update. To upgrade an existing Python
+installation as well, run `pip install --upgrade search-swe harbor` in that environment.
 
 ## Run with the CLI
 
@@ -105,7 +107,7 @@ URL for a branch or tag. Match the skill to your CLI and checkout.
 ### Update the skill
 
 The skill records its matching CLI release in `SKILL.md` as `metadata.version`
-(currently `0.3.1`), with compatible CLI/checkout series `0.3.x`.
+(currently `0.3.2`), with compatible CLI/checkout series `0.3.x`.
 For a project installation, run these commands in your coordinating agent's
 workspace:
 

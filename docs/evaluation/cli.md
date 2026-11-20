@@ -16,9 +16,9 @@ pip install search-swe
 search-swe run
 ```
 
-The Python package supplies the CLI; a separate checkout holds tasks, backend
-scripts, assets and results. CLI and checkout must share a release series,
-currently **0.3.x**. Patch versions within that series are compatible. For local
+The Python package installs the CLI and Harbor. A separate checkout holds tasks,
+backend scripts, assets and results. Use a **0.3.x** checkout with a CLI from the same
+series and a Harbor version that satisfies the checkout's requirement. For local
 CLI development, install from the checkout with `pip install -e .`.
 
 On first interactive use, choose an existing checkout, clone to `~/Search-SWE`,
@@ -56,8 +56,12 @@ actionable error. Ignored credentials, downloaded assets and job outputs are
 preserved; an upstream file that would overwrite them blocks the update.
 
 New tasks are discovered from the checkout and normally need no CLI upgrade.
-The target checkout must match the installed CLI's release series. `update`
-updates repository files; package upgrades remain separate Python installations.
+`update` checks both the target's CLI release series and its Harbor requirement
+before changing files. To use a newer Harbor with a 0.3.0 or 0.3.1 checkout,
+update the checkout to 0.3.2 or later in the same series. To reproduce either
+older checkout or rerun its saved native Harbor job configuration, use that
+checkout with Harbor 0.22.0 and verify `harbor --version` on `PATH`.
+To rerun only the verifier on a recorded trial, use `search-swe regrade`.
 
 ## Regrade a recorded trial
 
@@ -84,8 +88,9 @@ CPU pool, or `--gpu-device` for a specific GPU.
 The CLI starts only the verifier and preserves the original trial. The new
 trial and its `regrade.json` summary are written under `jobs/regrades/` or a
 fresh `--output` directory. The summary records both trial IDs, the verifier
-checkout revision, and rewards. Measurement validity is recorded when the
-verifier reports it explicitly. A failed verifier phase or a primary evaluation
+checkout revision, rewards and the `harbor_version` used for the replay.
+Measurement validity is recorded when the verifier reports it explicitly.
+A failed verifier phase or a primary evaluation
 invalidated by answer-judge errors causes a nonzero exit status. Review the new
 verifier logs before using the result, including when the reward is zero.
 
@@ -230,7 +235,7 @@ Each batch creates `jobs/evaluations/<unique-run>/` or a new `--output` director
 
 | Output | Contents |
 | --- | --- |
-| `run.json` | Setting, checkout revision/dirty state, per-task allocation, status and result paths |
+| `run.json` | Setting, `cli_version`, `harbor_version`, checkout revision/dirty state, per-task allocation, status and result paths |
 | `logs/` | Asset preparation and evaluation logs |
 | Harbor result paths recorded in `run.json` | Scores, verifier health, trajectories and artifacts |
 

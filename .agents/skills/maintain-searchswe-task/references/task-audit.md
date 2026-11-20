@@ -90,8 +90,9 @@ These commands are target contracts, not permission to execute PR-modified tools
 Inspect tracked and untracked changes. Render both Compose overlays using a
 trusted temporary base `main` service/image, then build both contexts only when
 authorized. Run known-good and negative verifier cases in disposable environments.
-For the documented Harbor 0.22.0 GPU backend, the launcher uses `--override-gpus 0`
-while **both** Compose overlays still request the GPU; recheck on version changes.
+For GPU tasks, check `gpus = 1` in the task metadata and one GPU reservation in
+each Compose overlay. The launcher adds `--override-gpus 0` on Harbor 0.22
+and 0.23. Starting with 0.24, Harbor supports the GPU declaration directly.
 For explicit selection, use `--gpu-device <host-index-or-UUID>` with the trusted
 launcher. Verify that the generated phase configurations expose the same UUID
 and retain task mounts and network controls; package defaults use `count: 1`.

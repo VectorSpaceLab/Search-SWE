@@ -1,8 +1,6 @@
 """Run Harbor's installed agents with scoped authentication and setup networking."""
 
-from contextlib import contextmanager
 import inspect
-import os
 from pathlib import Path
 import re
 import shlex
@@ -11,41 +9,41 @@ from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from harbor.agents.model_connection import PROVIDERS
+from scripts.evaluation.harbor_auth import ScopedHarborAuth, agent_environment
 from harbor.models.task.config import NetworkMode, NetworkPolicy
-from harbor.utils.env import is_sensitive_env_key
 from scripts.evaluation.harness_install import ManagedHarness, execute, verify_native
 from scripts.evaluation.pi_trajectory import PiTrajectory
 from scripts.evaluation.antigravity_trajectory import AntigravityTrajectory
 from scripts.evaluation.bounded_logs import FinalizeBoundedLogs
 
-# Native adapters read these account/provider selectors as well as API keys.
-# Only explicitly selected native env values should control their auth route.
-AUTH_PREFIXES = ("CLAUDE_", "ANTHROPIC_", "CODEX_", "GEMINI_", "AGY_", "OPENAI_",
-                 "AWS_", "AZURE_", "GOOGLE_", "CLOUDSDK_", "GCLOUD_", "LLM_",
-                 "VIBE_", "JUNIE_", "GROK_")
+class NativeLifecycle(ScopedHarborAuth, ManagedHarness):
+    def __init__(self, *args, search_swe_native_name=None, search_swe_setup_hosts=(), search_swe_files=(), **kwargs):
+        from search_swe import harnesses
+        from search_swe.harbor_native import registry
+        self.HARNESS_NAME = search_swe_native_name or self.HARNESS_NAME
+        selected = harnesses.resolve_version(self.HARNESS_NAME, kwargs.get("version"))
+        self._search_swe_expected_version = selected
+        self._search_swe_managed = harnesses.install_spec(self.HARNESS_NAME, selected) is not None
+        self._search_swe_setup_hosts = search_swe_setup_hosts
+        self._search_swe_files = search_swe_files
+        if selected:
+            kwargs["version"] = selected
+        if self.HARNESS_NAME not in registry():
+            from harbor.agents.installed.acp_registry import registry_spec_from_agent_name
+            kwargs.setdefault("registry_spec", registry_spec_from_agent_name(self.HARNESS_NAME))
+        if kwargs.get("model_name"):
+            from search_swe.harbor_native import native_model
+            kwargs["model_name"] = native_model(self.HARNESS_NAME, kwargs["model_name"])
+        with agent_environment(kwargs.get("extra_env") or {}):
+            super().__init__(*args, **kwargs)
 
+    @classmethod
+    def parse_options(cls, kwargs=None, env=None):
+        options = dict(kwargs or {})
+        for key in ("search_swe_native_name", "search_swe_setup_hosts", "search_swe_files"):
+            options.pop(key, None)
+        return super().parse_options(options, env)
 
-@contextmanager
-def agent_environment(extra_env):
-    """Legacy Harbor agents read os.environ directly instead of extra_env."""
-    original = dict(os.environ)
-    provider_vars = {name for spec in PROVIDERS.values()
-                     for name in (*spec.api_key_envs, *spec.base_url_envs, *spec.extra_envs)}
-    isolated = {name: value for name, value in original.items()
-                if name not in provider_vars and not is_sensitive_env_key(name) and not name.endswith("_PAT")
-                and not name.startswith((*AUTH_PREFIXES, "AGENT_", "VERIFIER_", "ANSWER_JUDGE_", "TRAJECTORY_JUDGE_"))}
-    try:
-        os.environ.clear()
-        os.environ.update(isolated)
-        os.environ.update(extra_env)
-        yield
-    finally:
-        os.environ.clear()
-        os.environ.update(original)
-
-
-class NativeLifecycle(ManagedHarness):
     async def setup(self, environment):
         from search_swe.harbor_native import HOST
         original = environment.network_policy
@@ -60,7 +58,7 @@ class NativeLifecycle(ManagedHarness):
         try:
             if policy != original:
                 await environment.set_network_policy(policy)
-            with agent_environment(self.extra_env):
+            with agent_environment(self._extra_env if hasattr(self, "_extra_env") else self.extra_env):
                 if self._search_swe_files:
                     uid = (await execute(environment, "id -u")).strip()
                     if not re.fullmatch(r"[0-9]+", uid):
@@ -81,12 +79,20 @@ class NativeLifecycle(ManagedHarness):
                 await environment.set_network_policy(original)
 
     async def run(self, *args, **kwargs):
-        with agent_environment(self.extra_env):
+        with agent_environment(self._extra_env if hasattr(self, "_extra_env") else self.extra_env):
             return await super().run(*args, **kwargs)
 
 
 class AntigravityOpenRouter:
     """Run Harbor's agy commands against the per-process Gemini bridge."""
+
+    def _parse_model_name(self, model_name):
+        return "gemini", model_name.rsplit("/", 1)[-1]
+
+    @classmethod
+    def resolve_model_connection_config(cls, model_name, resolve_env, **options):
+        # The local bridge speaks Gemini and owns the outbound provider selection.
+        return super().resolve_model_connection_config("gemini/bridge", resolve_env, **options)
 
     def _find_api_key(self):
         # Enable Harbor's headless Gemini configuration. The bridge generates
@@ -110,35 +116,37 @@ class AntigravityOpenRouter:
         return await super().exec_as_agent(environment, command, env=env, **kwargs)
 
 
-class NativeAgent:
-    """Factory returning the actual Harbor agent with its native capabilities."""
+def native_class(name, openrouter=False):
+    from search_swe.harbor_native import agent_class
+    base = agent_class(name)
+    converter = {"pi": PiTrajectory, "antigravity-cli": AntigravityTrajectory}.get(name)
+    mixins = (converter,) if converter else ()
+    if openrouter:
+        if name != "antigravity-cli":
+            raise ValueError("The Gemini bridge is only available for Antigravity CLI")
+        mixins += (AntigravityOpenRouter,)
+    attributes = {"_search_swe_base_class": base, "__module__": __name__}
+    if name == "pi" and hasattr(base, "capabilities"):
+        attributes["capabilities"] = base.capabilities.model_copy(update={"atif": True})
+    return type("SearchSwe" + base.__name__, (FinalizeBoundedLogs, NativeLifecycle, *mixins, base), attributes)
 
-    def __new__(cls, *args, search_swe_native_name, search_swe_setup_hosts=(),
-                search_swe_files=(), search_swe_openrouter=False, **kwargs):
-        from search_swe.harbor_native import agent_class, registry
-        from search_swe import harnesses
-        selected_version = harnesses.resolve_version(search_swe_native_name, kwargs.get("version"))
-        managed = harnesses.install_spec(search_swe_native_name, selected_version)
-        if selected_version:
-            kwargs["version"] = selected_version
-        base = agent_class(search_swe_native_name)
-        if search_swe_native_name not in registry():
-            from harbor.agents.installed.acp_registry import registry_spec_from_agent_name
-            kwargs.setdefault("registry_spec", registry_spec_from_agent_name(search_swe_native_name))
-        converter = {"pi": PiTrajectory, "antigravity-cli": AntigravityTrajectory}.get(search_swe_native_name)
-        mixins = (converter,) if converter else ()
-        if search_swe_openrouter:
-            if search_swe_native_name != "antigravity-cli":
-                raise ValueError("The Gemini bridge is only available for Antigravity CLI")
-            mixins += (AntigravityOpenRouter,)
-        bases = (FinalizeBoundedLogs, NativeLifecycle, *mixins, base)
-        adapted = type("SearchSwe" + base.__name__, bases, {"__module__": base.__module__})
-        with agent_environment(kwargs.get("extra_env") or {}):
-            instance = adapted(*args, **kwargs)
-        instance._search_swe_base_class = base
-        instance.HARNESS_NAME = search_swe_native_name
-        instance._search_swe_managed = managed is not None
-        instance._search_swe_expected_version = selected_version
-        instance._search_swe_setup_hosts = search_swe_setup_hosts
-        instance._search_swe_files = search_swe_files
-        return instance
+
+def __getattr__(attribute):
+    # Harbor resolves the concrete class, including its auth and options schema,
+    # during preflight, before it constructs an agent.
+    if attribute == "OpenRouterAntigravity":
+        return native_class("antigravity-cli", openrouter=True)
+    if attribute.startswith("Harness_"):
+        from search_swe.harbor_native import registry
+        name = attribute.removeprefix("Harness_").replace("_", "-")
+        if name in registry():
+            return native_class(name)
+    raise AttributeError(attribute)
+
+
+class NativeAgent:
+    """Constructor for existing job configurations."""
+
+    def __new__(cls, *args, search_swe_native_name, search_swe_openrouter=False, **kwargs):
+        return native_class(search_swe_native_name, search_swe_openrouter)(
+            *args, search_swe_native_name=search_swe_native_name, **kwargs)

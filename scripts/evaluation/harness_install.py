@@ -210,7 +210,8 @@ class ManagedHarness:
 
     def __init__(self, *args, **kwargs):
         if self.HARNESS_NAME and not kwargs.get("version"):
-            kwargs["version"] = harnesses.default_version(self.HARNESS_NAME)
+            if version := harnesses.default_version(self.HARNESS_NAME):
+                kwargs["version"] = version
         super().__init__(*args, **kwargs)
 
     async def setup(self, environment):

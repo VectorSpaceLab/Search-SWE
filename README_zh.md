@@ -41,8 +41,6 @@ Search-SWE 评估编码智能体能否在固定资源约束下**实现和优化*
 
 ### 通过 CLI 运行
 
-使用 **0.3.x** 版本的 CLI 和同一版本系列的 checkout。
-
 ```bash
 pip install search-swe
 search-swe run
@@ -53,8 +51,8 @@ search-swe run
 的数据和模型，并将日志与结果保存在 checkout 下的 `jobs/evaluations/`。
 下载前会展示任务数据、缓存的位置及所需磁盘空间；将缓存放到其他磁盘的方法见[资源说明](docs/evaluation/assets.md)。
 
-在两批评测之间使用 `search-swe update` 获取新贡献的任务；
-`search-swe info` 可查看当前使用的仓库路径、版本和任务数。
+使用 `search-swe info` 检查本地仓库的兼容性并查看任务数。
+在两批评测之间使用 `search-swe update` 获取新贡献的任务。
 
 Submission API key **必须配置**固定的 [OpenRouter 模型白名单](docs/evaluation/submission-models.md)：
 共享 key 为 **47 个模型**，`reasoning-query-rewriting` 专用 key 为 **17 个模型**。

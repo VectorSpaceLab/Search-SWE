@@ -81,6 +81,9 @@ def select_setting(current, args, *, root=None):
         model, metadata = openrouter_model(agent, default, args)
     elif model is None and agent == "pi" and provider != "native":
         model = pi_model(current.model if same_route else "deepseek/deepseek-flash")
+    elif model is None and agent == "antigravity-cli" and provider == "native":
+        model = ask(questionary.text("Antigravity model ID (e.g. gemini/gemini-3-flash)",
+                    default=current.model if same_route else "", validate=lambda value: bool(value.strip()))).strip()
     elif model is None:
         model = ask(questionary.text("Native model ID (optional when the agent supplies a default)" if provider == "native" else "Model ID for the direct endpoint",
                     default=current.model if same_route else "", validate=lambda value: provider == "native" or bool(value.strip()))).strip()
@@ -156,7 +159,7 @@ def openrouter_model(agent, default, args):
     return model, models.get(model)
 
 
-def credential(name, env, updates, *, optional=False, edit=False):
+def credential(name, env, updates, *, optional=False, edit=False, secret=False):
     if env.get(name, "").strip():
         if not edit:
             return
@@ -175,7 +178,7 @@ def credential(name, env, updates, *, optional=False, edit=False):
             return
     prompt = name + (" (optional; Enter to skip)" if optional else " (required)")
     from harbor.utils.env import is_sensitive_env_key
-    if is_sensitive_env_key(name) or name.endswith(("API_KEY", "TOKEN", "TOKEN_BEDROCK", "_PAT")):
+    if secret or is_sensitive_env_key(name) or name.endswith(("API_KEY", "TOKEN", "TOKEN_BEDROCK", "_PAT")):
         value = ask(questionary.password(prompt, validate=lambda v: True if optional or v.strip() else "A key is required"))
     else:
         defaults = {"AGENT_OPENAI_BASE_URL": "https://api.openai.com/v1",
@@ -192,11 +195,16 @@ def configure_agent(setting, env, updates, *, edit=False):
     if setting.agent == "pi" and setting.provider == "direct":
         provider, _, info = pi_models.selection(setting.model)
         print(f"Pi API-key setup: {info['name']} ({provider}). Only this provider's credentials are requested.")
+    secrets = set()
     if setting.provider == "native":
         info = harbor_native.describe(setting.agent)
         print(f"Harbor native agent: {setting.agent}; native ATIF: {info['native_atif']}. Task trajectory requirements remain in effect.")
-    for name in sorted(setting.required(env)):
-        credential(name, env, updates, edit=edit)
+        plan = harbor_native.plan(setting.agent, setting.model, env, setting.agent_config)
+        required, secrets = plan["required"], plan["secret_variables"]
+    else:
+        required = setting.required(env)
+    for name in sorted(required):
+        credential(name, env, updates, edit=edit, secret=name in secrets)
 
 
 def select_tasks(catalog, *, required=True):

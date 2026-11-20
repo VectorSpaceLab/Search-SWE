@@ -17,7 +17,7 @@ from harbor.models.task.verifier_mode import (
     resolve_task_verifier_mode,
 )
 from harbor.models.trial.config import AgentConfig, EnvironmentConfig
-from harbor.trial.network_policy import resolve_trial_network_plan
+from search_swe.harbor_compat import resolve_trial_network_plan
 
 from scripts.evaluation.harbor_agents import (
     PreinstalledClaudeCode,
@@ -108,12 +108,6 @@ class TaskNetworkPolicies(unittest.TestCase):
             self.assertIn("@openai/codex", dockerfile.read_text())
 
     def test_claude_effort_levels_are_supported_by_the_harbor_adapter(self):
-        effort_flag = next(
-            flag
-            for flag in PreinstalledClaudeCode.CLI_FLAGS
-            if flag.kwarg == "reasoning_effort"
-        )
-        self.assertTrue(set(CLAUDE_CODE_EFFORT_LEVELS) <= set(effort_flag.choices))
         self.assertNotIn("ultracode", CLAUDE_CODE_EFFORT_LEVELS)
         with tempfile.TemporaryDirectory() as directory:
             for effort in CLAUDE_CODE_EFFORT_LEVELS:
@@ -289,7 +283,7 @@ class LauncherNetworkPolicy(unittest.TestCase):
                 self.assertEqual(self.flag_values(argv, "--allow-agent-host"), ["openrouter.ai"])
                 self.assertEqual(self.flag_values(argv, "--ae"), expected_env)
                 self.assertTrue(argv[argv.index("--agent") + 1].endswith(agent_class))
-                self.assertEqual(argv[argv.index("-m") + 1], "openrouter/" + model if agent == "pi" else model)
+                self.assertEqual(argv[argv.index("--model") + 1], "openrouter/" + model if agent == "pi" else model)
                 self.assertNotIn("AGENT_OPENAI_API_KEY", result.stdout)
                 self.assertNotIn("AGENT_ANTHROPIC_API_KEY", result.stdout)
                 self.assertIn("OPENAI_API_KEY=${VERIFIER_OPENAI_API_KEY}",

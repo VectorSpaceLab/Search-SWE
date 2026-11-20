@@ -77,7 +77,7 @@ elif name == 'agy':
     jsonl(transcript, rows)
     # Force the native marker and transcript to have equal timestamps, as can
     # occur on fuse2fs even when the transcript was written later.
-    marker = Path('/tmp/.harbor-antigravity-run-start').stat()
+    marker = next(path for path in Path('/tmp').glob('.*antigravity-run-start') if path.is_file()).stat()
     os.utime(transcript, ns=(marker.st_atime_ns, marker.st_mtime_ns))
     (root / 'timestamp-probe.json').write_text(json.dumps({
         'marker_mtime_ns': marker.st_mtime_ns,
