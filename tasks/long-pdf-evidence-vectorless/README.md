@@ -11,7 +11,10 @@
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | single long PDF |
+| Public queries | 10 |
 | Hidden queries | 12 |
+
+## Overview
 
 Build a reusable, embedding-free index over the supplied *War and Peace* PDF and its fixed sentence inventory. Return up to five complete original sentence units supporting each interpretive question. The task uses **SentenceEvidenceAccuracy** and the sentence-evidence inputs attributed in [SOURCES.md](SOURCES.md).
 
@@ -39,36 +42,9 @@ The evidence judge uses the configured `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_
 
 ### Evidence judge calibration
 
-The judge evaluates requirements by their semantic support in the question and
-candidate evidence. Equivalent explanations may establish a distinction without
-repeating the reference's wording or separately negating alternatives. Requested
-comparisons, qualifications and causal links remain necessary. Extra evidence affects
-support when it creates a material contradiction or an unresolved essential referent;
-harmless redundancy is allowed. Rejection reasons identify the missing necessary
-relationship or concrete conflict.
+The judge evaluates requirements by their semantic support in the question and candidate evidence. Equivalent explanations may establish a distinction without repeating the reference's wording or separately negating alternatives. Requested comparisons, qualifications and causal links remain necessary. Extra evidence affects support when it creates a material contradiction or an unresolved essential referent; harmless redundancy is allowed. Rejection reasons identify the missing necessary relationship or concrete conflict.
 
-`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering
-causality, contrast, qualifications, reference resolution, contradiction and temporal
-context. These author-only cases are not part of scored data or the production prompt.
-`tests/test_judge_request.py` mocks HTTP to check request contents and failure handling;
-it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md)
-for local checks and the pending live calibration/re-evaluation handoff.
-
-### Credentials and evaluation
-
-Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the coding agent; `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY` for the evidence judge; and `VERIFIER_OPENAI_API_KEY` / `VERIFIER_OPENAI_BASE_URL` for the trajectory audit. All three evidence-judge settings are required and passed only to the verifier, with no fixed model or base URL. Optional solver calls use the separate `OPENROUTER_API_KEY` and only the models/endpoints in [available_resources.md](environment/docs/available_resources.md). The judge model is not a solver resource. Never include credential values in this package or artifacts.
-
-From the repository root, using the configured Python environment:
-
-```bash
-python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless
-python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless --verify-only
-python scripts/validation/check_tasks.py tasks/long-pdf-evidence-vectorless
-python -B -m unittest discover -s tasks/long-pdf-evidence-vectorless/tests -p 'test_*.py' -v
-bash scripts/evaluation/run_task.sh --task long-pdf-evidence-vectorless --agent codex --openrouter \
-  --model openai/gpt-6-luna --reasoning-effort max \
-  --output jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-RUN_ID
-```
+`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering causality, contrast, qualifications, reference resolution, contradiction and temporal context. These author-only cases are not part of scored data or the production prompt. `tests/test_judge_request.py` mocks HTTP to check request contents and failure handling; it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md) for local checks and the pending live calibration/re-evaluation handoff.
 
 ### Sources and validation status
 
@@ -84,6 +60,24 @@ The four public inputs intentionally reuse the original task's published paths a
 
 A public cart-purpose question omits the requester, allowing competing original scenes. Its supplied public reference requirements identify the intended furniture request; this observation does not invalidate the separate hidden-set measurement. On October 17 the contributor requested retaining wording unless modification was necessary, so the original public data are retained and this optional clarification is not a submission blocker. The diagnostic and proposed wording remain recorded in `public-query-ambiguity.md` under the October 16 author evidence directory. No question, grader or resource budget was changed in this review.
 
+## Running the Task
+
+Configure the ignored repository `.env`: `AGENT_OPENROUTER_API_KEY` for the coding agent; `ANSWER_JUDGE_MODEL_NAME`, `ANSWER_JUDGE_BASE_URL` and `ANSWER_JUDGE_API_KEY` for the evidence judge; and `VERIFIER_OPENAI_API_KEY` / `VERIFIER_OPENAI_BASE_URL` for the trajectory audit. All three evidence-judge settings are required and passed only to the verifier, with no fixed model or base URL. Optional solver calls use the separate `OPENROUTER_API_KEY` and only the models/endpoints in [available_resources.md](environment/docs/available_resources.md). The judge model is not a solver resource. Never include credential values in this package or artifacts.
+
+From the repository root, using the configured Python environment:
+
+```bash
+python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless
+python scripts/assets/download_assets.py --task long-pdf-evidence-vectorless --verify-only
+python scripts/validation/check_tasks.py tasks/long-pdf-evidence-vectorless
+python -B -m unittest discover -s tasks/long-pdf-evidence-vectorless/tests -p 'test_*.py' -v
+bash scripts/evaluation/run_task.sh --task long-pdf-evidence-vectorless --agent codex --openrouter \
+  --model openai/gpt-6-luna --reasoning-effort max \
+  --output jobs/long-pdf-evidence-vectorless-codex-openrouter-luna-max-RUN_ID
+```
+
 ## References
 
-- [Data, model and method provenance](SOURCES.md).
+- **Task source** — Experience
+- **Data source** — The 2016 PDF edition of *War and Peace* and the sentence inventory from long-pdf-evidence.
+- **Provenance details** — [Edition, sentence preparation, and usage terms](SOURCES.md)

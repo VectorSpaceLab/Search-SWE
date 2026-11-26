@@ -11,20 +11,16 @@
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | research-paper PDFs |
+| Public queries | 10 |
 | Hidden queries | 10 |
+
+## Overview
 
 Build a RAG system that answers scientific questions and identifies the supporting paper.
 
-### Overview
+Finding a related paper is only one part of scientific question answering. The system must recover relevant evidence from PDFs, interpret it, and produce an answer attributable to the correct source.
 
-Finding a related paper is only one part of scientific question answering.
-The system must recover relevant evidence from PDFs, interpret it, and
-produce an answer attributable to the correct source.
-
-This task combines retrieval and generation over 300 local research papers.
-It evaluates the complete pipeline: an otherwise plausible answer receives no
-credit when the submitted evidence document is wrong. It also tests whether
-the system can share its index and services reliably across concurrent questions.
+This task combines retrieval and generation over 300 local research papers. It evaluates the complete pipeline: an otherwise plausible answer receives no credit when the submitted evidence document is wrong. It also tests whether the system can share its index and services reliably across concurrent questions.
 
 ### Task Setup
 
@@ -36,29 +32,17 @@ the system can share its index and services reliably across concurrent questions
 | `data/validation/queries.jsonl` | 10 public development questions |
 | `data/validation/golden_answers.jsonl` | Public answers and supporting document IDs |
 
-Public assets are mounted under `/task/data`. The 10 held-out questions use
-the same PDF corpus, but their questions and labels are separated from the
-agent environment. [Long-PDF evidence](../long-pdf-evidence/README.md) instead evaluates page
-localization within a single long PDF.
+Public assets are mounted under `/task/data`. The 10 held-out questions use the same PDF corpus, but their questions and labels are separated from the agent environment. [Long-PDF evidence](../long-pdf-evidence/README.md) instead evaluates page localization within a single long PDF.
 
 #### Fixed Components and Allowed Changes
 
-The corpus and output interface are fixed. PDF processing, index design,
-retrieval, evidence selection, and answer synthesis are implementation choices.
-Optional OpenRouter and Jina services are subject to the
-[resource policy](environment/docs/available_resources.md); they do not permit
-replacing corpus-grounded work with external answers.
+The corpus and output interface are fixed. PDF processing, index design, retrieval, evidence selection, and answer synthesis are implementation choices. Optional OpenRouter and Jina services are subject to the [resource policy](environment/docs/available_resources.md); they do not permit replacing corpus-grounded work with external answers.
 
 #### Environment and Resource Limits
 
-The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage,
-and no GPU. The agent has two hours and the Harbor verifier four hours.
-The submitted build has a 3,600-second limit. The verifier launches up to five
-query processes at once, each with 900 seconds from process start; queue time
-is excluded and workers share the same resources.
+The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage, and no GPU. The agent has two hours and the Harbor verifier four hours. The submitted build has a 3,600-second limit. The verifier launches up to five query processes at once, each with 900 seconds from process start; queue time is excluded and workers share the same resources.
 
-The verifier also bounds query execution, answer scoring, and trajectory review
-as stages inside its overall budget. Stage limits do not extend that budget.
+The verifier also bounds query execution, answer scoring, and trajectory review as stages inside its overall budget. Stage limits do not extend that budget.
 
 ## Change Log
 
@@ -79,11 +63,7 @@ Author-side regressions are in `authoring/tests/` and are excluded from the veri
 
 ### Submission Contract
 
-The deliverable is `/app/build.sh` plus `/app/run.sh` and the implementation
-they need. Each query produces a concise `answer` and one evidence document ID
-(the PDF filename without `.pdf`), along with its query ID. The build must
-recreate any service in the separate verifier, and the query path must support
-concurrent invocations.
+The deliverable is `/app/build.sh` plus `/app/run.sh` and the implementation they need. Each query produces a concise `answer` and one evidence document ID (the PDF filename without `.pdf`), along with its query ID. The build must recreate any service in the separate verifier, and the query path must support concurrent invocations.
 
 The full schema and invocation details live in [instruction.md](instruction.md).
 
@@ -91,11 +71,7 @@ The full schema and invocation details live in [instruction.md](instruction.md).
 
 #### Search Quality
 
-A question scores one only when **both** conditions hold: the evidence document
-matches the reference, and an answer judge accepts the answer as semantically
-equivalent to the reference. LLMJudgeAccuracy is the mean of these binary
-outcomes over 10 hidden questions. The report's 0–100 score is 100 times the
-normalized reward. The answer judge is called only after the evidence document matches the reference.
+A question scores one only when **both** conditions hold: the evidence document matches the reference, and an answer judge accepts the answer as semantically equivalent to the reference. LLMJudgeAccuracy is the mean of these binary outcomes over 10 hidden questions. The report's 0–100 score is 100 times the normalized reward. The answer judge is called only after the evidence document matches the reference.
 
 #### Correctness and Resource Gates
 
@@ -103,31 +79,21 @@ Execution, complete query coverage, valid answers and document IDs, and runtime 
 
 #### Integrity Checks and Final Reward
 
-The answer judge and trajectory audit are separate. The first evaluates answer
-equivalence; the second checks task compliance and can set the whole reward
-to zero. Their credentials are isolated from submission processes and from
-each other.
-The trajectory audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0;
-the answer judge keeps its independently configured model.
+The answer judge and trajectory audit are separate. The first evaluates answer equivalence; the second checks task compliance and can set the whole reward to zero. Their credentials are isolated from submission processes and from each other. The trajectory audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0; the answer judge keeps its independently configured model.
 
-The 300 source PDFs are unchanged. Public and hidden questions were rebuilt
-to combine paper-identification conditions with evidence from tables, figures,
-and experimental details. The splits have disjoint query IDs, questions, and
-reference papers; the hidden split uses ten distinct reference papers.
-Current task identity and execution settings are recorded in `task.toml`.
+The 300 source PDFs are unchanged. Public and hidden questions were rebuilt to combine paper-identification conditions with evidence from tables, figures, and experimental details. The splits have disjoint query IDs, questions, and reference papers; the hidden split uses ten distinct reference papers. Current task identity and execution settings are recorded in `task.toml`.
 
-### Running This Task
+### Repeated measurements
 
-From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install Search-SWE and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
-task credential profile. The
-[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+After evidence matching, the fixed submitted answer is judged independently three times. The score is the mean of the three binary decisions, averaged equally across queries. Retrieval, answer generation and evidence comparison run once.
 
-This task needs both `ANSWER_JUDGE_*` settings for answer scoring and
-`VERIFIER_OPENAI_*` settings for the trajectory audit. Optional submission APIs
-use shared `OPENROUTER_API_KEY` and `JINA_API_KEY`. The evaluation guide explains
-the separate credential groups and their API requirements.
+The `answer-judge-v2` protocol starts each vote at 512 output tokens. It accepts the first parseable decision, including a negative vote. Empty or malformed replies and transport errors retry within the same three 120-second attempts. If the provider reports a length limit and the decision is incomplete, the next attempt gets four times the output budget, up to 8,192 tokens. Each completed vote is saved in the verifier's private results directory. Restarting the grader there with the same inputs, judge and protocol reuses those votes. A missing required vote invalidates the measurement and leaves zero reward. The answer-grader supervisor allows 2,700 seconds for up to 30 judgments with five workers. The overall verifier budget is 14,400 seconds and includes one trajectory audit.
+
+## Running the Task
+
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md) to install Search-SWE and prepare Docker. Use the [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and task credential profile. The [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+
+This task needs both `ANSWER_JUDGE_*` settings for answer scoring and `VERIFIER_OPENAI_*` settings for the trajectory audit. Optional submission APIs use shared `OPENROUTER_API_KEY` and `JINA_API_KEY`. The evaluation guide explains the separate credential groups and their API requirements.
 
 ```bash
 python scripts/assets/download_assets.py --task scientific-paper-qa
@@ -135,12 +101,7 @@ bash scripts/evaluation/run_task.sh --task scientific-paper-qa --agent codex --o
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 
-The shared launcher defaults to Codex, also supports Pi and Claude Code, and
-writes results under `jobs/scientific-paper-qa/`.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-command construction without starting an evaluation; this does not validate
-assets, credentials, or hardware.
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and writes results under `jobs/scientific-paper-qa/`. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect command construction without starting an evaluation; this does not validate assets, credentials, or hardware.
 
 ### Task Files
 
@@ -154,12 +115,7 @@ assets, credentials, or hardware.
 | [Verifier](tests/) | Execution, output validation, and scoring implementation |
 | [Resource policy](environment/docs/available_resources.md) | Allowed submission APIs and model restrictions |
 
-### Repeated verifier measurements
-
-After evidence matching, the fixed submitted answer is judged independently three times. The score is the mean of the three binary decisions, averaged equally across queries. Retrieval, answer generation and evidence comparison run once.
-
-The `answer-judge-v2` protocol starts each vote at 512 output tokens. It accepts the first parseable decision, including a negative vote. Empty or malformed replies and transport errors retry within the same three 120-second attempts. If the provider reports a length limit and the decision is incomplete, the next attempt gets four times the output budget, up to 8,192 tokens. Each completed vote is saved in the verifier's private results directory. Restarting the grader there with the same inputs, judge and protocol reuses those votes. A missing required vote invalidates the measurement and leaves zero reward. The answer-grader supervisor allows 2,700 seconds for up to 30 judgments with five workers. The overall verifier budget is 14,400 seconds and includes one trajectory audit.
-
 ## References
 
-None.
+- **Task source** — Experience
+- **Data source** — Fixed collection of 300 research-paper PDFs with task-authored questions. [Asset manifest](assets.json)

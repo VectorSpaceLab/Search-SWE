@@ -11,15 +11,14 @@
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 21600 s / 45600 s |
 | Dataset | Belebele and XQuAD full multilingual pools, original-content-grouped development/test partition |
+| Public queries | 3138 |
+| Hidden queries | 13002 |
+
+## Overview
 
 Improve multilingual retrieval by postprocessing frozen 1024-dimensional vectors with one GPU within six hours.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -35,6 +34,8 @@ Only transformations of frozen vectors are available. Improvements must transfer
 
 The verifier normalizes transformed vectors, ranks by FP32 cosine and computes binary nDCG@20 using the full positive sets. It averages equally across query languages and datasets, then linearly normalizes improvement from the fixed baseline B=0.9127469497437668 to the full-score point Q=1. Five fresh measurement rounds use a fixed order and fixed consistency probes. Each query is scored from its median-duration sample; failed samples occupy the deadline, and quality is never used to select a sample. Query failures retain their denominator; preparation, resource and integrity failures invalidate the submission. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
 
+## Running the Task
+
 ### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
@@ -44,26 +45,15 @@ python scripts/assets/download_assets.py --task multilingual-vector-postprocessi
 python scripts/assets/download_assets.py --task multilingual-vector-postprocessing --verify-only
 ```
 
-[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
-restoration paths. Keep verifier inputs outside agent mounts. Model cards,
-licenses and data-use restrictions are described in the resource document.
+[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled restoration paths. Keep verifier inputs outside agent mounts. Model cards, licenses and data-use restrictions are described in the resource document.
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 16 GiB RAM and
-100 GiB storage. Agent development has
-21600 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks. The primary supervisor is 43,500 seconds, the audit wrapper is 1,200 seconds, and the outer verifier allows 45,600 seconds.
+The task allocates 16 CPU cores, 16 GiB RAM and 100 GiB storage. Agent development has 21600 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks. The primary supervisor is 43,500 seconds, the audit wrapper is 1,200 seconds, and the outer verifier allows 45,600 seconds.
 
-Both phases require one GPU. Use `--gpu-device` to select the same
-host GPU for both phases.
+Both phases require one GPU. Use `--gpu-device` to select the same host GPU for both phases.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
-The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials
-are not submission inputs.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README. The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials are not submission inputs.
 
 Invoke the standard entrypoint directly:
 
@@ -73,9 +63,7 @@ bash scripts/evaluation/run_task.sh --task multilingual-vector-postprocessing --
   --output "jobs/multilingual-vector-postprocessing-codex-openrouter-luna-max-RUN_ID"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -84,13 +72,11 @@ python scripts/validation/check_tasks.py tasks/multilingual-vector-postprocessin
 python scripts/assets/download_assets.py --task multilingual-vector-postprocessing --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 
-None.
+- **Task source** — [LangSAE Editing (ACL 2026)](https://aclanthology.org/2026.acl-long.1685/)
+- **Data source** — Belebele and XQuAD multilingual pools with frozen embeddings and original-content-grouped splits. [Asset manifest](assets.json)

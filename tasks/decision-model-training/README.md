@@ -11,13 +11,14 @@
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 21600 s / 480 s |
 | Dataset | OpenJev mixture and held-out suite |
+| Public queries | 0 |
 | Hidden queries | 4200 |
+
+## Overview
 
 Author: Bingyu. Published task package; the saved coding-agent result is recorded in RUN_RESULTS.md.
 
-Build an offline Qwen3-0.6B-based system for categorical choices, Boolean
-judgments, and ordinal ratings. This task follows the user's revised OpenJev
-plan, rather than the earlier constrained-shopping recommendation proposal.
+Build an offline Qwen3-0.6B-based system for categorical choices, Boolean judgments, and ordinal ratings. This task follows the user's revised OpenJev plan, rather than the earlier constrained-shopping recommendation proposal.
 
 | Setting | Value |
 | --- | --- |
@@ -29,14 +30,7 @@ plan, rather than the earlier constrained-shopping recommendation proposal.
 | Startup / complete inference | 120 seconds / 240 seconds |
 | Network / judge API | Disabled / none |
 
-`start.sh` and `run.sh` and all runtime artifacts go in `/app/submission`.
-The verifier starts the system before exposing test requests, then times the
-whole batch. Categorical answers must be menu keys, Boolean answers JSON
-booleans, and ordinal answers zero-based integers. Invalid outputs and failed
-or timed-out commands score zero. Valid submissions receive the average of
-seven dataset accuracies, equal to overall accuracy because each has 600 rows.
-The verifier runs submitted code under UID 10001, protects labels and reward
-files, and stops all submission-owned processes before reading results.
+`start.sh` and `run.sh` and all runtime artifacts go in `/app/submission`. The verifier starts the system before exposing test requests, then times the whole batch. Categorical answers must be menu keys, Boolean answers JSON booleans, and ordinal answers zero-based integers. Invalid outputs and failed or timed-out commands score zero. Valid submissions receive the average of seven dataset accuracies, equal to overall accuracy because each has 600 rows. The verifier runs submitted code under UID 10001, protects labels and reward files, and stops all submission-owned processes before reading results.
 
 ## Change Log
 
@@ -52,10 +46,7 @@ The model must generalize across categorical, Boolean and ordinal decision tasks
 
 ### Local validation and author records
 
-Author scripts, original downloads, sampling lineage, GPU experiments and all
-known-answer fixtures are in
-`../../../task_development/decision-model-training`, outside the task package.
-Verification uses deterministic accuracy and runs entirely offline.
+Author scripts, original downloads, sampling lineage, GPU experiments and all known-answer fixtures are in `../../../task_development/decision-model-training`, outside the task package. Verification uses deterministic accuracy and runs entirely offline.
 
 Run from the repository root:
 
@@ -69,7 +60,7 @@ Public inputs are published and pinned to immutable revisions in `assets.json`, 
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health.
 
-### Running the task
+## Running the Task
 
 From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
@@ -83,25 +74,7 @@ bash scripts/evaluation/run_task.sh --task decision-model-training --agent codex
 
 ## References
 
-### Sources and preparation
-
-- [OpenJev training mixture](https://huggingface.co/datasets/s1lv3rj1nx/openjev-mixture/tree/e540d97fc37e92b493ceeb536bdb7a01e366bdc3): 323,466 original rows.
-- [OpenJev held-out suite](https://huggingface.co/datasets/s1lv3rj1nx/openjev-heldout/tree/fc5fe530405de8de02e983adbc5b10795618979c): AG News, Banking77, Civil Comments toxicity, CLINC OOS, HelpSteer helpfulness, MASSIVE intent, SST5.
-- [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B/tree/c1899de289a04d12100db370d81485cdf75e47ca): exact files verified against the user-supplied local model; Apache-2.0.
-- [OpenJev implementation](https://github.com/S1LV3RJ1NX/openjev/tree/91847b4c678f7d9330d8f3475e24c72c7fef73c2): author-side format and contamination checks; not provided as a solution.
-
-Sample without replacement within every source task configuration, seed
-20261014. Proportional largest-remainder allocation yields exactly 80,000 rows,
-with 8–742 examples per configuration. Before sampling, exclude two training
-rows whose normalized state occurs in the hidden suite. The original 4,200
-hidden states, questions, option descriptions/order and typed labels are
-preserved. Flatten per-example option overrides into each example's question
-schema. Neither new labels nor synthetic questions are generated. The upstream
-alias guard and normalized-state overlap check pass. No separate public
-validation split or baseline implementation is supplied.
-
-OpenJev's assembly is Apache-2.0; constituent datasets retain their own terms.
-Its held-out card explicitly flags unclear redistribution rights for AG News
-and SST5. The training mixture also does not supply a complete license audit of
-all underlying datasets. This package makes no claim that every row is cleared for republication.
-Unresolved constituent terms remain recorded for maintainer review.
+- **Task source** — [OpenJev](https://openjev.com/)
+- **Data source** — OpenJev training mixture and seven held-out decision datasets.
+- **Model source** — [Qwen3-0.6B at revision c1899de](https://huggingface.co/Qwen/Qwen3-0.6B/tree/c1899de289a04d12100db370d81485cdf75e47ca), Apache-2.0.
+- **Provenance details** — [Upstream revisions, sampling, and constituent dataset terms](SOURCES.md)

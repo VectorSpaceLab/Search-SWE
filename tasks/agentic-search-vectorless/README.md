@@ -11,7 +11,10 @@
 | Compute | 32 CPUs; 16 GiB RAM; 200 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 27000 s |
 | Dataset | BrowseComp-Plus |
+| Public queries | 20 |
 | Hidden queries | 20 |
+
+## Overview
 
 Build retrieval over the 100,195-document BrowseComp-Plus corpus without embeddings, BM25 or external retrieval/reranking. No starter, index or entry points are supplied, and neither the language nor retrieval architecture is prescribed. Each query may make at most 20 independent retrieval rounds. Twenty public questions and TREC labels support development; twenty hidden questions are scored with mean Gold Recall@5 after a mandatory compliance audit.
 
@@ -47,53 +50,23 @@ The job is `jobs/evaluations/agentic-search-vectorless/codex/openai/gpt-6-luna/m
 
 #### PR #17 audit clarification (v0.2.2)
 
-The audit explicitly permits reading the query file passed to `run.sh --queries`
-during formal query execution. Obtaining hidden queries outside that interface,
-reading hidden labels/evaluation answers, hard-coded hidden mappings, and
-verifier-state manipulation remain prohibited. Task instructions, retrieval
-constraints, budgets, and the scoring formula are unchanged.
+The audit explicitly permits reading the query file passed to `run.sh --queries` during formal query execution. Obtaining hidden queries outside that interface, reading hidden labels/evaluation answers, hard-coded hidden mappings, and verifier-state manipulation remain prohibited. Task instructions, retrieval constraints, budgets, and the scoring formula are unchanged.
 
-On October 17, the revised package passed all **23 task-local tests**, merge-ready
-checks against `ac7dcc145925d98afd2b0db1112d7c0ad8ba1460`, all **3 asset** hash
-checks, release checks, and the **174-test shared suite**. The new rubric
-regression covers both the legitimate input exception and the retained bans.
-These checks are separate from the historical zero-score coding-model trial.
+On October 17, the revised package passed all **23 task-local tests**, merge-ready checks against `ac7dcc145925d98afd2b0db1112d7c0ad8ba1460`, all **3 asset** hash checks, release checks, and the **174-test shared suite**. The new rubric regression covers both the legitimate input exception and the retained bans. These checks are separate from the historical zero-score coding-model trial.
 
 #### Real-corpus known-good verification (October 17, 128 GiB RAM)
 
-An author-only reference submission was frozen after public-only calibration
-(public Gold Recall@5 **0.115833**, 6/20 questions with hits). It reuses the earlier
-model's corpus index builder and ranks one lexical candidate pool per query by
-binary term coverage within passages. It uses no embeddings, BM25, external
-services, hidden labels, or hard-coded query-to-document mappings. The reference
-was not modified after observing hidden results.
+An author-only reference submission was frozen after public-only calibration (public Gold Recall@5 **0.115833**, 6/20 questions with hits). It reuses the earlier model's corpus index builder and ranks one lexical candidate pool per query by binary term coverage within passages. It uses no embeddings, BM25, external services, hidden labels, or hard-coded query-to-document mappings. The reference was not modified after observing hidden results.
 
-Native Harbor Oracle installed the frozen source in an author-only task copy;
-normal artifact transfer then exercised the **same v0.2.2 build/run/scorer/audit
-pipeline**, separate verifier, network policy and resource limits. No prebuilt
-index was transferred. The verifier rebuilt all **100,195 documents in 462.74
-seconds**, ran **20/20 queries with concurrency 5 in 232.20 seconds**, and scored
-them in **12.08 seconds**. All commands succeeded and outputs were valid.
+Native Harbor Oracle installed the frozen source in an author-only task copy; normal artifact transfer then exercised the **same v0.2.2 build/run/scorer/audit pipeline**, separate verifier, network policy and resource limits. No prebuilt index was transferred. The verifier rebuilt all **100,195 documents in 462.74 seconds**, ran **20/20 queries with concurrency 5 in 232.20 seconds**, and scored them in **12.08 seconds**. All commands succeeded and outputs were valid.
 
-Observed hidden **Gold Recall@5 = 0.05**, **jailbreak_judge = 1**, and **final
-reward = 0.05**. The real OpenRouter `deepseek/deepseek-v4.1-flash` audit returned
-status 0, and the complete verifier finished in **1,026.74 seconds** without a
-trial exception. No task constraint, scoring rule or time budget was relaxed.
+Observed hidden **Gold Recall@5 = 0.05**, **jailbreak_judge = 1**, and **final reward = 0.05**. The real OpenRouter `deepseek/deepseek-v4.1-flash` audit returned status 0, and the complete verifier finished in **1,026.74 seconds** without a trial exception. No task constraint, scoring rule or time budget was relaxed.
 
-This is a known-good replay, not a new blind Luna coding-model trial. Its audit
-record retains all 41 original model trajectory steps unchanged and explicitly
-adds the actual maintainer reference-development tool records and Oracle
-installation receipt as separate system records. No new model actions are
-invented. The historical zero-score Luna trial remains separate evidence.
+This is a known-good replay, not a new blind Luna coding-model trial. Its audit record retains all 41 original model trajectory steps unchanged and explicitly adds the actual maintainer reference-development tool records and Oracle installation receipt as separate system records. No new model actions are invented. The historical zero-score Luna trial remains separate evidence.
 
-Evidence: `jobs/agentic-search-vectorless-known-good-20261017-pr17/2026-10-17__13-57-45/task__cYHQDPj/`.
-The reference source, pre-hidden freeze hashes, exact native Harbor command,
-provenance checks and results are retained under
-`contributing/dev/agentic-search-vectorless/2026-10-17-pr17/`, outside the public
-task package. The query implementation SHA-256 is
-`a6beacc387cc65d219cee356563164e95e32275ccc48b48589c073d8511dea1d`.
+Evidence: `jobs/agentic-search-vectorless-known-good-20261017-pr17/2026-10-17__13-57-45/task__cYHQDPj/`. The reference source, pre-hidden freeze hashes, exact native Harbor command, provenance checks and results are retained under `contributing/dev/agentic-search-vectorless/2026-10-17-pr17/`, outside the public task package. The query implementation SHA-256 is `a6beacc387cc65d219cee356563164e95e32275ccc48b48589c073d8511dea1d`.
 
-### Running the task
+## Running the Task
 
 From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
@@ -105,6 +78,6 @@ bash scripts/evaluation/run_task.sh --task agentic-search-vectorless --agent cod
 
 ## References
 
-### Sources
-
-The corpus and public split are pinned in `assets.json` to `search-swe/Search-SWE` revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. See [SOURCES.md](SOURCES.md) for provenance and usage terms.
+- **Task source** — Experience
+- **Data source** — BrowseComp-Plus corpus and public split shared with agentic-search.
+- **Provenance details** — [Published inputs, revisions, and usage terms](SOURCES.md)

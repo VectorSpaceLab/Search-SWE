@@ -14,6 +14,8 @@
 | Public queries | 10 |
 | Hidden queries | 20 |
 
+## Overview
+
 Build a reusable search engine that returns the source regions needed to understand and address an issue in a fixed repository snapshot. The target is the original SWE-Explore reading context, including relevant implementation, helpers and tests. It is not exact bug-line localization and does not require generating a patch.
 
 ### Data and interface
@@ -38,15 +40,7 @@ The solver supplies executable `/app/build.sh` and `/app/run.sh` with the comman
 
 ### Difficulty evidence
 
-One packaged CPU/API Codex/OpenRouter `openai/gpt-6-luna`, `max` trial produced
-mean line F1 and reward **0.17146875932337885** under the labels before the
-2026-10-28 correction. The coding agent reached its
-7,200-second development limit (`AgentTimeoutError`); the subsequent verifier
-completed all 20 queries with valid outputs and no query timeouts. This is a
-scored submission after development-budget exhaustion, not an exception-free
-agent completion. [VALIDATION.md](VALIDATION.md) records the trial, matching
-instruction fingerprint, timings and original evidence locations. No online
-trajectory judge is configured for this task.
+One packaged CPU/API Codex/OpenRouter `openai/gpt-6-luna`, `max` trial produced mean line F1 and reward **0.17146875932337885** under the labels before the 2026-10-28 correction. The coding agent reached its 7,200-second development limit (`AgentTimeoutError`); the subsequent verifier completed all 20 queries with valid outputs and no query timeouts. This is a scored submission after development-budget exhaustion, not an exception-free agent completion. [VALIDATION.md](VALIDATION.md) records the trial, matching instruction fingerprint, timings and original evidence locations. No online trajectory judge is configured for this task.
 
 Author-side screening evaluated the same selected issues with the labels before the 2026-10-28 correction, a common five-region/500-line output budget and a 180-second query limit. Dense retrieval and reranking used local Qwen3 8B models; agents used local Qwen3.5-9B without thinking, at most 25 exploration steps plus a final call. Local GPU pilot latency is not a measurement of the packaged CPU/API environment. Index/model startup was excluded; enhanced-agent timing summed separately measured retrieval and exploration.
 
@@ -77,7 +71,7 @@ The task has 16 CPU cores, 32 GiB RAM, 100 GiB storage, no GPU and a two-hour de
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
 
-### Running the task
+## Running the Task
 
 From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
@@ -89,14 +83,6 @@ bash scripts/evaluation/run_task.sh --task code-context-retrieval --agent codex 
 
 ## References
 
-### Sources and reproduction
-
-[SWE-Explore paper](https://arxiv.org/abs/2606.07297), [SWE-Explore dataset](https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench), and [SWE-Explore implementation](https://github.com/Qiushao-E/SWE-Explore-Bench).
-
-Dataset revision: `bdb0ae45d7c337d9e1dc3ebfe2a0af6bc7c1fbd9`; release SHA-256: `dc4f114ececd0bfb987361c26ae5e2440456e2cccb36adfccb09ea5385aec202`. SWE-Explore implementation revision: `5602f031f2d9562d0a805f83402b536e831a5a11`. Issues and base commits were joined by exact IDs to pinned SWE-bench Verified, Multilingual and Pro v1 releases. Attribution and per-snapshot origins are in `LICENSE.data.md`.
-
-The authoring directory is `task_development/code-bug-localization`, adjacent to this Search-SWE checkout. It contains source downloads, the frozen selection, per-query baseline traces, review notes, export scripts, source hashes and author-only runtime fixtures. None is mounted into the solver environment. Reproduce the export with `python task_development/code-bug-localization/package_task.py` from the parent workspace; its input is the already frozen `selection/`.
-
-Run `python scripts/assets/download_assets.py --task code-context-retrieval --verify-only` from this checkout to verify local asset hashes, and `python -m unittest discover -s tasks/code-context-retrieval/tests -p test_contract.py` for scoring regression checks. `VALIDATION.md` records actual runtime checks and remaining validation layers.
-
-Public inputs are published and pinned to immutable revisions in `assets.json`, with exact sizes and SHA-256 hashes. Unchanged model pins are retained. See [RUN_RESULTS.md](RUN_RESULTS.md) for the current run evidence and publication status. Existing source terms and attribution remain applicable.
+- **Task source** — [SWE-Explore (arXiv 2026)](https://arxiv.org/abs/2606.07297)
+- **Data source** — [SWE-Explore annotations](https://huggingface.co/datasets/SWE-Explore-Bench/SWE-Explore-Bench) and pinned SWE-bench repository snapshots. [Data attribution and licenses](LICENSE.data.md)
+- **Provenance details** — [Source revisions, export, and reproduction](SOURCES.md)
