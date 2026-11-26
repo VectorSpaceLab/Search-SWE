@@ -10,15 +10,15 @@
 | Primary metric | Equal-weight mean of per-dataset strict reciprocal-top1 paired success fractions |
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 3600 s / 130000 s |
+| Dataset | ProtT3 Swiss-Prot and ProteinKG25 |
+| Public queries | 10 per dataset and direction |
+| Hidden queries | 10,000 per dataset and direction |
+
+## Overview
 
 Learn compact 64-dimensional protein/text embeddings and maximize strict reciprocal-top1 pair recovery under online latency and submission limits.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -38,6 +38,8 @@ A pair succeeds only when its independently executed protein-to-text and text-to
 
 [Validation evidence](VALIDATION.md) distinguishes the deployment limits from measured results and records the remaining need for a trial under the current 16 GiB memory limit. It also documents the public/runtime boundary and checks for the documentation cleanup.
 
+## Running the Task
+
 ### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
@@ -47,26 +49,15 @@ python scripts/assets/download_assets.py --task protein-text-bidirectional-retri
 python scripts/assets/download_assets.py --task protein-text-bidirectional-retrieval --verify-only
 ```
 
-[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
-restoration paths. Keep verifier inputs outside agent mounts. Model provenance,
-licenses and data-use terms are described in [SOURCES.md](SOURCES.md).
+[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled restoration paths. Keep verifier inputs outside agent mounts. Model provenance, licenses and data-use terms are described in [SOURCES.md](SOURCES.md).
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 16 GiB RAM and
-100 GiB storage. Agent development has
-3600 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+The task allocates 16 CPU cores, 16 GiB RAM and 100 GiB storage. Agent development has 3600 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks.
 
-Both phases require one GPU; the verifier does not restrict its model or memory capacity. Use `--gpu-device` to select the same
-host GPU for both phases.
+Both phases require one GPU; the verifier does not restrict its model or memory capacity. Use `--gpu-device` to select the same host GPU for both phases.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
-The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials
-are not submission inputs.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README. The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials are not submission inputs.
 
 Invoke the standard entrypoint directly:
 
@@ -76,9 +67,7 @@ bash scripts/evaluation/run_task.sh --task protein-text-bidirectional-retrieval 
   --output "jobs/protein-text-bidirectional-retrieval-codex-openrouter-luna-max-RUN_ID"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -87,15 +76,12 @@ python scripts/validation/check_tasks.py tasks/protein-text-bidirectional-retrie
 python scripts/assets/download_assets.py --task protein-text-bidirectional-retrieval --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 
-- [Task reference](https://aclanthology.org/2024.acl-long.324/).
-
-- [Data, model and method provenance](SOURCES.md).
+- **Task source** — [ProtT3 (ACL 2024)](https://aclanthology.org/2024.acl-long.324/)
+- **Data source** — Swiss-Prot and ProteinKG25 pairs from the ProtT3 data release.
+- **Provenance details** — [Paired archives, ESM-2 and BiomedBERT checkpoints, and usage terms](SOURCES.md)

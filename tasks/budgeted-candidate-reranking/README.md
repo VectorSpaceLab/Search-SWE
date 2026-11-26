@@ -11,15 +11,14 @@
 | Compute | 16 CPUs; 32 GiB RAM; 40 GiB storage; 1 GPU |
 | Agent / verifier time limits | 7200 s / 40000 s |
 | Dataset | MS MARCO passage; all 43 judged TREC DL2019 public queries and all 54 judged DL2020 test queries |
+| Public queries | 43 |
+| Hidden queries | 54 |
+
+## Overview
 
 Improve fixed BM25 Top-100 passage reranking with a metered, frozen local Qwen3-1.7B model.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -35,6 +34,14 @@ The candidate pool and local model are fixed. The system must allocate a small w
 
 The verifier measures mean linear-gain nDCG@10 over all 54 hidden queries and normalizes improvement between a frozen baseline and the fixed-candidate oracle. Candidate pools, full-qrels normalization and model/token budgets remain fixed. A healthy passing trajectory audit gates the numerical reward. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
 
+### Repeated measurements
+
+Each test query is measured five times, with a new strategy process and a fresh writable work directory each time. Model deployment and the fixed warmup occur once. Each measurement has its own 2048 weighted-token allowance. The medians of the five local-strategy times and five trusted-response times must be at most 1.0 and 90 seconds, respectively. Individual measurements have execution caps of 2.0 local seconds and 120 trusted-response seconds. All five measurements must return valid rankings within their token allowance; otherwise that query scores zero. For a query passing these checks and both median limits, its quality is the arithmetic mean of its five nDCG@10 values.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.
+
+## Running the Task
+
 ### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
@@ -44,31 +51,17 @@ python scripts/assets/download_assets.py --task budgeted-candidate-reranking
 python scripts/assets/download_assets.py --task budgeted-candidate-reranking --verify-only
 ```
 
-[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
-restoration paths. Keep verifier inputs outside agent mounts. Model cards,
-licenses and data-use restrictions are described in the resource document.
+[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled restoration paths. Keep verifier inputs outside agent mounts. Model cards, licenses and data-use restrictions are described in the resource document.
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 32 GiB RAM and
-40 GiB storage. Agent development has
-7200 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+The task allocates 16 CPU cores, 32 GiB RAM and 40 GiB storage. Agent development has 7200 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks.
 
-Both phases require one GPU. Use `--gpu-device` to select the same
-host GPU for both phases.
+Both phases require one GPU. Use `--gpu-device` to select the same host GPU for both phases.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README.
 
-The independent verifier audit also requires `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in that local configuration.
-It uses `deepseek/deepseek-v4.1-flash`; only verifier egress to `openrouter.ai`
-is allowed. These credentials are never passed to submitted commands.
-The verifier protects the transferred trajectory, records the raw numerical
-score, terminates candidate processes, and publishes reward only after a
-healthy passing integrity audit. See `audit-status.json` for audit health.
+The independent verifier audit also requires `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in that local configuration. It uses `deepseek/deepseek-v4.1-flash`; only verifier egress to `openrouter.ai` is allowed. These credentials are never passed to submitted commands. The verifier protects the transferred trajectory, records the raw numerical score, terminates candidate processes, and publishes reward only after a healthy passing integrity audit. See `audit-status.json` for audit health.
 
 Invoke the standard entrypoint directly:
 
@@ -78,9 +71,7 @@ bash scripts/evaluation/run_task.sh --task budgeted-candidate-reranking --gpu-de
   --output "jobs/budgeted-candidate-reranking-codex-openrouter-luna-max-RUN_ID"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -89,19 +80,12 @@ python scripts/validation/check_tasks.py tasks/budgeted-candidate-reranking
 python scripts/assets/download_assets.py --task budgeted-candidate-reranking --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 
-None.
-
-## Repeated measurements
-
-Each test query is measured five times, with a new strategy process and a fresh writable work directory each time. Model deployment and the fixed warmup occur once. Each measurement has its own 2048 weighted-token allowance. The medians of the five local-strategy times and five trusted-response times must be at most 1.0 and 90 seconds, respectively. Individual measurements have execution caps of 2.0 local seconds and 120 trusted-response seconds. All five measurements must return valid rankings within their token allowance; otherwise that query scores zero. For a query passing these checks and both median limits, its quality is the arithmetic mean of its five nDCG@10 values.
-
-The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.
+- **Task source** — [PRP-Graph (ACL 2024)](https://aclanthology.org/2024.acl-long.313/)
+- **Data source** — MS MARCO passages and judged TREC Deep Learning 2019 and 2020 queries.
+- **Model source** — [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B). [Asset manifest](assets.json)

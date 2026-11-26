@@ -11,7 +11,10 @@
 | Compute | 8 CPUs; 32 GiB RAM; 100 GiB storage; 1 GPU |
 | Agent / verifier time limits | 21600 s / 10800 s |
 | Dataset | code-retrieval |
+| Public queries | 0 |
 | Hidden queries | 200 |
+
+## Overview
 
 Fine-tune the supplied `BAAI/bge-reranker-base` weights while preserving architecture, configuration and tokenizer. The fixed first stage combines local BM25 Top-200 with local `BAAI/bge-base-en-v1.5` embedding Top-200 through equal-weight RRF (`k=60`), retaining the whole deduplicated union of 200–400 candidates. Original and submitted rerankers use exactly the same lists. Reward measures mean Accuracy@5 gain normalized by fixed-candidate headroom over all 200 hidden questions.
 
@@ -43,10 +46,6 @@ An earlier author-only local A100 run substituted local BGE embeddings for the A
 
 ### Validation
 
-From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. The input sources, immutable revisions, filenames, sizes and hashes are listed in `assets.json`.
-
-Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which uses the task's GPU reservations for both the agent and verifier.
-
 #### Historical 6-hour coding-model evaluation (v0.3.1)
 
 The October 17 trial evaluated **v0.3.1 with the current 6-hour budget**, using Codex 0.157.1 + OpenRouter `openai/gpt-6-luna`, effort `max`, on one A100 40GB. It completed normally, without agent timeout, trial errors or retries. Agent execution took **10,901.70 seconds (3 hours 2 minutes)** and separate verification **1,398.98 seconds (23 minutes 19 seconds)**.
@@ -63,43 +62,27 @@ The October 15–16 trial used v0.3.0 with a 12-hour budget. It took 33,677.75 s
 
 #### PR #17 tokenizer isolation fix (v0.3.2)
 
-Both model loads now obtain their tokenizer exclusively from the trusted
-backbone. The submitted directory is still used for model weights, and the four
-required tokenizer files retain their byte-for-byte checks. Additional files
-such as `added_tokens.json` are never loaded as tokenizer configuration.
+Both model loads now obtain their tokenizer exclusively from the trusted backbone. The submitted directory is still used for model weights, and the four required tokenizer files retain their byte-for-byte checks. Additional files such as `added_tokens.json` are never loaded as tokenizer configuration.
 
-The new offline regression uses a real small XLM-R tokenizer and model: adding
-one metadata file changes token IDs and logits under the old loader, with the
-existing tokenizer files, vocabulary size, configuration and weights unchanged.
-The fixed loader produces identical token IDs and scores for both checkpoints.
-A second case checks that malformed submitted metadata is never loaded. Both
-regressions fail against the reviewed `b78f354` loader and pass after this fix.
+The new offline regression uses a real small XLM-R tokenizer and model: adding one metadata file changes token IDs and logits under the old loader, with the existing tokenizer files, vocabulary size, configuration and weights unchanged. The fixed loader produces identical token IDs and scores for both checkpoints. A second case checks that malformed submitted metadata is never loaded. Both regressions fail against the reviewed `b78f354` loader and pass after this fix.
 
-On October 17, the revised package passed all **27 task-local tests**, merge-ready
-checks against `ac7dcc145925d98afd2b0db1112d7c0ad8ba1460`, all **19 asset** hash
-checks, release checks, and the **174-test shared suite**. Instructions, training
-budget, candidate generation and reward mapping are unchanged.
+On October 17, the revised package passed all **27 task-local tests**, merge-ready checks against `ac7dcc145925d98afd2b0db1112d7c0ad8ba1460`, all **19 asset** hash checks, release checks, and the **174-test shared suite**. Instructions, training budget, candidate generation and reward mapping are unchanged.
 
-The saved six-hour Luna checkpoint was then replayed through native Harbor
-Oracle installation, normal checkpoint transfer, and the **v0.3.2 separate
-verifier**, with the original offline policy and one A100 40GB. This is a fresh
-full verifier execution, not a new training trial. Verification took **1,398.93
-seconds**, completed without errors, and exactly reproduced **B=0.015,
-S=0.09, C=0.235, reward=0.3409090909**, over 76,788 candidate pairs.
+The saved six-hour Luna checkpoint was then replayed through native Harbor Oracle installation, normal checkpoint transfer, and the **v0.3.2 separate verifier**, with the original offline policy and one A100 40GB. This is a fresh full verifier execution, not a new training trial. Verification took **1,398.93 seconds**, completed without errors, and exactly reproduced **B=0.015, S=0.09, C=0.235, reward=0.3409090909**, over 76,788 candidate pairs.
 
-Evidence: `jobs/code-reranker-finetuning-regrade-20261017-pr17/2026-10-17__13-47-11/task__jQETt8r/`;
-author records and the exact replay configuration are under
-`contributing/dev/code-reranker-finetuning/2026-10-17-pr17/`. The temporary GPU
-binding exists only in that author-only task copy; the contributed Compose
-files retain portable one-GPU reservations. No new six-hour coding-model trial
-was run: the existing trained checkpoint and unchanged agent instructions are
-reused, while the corrected tokenizer path is covered by the new regressions
-and this complete regrade.
+Evidence: `jobs/code-reranker-finetuning-regrade-20261017-pr17/2026-10-17__13-47-11/task__jQETt8r/`; author records and the exact replay configuration are under `contributing/dev/code-reranker-finetuning/2026-10-17-pr17/`. The temporary GPU binding exists only in that author-only task copy; the contributed Compose files retain portable one-GPU reservations. No new six-hour coding-model trial was run: the existing trained checkpoint and unchanged agent instructions are reused, while the corrected tokenizer path is covered by the new regressions and this complete regrade.
+
+## Running the Task
+
+From the repository root, restore inputs with `python scripts/assets/download_assets.py --task code-reranker-finetuning`. The input sources, immutable revisions, filenames, sizes and hashes are listed in `assets.json`.
+
+Use `python scripts/validation/check_tasks.py tasks/code-reranker-finetuning`, `python scripts/assets/download_assets.py --task code-reranker-finetuning --verify-only`, and `python -B -m unittest discover -s tasks/code-reranker-finetuning/tests -p 'test_*.py' -q`. Launch through `bash scripts/evaluation/run_task.sh --task code-reranker-finetuning --agent codex --openrouter --model openai/gpt-6-luna --reasoning-effort max`, which uses the task's GPU reservations for both the agent and verifier.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 
-### Sources
-
-Corpus and training inputs are pinned in `assets.json` to `search-swe/Search-SWE` revision `6713b1eb7474e0768e906a0151c76af92f0cfcdd`. The reranker uses `BAAI/bge-reranker-base` revision `2cfc18c9415c912f9d8155881c133215df768a70`. The local embedding model is pinned to `BAAI/bge-base-en-v1.5` revision `a5beb1e3e68b9ab74eb54cfd186867f64f240e1a`. See [SOURCES.md](SOURCES.md) for provenance and usage terms.
+- **Task source** — Experience
+- **Data source** — CoIR/APPS-derived corpus and training examples from code-embedding-finetuning.
+- **Model source** — [BAAI/bge-reranker-base](https://huggingface.co/BAAI/bge-reranker-base) and [BAAI/bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5).
+- **Provenance details** — [Data and model revisions and usage terms](SOURCES.md)

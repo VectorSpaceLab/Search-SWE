@@ -14,19 +14,13 @@
 | Public queries | 100 |
 | Hidden queries | 100 |
 
+## Overview
+
 Improve long-document ranking without changing the candidate pool or the relevance model.
 
-### Overview
+A relevant passage in a long document may lie far beyond the first 512 model tokens. Simply truncating every candidate can therefore discard the evidence needed to rank it correctly.
 
-A relevant passage in a long document may lie far beyond the first 512 model
-tokens. Simply truncating every candidate can therefore discard the evidence
-needed to rank it correctly.
-
-This task starts from a fixed reranking pipeline for NarrativeQA retrieval.
-The system receives a BM25 Top-100 candidate pool and must use the supplied
-BGE reranker. The engineering opportunity is in how documents are prepared,
-which windows are scored, and how local scores inform a document-level decision.
-Finding more evidence must remain practical within the runtime budget.
+This task starts from a fixed reranking pipeline for NarrativeQA retrieval. The system receives a BM25 Top-100 candidate pool and must use the supplied BGE reranker. The engineering opportunity is in how documents are prepared, which windows are scored, and how local scores inform a document-level decision. Finding more evidence must remain practical within the runtime budget.
 
 ### Task Setup
 
@@ -39,29 +33,17 @@ Finding more evidence must remain practical within the runtime budget.
 | `models/bge-reranker-large/` | The pinned `BAAI/bge-reranker-large` model |
 | `environment/starter/` | An editable build/query pipeline |
 
-Downloaded data and models are mounted read-only under `/task/data` and
-`/task/models`. The hidden evaluation contains 100 disjoint queries.
-The [starter implementation](environment/starter/) includes the build and query entry points.
+Downloaded data and models are mounted read-only under `/task/data` and `/task/models`. The hidden evaluation contains 100 disjoint queries. The [starter implementation](environment/starter/) includes the build and query entry points.
 
 #### Fixed Components and Allowed Changes
 
-The candidate documents and reranker model, tokenizer, and configuration are
-fixed. The agent may optimize preprocessing, window selection, score aggregation,
-caching, and runtime organization. It may not retrieve additional candidates,
-replace or train the model, distill it, or modify its weights through quantization.
+The candidate documents and reranker model, tokenizer, and configuration are fixed. The agent may optimize preprocessing, window selection, score aggregation, caching, and runtime organization. It may not retrieve additional candidates, replace or train the model, distill it, or modify its weights through quantization.
 
-The Docker mounts and instructions place the model at
-`/task/models/bge-reranker-large`.
+The Docker mounts and instructions place the model at `/task/models/bge-reranker-large`.
 
 #### Environment and Resource Limits
 
-The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage,
-and no GPU. The agent has two hours and the Harbor verifier 13,200 seconds
-(3 hours 40 minutes). The verifier window covers a 1,800-second build, two
-query runs of up to 3,600 seconds each, a 3,600-second trajectory judge,
-and 600 seconds for setup and cleanup:
-`1800 + 2 * 3600 + 3600 + 600 = 13200`.
-Each submission stage remains subject to its own time limit.
+The CPU Python 3.12 environment provides 16 CPUs, 16 GiB memory, 100 GiB storage, and no GPU. The agent has two hours and the Harbor verifier 13,200 seconds (3 hours 40 minutes). The verifier window covers a 1,800-second build, two query runs of up to 3,600 seconds each, a 3,600-second trajectory judge, and 600 seconds for setup and cleanup: `1800 + 2 * 3600 + 3600 + 600 = 13200`. Each submission stage remains subject to its own time limit.
 
 ## Change Log
 
@@ -80,52 +62,33 @@ Each submission stage remains subject to its own time limit.
 
 ### Submission Contract
 
-The deliverable is `/app/build.sh` and `/app/run.sh` with the implementation
-needed to rebuild preprocessing artifacts and serve reranking requests.
-Each question returns five ranked document IDs and scores from its original
-candidate pool.
+The deliverable is `/app/build.sh` and `/app/run.sh` with the implementation needed to rebuild preprocessing artifacts and serve reranking requests. Each question returns five ranked document IDs and scores from its original candidate pool.
 
-The verifier uses a separate environment and unprivileged submission execution.
-The index directory is supplied by the caller. Consult
-[instruction.md](instruction.md) for the complete CLI and result format.
+The verifier uses a separate environment and unprivileged submission execution. The index directory is supplied by the caller. Consult [instruction.md](instruction.md) for the complete CLI and result format.
 
 ### Evaluation
 
 #### Search Quality
 
-A hidden query is a hit if a relevant document is among the five returned
-candidates. Accuracy@5 is the fraction of hits over all hidden queries.
-Valid runs receive this fraction as a continuous quality score.
+A hidden query is a hit if a relevant document is among the five returned candidates. Accuracy@5 is the fraction of hits over all hidden queries. Valid runs receive this fraction as a continuous quality score.
 
 #### Correctness and Resource Gates
 
-The verifier checks executable behavior, complete outputs, valid ranking
-fields, candidate membership, and compliance with the fixed-model rules.
-Retrieval outside the pool is not a valid way to improve this task's score.
-Both sequential query invocations must pass the same output checks; their
-bytes, scores and rankings need not match. Only the first invocation determines
-Accuracy@5. The second checks that the service remains available and produces
-valid outputs.
+The verifier checks executable behavior, complete outputs, valid ranking fields, candidate membership, and compliance with the fixed-model rules. Retrieval outside the pool is not a valid way to improve this task's score. Both sequential query invocations must pass the same output checks; their bytes, scores and rankings need not match. Only the first invocation determines Accuracy@5. The second checks that the service remains available and produces valid outputs.
 
 #### Integrity Checks and Final Reward
 
-A separate trajectory judge checks task compliance. Final reward equals
-Accuracy@5 only when evaluation is valid and the judge passes; otherwise zero.
-The model being optimized around is the fixed reranker, not the trajectory judge.
-The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit
-0.2.0 and receives its credentials only in the verifier.
+A separate trajectory judge checks task compliance. Final reward equals Accuracy@5 only when evaluation is valid and the judge passes; otherwise zero. The model being optimized around is the fixed reranker, not the trajectory judge. The trajectory judge itself uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its credentials only in the verifier.
 
-### Running This Task
+### Instruction source
 
-From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install Search-SWE and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
-task credential profile. The
-[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+`raw-instruction.md` is the structured source for `instruction.md`. Both now state the existing build/query limits, repeat schedule and first-run scoring. The fixed model, candidate/model restrictions and Accuracy@5 definition remain unchanged. Local regression evidence is recorded in [VALIDATION.md](VALIDATION.md).
 
-Download both data and model assets with the command below. Configure the
-verifier's integrity judge separately from the coding agent. The submission
-uses the local reranker and does not need external reranking-service credentials.
+## Running the Task
+
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md) to install Search-SWE and prepare Docker. Use the [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and task credential profile. The [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+
+Download both data and model assets with the command below. Configure the verifier's integrity judge separately from the coding agent. The submission uses the local reranker and does not need external reranking-service credentials.
 
 ```bash
 python scripts/assets/download_assets.py --task long-document-reranking
@@ -133,12 +96,7 @@ bash scripts/evaluation/run_task.sh --task long-document-reranking --agent codex
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 
-The shared launcher defaults to Codex, also supports Pi and Claude Code, and
-writes results under `jobs/long-document-reranking/`.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-command construction without starting an evaluation; this does not validate
-assets, credentials, or hardware.
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and writes results under `jobs/long-document-reranking/`. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect command construction without starting an evaluation; this does not validate assets, credentials, or hardware.
 
 ### Task Files
 
@@ -153,13 +111,8 @@ assets, credentials, or hardware.
 | [Starter implementation](environment/starter/) | Build and query scripts for the initial pipeline |
 | [Verifier notes](tests/README.md) | Additional verification details |
 
-### Instruction source
-
-`raw-instruction.md` is the structured source for `instruction.md`. Both now
-state the existing build/query limits, repeat schedule and first-run scoring.
-The fixed model, candidate/model restrictions and Accuracy@5 definition remain
-unchanged. Local regression evidence is recorded in [VALIDATION.md](VALIDATION.md).
-
 ## References
 
-None.
+- **Task source** — Experience
+- **Data source** — MTEB NarrativeQARetrieval with a fixed BM25 candidate pool.
+- **Model source** — [BAAI/bge-reranker-large](https://huggingface.co/BAAI/bge-reranker-large). [Asset manifest](assets.json)

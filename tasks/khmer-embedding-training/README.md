@@ -14,17 +14,13 @@
 | Public queries | 3 |
 | Hidden queries | 1000 |
 
+## Overview
+
 Adapt a supplied embedding backbone and retrieve English documents for Khmer questions.
 
-### Overview
+Cross-language retrieval must connect a Khmer question to an English document even when they share no words. This task supplies a large English collection, a multilingual embedding backbone and three examples.
 
-Cross-language retrieval must connect a Khmer question to an English
-document even when they share no words. This task supplies a large English
-collection, a multilingual embedding backbone and three examples.
-
-Development can use an additional local generative model. That model is absent
-from evaluation, where the trained embedding checkpoint and submitted search
-pipeline must operate offline.
+Development can use an additional local generative model. That model is absent from evaluation, where the trained embedding checkpoint and submitted search pipeline must operate offline.
 
 ### Task Setup
 
@@ -38,31 +34,19 @@ pipeline must operate offline.
 | `models/multilingual-e5-large/` | Embedding backbone |
 | `models/Qwen3.5-9B/` | Optional development-only local generative model |
 
-Public data are mounted read-only under `/task/data`, local models where
-provided under `/task/models`, and resource documents under `/task/docs`.
-Held-out questions and labels are verifier-only.
+Public data are mounted read-only under `/task/data`, local models where provided under `/task/models`, and resource documents under `/task/docs`. Held-out questions and labels are verifier-only.
 
 The three public questions and answers are restored into `data/validation/` from the immutable official HF revision recorded in [assets.json](assets.json). This is a layout change only; their content, IDs and order are unchanged. Corpus and model sources retain their existing upstream pins.
 
-The collection is [BEIR/NQ](https://huggingface.co/datasets/BeIR/nq).
-Question and answer aliases originate from filtered MKQA records checked
-against the original data. The question pool contains three public examples,
-1,000 held-out questions and 5,616 unused questions.
+The collection is [BEIR/NQ](https://huggingface.co/datasets/BeIR/nq). Question and answer aliases originate from filtered MKQA records checked against the original data. The question pool contains three public examples, 1,000 held-out questions and 5,616 unused questions.
 
-The supplied backbone is intfloat/multilingual-e5-large, and the optional
-generative checkpoint is Qwen/Qwen3.5-9B. Upstream model revisions and restored
-files are recorded in [assets.json](assets.json). No extra labeled training
-questions are supplied.
+The supplied backbone is intfloat/multilingual-e5-large, and the optional generative checkpoint is Qwen/Qwen3.5-9B. Upstream model revisions and restored files are recorded in [assets.json](assets.json). No extra labeled training questions are supplied.
 
 #### Fixed Components and Allowed Changes
 
-The embedding backbone architecture, parameter names and shapes, configuration
-and tokenizer are fixed. Its weights are trainable. Training-data preparation,
-index structure and the retrieval implementation are submission choices.
-No starter is supplied, and no external API or network resource is available.
+The embedding backbone architecture, parameter names and shapes, configuration and tokenizer are fixed. Its weights are trainable. Training-data preparation, index structure and the retrieval implementation are submission choices. No starter is supplied, and no external API or network resource is available.
 
-The optional generative model is a development resource. Neither it nor an
-already built corpus index is transferred as a runtime retrieval resource.
+The optional generative model is a development resource. Neither it nor an already built corpus index is transferred as a runtime retrieval resource.
 
 #### Environment and Resource Limits
 
@@ -87,17 +71,9 @@ The primary evaluator has 48,000 seconds, covering these 47,100 seconds of candi
 
 ### Submission Contract
 
-Submit executable `/app/build.sh`, `/app/run.sh` and the trained checkpoint
-under `/app/submission/model/`, including `model.safetensors`, `config.json`
-and unchanged tokenizer files. The checkpoint must load locally with standard
-Hugging Face AutoModel and AutoTokenizer and without remote code.
+Submit executable `/app/build.sh`, `/app/run.sh` and the trained checkpoint under `/app/submission/model/`, including `model.safetensors`, `config.json` and unchanged tokenizer files. The checkpoint must load locally with standard Hugging Face AutoModel and AutoTokenizer and without remote code.
 
-Build creates a fresh collection index before evaluation queries are exposed.
-Each query returns 100 unique zero-based corpus positions and finite scores,
-ordered by decreasing score and then increasing corpus position for ties.
-Build and retrieval run under separate non-root roles with read-only code and
-inputs. Unlike the other tasks, the index directory initially does not exist;
-its parent is writable. After construction, retrieval sees a read-only index.
+Build creates a fresh collection index before evaluation queries are exposed. Each query returns 100 unique zero-based corpus positions and finite scores, ordered by decreasing score and then increasing corpus position for ties. Build and retrieval run under separate non-root roles with read-only code and inputs. Unlike the other tasks, the index directory initially does not exist; its parent is writable. After construction, retrieval sees a read-only index.
 
 The full commands and output contract are in [instruction.md](instruction.md).
 
@@ -105,32 +81,22 @@ The full commands and output contract are in [instruction.md](instruction.md).
 
 #### Search Quality
 
-Recall@100 uses the source answer-token hit rule: a question succeeds when
-at least one of the first 100 retrieved documents contains an accepted answer.
-Recall@20 is diagnostic.
+Recall@100 uses the source answer-token hit rule: a question succeeds when at least one of the first 100 retrieved documents contains an accepted answer. Recall@20 is diagnostic.
 
 #### Score Normalization
 
-The final reward uses the raw quality described above, with fixed reference
-quality `b = 0.595` and integer score anchor `a = 15` on the 0–100 scale:
+The final reward uses the raw quality described above, with fixed reference quality `b = 0.595` and integer score anchor `a = 15` on the 0–100 scale:
 
 ```text
 reward(q) = (a / 100) * q / b                             if 0 <= q <= b
             a / 100 + (1 - a / 100) * (q - b) / (1 - b)  if b < q <= 1
 ```
 
-This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and
-auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
-precision; a displayed 0–100 score is rounded to one decimal place.
-Correctness and trajectory-audit gates take precedence over this conversion. The primary evaluation report and finalizer use this same mapping. The stored untrained-backbone Recall@100 of 0.279 is a historical diagnostic, not the score anchor or denominator.
+This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward precision; a displayed 0–100 score is rounded to one decimal place. Correctness and trajectory-audit gates take precedence over this conversion. The primary evaluation report and finalizer use this same mapping. The stored untrained-backbone Recall@100 of 0.279 is a historical diagnostic, not the score anchor or denominator.
 
 #### Correctness and Resource Gates
 
-The verifier checks local checkpoint loading, preserved architecture and
-tokenizer, a successful fresh build, complete query coverage, 100 valid unique
-positions per query, finite sorted scores and time limits. Hidden questions,
-answer aliases, the generative model and judge credentials are unavailable
-to submitted build and retrieval processes.
+The verifier checks local checkpoint loading, preserved architecture and tokenizer, a successful fresh build, complete query coverage, 100 valid unique positions per query, finite sorted scores and time limits. Hidden questions, answer aliases, the generative model and judge credentials are unavailable to submitted build and retrieval processes.
 
 #### Integrity Checks and Final Reward
 
@@ -138,21 +104,15 @@ A separate trajectory audit runs once, checks task compliance and gates the qual
 
 Recall@100 uses deterministic answer matching. Execution times are diagnostic and subject to hard deadlines; they do not contribute to the quality score. There is no answer-quality LLM judge and no repeated latency metric in this task.
 
-Private questions, reference labels and audit credentials are excluded from
-the agent environment and protected from submitted programs.
+Private questions, reference labels and audit credentials are excluded from the agent environment and protected from submitted programs.
 
-### Running This Task
+## Running the Task
 
-Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor
-and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and
-credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for
-restoring fixed inputs.
+Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for restoring fixed inputs.
 
-Prepare the GPU runtime and independent trajectory-audit credentials.
-Submitted task programs run offline and receive no provider credentials.
+Prepare the GPU runtime and independent trajectory-audit credentials. Submitted task programs run offline and receive no provider credentials.
 
-The commands below apply in a checkout with this package installed at
-`tasks/khmer-embedding-training/`:
+The commands below apply in a checkout with this package installed at `tasks/khmer-embedding-training/`:
 
 ```bash
 python scripts/assets/download_assets.py --task khmer-embedding-training
@@ -160,11 +120,7 @@ bash scripts/evaluation/run_task.sh --task khmer-embedding-training --agent code
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
-The shared launcher defaults to Codex and also supports Pi and Claude Code.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-launch construction without starting an evaluation; it does not validate assets,
-credentials or hardware. Results are written under `jobs/khmer-embedding-training/`.
+The shared launcher defaults to Codex and also supports Pi and Claude Code. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect launch construction without starting an evaluation; it does not validate assets, credentials or hardware. Results are written under `jobs/khmer-embedding-training/`.
 
 ### Task Files
 
@@ -185,4 +141,6 @@ credentials or hardware. Results are written under `jobs/khmer-embedding-trainin
 
 ## References
 
-- [Data, model and method provenance](SOURCES.md).
+- **Task source** — [BGE-M3 (Findings of ACL 2024)](https://aclanthology.org/2024.findings-acl.137/)
+- **Data source** — Khmer MKQA questions from the BGE-M3 data release and English passages from BEIR Natural Questions.
+- **Provenance details** — [Dataset preparation, multilingual E5 checkpoint, and usage terms](SOURCES.md)

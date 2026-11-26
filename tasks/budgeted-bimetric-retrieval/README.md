@@ -10,15 +10,15 @@
 | Primary metric | baseline-normalized mean nDCG@10 |
 | Compute | 16 CPUs; 32 GiB RAM; 64 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 62000 s |
+| Dataset | BEIR Natural Questions |
+| Public queries | 500 |
+| Hidden queries | 3452 |
+
+## Overview
 
 Improve retrieval over 250,000 NQ passages with 20 controlled expensive distances and two seconds per query.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -36,24 +36,23 @@ The verifier averages nDCG@10 over all 3,452 hidden queries, including failed qu
 
 ### Reference baseline
 
-The frozen baseline reference is B = 0.8863201879062371. The full-corpus
-expensive-vector reference remains U = 0.9117533972383719. B is the highest
-resource-valid mean among the public vector, direct-vector, hybrid and two-round
-feedback baselines.
+The frozen baseline reference is B = 0.8863201879062371. The full-corpus expensive-vector reference remains U = 0.9117533972383719. B is the highest resource-valid mean among the public vector, direct-vector, hybrid and two-round feedback baselines.
 
-The feedback baseline uses ten cheap-vector and lexical features, a small tree
-ranker, and two batches of ten expensive scores. Its parameters were selected
-using five-fold validation on the 500 public development questions. Prepare its
-submission in the development container:
+The feedback baseline uses ten cheap-vector and lexical features, a small tree ranker, and two batches of ten expensive scores. Its parameters were selected using five-fold validation on the 500 public development questions. Prepare its submission in the development container:
 
 ```bash
 python /task/baseline/train_feedback.py --data-dir /task/public --output-dir /app/feedback-baseline
 ```
 
-The generated `search.sh` implements the standard build/load interface. The
-preparation step fits the model; final build/load only builds the index and loads
-those parameters. See [available resources](environment/docs/available_resources.md)
-for the invocation details.
+The generated `search.sh` implements the standard build/load interface. The preparation step fits the model; final build/load only builds the index and loads those parameters. See [available resources](environment/docs/available_resources.md) for the invocation details.
+
+### Repeated measurements
+
+Each test query is measured five times in five complete passes over the query set. The index is built once. Before each pass, the verifier starts a fresh load worker and clears its writable scratch directory. Prepared artifacts become read-only after construction; use the supplied TMPDIR for query-time writes. Initial construction and all loads still share the 3600-second startup allowance. Each measurement receives a fresh query token and a separate 20-score allowance. The median of the five complete-response times must be at most 2.0 seconds. Each individual measurement has a 3.0-second execution cap. All five results must satisfy the protocol and score budget; otherwise that query scores zero. For a query that passes these checks and the median time limit, its quality is the arithmetic mean of the five nDCG@10 values.
+
+The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.
+
+## Running the Task
 
 ### Restore inputs
 
@@ -64,40 +63,19 @@ python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval
 python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval --verify-only
 ```
 
-[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled
-restoration paths. Keep verifier inputs outside agent mounts. Model cards,
-licenses and data-use restrictions are described in the resource document.
+[assets.json](assets.json) fixes file sizes, hashes and source revisions or bundled restoration paths. Keep verifier inputs outside agent mounts. Model cards, licenses and data-use restrictions are described in the resource document.
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 32 GiB RAM and
-64 GiB storage. Agent development has
-7200 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+The task allocates 16 CPU cores, 32 GiB RAM and 64 GiB storage. Agent development has 7200 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks.
 
 This task uses no GPU.
 
-Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`,
-`dpkg-deb`, and root or sudo access. The standard launcher prepares fresh
-bounded agent/verifier storage and the oracle socket directory, chooses
-16 logical CPUs from its available affinity, and unmounts storage after the
-run's containers exit. Backing images remain under
-`jobs/.task-storage/budgeted-bimetric-retrieval/`.
-Set `BIMETRIC_CPUSET` to preserve a particular 16-CPU allocation when reproducing
-a run. See [bounded task storage](../../docs/evaluation/runtime.md#bounded-task-storage)
-for host setup, permissions, recovery and caller-managed storage.
+Use a native Linux x86_64 Docker host with `/dev/fuse`, `mkfs.ext4`, `dpkg-deb`, and root or sudo access. The standard launcher prepares fresh bounded agent/verifier storage and the oracle socket directory, chooses 16 logical CPUs from its available affinity, and unmounts storage after the run's containers exit. Backing images remain under `jobs/.task-storage/budgeted-bimetric-retrieval/`. Set `BIMETRIC_CPUSET` to preserve a particular 16-CPU allocation when reproducing a run. See [bounded task storage](../../docs/evaluation/runtime.md#bounded-task-storage) for host setup, permissions, recovery and caller-managed storage.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README.
 
-The independent verifier audit also requires `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in that local configuration.
-It uses `deepseek/deepseek-v4.1-flash`; only verifier egress to `openrouter.ai`
-is allowed. These credentials are never passed to submitted commands.
-The verifier protects the transferred trajectory, records the raw numerical
-score, terminates candidate processes, and publishes reward only after a
-healthy passing integrity audit. See `audit-status.json` for audit health.
+The independent verifier audit also requires `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in that local configuration. It uses `deepseek/deepseek-v4.1-flash`; only verifier egress to `openrouter.ai` is allowed. These credentials are never passed to submitted commands. The verifier protects the transferred trajectory, records the raw numerical score, terminates candidate processes, and publishes reward only after a healthy passing integrity audit. See `audit-status.json` for audit health.
 
 Invoke the standard entrypoint directly:
 
@@ -107,9 +85,7 @@ bash scripts/evaluation/run_task.sh --task budgeted-bimetric-retrieval --agent c
   --output "jobs/budgeted-bimetric-retrieval-codex-openrouter-luna-max"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -118,17 +94,10 @@ python scripts/validation/check_tasks.py tasks/budgeted-bimetric-retrieval
 python scripts/assets/download_assets.py --task budgeted-bimetric-retrieval --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 ## References
 
-None.
-
-## Repeated measurements
-
-Each test query is measured five times in five complete passes over the query set. The index is built once. Before each pass, the verifier starts a fresh load worker and clears its writable scratch directory. Prepared artifacts become read-only after construction; use the supplied TMPDIR for query-time writes. Initial construction and all loads still share the 3600-second startup allowance. Each measurement receives a fresh query token and a separate 20-score allowance. The median of the five complete-response times must be at most 2.0 seconds. Each individual measurement has a 3.0-second execution cap. All five results must satisfy the protocol and score budget; otherwise that query scores zero. For a query that passes these checks and the median time limit, its quality is the arithmetic mean of the five nDCG@10 values.
-
-The integrity review runs independently three times. Its reported value is the arithmetic mean of the three binary decisions. A positive task reward requires all three reviews to accept the submission. A missing, failed or malformed review is an evaluation infrastructure failure.
+- **Task source** — [Bi-metric (ICML 2026)](https://proceedings.mlr.press/v306/xu26au.html)
+- **Data source** — BEIR Natural Questions passages and judgments with fixed BGE and SFR embedding vectors.
+- **Provenance details** — [Dataset and encoder revisions, usage terms, and vector preparation](SOURCES.md)

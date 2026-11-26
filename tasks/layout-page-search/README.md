@@ -14,17 +14,13 @@
 | Public queries | 5 |
 | Hidden queries | 515 |
 
+## Overview
+
 Find the complete set of supporting pages within a specified visual document.
 
-### Overview
+A question about a chart, figure or page layout may require more than one page of evidence. The system must return a compact set of pages that together support the question within the document named by the request.
 
-A question about a chart, figure or page layout may require more than one
-page of evidence. The system must return a compact set of pages that together
-support the question within the document named by the request.
-
-The task evaluates page selection rather than answer generation. The document
-is supplied in the query; it is not a collection-wide document-identification
-task.
+The task evaluates page selection rather than answer generation. The document is supplied in the query; it is not a collection-wide document-identification task.
 
 ### Task Setup
 
@@ -37,35 +33,21 @@ task.
 | `models/page-encoder/` | ColQwen2.5 adapter and processor |
 | `models/vision-backbone/` | Compatible local retrieval backbone |
 
-Public data are mounted read-only under `/task/data`, local models where
-provided under `/task/models`, and resource documents under `/task/docs`.
-Held-out questions and labels are verifier-only.
+Public data are mounted read-only under `/task/data`, local models where provided under `/task/models`, and resource documents under `/task/docs`. Held-out questions and labels are verifier-only.
 
-Questions and original evidence-page annotations come from MMLongBench-Doc
-through the [DocLens dataset release](https://huggingface.co/datasets/dwzhu/DocLensDatasets).
-Retained questions have chart, figure or generalized-text/layout evidence,
-existing evidence pages and a complete reference page set within ten pages.
+Questions and original evidence-page annotations come from MMLongBench-Doc through the [DocLens dataset release](https://huggingface.co/datasets/dwzhu/DocLensDatasets). Retained questions have chart, figure or generalized-text/layout evidence, existing evidence pages and a complete reference page set within ten pages.
 
-The resulting 520 unchanged questions are split into five public examples and
-515 held-out questions. All 119 documents are shared. The source annotations
-identify visual evidence, but do not certify that text-only retrieval must fail.
-This task overlaps the document source used by
-`visual-document-qa`; the output and metric differ.
+The resulting 520 unchanged questions are split into five public examples and 515 held-out questions. All 119 documents are shared. The source annotations identify visual evidence, but do not certify that text-only retrieval must fail. This task overlaps the document source used by `visual-document-qa`; the output and metric differ.
 
 #### Fixed Components and Allowed Changes
 
-The corpus, specified document, evidence labels and output interface are fixed.
-Supplied encoder weights remain fixed. At most 40 pages per query may receive
-query-dependent token, region or learned pairwise comparisons.
+The corpus, specified document, evidence labels and output interface are fixed. Supplied encoder weights remain fixed. At most 40 pages per query may receive query-dependent token, region or learned pairwise comparisons.
 
-Representations, index structure and page selection are implementation choices.
-No precomputed vectors, starter or external API resource is supplied.
+Representations, index structure and page selection are implementation choices. No precomputed vectors, starter or external API resource is supplied.
 
 #### Environment and Resource Limits
 
-The environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and one
-GPU. Development has six hours. Build has 3,600 seconds; each of two query
-calls has 2,700 seconds.
+The environment provides eight CPU cores, 32 GiB RAM, 100 GiB storage and one GPU. Development has six hours. Build has 3,600 seconds; each of two query calls has 2,700 seconds.
 
 ## Change Log
 
@@ -83,13 +65,9 @@ calls has 2,700 seconds.
 
 ### Submission Contract
 
-Submit executable `/app/build.sh` and `/app/run.sh` with supporting files
-under `/app`. Return up to ten distinct page IDs from the specified document,
-with finite nonincreasing scores. No answer text or bounding box is required.
+Submit executable `/app/build.sh` and `/app/run.sh` with supporting files under `/app`. Return up to ten distinct page IDs from the specified document, with finite nonincreasing scores. No answer text or bounding box is required.
 
-Commands run as a non-root user with code and inputs read-only. The supplied
-index directory remains writable across calls, while its parent is not writable.
-Use the supplied index, output, cache and temporary paths for generated files.
+Commands run as a non-root user with code and inputs read-only. The supplied index directory remains writable across calls, while its parent is not writable. Use the supplied index, output, cache and temporary paths for generated files.
 
 The full schema and invocation details are in [instruction.md](instruction.md).
 
@@ -97,60 +75,38 @@ The full schema and invocation details are in [instruction.md](instruction.md).
 
 #### Search Quality
 
-For each question, compute set F1 between the returned pages and the complete
-original evidence-page set. Quality is mean F1 over 515 held-out questions.
- Domain means are diagnostic.
+For each question, compute set F1 between the returned pages and the complete original evidence-page set. Quality is mean F1 over 515 held-out questions. Domain means are diagnostic.
 
-The set metric penalizes both missing evidence and extra pages. Returning the
-complete annotated evidence set achieves full per-query credit. It does not
-measure answer accuracy or bounding-box localization.
+The set metric penalizes both missing evidence and extra pages. Returning the complete annotated evidence set achieves full per-query credit. It does not measure answer accuracy or bounding-box localization.
 
 #### Score Normalization
 
-The final reward uses the raw quality described above, with fixed reference
-quality `b = 0.5734305608092015` and integer score anchor `a = 20` on the 0–100 scale:
+The final reward uses the raw quality described above, with fixed reference quality `b = 0.5734305608092015` and integer score anchor `a = 20` on the 0–100 scale:
 
 ```text
 reward(q) = (a / 100) * q / b                             if 0 <= q <= b
             a / 100 + (1 - a / 100) * (q - b) / (1 - b)  if b < q <= 1
 ```
 
-This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and
-auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward
-precision; a displayed 0–100 score is rounded to one decimal place.
-Correctness and trajectory-audit gates take precedence over this conversion.
+This maps raw quality 0, b and 1 to rewards 0, a / 100 and 1. Raw quality and auxiliary diagnostics are reported separately. Harbor retains the 0–1 reward precision; a displayed 0–100 score is rounded to one decimal place. Correctness and trajectory-audit gates take precedence over this conversion.
 
 #### Correctness and Resource Gates
 
-The verifier checks successful index construction, executable behavior,
-query coverage, IDs, duplicate handling, finite scores and stage limits.
-Completed valid JSONL rows remain usable after a query timeout; missing or
-invalid rows score zero. A non-timeout query-command failure invalidates
-that call. See [instruction.md](instruction.md) and the verifier for the exact
-task-specific validity checks.
+The verifier checks successful index construction, executable behavior, query coverage, IDs, duplicate handling, finite scores and stage limits. Completed valid JSONL rows remain usable after a query timeout; missing or invalid rows score zero. A non-timeout query-command failure invalidates that call. See [instruction.md](instruction.md) and the verifier for the exact task-specific validity checks.
 
 #### Integrity Checks and Final Reward
 
-A separate trajectory audit checks task compliance and gates the quality
-reward. A confirmed violation sets reward to zero; unavailable or incomplete
-audit results are not valid evidence of model quality. The audit uses pinned
-RewardKit 0.2.0 with verifier-only OpenRouter settings.
+A separate trajectory audit checks task compliance and gates the quality reward. A confirmed violation sets reward to zero; unavailable or incomplete audit results are not valid evidence of model quality. The audit uses pinned RewardKit 0.2.0 with verifier-only OpenRouter settings.
 
-Private questions, reference labels and audit credentials are excluded from
-the agent environment and protected from submitted programs.
+Private questions, reference labels and audit credentials are excluded from the agent environment and protected from submitted programs.
 
-### Running This Task
+## Running the Task
 
-Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor
-and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and
-credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for
-restoring fixed inputs.
+Follow the repository [quick start](../../docs/evaluation/quickstart.md) to prepare Harbor and Docker, the [evaluation guide](../../docs/evaluation/runtime.md) for agent and credential configuration, and the [asset guide](../../docs/evaluation/assets.md) for restoring fixed inputs.
 
-Prepare the GPU runtime and independent trajectory-audit credentials.
-Submitted task programs run offline and receive no provider credentials.
+Prepare the GPU runtime and independent trajectory-audit credentials. Submitted task programs run offline and receive no provider credentials.
 
-The commands below apply in a checkout with this package installed at
-`tasks/layout-page-search/`:
+The commands below apply in a checkout with this package installed at `tasks/layout-page-search/`:
 
 ```bash
 python scripts/assets/download_assets.py --task layout-page-search
@@ -158,11 +114,7 @@ bash scripts/evaluation/run_task.sh --task layout-page-search --agent codex --op
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
-The shared launcher defaults to Codex and also supports Pi and Claude Code.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-launch construction without starting an evaluation; it does not validate assets,
-credentials or hardware. Results are written under `jobs/layout-page-search/`.
+The shared launcher defaults to Codex and also supports Pi and Claude Code. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect launch construction without starting an evaluation; it does not validate assets, credentials or hardware. Results are written under `jobs/layout-page-search/`.
 
 ### Task Files
 
@@ -182,4 +134,6 @@ credentials or hardware. Results are written under `jobs/layout-page-search/`.
 
 ## References
 
-- [Data, model and method provenance](SOURCES.md).
+- **Task source** — [AGREE (SIGIR 2026)](https://doi.org/10.1145/3805712.3809532)
+- **Data source** — MMLongBench-Doc pages and evidence annotations from DocLensDatasets.
+- **Provenance details** — [Evidence selection, ColQwen2.5 assets, and usage terms](SOURCES.md)

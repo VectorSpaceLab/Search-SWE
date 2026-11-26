@@ -11,7 +11,10 @@
 | Compute | 16 CPUs; 16 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 14400 s |
 | Dataset | single long PDF |
+| Public queries | 10 |
 | Hidden queries | 12 |
+
+## Overview
 
 Retrieve up to five original sentence units that fully support a short interpretive question about *War and Peace*. The task uses **SentenceEvidenceAccuracy** with a configurable evidence judge and a 30-second limit per query.
 
@@ -55,20 +58,9 @@ Author development and calibration records live outside the package in `task_dev
 
 ### Evidence judge calibration
 
-The judge evaluates requirements by their semantic support in the question and
-candidate evidence. Equivalent explanations may establish a distinction without
-repeating the reference's wording or separately negating alternatives. Requested
-comparisons, qualifications and causal links remain necessary. Extra evidence affects
-support when it creates a material contradiction or an unresolved essential referent;
-harmless redundancy is allowed. Rejection reasons identify the missing necessary
-relationship or concrete conflict.
+The judge evaluates requirements by their semantic support in the question and candidate evidence. Equivalent explanations may establish a distinction without repeating the reference's wording or separately negating alternatives. Requested comparisons, qualifications and causal links remain necessary. Extra evidence affects support when it creates a material contradiction or an unresolved essential referent; harmless redundancy is allowed. Rejection reasons identify the missing necessary relationship or concrete conflict.
 
-`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering
-causality, contrast, qualifications, reference resolution, contradiction and temporal
-context. These author-only cases are not part of scored data or the production prompt.
-`tests/test_judge_request.py` mocks HTTP to check request contents and failure handling;
-it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md)
-for local checks and the pending live calibration/re-evaluation handoff.
+`tests/judge_calibration.json` contains ten synthetic positive/negative cases covering causality, contrast, qualifications, reference resolution, contradiction and temporal context. These author-only cases are not part of scored data or the production prompt. `tests/test_judge_request.py` mocks HTTP to check request contents and failure handling; it does not establish the model's semantic decisions. See [VALIDATION.md](VALIDATION.md) for local checks and the pending live calibration/re-evaluation handoff.
 
 ### Historical judge-model revision
 
@@ -78,7 +70,7 @@ The earlier DeepSeek rejudgment of a Luna-generated submission returned 8/20 on 
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health.
 
-### Running the task
+## Running the Task
 
 From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
@@ -90,4 +82,6 @@ bash scripts/evaluation/run_task.sh --task long-pdf-evidence --agent codex --ope
 
 ## References
 
-None.
+- **Task source** — Experience
+- **Data source** — Leo Tolstoy’s *War and Peace*, translated by Louise and Aylmer Maude, in the 2016 PDF edition edited by Daniel Studzinski. [Edition and usage terms](../long-pdf-evidence-vectorless/SOURCES.md#origin-and-terms)
+- **Provenance details** — [Asset manifest](assets.json)

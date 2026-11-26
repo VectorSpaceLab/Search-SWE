@@ -14,19 +14,13 @@
 | Public queries | 100 |
 | Hidden queries | 100 |
 
+## Overview
+
 Improve a compact query encoder against a document collection whose embeddings cannot change.
 
-### Overview
+Replacing or tuning a query encoder does not automatically preserve its compatibility with an existing document index. This task fixes the document embeddings and asks the agent to improve retrieval from the query side using the supplied Qwen3-Embedding-0.6B backbone.
 
-Replacing or tuning a query encoder does not automatically preserve its
-compatibility with an existing document index. This task fixes the document
-embeddings and asks the agent to improve retrieval from the query side using
-the supplied Qwen3-Embedding-0.6B backbone.
-
-The system must be accurate and materially faster than a larger teacher-side
-reference. It is therefore a joint representation and execution problem:
-a query vector must land in the right document space, and the complete query
-pipeline must stay within the relative runtime budget.
+The system must be accurate and materially faster than a larger teacher-side reference. It is therefore a joint representation and execution problem: a query vector must land in the right document space, and the complete query pipeline must stay within the relative runtime budget.
 
 ### Task Setup
 
@@ -41,34 +35,17 @@ pipeline must stay within the relative runtime budget.
 | `environment/time_reference/` | 4B time reference runner and validation notes |
 | `environment/quality_reference/` | Frozen 0.6B ridge baseline, fit/inference code and configuration |
 
-The manifest also restores the Qwen3-Embedding-4B reference assets.
-The development root user can read the 4B reference, including for teacher
-signals on public inputs. Its private permissions keep it inaccessible to the
-unprivileged final process; it is not an allowed final inference backbone.
-There are 100 hidden evaluation queries, isolated from the agent environment.
+The manifest also restores the Qwen3-Embedding-4B reference assets. The development root user can read the 4B reference, including for teacher signals on public inputs. Its private permissions keep it inaccessible to the unprivileged final process; it is not an allowed final inference backbone. There are 100 hidden evaluation queries, isolated from the agent environment.
 
 #### Fixed Components and Allowed Changes
 
-The query-side system may be adapted within the supplied 0.6B backbone
-requirement. Document vectors must not be modified, re-encoded, replaced,
-or reordered. Task network access during development is restricted to
-`openrouter.ai` and `api.jina.ai`. Do not acquire replacement backbones,
-evaluation labels, or external retrieval results. The final submission must
-be self-contained and offline.
+The query-side system may be adapted within the supplied 0.6B backbone requirement. Document vectors must not be modified, re-encoded, replaced, or reordered. Task network access during development is restricted to `openrouter.ai` and `api.jina.ai`. Do not acquire replacement backbones, evaluation labels, or external retrieval results. The final submission must be self-contained and offline.
 
 #### Environment and Resource Limits
 
-The Python 3.12 runtime uses CUDA-enabled PyTorch, 8 CPUs, 32 GiB memory, and
-a 100 GiB storage budget. The local Docker backend does not enforce that budget
-with a filesystem quota; the completed calibration stayed well below it.
-Both Compose configurations and `task.toml` request **one
-NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
+The Python 3.12 runtime uses CUDA-enabled PyTorch, 8 CPUs, 32 GiB memory, and a 100 GiB storage budget. The local Docker backend does not enforce that budget with a filesystem quota; the completed calibration stayed well below it. Both Compose configurations and `task.toml` request **one NVIDIA GPU**. Use `--gpu-device <index-or-UUID>` to select the same host GPU for both phases.
 
-The agent has 6 hours. Task-specific verification has 340 minutes inside
-the 535-minute Harbor verifier phase. The integrity audit has a separate
-185-minute envelope, with each judge attempt limited to 60 minutes.
-The candidate must finish within **60% of the measured reference runtime**.
-The evaluation runner also caps each reference/candidate run at 1,800 seconds.
+The agent has 6 hours. Task-specific verification has 340 minutes inside the 535-minute Harbor verifier phase. The integrity audit has a separate 185-minute envelope, with each judge attempt limited to 60 minutes. The candidate must finish within **60% of the measured reference runtime**. The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
 ## Change Log
 
@@ -87,27 +64,15 @@ The evaluation runner also caps each reference/candidate run at 1,800 seconds.
 
 ### Submission Contract
 
-The complete deliverable lives under `/app/submission` and includes an executable
-`run.sh`. It accepts document vectors and query files, and returns one ranked
-document per query. The verifier copies only this directory.
+The complete deliverable lives under `/app/submission` and includes an executable `run.sh`. It accepts document vectors and query files, and returns one ranked document per query. The verifier copies only this directory.
 
-Outputs must be deterministic and preserve query order, and execution must
-leave no background processes. [instruction.md](instruction.md) defines the
-complete interface; no separate submitted build step is required.
+Outputs must be deterministic and preserve query order, and execution must leave no background processes. [instruction.md](instruction.md) defines the complete interface; no separate submitted build step is required.
 
 ### Evaluation
 
 #### Search Quality
 
-The public quality reference freezes Qwen3-Embedding-0.6B and fits centered
-ridge once on all public corpus/text-vector pairs. Its fixed settings and
-reproduction commands are in [the baseline README](environment/quality_reference/README.md).
-Every verifier run independently fits the pinned baseline using public corpus
-pairs, then measures A0 on the same hidden queries and hardware as the candidate.
-The baseline definition and inputs are fixed in `tests/quality_baseline_lock.json`;
-its accuracy and prediction fingerprint are recorded from the current run.
-The 4B time reference is also measured on that hardware. Use a compatible NVIDIA
-GPU with enough memory for both reference models and the submission.
+The public quality reference freezes Qwen3-Embedding-0.6B and fits centered ridge once on all public corpus/text-vector pairs. Its fixed settings and reproduction commands are in [the baseline README](environment/quality_reference/README.md). Every verifier run independently fits the pinned baseline using public corpus pairs, then measures A0 on the same hidden queries and hardware as the candidate. The baseline definition and inputs are fixed in `tests/quality_baseline_lock.json`; its accuracy and prediction fingerprint are recorded from the current run. The 4B time reference is also measured on that hardware. Use a compatible NVIDIA GPU with enough memory for both reference models and the submission.
 
 ```text
 quality = clip((candidate Accuracy@1 - A0) / (1 - A0), 0, 1)
@@ -115,15 +80,9 @@ reward = quality if all gates pass else 0
 score = 100 * reward
 ```
 
-A reference failure or A0=1 is an invalid benchmark measurement, not a
-candidate zero. Quality baseline configuration is frozen before hidden
-measurement or model evaluation. The separate 4B reference supplies time only;
-its accuracy is retained as a diagnostic. Raw candidate accuracy, A0, quality, runtime gate, judge health and
-final reward are recorded separately.
+A reference failure or A0=1 is an invalid benchmark measurement, not a candidate zero. Quality baseline configuration is frozen before hidden measurement or model evaluation. The separate 4B reference supplies time only; its accuracy is retained as a diagnostic. Raw candidate accuracy, A0, quality, runtime gate, judge health and final reward are recorded separately.
 
-Both references exclude same-ID documents and all canonical-text copies:
-NFKC, collapse whitespace, casefold. They rank all unchanged vectors, filter,
-then refill; ties use corpus row order. The grader rejects excluded results.
+Both references exclude same-ID documents and all canonical-text copies: NFKC, collapse whitespace, casefold. They rank all unchanged vectors, filter, then refill; ties use corpus row order. The grader rejects excluded results.
 
 #### Correctness and Resource Gates
 
@@ -131,38 +90,36 @@ Candidate wall time must be at most `0.60 × time reference wall time`, measured
 
 #### Integrity Checks and Final Reward
 
-The normalized quality reward is accepted only after runtime and validity gates
-and the independent trajectory audit pass. Failure at any gate produces zero.
-Judge and reference failures leave zero in the fail-closed reward artifact and are marked `measurement_valid=false`, not reported as evidence of model difficulty. Task-verification or integrity-judge timeouts also yield zero. Hidden baseline predictions, projection provenance and metrics stay in protected verifier logs.
-Submitted processes run as UID 10001 with no credentials,
-read-only runtime, protected reference/log directories and inherited seccomp
-network denial.
-The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
-verifier-only DeepSeek endpoint and key settings.
-Its binary decision must agree with the complete, error-free RewardKit details.
-Both an internal judge timeout and an outer process timeout invalidate the
-measurement; a completed integrity rejection is a valid zero.
+The normalized quality reward is accepted only after runtime and validity gates and the independent trajectory audit pass. Failure at any gate produces zero. Judge and reference failures leave zero in the fail-closed reward artifact and are marked `measurement_valid=false`, not reported as evidence of model difficulty. Task-verification or integrity-judge timeouts also yield zero. Hidden baseline predictions, projection provenance and metrics stay in protected verifier logs. Submitted processes run as UID 10001 with no credentials, read-only runtime, protected reference/log directories and inherited seccomp network denial. The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with verifier-only DeepSeek endpoint and key settings. Its binary decision must agree with the complete, error-free RewardKit details. Both an internal judge timeout and an outer process timeout invalidate the measurement; a completed integrity rejection is a valid zero.
 
-For verifier-only reevaluation, restore the original `/app/submission` and
-`/logs/agent/trajectory.json` into a fresh independent verifier with the current
-task files, pinned assets, GPU allocation and judge credentials. Run the full
-`/tests/test.sh` so the quality baseline, five timing pairs and integrity audit
-are evaluated together. Keep the original submission and trajectory unchanged,
-and save new verifier results separately with the task revision and hardware.
-Use the resulting measured A0 and final reward; an earlier score's denominator
-alone is insufficient to establish a valid reevaluation.
+For verifier-only reevaluation, restore the original `/app/submission` and `/logs/agent/trajectory.json` into a fresh independent verifier with the current task files, pinned assets, GPU allocation and judge credentials. Run the full `/tests/test.sh` so the quality baseline, five timing pairs and integrity audit are evaluated together. Keep the original submission and trajectory unchanged, and save new verifier results separately with the task revision and hardware. Use the resulting measured A0 and final reward; an earlier score's denominator alone is insufficient to establish a valid reevaluation.
 
-### Running This Task
+### Data provenance and local checks
 
-From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install Search-SWE and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
-task credential profile. The
-[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+The packaged ArguAna corpus matches mteb/arguana commit `6c1bcf74b13dfd823aff056b79d4d93e702f19c7`, with task-specific IDs; its source license is CC BY-SA 4.0. The model family is described in [Qwen3 Embedding](https://arxiv.org/abs/2506.05176v3), licensed Apache-2.0. This frozen-index alignment task and its ridge reference are engineering adaptations, not reported paper experiments. The original fixed matrix is preserved byte-for-byte; its generation recipe is not reconstructed here. The manifest pins 30 files totaling 8.72 GiB at immutable revisions, exact sizes and hashes; public split and hidden split remain unchanged.
 
-Prepare the GPU runtime and configure the independent integrity judge. Download
-as a host user distinct from submission UID 10001, following the asset guide,
-so the reference model's private file permissions retain their intended effect.
+```bash
+python -m unittest discover -s tasks/query-encoder-alignment/authoring/tests -p 'test_*.py' -v
+python scripts/validation/check_tasks.py tasks/query-encoder-alignment
+```
+
+Author calibration records and runtime evidence are kept under `contributing/dev/query-encoder-alignment/v020/`, never mounted into a solving agent. Public first-fit ridge Accuracy@1 is 54/100 with approximately 107 s fit time on one A100 40GB. Two independent fits and public predictions are byte-identical. The historical hidden A0 on that platform was 62/100. Current verifier runs measure their own A0 using the same pinned implementation and inputs. The repaired 4B reference scores 68/100. Known-baseline submission passes the runtime, output and determinism checks and scores zero at its own quality anchor. Historical artifact replay: Opus xhigh 76%, 36.8421/100 and time gate passed; Luna xhigh 64%, quality 5.2632/100, time gate failed and retrieval reward zero. These are retrieval replays, not new model solves or newly accepted judge runs. The historical Codex 0.157.1 + OpenRouter `openai/gpt-6-luna`, effort `max` run used the 12-hour development limit and scored **18.4211/100**: hidden Accuracy@1 69%, A0 62%, candidate 12.1705 s against a 25.2756 s reference (15.1654 s limit). The repeat output is byte-identical. The independent DeepSeek integrity judge accepted the submission; `measurement_valid=true`, with no infrastructure exception. The solve took 36m48s and verification 6m51s, on a reserved A100 40GB. Agent/verifier memory peaks were 10.80/10.88 GiB. Job: `jobs/query-encoder-alignment-codex-openrouter-luna-max-v020-20261022-r2/2026-10-22__20-15-17/`. The preceding r1 attempt was canceled before submission when an external service occupied its reserved GPU; it has no valid model score. Both records are retained. No scoring parameter changed between attempts.
+
+This historical Luna/max solve supports the approximate 20-point difficulty target; the historical Opus artifact replay scores below 50. A legal author solution achieving 100% hidden accuracy has not been demonstrated; synthetic grader tests establish the full-score numeric boundary only. Model-run evidence for the six-hour budget will come from the release evaluations.
+
+`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
+
+### Repeated measurements
+
+The primary supervisor allows 20,400 seconds: one quality fit/run plus five reference and five candidate calls at up to 1,800 seconds each (19,800 seconds), with 600 seconds for setup and cleanup.
+
+The integrity audit allows 3,600 seconds per attempt. Its 11,100-second supervisor covers RewardKit 0.2.0's existing maximum of three attempts for process or output-format errors, plus 300 seconds of overhead. A valid decision ends the audit immediately; a timed-out attempt invalidates the measurement. The 32,100-second verifier envelope covers primary evaluation, the audit and 600 seconds for finalization, termination grace periods and other overhead.
+
+## Running the Task
+
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md) to install Search-SWE and prepare Docker. Use the [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and task credential profile. The [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+
+Prepare the GPU runtime and configure the independent integrity judge. Download as a host user distinct from submission UID 10001, following the asset guide, so the reference model's private file permissions retain their intended effect.
 
 ```bash
 python scripts/assets/download_assets.py --task query-encoder-alignment
@@ -171,13 +128,7 @@ bash scripts/evaluation/run_task.sh --task query-encoder-alignment --gpu-device 
   --model openai/gpt-6-luna --reasoning-effort max --output jobs/query-encoder-alignment-UNIQUE_RUN_ID
 ```
 
-The shared launcher defaults to Codex, also supports Pi and Claude Code, and
-writes results under `jobs/query-encoder-alignment/`.
-Configure `AGENT_OPENROUTER_API_KEY`, `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in the ignored repository
-`.env`. Add `--dry-run` to inspect
-command construction without starting an evaluation; this does not validate
-assets, credentials, or hardware.
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and writes results under `jobs/query-encoder-alignment/`. Configure `AGENT_OPENROUTER_API_KEY`, `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL=https://openrouter.ai/api/v1` in the ignored repository `.env`. Add `--dry-run` to inspect command construction without starting an evaluation; this does not validate assets, credentials, or hardware.
 
 ### Task Files
 
@@ -192,66 +143,9 @@ assets, credentials, or hardware.
 | [Time reference notes](environment/time_reference/README.md) | 4B timing reference and public validation |
 | [Resource policy](environment/docs/available_resources.md) | Development access and offline submission rules |
 
-### Data provenance and local checks
-
-The packaged ArguAna corpus matches mteb/arguana commit
-`6c1bcf74b13dfd823aff056b79d4d93e702f19c7`, with task-specific IDs; its source
-license is CC BY-SA 4.0. The model family is described in
-[Qwen3 Embedding](https://arxiv.org/abs/2506.05176v3), licensed Apache-2.0.
-This frozen-index alignment task and its ridge reference are engineering
-adaptations, not reported paper experiments. The original fixed matrix is
-preserved byte-for-byte; its generation recipe is not reconstructed here.
-The manifest pins 30 files totaling 8.72 GiB at immutable revisions, exact
-sizes and hashes; public split and hidden split remain unchanged.
-
-```bash
-python -m unittest discover -s tasks/query-encoder-alignment/authoring/tests -p 'test_*.py' -v
-python scripts/validation/check_tasks.py tasks/query-encoder-alignment
-```
-
-Author calibration records and runtime evidence are kept under
-`contributing/dev/query-encoder-alignment/v020/`, never mounted into a solving
-agent. Public first-fit ridge Accuracy@1 is 54/100 with approximately 107 s
-fit time on one A100 40GB. Two independent fits and public predictions are byte-identical.
-The historical hidden A0 on that platform was 62/100. Current verifier runs
-measure their own A0 using the same pinned implementation and inputs.
-The repaired 4B reference scores 68/100. Known-baseline submission passes the
-runtime, output and determinism checks and scores zero at its own quality anchor.
-Historical artifact replay: Opus xhigh 76%, 36.8421/100 and time gate passed;
-Luna xhigh 64%, quality 5.2632/100, time gate failed and retrieval reward zero.
-These are retrieval replays, not new model solves or newly accepted judge runs.
-The historical Codex 0.157.1 + OpenRouter `openai/gpt-6-luna`, effort `max` run
-used the 12-hour development limit and scored **18.4211/100**: hidden Accuracy@1
-69%, A0 62%, candidate 12.1705 s
-against a 25.2756 s reference (15.1654 s limit). The repeat output is
-byte-identical. The independent DeepSeek integrity judge accepted the submission;
-`measurement_valid=true`, with no infrastructure exception. The solve took
-36m48s and verification 6m51s, on a reserved A100 40GB. Agent/verifier memory
-peaks were 10.80/10.88 GiB. Job:
-`jobs/query-encoder-alignment-codex-openrouter-luna-max-v020-20261022-r2/2026-10-22__20-15-17/`.
-The preceding r1 attempt was canceled before submission when an external
-service occupied its reserved GPU; it has no valid model score. Both records
-are retained. No scoring parameter changed between attempts.
-
-This historical Luna/max solve supports the approximate 20-point difficulty
-target; the historical Opus artifact replay scores below 50. A legal author
-solution achieving 100% hidden accuracy has not been demonstrated; synthetic
-grader tests establish the full-score numeric boundary only. Model-run evidence
-for the six-hour budget will come from the release evaluations.
-
-`--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device with the task's required capacity. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
-
-### Repeated verifier measurements
-
-The primary supervisor allows 20,400 seconds: one quality fit/run plus five reference and five candidate calls at up to 1,800 seconds each (19,800 seconds), with 600 seconds for setup and cleanup.
-
-The integrity audit allows 3,600 seconds per attempt. Its 11,100-second supervisor
-covers RewardKit 0.2.0's existing maximum of three attempts for process or
-output-format errors, plus 300 seconds of overhead. A valid decision ends the
-audit immediately; a timed-out attempt invalidates the measurement. The
-32,100-second verifier envelope covers primary evaluation, the audit and
-600 seconds for finalization, termination grace periods and other overhead.
-
 ## References
 
-- [Task reference](https://arxiv.org/abs/2506.05176v3).
+- **Task source** — Experience
+- **Data source** — ArguAna corpus with task-specific identifiers and frozen document embeddings.
+- **Model source** — Qwen3-Embedding-0.6B and 4B. [Qwen3 Embedding technical report](https://arxiv.org/abs/2506.05176v3)
+- **Provenance details** — [Data, model, and local checks](#data-provenance-and-local-checks)

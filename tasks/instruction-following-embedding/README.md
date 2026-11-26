@@ -12,14 +12,11 @@
 | Agent / verifier time limits | 7200 s / 7200 s |
 | Dataset | FollowIR Robust04/Core17/News21; topic-disjoint 20-group development and 84-group test partition |
 
+## Overview
+
 Adapt a compact E5-large-v2 query adapter within a 512KiB deployment budget while retaining the fixed base document space.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -40,6 +37,8 @@ Documents are prepared once. Each query/instruction version is measured five tim
 
 The primary wrapper allows 5,000 seconds, including up to 3,600 seconds for preparation and 840 one-second query measurements (84 groups × 2 versions × 5). The remaining primary time covers setup, reporting and bounded worker recovery. Primary/audit/finalization wrappers plus kill grace total 7,015 seconds (5,000 + 15 + 1,950 + 15 + 30 + 5), leaving 185 seconds within the 7,200-second verifier limit. `/app` and `/tmp` use disk; the runtime checks their logical file sizes plus mounted data/models against 32 GiB. Artifact collection is a separate phase with its existing 600-second limit.
 
+## Running the Task
+
 ### Restore inputs
 
 Run from the repository root using the repository's existing Python environment:
@@ -51,22 +50,13 @@ python scripts/assets/download_assets.py --task instruction-following-embedding 
 
 [assets.json](assets.json) fixes file sizes, hashes and source revisions. Keep verifier inputs outside agent mounts. The three required corpora restore to `data/corpus/{robust04,core17,news21}.jsonl`; processed training data and public validation groups restore to `data/train.jsonl` and `data/validation/dev-groups.json`. Runtime restoration does not download raw preparation inputs or require a preprocessing step. Source and license information is recorded in `DATA_SOURCES.md`.
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 32 GiB RAM and
-32 GiB storage. Agent development has
-7200 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+The task allocates 16 CPU cores, 32 GiB RAM and 32 GiB storage. Agent development has 7200 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks.
 
-Both phases use one NVIDIA GPU with support for the fixed CUDA/BF16/SDPA runtime. Use `--gpu-device` to select the same
-host GPU for both phases. GPU model and memory capacity are not task requirements; changing hardware still requires runtime and timing validation.
+Both phases use one NVIDIA GPU with support for the fixed CUDA/BF16/SDPA runtime. Use `--gpu-device` to select the same host GPU for both phases. GPU model and memory capacity are not task requirements; changing hardware still requires runtime and timing validation.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
-The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials
-are not submission inputs.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README. The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials are not submission inputs.
 
 Invoke the standard entrypoint directly:
 
@@ -76,9 +66,7 @@ bash scripts/evaluation/run_task.sh --task instruction-following-embedding --gpu
   --output "jobs/instruction-following-embedding-codex-openrouter-luna-max-RUN_ID"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -87,13 +75,12 @@ python scripts/validation/check_tasks.py tasks/instruction-following-embedding
 python scripts/assets/download_assets.py --task instruction-following-embedding --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 `--gpu-device 0` selects host GPU 0; a full GPU UUID is also accepted. Omit the option to use the default single-GPU allocation. Choose an available device compatible with the task runtime. The [GPU guide](../../docs/evaluation/runtime.md#gpu-device-selection) explains selection and per-run records.
 
 ## References
 
-None.
+- **Task source** — [FollowIR (NAACL 2025)](https://aclanthology.org/2025.naacl-long.597/)
+- **Data source** — FollowIR Robust04, Core17, and News21 with a task-specific topic-disjoint split.
+- **Model source** — [intfloat/e5-large-v2](https://huggingface.co/intfloat/e5-large-v2). [Asset manifest](assets.json)

@@ -10,7 +10,11 @@
 | Primary metric | Complete table-and-join coverage at 5 tables and 6 joins |
 | Compute | 16 CPUs; 32 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 4800 s |
+| Dataset | Spider 1.0 |
+| Public queries | 10 |
 | Hidden queries | 10 |
+
+## Overview
 
 Build a CPU search engine over 1,056 tables in 206 opaque database groups. Given a natural-language question without a database ID, return exactly five tables and at most six public column-level equality relationships. A question scores one only when an acceptable table-and-join plan is completely covered. The raw score is the mean over all hidden questions; the final score additionally requires a healthy, accepting compliance audit. Author: **Bingyu**.
 
@@ -108,7 +112,7 @@ The three public inputs are pinned in `assets.json` to `search-swe/Search-SWE` r
 
 See [RUN_RESULTS.md](RUN_RESULTS.md) for recorded run outcomes and judge health, and [VALIDATION.md](VALIDATION.md) for validation evidence.
 
-### Running the task
+## Running the Task
 
 From the repository root, configure the agent and any task-specific judge credentials using the [evaluation guide](../../docs/evaluation/runtime.md), then run:
 
@@ -120,8 +124,6 @@ bash scripts/evaluation/run_task.sh --task join-aware-table-retrieval --agent co
 
 ## References
 
-### Attribution
-
-Source: [Spider 1.0](https://yale-lily.github.io/spider), by Tao Yu and collaborators, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The captured official archive has 205,800,266 bytes and SHA-256 `00636695dabed6b5f4b8328a16b13e069a2f16591d5efcce57660669c85b121b`. Attribution and adaptation details are in `LICENSE.data.md`.
-
-- [Task reference](https://arxiv.org/abs/1809.08887).
+- **Task source** — [JAR (ACL 2024)](https://aclanthology.org/2024.acl-long.148/)
+- **Data source** — [Spider 1.0](https://yale-lily.github.io/spider) ([EMNLP 2018 paper](https://arxiv.org/abs/1809.08887)), by Tao Yu and collaborators, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The captured official archive has 205,800,266 bytes and SHA-256 `00636695dabed6b5f4b8328a16b13e069a2f16591d5efcce57660669c85b121b`.
+- **Provenance details** — [Attribution, adaptation, and data license](LICENSE.data.md)

@@ -14,18 +14,13 @@
 | Public queries | 10 |
 | Hidden queries | 200 |
 
+## Overview
+
 Adapt a fixed embedding backbone to code retrieval and measure the resulting quality gain.
 
-### Overview
+A general embedding model may not organize natural-language requests and code documents in the way a code-search application needs. This task asks a coding agent to improve that alignment using supplied supervised examples.
 
-A general embedding model may not organize natural-language requests and code
-documents in the way a code-search application needs. This task asks a coding
-agent to improve that alignment using supplied supervised examples.
-
-The output is a trained checkpoint, rather than a custom search service.
-The verifier applies the same embedding and exact-search procedure to the
-original backbone and the submission. This isolates improvement in the learned
-representation from changes to indexing, candidate selection, or serving code.
+The output is a trained checkpoint, rather than a custom search service. The verifier applies the same embedding and exact-search procedure to the original backbone and the submission. This isolates improvement in the learned representation from changes to indexing, candidate selection, or serving code.
 
 ### Task Setup
 
@@ -39,33 +34,19 @@ representation from changes to indexing, candidate selection, or serving code.
 | `models/bge-base-en-v1.5/` | The pinned original backbone |
 | `environment/starter/train.sh` | Starting point for the training workflow |
 
-The hidden evaluation contains 200 queries. Public data and the backbone are
-mounted read-only under `/task/data` and `/task/models`; hidden questions and
-labels are excluded from the agent environment.
+The hidden evaluation contains 200 queries. Public data and the backbone are mounted read-only under `/task/data` and `/task/models`; hidden questions and labels are excluded from the agent environment.
 
 #### Fixed Components and Allowed Changes
 
-Training choices and model weights may change. The backbone architecture,
-model class, structural configuration, parameter names, shapes, and count must
-remain compatible. The verifier owns the embedding and exact-retrieval procedure.
+Training choices and model weights may change. The backbone architecture, model class, structural configuration, parameter names, shapes, and count must remain compatible. The verifier owns the embedding and exact-retrieval procedure.
 
-Development uses the supplied offline data and packages. External checkpoints,
-datasets, labels, and answer mappings are not permitted; see the
-[resource policy](environment/docs/available_resources.md).
+Development uses the supplied offline data and packages. External checkpoints, datasets, labels, and answer mappings are not permitted; see the [resource policy](environment/docs/available_resources.md).
 
 #### Environment and Resource Limits
 
-The runtime uses Python 3.12 with CUDA-enabled PyTorch. It is configured for
-8 CPUs, 32 GiB memory, and 100 GiB storage. The environment and verifier
-Compose files and `task.toml` explicitly request **one GPU**.
-For local Docker, the shared launcher handles Harbor 0.22 and 0.23 GPU
-capability preflight with `--override-gpus 0`; the Compose reservations still
-provide the GPU to both containers.
+The runtime uses Python 3.12 with CUDA-enabled PyTorch. It is configured for 8 CPUs, 32 GiB memory, and 100 GiB storage. The environment and verifier Compose files and `task.toml` explicitly request **one GPU**. For local Docker, the shared launcher handles Harbor 0.22 and 0.23 GPU capability preflight with `--override-gpus 0`; the Compose reservations still provide the GPU to both containers.
 
-The agent phase has 6 hours. Task-specific verification has one hour,
-followed by a separately bounded integrity check, within an 85-minute Harbor
-verifier phase. The submission training environment is offline; the coding
-agent and private judge have their own API configuration.
+The agent phase has 6 hours. Task-specific verification has one hour, followed by a separately bounded integrity check, within an 85-minute Harbor verifier phase. The submission training environment is offline; the coding agent and private judge have their own API configuration.
 
 ## Change Log
 
@@ -84,54 +65,35 @@ agent and private judge have their own API configuration.
 
 ### Submission Contract
 
-The artifact is a complete checkpoint at `/app/submission/model`, including
-the files needed by standard Transformers tokenizer and model loaders with
-`local_files_only=True`. Only `/app/submission` is transferred for evaluation.
+The artifact is a complete checkpoint at `/app/submission/model`, including the files needed by standard Transformers tokenizer and model loaders with `local_files_only=True`. Only `/app/submission` is transferred for evaluation.
 
-There is no submitted retrieval CLI to optimize here: the verifier loads the
-checkpoint and executes its own fixed search procedure. Full compatibility
-requirements are in [instruction.md](instruction.md).
+There is no submitted retrieval CLI to optimize here: the verifier loads the checkpoint and executes its own fixed search procedure. Full compatibility requirements are in [instruction.md](instruction.md).
 
 ### Evaluation
 
 #### Search Quality
 
-Accuracy@1 measures whether the highest-ranked code document is relevant.
-The grader evaluates both checkpoints on identical hidden queries, using
-normalized first-token embeddings, the same token limit, and exact inner-product
-search. The base task reward is:
+Accuracy@1 measures whether the highest-ranked code document is relevant. The grader evaluates both checkpoints on identical hidden queries, using normalized first-token embeddings, the same token limit, and exact inner-product search. The base task reward is:
 
 ```text
 max(0, submitted Accuracy@1 - original-backbone Accuracy@1)
 ```
 
-This is an absolute gain on the 0–1 accuracy scale, not a percentage-relative
-improvement and not the submitted accuracy by itself.
+This is an absolute gain on the 0–1 accuracy scale, not a percentage-relative improvement and not the submitted accuracy by itself.
 
 #### Correctness and Resource Gates
 
-The checkpoint must load offline and match the backbone's structural signature.
-Invalid models, failed evaluation, and timeouts receive zero. Training-side
-validation results do not replace the verifier's independent comparison.
+The checkpoint must load offline and match the backbone's structural signature. Invalid models, failed evaluation, and timeouts receive zero. Training-side validation results do not replace the verifier's independent comparison.
 
 #### Integrity Checks and Final Reward
 
-A trajectory audit gates the nonnegative quality gain. A failed audit or
-invalid evaluation produces zero, regardless of the apparent training result.
-The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with
-verifier-only DeepSeek endpoint and key settings.
+A trajectory audit gates the nonnegative quality gain. A failed audit or invalid evaluation produces zero, regardless of the apparent training result. The audit uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 with verifier-only DeepSeek endpoint and key settings.
 
-### Running This Task
+## Running the Task
 
-From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install Search-SWE and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
-task credential profile. The
-[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md) to install Search-SWE and prepare Docker. Use the [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and task credential profile. The [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
-Prepare an NVIDIA-capable Docker host and the GPU base image referenced by the
-Dockerfiles. Configure the integrity judge as well as the coding agent.
-The asset downloader restores both training data and the fixed backbone.
+Prepare an NVIDIA-capable Docker host and the GPU base image referenced by the Dockerfiles. Configure the integrity judge as well as the coding agent. The asset downloader restores both training data and the fixed backbone.
 
 ```bash
 python scripts/assets/download_assets.py --task code-embedding-finetuning
@@ -139,12 +101,7 @@ bash scripts/evaluation/run_task.sh --task code-embedding-finetuning --agent cod
   --model openai/gpt-6-luna --reasoning-effort max --gpu-device 0
 ```
 
-The shared launcher defaults to Codex, also supports Pi and Claude Code, and
-writes results under `jobs/code-embedding-finetuning/`.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-command construction without starting an evaluation; this does not validate
-assets, credentials, or hardware.
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and writes results under `jobs/code-embedding-finetuning/`. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect command construction without starting an evaluation; this does not validate assets, credentials, or hardware.
 
 ### Task Files
 
@@ -163,4 +120,6 @@ assets, credentials, or hardware.
 
 ## References
 
-None.
+- **Task source** — Experience
+- **Data source** — CoIR/APPS-derived code corpus and training examples. [Published source record](https://huggingface.co/datasets/search-swe/Search-SWE/blob/6713b1eb7474e0768e906a0151c76af92f0cfcdd/SOURCES.md)
+- **Model source** — [BAAI/bge-base-en-v1.5 at revision a5beb1e](https://huggingface.co/BAAI/bge-base-en-v1.5/tree/a5beb1e3e68b9ab74eb54cfd186867f64f240e1a). The bundled model README adapts the upstream `README.md` at that revision and retains its metadata, attribution, license information, and citations. The bundled copy is restored using the size and SHA-256 in [assets.json](assets.json).

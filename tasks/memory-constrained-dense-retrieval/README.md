@@ -11,21 +11,16 @@
 | Compute | 16 CPUs; 0.5 GiB RAM; 100 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 7200 s |
 | Dataset | NaturalQuestions |
+| Public queries | 20 |
 | Hidden queries | 20 |
+
+## Overview
 
 Search a fixed vector collection larger than available RAM while meeting strict query deadlines.
 
-### Overview
+This task contains 1.5 million precomputed NaturalQuestions document vectors, each with 1,024 float32 dimensions. The raw vectors occupy about 6.14 GB, while the runtime has only 512 MiB of memory.
 
-This task contains 1.5 million precomputed NaturalQuestions document vectors,
-each with 1,024 float32 dimensions. The raw vectors occupy about 6.14 GB,
-while the runtime has only 512 MiB of memory.
-
-The challenge is to design an index, storage layout, and query path that work
-together under that mismatch. Retrieval quality alone is insufficient:
-the system must become ready quickly and serve independent query invocations
-within a tight end-to-end deadline. The architecture is open, so memory
-management and service lifecycle are as important as the search algorithm.
+The challenge is to design an index, storage layout, and query path that work together under that mismatch. Retrieval quality alone is insufficient: the system must become ready quickly and serve independent query invocations within a tight end-to-end deadline. The architecture is open, so memory management and service lifecycle are as important as the search algorithm.
 
 ### Task Setup
 
@@ -37,32 +32,15 @@ management and service lifecycle are as important as the search algorithm.
 | `data/metadata.jsonl` and `data/vector_config.json` | Document mapping and vector layout |
 | `data/validation/` | 20 public examples, query vectors, metadata, and labels |
 
-Files are restored under the task's `data/` and mounted at `/task/data`.
-The hidden workload contains 20 queries, disjoint from public validation.
-Every hidden query is scored for both retrieval correctness and latency.
+Files are restored under the task's `data/` and mounted at `/task/data`. The hidden workload contains 20 queries, disjoint from public validation. Every hidden query is scored for both retrieval correctness and latency.
 
-The asset manifest fixes the packaged revision and each file's size and SHA-256.
-Its [source record](https://huggingface.co/datasets/search-swe/Search-SWE/blob/6713b1eb7474e0768e906a0151c76af92f0cfcdd/SOURCES.md)
-identifies BGE-large-en-v1.5 with L2 normalization, but does not record the
-original encoder revision. These are preserved frozen vectors, not a newly
-reconstructed embedding dataset. Original source attribution and terms apply;
-the collection does not grant a blanket license for all underlying materials.
+The asset manifest fixes the packaged revision and each file's size and SHA-256. Its [source record](https://huggingface.co/datasets/search-swe/Search-SWE/blob/6713b1eb7474e0768e906a0151c76af92f0cfcdd/SOURCES.md) identifies BGE-large-en-v1.5 with L2 normalization, but does not record the original encoder revision. These are preserved frozen vectors, not a newly reconstructed embedding dataset. Original source attribution and terms apply; the collection does not grant a blanket license for all underlying materials.
 
-Document and query IDs are independent opaque random identifiers. Corpus
-vector rows and metadata are shuffled together, with vector values preserved
-bit for bit and relevance labels mapped consistently. Labels remain original
-NQ relevance judgments. Both splits were selected from full-corpus exact
-Top-3 hits, favoring small relevant-document margins over rank four and
-balancing those margins between splits. This margin is a difficulty proxy,
-not evidence of failure by a measured ANN baseline.
+Document and query IDs are independent opaque random identifiers. Corpus vector rows and metadata are shuffled together, with vector values preserved bit for bit and relevance labels mapped consistently. Labels remain original NQ relevance judgments. Both splits were selected from full-corpus exact Top-3 hits, favoring small relevant-document margins over rank four and balancing those margins between splits. This margin is a difficulty proxy, not evidence of failure by a measured ANN baseline.
 
 #### Fixed Components and Allowed Changes
 
-Document and query vectors are supplied inputs. Index organization, compression,
-storage access, and the retrieval implementation may change. External models,
-retrieval services, and answer mappings are not part of the task.
-An internal representation must still produce valid results for the supplied
-vectors and preserve their document identities.
+Document and query vectors are supplied inputs. Index organization, compression, storage access, and the retrieval implementation may change. External models, retrieval services, and answer mappings are not part of the task. An internal representation must still produce valid results for the supplied vectors and preserve their document identities.
 
 #### Environment and Resource Limits
 
@@ -72,9 +50,7 @@ For representative query tests, first terminate only your own build-started sear
 
 The supplied index workspace is `/task/index`, a fresh 64 MiB (67,108,864-byte) tmpfs mounted in both phases. Use it as `--index-dir` for representative development tests and final execution. All final build and query artifacts, including indexes, document lookup tables, executables, logs, temporary files and caches, must fit there throughout the final build and query workload; the kernel rejects writes beyond its capacity. The requested result JSONL file is the exception and must be written to the supplied `--output` path. Sparse files also count by logical size for the grader limit. This workspace is charged to the same 512 MiB memory cgroup, not an additional memory allowance. Keep submitted source files and development scratch files under `/app` within the general storage allowance. The timed final build must derive corpus-dependent search state from the supplied inputs; it must not reuse prebuilt corpus indexes or learned search tables bundled with the source. Do not place generated search state elsewhere or use other persistent writable paths or query-output directories to evade the workspace budget. Anonymous memory and IPC shared memory are permitted within the total memory budget, but POSIX shared-memory files and submission-owned System V IPC objects are removed and checked during the post-build restart and cannot preserve an index across it. The supplied corpus remains read-only and may be read for genuine retrieval and reranking.
 
-The submitted build must finish within **150 seconds**, including service
-startup. Every query invocation has a **0.5-second wall-clock limit**, measured
-from process start through exit and protected output capture, including the full query path. The grader records index size.
+The submitted build must finish within **150 seconds**, including service startup. Every query invocation has a **0.5-second wall-clock limit**, measured from process start through exit and protected output capture, including the full query path. The grader records index size.
 
 ## Change Log
 
@@ -93,34 +69,19 @@ from process start through exit and protected output capture, including the full
 
 ### Submission Contract
 
-The deliverable contains `/app/build.sh` and `/app/run.sh`. The first builds the
-index and starts a reusable service; the second accepts query-vector files and
-returns exactly three ranked document IDs with scores per query.
+The deliverable contains `/app/build.sh` and `/app/run.sh`. The first builds the index and starts a reusable service; the second accepts query-vector files and returns exactly three ranked document IDs with scores per query.
 
-The verifier supplies file and index paths and may invoke the query entry point
-separately for each question. Submission execution is unprivileged, with
-persistent and runtime artifacts written to the supplied index directory.
-The complete interface is in [instruction.md](instruction.md).
+The verifier supplies file and index paths and may invoke the query entry point separately for each question. Submission execution is unprivileged, with persistent and runtime artifacts written to the supplied index directory. The complete interface is in [instruction.md](instruction.md).
 
 ### Evaluation
 
 #### Search Quality
 
-Each query earns 1 only when its invocation exits successfully, its valid output
-is captured within 0.5 seconds, and its top three results contain a relevant
-document. Otherwise that query earns 0. The primary metric is the mean of
-these 20 binary scores; 17 passing queries give Accuracy@3 = 0.85 and fail the minimum 0.95 quality requirement. The report
-also records retrieval accuracy without the latency gate for diagnosis. These primary results come from the median-P95 round; all five rounds are retained in the report.
+Each query earns 1 only when its invocation exits successfully, its valid output is captured within 0.5 seconds, and its top three results contain a relevant document. Otherwise that query earns 0. The primary metric is the mean of these 20 binary scores; 17 passing queries give Accuracy@3 = 0.85 and fail the minimum 0.95 quality requirement. The report also records retrieval accuracy without the latency gate for diagnosis. These primary results come from the median-P95 round; all five rounds are retained in the report.
 
 #### Correctness and Resource Gates
 
-The verifier checks output coverage, document IDs, finite scores, ordering,
-and the execution deadline for each invocation. Incorrect answers, malformed
-outputs, failed invocations, and timeouts reduce the corresponding query score;
-the remaining queries still run, and the aggregate quality floor still applies. A query timeout terminates its invocation
-process group while preserving the separately started query service. Build
-failure, an invalid index, or invalid evaluator inputs still invalidate the
-evaluation. The 512 MiB container memory limit applies throughout execution.
+The verifier checks output coverage, document IDs, finite scores, ordering, and the execution deadline for each invocation. Incorrect answers, malformed outputs, failed invocations, and timeouts reduce the corresponding query score; the remaining queries still run, and the aggregate quality floor still applies. A query timeout terminates its invocation process group while preserving the separately started query service. Build failure, an invalid index, or invalid evaluator inputs still invalidate the evaluation. The 512 MiB container memory limit applies throughout execution.
 
 #### Integrity Checks and Final Reward
 
@@ -128,20 +89,13 @@ A trajectory audit independently checks task compliance. Let `A` be the mean of 
 
 The verifier performs five independent measurement rounds. Each round starts from an empty index workspace and a fresh build, with previous submission processes, IPC state, query inputs and output directories cleared. After the successful build, it terminates all submission processes while preserving the workspace and clearing POSIX shared-memory files and submission-owned System V shared memory, message queues and semaphores, to verify that the stored index can be deployed independently. The first run.sh call must automatically load that stored state and start its service if needed; this cold startup is included in that call's 0.5-second deadline and latency. Later calls may reuse the service for one sequential pass over the same 20 distinct hidden queries in fixed stored order within each round. There is no query warmup. Query-result caches do not carry over between rounds. Each round produces its own Accuracy@3 and P95; sort rounds by P95, breaking ties by round order, and use the third round in that order for both the accuracy and latency terms of the final score. Do not pool the 100 measurements or select a round by accuracy. The verifier does not flush the operating-system file cache; file pages and index state created during the build may remain cached. P95 is the nearest-rank quantile: sort all 20 end-to-end durations and take the 19th (one-based, `ceil(0.95 * 20)`). Timeouts and failed launches contribute 0.5 seconds; all other invocations, including nonzero exits and invalid outputs, contribute their externally measured duration capped at 0.5 seconds. Timing uses a monotonic clock and Linux process-exit events. Build time ends at observed process exit. Query time runs from immediately before process creation until the verifier has captured the bounded output into protected storage after client exit; input reading, communication, retrieval, result output, exit and output capture are included. Both P95 and the 0.5-second query deadline use this capture-inclusive duration. Process-exit and output-capture durations are also reported separately. The verifier does not wait for late results: it attempts capture immediately after observing exit, and capture failure or completion after the deadline earns no query credit. Timeout termination and cleanup are recorded separately and do not inflate completed-query latency. A timed-out client is terminated while a separately started query service remains available for subsequent queries. Nonpositive or nonfinite timings invalidate evaluation. Independent author reruns start a fresh build and service; they measure stability and do not increase the count of distinct queries.
 
-It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its
-DeepSeek endpoint and key only in the verifier.
+It uses `deepseek/deepseek-v4.1-flash` via OpenRouter through pinned RewardKit 0.2.0 and receives its DeepSeek endpoint and key only in the verifier.
 
-### Running This Task
+## Running the Task
 
-From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md)
-to install Search-SWE and prepare Docker. Use the
-[evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and
-task credential profile. The
-[asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
+From the repository root, follow the [quick start](../../docs/evaluation/quickstart.md) to install Search-SWE and prepare Docker. Use the [evaluation guide](../../docs/evaluation/runtime.md) to configure the selected agent and task credential profile. The [asset guide](../../docs/evaluation/assets.md) covers downloads, checksums, and cache options.
 
-Configure the verifier's integrity-judge credentials using the evaluation guide.
-The candidate search system uses supplied vectors and does not require
-external model-service credentials.
+Configure the verifier's integrity-judge credentials using the evaluation guide. The candidate search system uses supplied vectors and does not require external model-service credentials.
 
 ```bash
 python scripts/assets/download_assets.py --task memory-constrained-dense-retrieval
@@ -149,12 +103,7 @@ bash scripts/evaluation/run_task.sh --task memory-constrained-dense-retrieval --
   --model openai/gpt-6-luna --reasoning-effort max
 ```
 
-The shared launcher defaults to Codex, also supports Pi and Claude Code, and
-writes results under `jobs/memory-constrained-dense-retrieval/`.
-Adjust `--model` and `--reasoning-effort` for another supported model.
-Add `--dry-run` to inspect
-command construction without starting an evaluation; this does not validate
-assets, credentials, or hardware.
+The shared launcher defaults to Codex, also supports Pi and Claude Code, and writes results under `jobs/memory-constrained-dense-retrieval/`. Adjust `--model` and `--reasoning-effort` for another supported model. Add `--dry-run` to inspect command construction without starting an evaluation; this does not validate assets, credentials, or hardware.
 
 ### Task Files
 
@@ -175,4 +124,6 @@ The verifier snapshots each output immediately after observing client exit, in a
 
 ## References
 
-None.
+- **Task source** — Experience
+- **Data source** — Natural Questions corpus with frozen BGE-large-en-v1.5 vectors.
+- **Provenance details** — [Published source record](https://huggingface.co/datasets/search-swe/Search-SWE/blob/6713b1eb7474e0768e906a0151c76af92f0cfcdd/SOURCES.md) and [asset manifest](assets.json)

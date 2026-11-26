@@ -10,15 +10,15 @@
 | Primary metric | Time-gated logarithmic missed-neighbor reduction over public reference |
 | Compute | 16 CPUs; 32 GiB RAM; 32 GiB storage; 0 GPUs |
 | Agent / verifier time limits | 7200 s / 86400 s |
+| Dataset | Qdrant DBpedia entity embeddings (1,536 and 3,072 dimensions) |
+| Public queries | 1,000 per collection |
+| Hidden queries | 10,000 per collection |
+
+## Overview
 
 Build an incremental vector index and maximize recall across five retrieval sizes under per-stage time budgets.
 
-The complete task contract is in [raw-instruction.md](raw-instruction.md).
-The coding agent receives [instruction.md](instruction.md),
-[available resources](environment/docs/available_resources.md), and
-[environment instructions](environment/docs/environment.md).
-Those documents specify the submission interface, allowed inputs, scoring,
-failure behavior and public self-check commands.
+The complete task contract is in [raw-instruction.md](raw-instruction.md). The coding agent receives [instruction.md](instruction.md), [available resources](environment/docs/available_resources.md), and [environment instructions](environment/docs/environment.md). Those documents specify the submission interface, allowed inputs, scoring, failure behavior and public self-check commands.
 
 ## Change Log
 
@@ -34,6 +34,8 @@ The index must incorporate successive data additions and retain recall across fi
 ## Verification Explanation
 
 For each collection, the verifier performs five independent complete incremental replays at five retrieval sizes, with fresh state and a fresh process for each replay. Each build, insertion and stage/K query gate uses its five-sample median; query quality comes from the replay corresponding to that cell's median time. A missing timing after timeout counts as infinity. Invalid execution or resource violations invalidate the collection. It counts missing exact neighbors, computes logarithmic error reduction over the fixed public reference, and aggregates the two collections. Each collection must pass its build, insertion, query and resource gates. See the [verification contract](raw-instruction.md#verification) for exact formulas, thresholds and failure handling.
+
+## Running the Task
 
 ### Restore inputs
 
@@ -55,21 +57,13 @@ Completed caches live under ignored `tests/platform/<cache-key>/`. A cache key i
 
 Public limits and current-runtime public validation are mounted read-only into both phases; prepared hidden targets are verifier-only. Failed preparation stops before the coding agent is launched. Direct container startup checks the supplied preparation and cannot silently reuse a different platform's time limits.
 
-### Run
+### Launch evaluation
 
-The task allocates 16 CPU cores, 32 GiB RAM and
-32 GiB storage. Agent development has
-7200 seconds. Final-stage limits and accounting are
-specified in the task contract; the verifier service timeout also includes its
-trusted setup and checks.
+The task allocates 16 CPU cores, 32 GiB RAM and 32 GiB storage. Agent development has 7200 seconds. Final-stage limits and accounting are specified in the task contract; the verifier service timeout also includes its trusted setup and checks.
 
 This task uses no GPU.
 
-Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or
-authorized process environment, following the repository README.
-The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and
-`VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials
-are not submission inputs.
+Configure `AGENT_OPENROUTER_API_KEY` through the existing ignored `.env` or authorized process environment, following the repository README. The independent verifier audit also needs `VERIFIER_OPENAI_API_KEY` and `VERIFIER_OPENAI_BASE_URL` as documented by the repository runner. Credentials are not submission inputs.
 
 Invoke the standard entrypoint directly:
 
@@ -79,9 +73,7 @@ bash scripts/evaluation/run_task.sh --task incremental-vector-search --agent cod
   --output "jobs/incremental-vector-search-codex-openrouter-luna-max-RUN_ID"
 ```
 
-Inspect the resulting agent trajectory, submission and verifier report under the
-job directory. The score alone does not distinguish an invalid submission from
-an infrastructure error.
+Inspect the resulting agent trajectory, submission and verifier report under the job directory. The score alone does not distinguish an invalid submission from an infrastructure error.
 
 ### Validate the package
 
@@ -90,12 +82,11 @@ python scripts/validation/check_tasks.py tasks/incremental-vector-search
 python scripts/assets/download_assets.py --task incremental-vector-search --verify-only
 ```
 
-Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective
-directories as build contexts. Run the public helper and verifier with the task's
-resource controls and mounts. Tests that exercise process isolation or GPU
-enforcement belong in disposable task containers, not the shared host.
+Build both `environment/Dockerfile` and `tests/Dockerfile` with their respective directories as build contexts. Run the public helper and verifier with the task's resource controls and mounts. Tests that exercise process isolation or GPU enforcement belong in disposable task containers, not the shared host.
 
 ## References
 
-- [Source provenance and usage terms](SOURCES.md)
-- [Validation evidence and unrun layers](VALIDATION.md)
+- **Task source** — [PAG (ICML 2026)](https://proceedings.mlr.press/v306/lu26y.html)
+- **Data source** — Two Qdrant releases of DBpedia entity embeddings, with 1,536 and 3,072 dimensions.
+- **Provenance details** — [Dataset revisions, sampling, and usage terms](SOURCES.md)
+- **Validation** — [Validation evidence and unrun layers](VALIDATION.md)
